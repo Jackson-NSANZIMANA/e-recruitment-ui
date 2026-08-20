@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "atlassian-design-system-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "./node_modules/@atlaskit/ads-mcp/index.js"
+      ]
+    }
+  }
+}

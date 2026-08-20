@@ -1,0 +1,159 @@
+# Atlassian Design System
+
+> A comprehensive design system that provides a unified set of components, tokens, primitives, and tools for building consistent, accessible, and responsive user interfaces across Atlassian apps.
+
+## Core Packages
+
+### Design Tokens
+
+The foundational design decisions and values that ensure consistency across the design system.
+
+- [Design Tokens Documentation](llms-tokens.txt)
+- Package: `@atlaskit/tokens`
+- Purpose: Single source of truth for design decisions
+- Key features:
+  - Color tokens (background, text, border, etc.)
+  - Typography tokens (font size, line height, font weight)
+  - Spacing tokens
+  - Border radius tokens
+  - Elevation tokens
+
+### Primitives
+
+Low-level building blocks for creating consistent user interfaces.
+
+- [Primitives Documentation](llms-primitives.txt)
+- Package: `@atlaskit/primitives/compiled` (recommended)
+- Package: `@atlaskit/primitives` (legacy, deprecated)
+- Purpose: Foundational components and utilities
+- Key features:
+  - Box: Generic container with token support
+  - Stack: Vertical layout component
+  - Inline: Horizontal layout component
+  - Text: Typography primitive
+  - Pressable: Interactive element base
+  - Flex: CSS Flexbox implementation
+  - Grid: CSS Grid implementation
+  - Bleed: Negative margin utility
+
+### Components
+
+High-level React components built on top of primitives and tokens.
+
+- [Components Documentation](llms-components.txt)
+- Purpose: Ready-to-use UI components
+- Categories:
+  - Core Components (Avatar, Badge, Button)
+  - Form Components (Checkbox, Radio, Select)
+  - Layout Components (Grid, Stack)
+  - Navigation Components (Breadcrumbs, Tabs)
+  - Feedback Components (Spinner, Skeleton)
+  - Overlay Components (Modal, Drawer)
+  - Data Display Components (Table, Tree)
+  - Feedback Components (Toast, Flag)
+
+### UI Styling Standard
+
+Standards and tools for consistent styling practices.
+
+- [Styling Standards Documentation](llms-styling.txt)
+- Package: `@atlaskit/eslint-plugin-ui-styling-standard`
+- Purpose: Enforce consistent styling practices
+- Key features:
+  - Design token usage
+  - CSS-in-JS standards
+  - Component styling patterns
+  - Performance best practices
+
+### Accessibility
+
+Comprehensive accessibility guidelines and best practices for building inclusive interfaces.
+
+- [Accessibility Documentation](llms-a11y.txt)
+- Purpose: Ensure WCAG 2.1 AA compliance and inclusive design
+- Key features:
+  - WCAG 2.1 AA compliance guidelines
+  - Design token usage for accessibility
+  - Component-specific accessibility patterns
+  - ARIA usage guidelines
+  - Keyboard navigation support
+  - Screen reader optimization
+  - Automated testing tools
+  - Fix patterns for common violations
+
+## Development Tools
+
+### Linters and Scanners
+
+#### ESLint Plugins
+
+We have two ESLint plugins:
+ - `@atlaskit/eslint-plugin-design-system` enforcing the Design System best practices
+ - `@atlaskit/eslint-plugin-ui-styling-standard` enforcing styling standards and best practices across Atlassian
+
+```js
+module.exports = {
+  extends: [
+		'plugin:@atlaskit/design-system/recommended',
+    'plugin:@atlaskit/ui-styling-standard/recommended',
+  ],
+};
+```
+
+### Migration Tools
+
+#### Codemod CLI
+Tool for automated code migrations, often referenced in our docs.
+
+```bash
+# Run codemod
+npx @hypermod/cli --packages="@atlaskit/tokens#theme-to-design-tokens" --experimental-loader --parser tsx <relative-path>
+```
+
+Example codemods:
+ - `--packages=@atlaskit/css#primitives-emotion-to-compiled`
+ - `--packages=@atlaskit/tokens#theme-to-design-tokens`
+
+### ADS MCP server
+
+Official Model Context Protocol server for ADS tokens, icons, components and primitives, and accessibility tooling.
+
+- **Remote (hosted):** [https://mcp.atlassian.com/v1/ads/public/mcp](https://mcp.atlassian.com/v1/ads/public/mcp) â€” point your MCP client at this URL (HTTP transport).
+- **Local (stdio):** `npx -y @atlaskit/ads-mcp` â€” run the published [`@atlaskit/ads-mcp`](https://www.npmjs.com/package/@atlaskit/ads-mcp) package.
+
+### Internal skill: `atlassian-design-system` (Atlassian only)
+
+The **`atlassian-design-system`** agent skill bundles progressive-disclosure guidance for ADS tokens and components together with MCP-oriented workflows. It is generated from the same content as this file and is published for internal usage with `@atlassian/skills`.
+
+## Design Tools
+
+### Figma Integration
+
+#### Figma Plugin
+Official Figma plugin for Atlassian Design System.
+
+- [Figma Libraries & Plugins Documentation](https://atlassian.design/get-started/figma-libraries)
+- Features:
+  - Component library
+  - Design token integration
+  - Code snippets
+  - Design system updates
+  - Component documentation
+
+## Documentation
+
+### Official Documentation
+- [Atlassian Design System](https://atlassian.design)
+- [Atlasskit] (https://atlaskit.atlassian.com/)
+- [Component Library](https://atlassian.design/components)
+- [Design Tokens](https://atlassian.design/foundations/design-tokens)
+- [Accessibility Guidelines](https://atlassian.design/foundations/accessibility)
+
+### Links to other sets
+- [Complete documentation](https://atlassian.design/llms-full.txt): The complete ADS documentation including all other sets and this file
+- [Components](https://atlassian.design/llms-components.txt): Documentation for ADS Components
+- [Primitives](https://atlassian.design/llms-primitives.txt): Documentation for ADS Primitives (low-level building blocks)
+- [Tokens](https://atlassian.design/llms-tokens.txt): Documentation for using ADS Tokens
+- [Styling](https://atlassian.design/llms-styling.txt): Documentation for styling with ADS
+- [Accessibility](https://atlassian.design/llms-a11y.txt): Documentation for accessibility guidelines and best practices
+- [Content](https://atlassian.design/llms-content.txt): Documentation for content guidelines and language usage

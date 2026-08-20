@@ -1,0 +1,128 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "applications": "Candidatures",
+    "walk_in": "File d'attente directe",
+    "scheduling": "Planification",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter"
+  },
+  "auth": {
+    "sign_in": "Se connecter",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "signing_in": "Connexion…",
+    "invalid_credentials": "E-mail ou mot de passe invalide",
+    "session_expired": "Votre session a expiré. Veuillez vous reconnecter."
+  },
+  "status": {
+    "DRAFT": "Brouillon",
+    "SUBMITTED": "Soumis",
+    "UNDER_REVIEW": "En cours d'examen",
+    "SHORTLISTED": "Présélectionné",
+    "PHYSICAL_SCHEDULED": "Test physique planifié",
+    "PHYSICAL_PASSED": "Test physique réussi",
+    "PHYSICAL_FAILED": "Test physique échoué",
+    "MEDICAL_SCHEDULED": "Examen médical planifié",
+    "MEDICAL_PASSED": "Examen médical réussi",
+    "MEDICAL_FAILED": "Examen médical échoué",
+    "VETTING_IN_PROGRESS": "Vérification en cours",
+    "VETTING_PASSED": "Vérification réussie",
+    "VETTING_FAILED": "Vérification échouée",
+    "ACCEPTED": "Accepté",
+    "REJECTED": "Refusé",
+    "WITHDRAWN": "Retiré",
+    "EXPIRED": "Expiré"
+  },
+  "document_type": {
+    "NATIONAL_ID": "Carte d'identité nationale",
+    "PASSPORT_PHOTO": "Photo passeport",
+    "ACADEMIC_CERTIFICATE": "Diplôme académique",
+    "MEDICAL_REPORT": "Rapport médical",
+    "POLICE_CLEARANCE": "Casier judiciaire",
+    "PROOF_OF_RESIDENCE": "Justificatif de domicile"
+  },
+  "dashboard": {
+    "title": "Tableau de bord du recrutement",
+    "pending_review": "En attente d'examen",
+    "requires_action": "Action requise",
+    "scheduled_today": "Planifié aujourd'hui",
+    "accepted_this_week": "Acceptés cette semaine",
+    "no_exceptions": "Aucune exception — tout est en ordre"
+  },
+  "application": {
+    "id": "Numéro de candidature",
+    "applicant": "Candidat",
+    "agency": "Agence",
+    "post": "Poste demandé",
+    "submitted": "Soumis le",
+    "last_updated": "Dernière mise à jour",
+    "history": "Historique des événements",
+    "documents": "Documents",
+    "actions": "Actions"
+  },
+  "actions": {
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "request_correction": "Demander correction",
+    "schedule": "Planifier le test",
+    "view": "Voir",
+    "download": "Télécharger",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "network": "Impossible de se connecter. Vérifiez votre connexion.",
+    "not_found": "Cet enregistrement est introuvable.",
+    "forbidden": "Vous n'avez pas la permission d'effectuer cette action.",
+    "validation": "Veuillez corriger les erreurs ci-dessous avant de continuer."
+  },
+  "offline": {
+    "banner": "Vous êtes hors ligne. Les modifications seront synchronisées à la reconnexion.",
+    "syncing": "Synchronisation…",
+    "synced": "Toutes les modifications enregistrées"
+  },
+  "a11y": {
+    "loading": "Chargement…",
+    "close": "Fermer",
+    "open_menu": "Ouvrir le menu",
+    "play_audio_help": "Lire le guide audio"
+  },
+  "biometric_consent": {
+    "title": "Consentement à la collecte de données biométriques",
+    "body": "En continuant, vous autorisez {{agencyName}} à collecter et traiter vos données biométriques (empreintes digitales, image faciale) dans le cadre du processus de recrutement USRP. Vos données seront traitées conformément aux réglementations applicables en matière de protection des données.",
+    "agree": "J'accepte",
+    "decline": "Refuser",
+    "audio_label": "Écouter ce consentement en Kinyarwanda"
+  },
+  "officer_actions": {
+    "request_documents": "Demander des documents",
+    "reject_confirm_title": "Rejeter la candidature",
+    "reject_confirm_body": "Êtes-vous sûr de vouloir rejeter cette candidature ? Cette action est irréversible."
+  },
+  "scan": {
+    "start": "Démarrer le scan",
+    "stop": "Arrêter le scan",
+    "no_camera": "Caméra indisponible sur cet appareil. Veuillez saisir le code manuellement.",
+    "camera_error": "Impossible d'accéder à la caméra. Veuillez saisir le code manuellement.",
+    "fallback_label": "Saisir le code manuellement",
+    "fallback_placeholder": "Collez ou tapez la valeur du QR code",
+    "fallback_submit": "Soumettre",
+    "preview": "Aperçu de la caméra"
+  },
+  "upload": {
+    "drop_hint": "Déposez les fichiers ici, ou cliquez pour en sélectionner",
+    "drag_active": "Relâchez pour ajouter les fichiers",
+    "select_files": "Sélectionner des fichiers",
+    "error_type": "Type de fichier non autorisé : {{name}}",
+    "error_size": "{{name}} dépasse la limite de {{maxSize}}",
+    "remove_file": "Supprimer {{name}}",
+    "no_files": "Aucun fichier sélectionné"
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "applications": "Applications",
+    "walk_in": "Walk-in Lane",
+    "scheduling": "Scheduling",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "sign_in": "Sign in",
+    "email": "Email address",
+    "password": "Password",
+    "signing_in": "Signing in…",
+    "invalid_credentials": "Invalid email or password",
+    "session_expired": "Your session has expired. Please sign in again."
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "SUBMITTED": "Submitted",
+    "UNDER_REVIEW": "Under review",
+    "SHORTLISTED": "Shortlisted",
+    "PHYSICAL_SCHEDULED": "Physical test scheduled",
+    "PHYSICAL_PASSED": "Physical passed",
+    "PHYSICAL_FAILED": "Physical failed",
+    "MEDICAL_SCHEDULED": "Medical scheduled",
+    "MEDICAL_PASSED": "Medical passed",
+    "MEDICAL_FAILED": "Medical failed",
+    "VETTING_IN_PROGRESS": "Vetting in progress",
+    "VETTING_PASSED": "Vetting passed",
+    "VETTING_FAILED": "Vetting failed",
+    "ACCEPTED": "Accepted",
+    "REJECTED": "Rejected",
+    "WITHDRAWN": "Withdrawn",
+    "EXPIRED": "Expired"
+  },
+  "document_type": {
+    "NATIONAL_ID": "National ID",
+    "PASSPORT_PHOTO": "Passport photo",
+    "ACADEMIC_CERTIFICATE": "Academic certificate",
+    "MEDICAL_REPORT": "Medical report",
+    "POLICE_CLEARANCE": "Police clearance",
+    "PROOF_OF_RESIDENCE": "Proof of residence"
+  },
+  "dashboard": {
+    "title": "Recruitment Dashboard",
+    "pending_review": "Pending review",
+    "requires_action": "Requires action",
+    "scheduled_today": "Scheduled today",
+    "accepted_this_week": "Accepted this week",
+    "no_exceptions": "No exceptions — all clear"
+  },
+  "application": {
+    "id": "Application ID",
+    "applicant": "Applicant",
+    "agency": "Agency",
+    "post": "Post applied for",
+    "submitted": "Submitted",
+    "last_updated": "Last updated",
+    "history": "Event history",
+    "documents": "Documents",
+    "actions": "Actions"
+  },
+  "actions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "request_correction": "Request correction",
+    "schedule": "Schedule test",
+    "view": "View",
+    "download": "Download",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Unable to connect. Check your internet connection.",
+    "not_found": "This record could not be found.",
+    "forbidden": "You don't have permission to perform this action.",
+    "validation": "Please fix the errors below before continuing."
+  },
+  "offline": {
+    "banner": "You're offline. Changes will sync when you reconnect.",
+    "syncing": "Syncing…",
+    "synced": "All changes saved"
+  },
+  "a11y": {
+    "loading": "Loading…",
+    "close": "Close",
+    "open_menu": "Open menu",
+    "play_audio_help": "Play audio guidance"
+  },
+  "biometric_consent": {
+    "title": "Biometric Data Collection Consent",
+    "body": "By proceeding, you consent to {{agencyName}} collecting and processing your biometric data (fingerprints, facial image) for the USRP recruitment process. Your data will be handled in strict accordance with applicable data protection regulations.",
+    "agree": "I agree",
+    "decline": "Decline",
+    "audio_label": "Listen to this consent in Kinyarwanda"
+  },
+  "officer_actions": {
+    "request_documents": "Request documents",
+    "reject_confirm_title": "Reject application",
+    "reject_confirm_body": "Are you sure you want to reject this application? This action cannot be undone."
+  },
+  "scan": {
+    "start": "Start scanning",
+    "stop": "Stop scanning",
+    "no_camera": "Camera not available on this device. Please enter the code manually.",
+    "camera_error": "Could not access camera. Please enter the code manually.",
+    "fallback_label": "Enter code manually",
+    "fallback_placeholder": "Paste or type the QR code value",
+    "fallback_submit": "Submit",
+    "preview": "Camera preview"
+  },
+  "upload": {
+    "drop_hint": "Drop files here, or click to select",
+    "drag_active": "Release to add files",
+    "select_files": "Select files",
+    "error_type": "File type not allowed: {{name}}",
+    "error_size": "{{name}} exceeds the {{maxSize}} size limit",
+    "remove_file": "Remove {{name}}",
+    "no_files": "No files selected"
+  }
+}

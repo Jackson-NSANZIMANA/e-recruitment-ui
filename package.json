@@ -1,0 +1,31 @@
+{
+  "name": "usrp-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unified Security Recruitment Portal — Frontend Monorepo (RDF/RNP/RCS)",
+  "author": "Jackson NSANZIMANA",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
+  "engines": {
+    "node": ">=20 <=25",
+    "pnpm": ">=9 <10"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "build:affected": "turbo run build --filter=[HEAD^1]",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "@atlaskit/ads-mcp": "1.7.3",
+    "@atlaskit/tokens": "^16.4.0",
+    "@playwright/test": "^1.62.1",
+    "prettier": "3.3.3",
+    "turbo": "2.5.4"
+  }
+}

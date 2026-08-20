@@ -1,0 +1,29 @@
+{
+  "name": "@usrp/eslint-config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared ESLint config — ADS rules + UI styling standard + USRP conventions",
+  "license": "UNLICENSED",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./flat": "./flat.cjs"
+  },
+  "scripts": {
+    "typecheck": "echo 'no ts in eslint-config'"
+  },
+  "peerDependencies": {
+    "@atlaskit/eslint-plugin-design-system": ">=16",
+    "@atlaskit/eslint-plugin-ui-styling-standard": ">=1",
+    "@compiled/eslint-plugin": ">=0",
+    "@typescript-eslint/parser": ">=7",
+    "eslint": ">=9"
+  },
+  "devDependencies": {
+    "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@atlaskit/eslint-plugin-ui-styling-standard": "^1.0.0",
+    "@compiled/eslint-plugin": "^0.14.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^9.9.0"
+  }
+}
