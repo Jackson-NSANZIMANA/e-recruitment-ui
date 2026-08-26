@@ -1,0 +1,448 @@
+# ════════════════════════════════════════════════════════════════
+# document-forensics-service — document ingress and forensic analysis
+#
+# HAND-AUTHORED from the controllers at backend SHA 18e468a.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP document-forensics-service"
+  version: "1.0.0"
+  description: >-
+    Owns MinIO, ClamAV, the forensic analyzer and document_records. The upload
+    ingress lives here rather than in application-service because a route
+    anywhere else would have to reach across all four.
+  x-usrp-backend-sha: "18e468a2afe779a4c2402e81ed8eda92b756e7e4"
+  x-usrp-service-port-var: "PORT_FORENSICS_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: >-
+        Body-parsing operations only. The upload route additionally emits its
+        own 413 FILE_TOO_LARGE from the handler — see that operation.
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+      note: "Body-parsing operations only."
+
+paths:
+  /v1/documents/upload:
+    post:
+      operationId: "uploadDocument"
+      summary: "Upload one applicant document (multipart, scan-before-store)"
+      description: >-
+        SERVICE-INTERNAL despite being a citizen action. The caller is
+        citizen-bff, which has validated the citizen's opaque session and acts
+        on their behalf with its own client-credentials token — the same ADR-016
+        pattern as withdraw-own. An OFFICER token is refused with 403: this door
+        carries the citizen's own authority over their own application and must
+        never become an unaudited path for an officer to inject documents into a
+        case they review.
+
+
+        THE ORDER IS: resolve ownership, admit the container, SCAN, store,
+        record, emit. An infected upload therefore produces an audit event and
+        NOTHING ELSE — no MinIO object and no document_records row. That is not
+        tidiness: the row keys idempotency on (application_id,
+        minio_object_key), so a row written for a rejected upload would make the
+        next legitimate upload of that type look like a re-analysis of an object
+        that was never stored.
+
+
+        THE AGENCY IS DERIVED FROM OWNERSHIP, never accepted from the request.
+        "Not yours" and "doesn't exist" collapse to the same 404, so the route
+        is not an application-existence oracle. Which document types are legal
+        depends on that derived agency — drive the wizard's upload slots from
+        AGENCY_DOCUMENT_TYPES in src/agency.ts or the citizen will hit a 422
+        they cannot act on.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentForm"
+      responses:
+        "201":
+          description: >-
+            Stored, scanned clean, sealed and recorded. Carries no forensic
+            verdict — see UploadAccepted201.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadAccepted201"
+        "400":
+          description: >-
+            Framing or field fault. MISSING_FILE (no file part, or the part is
+            not named "file"), INVALID_FILENAME (over 255 chars or containing
+            control characters — a log-injection and terminal-escape vector),
+            EMPTY_FILE, or INVALID_REQUEST / INVALID_DOCUMENT_TYPE for the
+            text fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadBadRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal — an officer token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: >-
+            APPLICATION_NOT_FOUND. Also the answer when the application exists
+            but belongs to another applicant. Not an ownership oracle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationNotFound404"
+        "409":
+          description: >-
+            NOT_ACCEPTING_DOCUMENTS — the application is ACCEPTED, REJECTED,
+            WITHDRAWN or WALK_IN_REJECTED. Carries currentStatus so the UI can
+            say which, rather than a bare refusal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotAcceptingDocuments409"
+        "413":
+          description: >-
+            FILE_TOO_LARGE, from the handler's own length check against
+            FORENSICS_MAX_FILE_SIZE_MB. Distinct from the transport's 413: the
+            socket cap is file size plus an 8 KiB multipart framing budget, so a
+            caller could otherwise spend the whole budget on framing and
+            legal-looking junk parts without ever sending an oversized file.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileTooLarge413"
+        "422":
+          description: >-
+            Admission or scan rejection. Five distinct outcomes — see
+            UploadRejected422. Admission here is deliberately STRICTER than the
+            analyze route: an ingress can simply refuse unidentifiable bytes,
+            whereas an object that arrived by some other path has to be judged
+            and gets lanned AMBER.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadRejected422"
+        "500":
+          description: >-
+            DOCUMENT_ENCRYPTION_ERROR or FORENSICS_PERSISTENCE_ERROR. Detail is
+            withheld from the caller.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadServerError500"
+        "503":
+          description: >-
+            SCANNER_UNAVAILABLE or OBJECT_STORE_UNAVAILABLE. FAIL-CLOSED: with
+            the scanner down there is no object, no row and no event. Retryable,
+            and the only status on this route that should be retried.
+
+
+            NOTE the backend writes a caller-facing detail string for these and
+            it is DISCARDED before the wire (HttpError.expose = status < 500),
+            so the body is the bare code. Do not build UI that reads detail off
+            a 503.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUnavailable503"
+
+  /v1/forensics/analyze:
+    post:
+      operationId: "analyzeDocument"
+      summary: "Analyze a stored document object"
+      description: >-
+        SERVICE-INTERNAL, system token only. Takes a reference to an object the
+        CALLER owns, which is why it accepts an agency in its body while the
+        upload route derives agency from ownership.
+
+
+        KNOWN BACKEND INCONSISTENCY (recorded, not smoothed over): this
+        controller keys BUSINESS outcomes on the `error` field
+        (APPLICATION_NOT_FOUND, OBJECT_NOT_FOUND, UNSUPPORTED_DOCUMENT_TYPE,
+        SCANNER_UNAVAILABLE) whereas all fourteen sibling controllers key
+        outcomes on `status` and reserve `error` for thrown transport faults. On
+        this route a client cannot distinguish a business outcome from a
+        transport fault. It has no frontend consumer today, so re-keying it is
+        the cheapest it will ever be.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/analyze-document.controller.ts (ANALYZE_DOCUMENT_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Analysis complete; a lane was assigned and published."
+        "400":
+          description: "Malformed body."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not a system principal."
+        "404":
+          description: "APPLICATION_NOT_FOUND or OBJECT_NOT_FOUND."
+        "422":
+          description: "UNSUPPORTED_DOCUMENT_TYPE."
+        "503":
+          description: "SCANNER_UNAVAILABLE or OBJECT_STORE_UNAVAILABLE."
+
+  /health:
+    get:
+      operationId: "health"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "ready"
+      summary: "Readiness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Dependencies reachable."
+        "503":
+          description: "A dependency is unreachable."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    DocumentType:
+      description: >-
+        The union of all three agencies' document_type enums, 11 values. WHICH
+        ONES ARE LEGAL depends on the agency that owns the application, derived
+        server-side from ownership. Use DocumentTypeFor<Agency> from
+        src/agency.ts to constrain at compile time; the handler's own gate here
+        is only "is that a word at all", with the per-agency check happening in
+        the use case once ownership resolves the agency.
+      type: "string"
+      enum:
+        - "NATIONAL_ID"
+        - "APPLICATION_FORM_WITH_PHOTO"
+        - "BIRTH_CERTIFICATE"
+        - "OLEVEL_CERTIFICATE"
+        - "ALEVEL_CERTIFICATE"
+        - "DEGREE_DIPLOMA_COPY"
+        - "DEGREE_DIPLOMA_NOTARIZED"
+        - "GOOD_CONDUCT_CERTIFICATE"
+        - "NON_CONVICTION_CERTIFICATE"
+        - "CELIBACY_CERTIFICATE"
+        - "MEDICAL_CERTIFICATE_GOVT"
+
+    UploadDocumentForm:
+      description: >-
+        multipart/form-data with at most 8 parts and exactly ONE file.
+
+
+        THE BOUNDARY IS CASE-SENSITIVE (RFC 2046 bchars). The backend reads the
+        content-type header verbatim precisely because every real browser
+        boundary carries mixed case (----WebKitFormBoundaryAbC123). A client
+        that normalises its own content-type to lower case will have every
+        upload fail as malformed, for a reason no log explains. Let the browser
+        set this header; never construct it by hand.
+
+
+        DUPLICATE FIELD NAMES: FIRST OCCURRENCE WINS. Text fields are capped at
+        4 KiB each.
+      type: "object"
+      additionalProperties: false
+      required: ["file", "applicantId", "applicationId", "documentType"]
+      properties:
+        file:
+          description: >-
+            THE PART MUST BE NAMED "file" — any other field name is a 400
+            MISSING_FILE, not a silent skip. Its declared content type must be
+            in FORENSICS_ALLOWED_MIME_TYPES, and the BYTES must agree with the
+            declaration: a PNG-declared PDF is treated as a polyglot attempt,
+            not a mistake (422 CONTENT_TYPE_MISMATCH).
+
+
+            The filename is validated and then IGNORED. The storage key is
+            derived from closed-set inputs (agency, application id, document
+            type), because a filename-derived key is a path traversal and a
+            write-into-someone-else's-record primitive in one field.
+          type: "string"
+          format: "binary"
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+
+    UploadAccepted201:
+      description: >-
+        CARRIES NO VERDICT, AND THAT IS THE SECURITY PROPERTY. No lane, no
+        score, no flags. A forensics verdict returned to whoever uploaded the
+        file is a forgery-tuning oracle: edit, re-upload, watch the number move,
+        repeat until GREEN. Verdicts belong to the officer reads (by-id, the
+        amber queue) where the audience is the reviewer, not the author.
+
+
+        CONSEQUENCE FOR UI WORK: there must be no applicant-facing document
+        quality indicator, progress-to-green meter, or forensic feedback of any
+        kind in the wizard. Confirmation of receipt is all the citizen gets, and
+        all they should get.
+      type: "object"
+      additionalProperties: false
+      required: ["status", "documentId", "documentType"]
+      properties:
+        status:
+          type: "string"
+          const: "UPLOADED"
+        documentId:
+          description: >-
+            Stable across re-uploads of the same document type: the derived key
+            is stable, so a corrected certificate overwrites the object and
+            UPDATEs the same row rather than orphaning the old one.
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+
+    UploadBadRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "MISSING_FILE"
+            - "INVALID_FILENAME"
+            - "EMPTY_FILE"
+            - "INVALID_REQUEST"
+            - "INVALID_DOCUMENT_TYPE"
+        detail:
+          type: "string"
+
+    ApplicationNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "APPLICATION_NOT_FOUND"
+
+    NotAcceptingDocuments409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "currentStatus"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_ACCEPTING_DOCUMENTS"
+        currentStatus:
+          description: >-
+            Compared as TEXT server-side, not cast to an enum: the WALK_IN_*
+            values exist only in rdf_ops, so an enum cast would be a hard error
+            for RNP and RCS (the ADR-017 idiom).
+          type: "string"
+
+    FileTooLarge413:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FILE_TOO_LARGE"
+        detail:
+          type: "string"
+
+    UploadRejected422:
+      description: >-
+        Five distinct rejections, and the UI must say different things for each.
+        DOCUMENT_REJECTED_MALWARE in particular is the ONE forensic fact
+        reported to the uploader, because a binary antivirus verdict teaches a
+        forger nothing while silence would be unusable UX for a legal process.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "UNSUPPORTED_DOCUMENT_TYPE"
+            - "UNSUPPORTED_FILE_TYPE"
+            - "UNSUPPORTED_FILE_CONTENT"
+            - "CONTENT_TYPE_MISMATCH"
+            - "DOCUMENT_REJECTED_MALWARE"
+        declared:
+          description: "Present only on CONTENT_TYPE_MISMATCH."
+          type: "string"
+
+    UploadServerError500:
+      description: "Detail withheld from the caller. The server logs the cause."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "DOCUMENT_ENCRYPTION_ERROR"
+            - "FORENSICS_PERSISTENCE_ERROR"
+            - "INTERNAL_ERROR"
+
+    UploadUnavailable503:
+      description: >-
+        The only retryable failures on this route. Bare code: the backend's
+        detail string is discarded because expose = status < 500.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["SCANNER_UNAVAILABLE", "OBJECT_STORE_UNAVAILABLE"]
+
+    Unauthenticated401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
