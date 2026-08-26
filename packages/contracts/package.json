@@ -1,0 +1,26 @@
+{
+  "name": "@usrp/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "USRP API contracts — OpenAPI 3.1 documents, generated Zod schemas, and the per-agency divergence model. The only legal source of domain types in the frontend.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./agency": "./src/agency.ts"
+  },
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "verify": "tsx scripts/verify.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@usrp/eslint-config": "workspace:*",
+    "tsx": "^4.19.0",
+    "typescript": "~5.4.0"
+  }
+}
