@@ -1,0 +1,1054 @@
+# ════════════════════════════════════════════════════════════════
+# application-service — the state owner and officer front door
+#
+# HAND-AUTHORED from the controllers at backend SHA 18e468a. Every operation
+# records its provenance in x-usrp-source and its verification level in
+# x-usrp-verified:
+#
+#   controller-verbatim  the request and response shapes were transcribed from
+#                        the named controller file, field by field
+#   pending-controller-read
+#                        path, method and auth kind are verified; the bodies
+#                        are derived from selfcheck output and commit messages
+#                        and MUST be transcribed before this document is used
+#                        to generate a client for that route
+#
+# The distinction is deliberate. A contract that guesses is worse than one that
+# admits a gap, because a guess type-checks.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP application-service"
+  version: "1.0.0"
+  description: >-
+    The single writer of application state (ADR-006) and the officer read
+    surface. Agency isolation is enforced by Postgres RLS under the officer's
+    own agency DB role, never by this document and never by the UI.
+  x-usrp-backend-sha: "18e468a2afe779a4c2402e81ed8eda92b756e7e4"
+  x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
+  # shared-http answers these uniformly on every business route. Authored once
+  # here and fanned out by the generator rather than repeated 13 times.
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: "Body-parsing operations only."
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+      note: "Body-parsing operations only."
+
+paths:
+  # ───────────────────────────────────────────────────────────────
+  # Officer reads — all five transcribed verbatim
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/applications:
+    get:
+      operationId: "listApplications"
+      summary: "List the calling officer's own agency applications"
+      description: >-
+        Runs under the officer's own agency DB role, so rls/0001 per-agency
+        schema isolation enforces on a live request. TAKES NO PARAMETERS: no
+        status filter, no search, no pagination. The result is capped at
+        DEFAULT_MAX_RESULTS (100) and returned as a bare array with no total.
+        Past roughly 100 rows an officer cannot locate a specific application,
+        which is why a search endpoint is a documented gap.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/list-applications.controller.ts (listApplicationsRoute)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The agency's applications, non-PII."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListApplicationsOk"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Authenticated but not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: "Read fault. Detail is withheld from the caller by design."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationReadError500"
+    post:
+      operationId: "submitApplication"
+      summary: "File an application"
+      description: >-
+        SERVICE-INTERNAL. Requires a system bearer token; the caller is the
+        edge tier acting for an authenticated citizen. Shares the path with the
+        officer GET — shared-http keys its table by (path -> method), so the
+        two coexist.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/submit-application.controller.ts (SUBMIT_APPLICATION_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "201":
+          description: "Application filed; APPLICANT_SUBMITTED published."
+        "400":
+          description: "Malformed or missing field."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not a system principal."
+        "409":
+          description: >-
+            Business conflict. Known codes include IDENTITY_NOT_VERIFIED,
+            AGE_PENDING (retryable, unlike the others) and NO_OPEN_CAMPAIGN.
+        "422":
+          description: "Known codes include WRONG_AGENCY_CATEGORY, INVALID_ACADEMIC_INPUT."
+
+  /v1/applications/amber-queue:
+    get:
+      operationId: "listAmberQueue"
+      summary: "The officer review queue (ADR-011)"
+      description: >-
+        Applications held at DOCUMENT_REVIEW_AMBER joined to their un-reviewed
+        amber document rows, plus applications held at ADJUDICATION_REVIEW
+        (document fields null for those). Non-PII by construction: the
+        processing code stands in for the applicant.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/list-applications.controller.ts (amberQueueRoute)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The agency's review queue."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmberQueueOk"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationReadError500"
+
+  /v1/applications/by-applicant:
+    get:
+      operationId: "listApplicationsByApplicant"
+      summary: "One citizen's applications, across all three agencies"
+      description: >-
+        SERVICE-INTERNAL (ADR-018). The caller is identity-service, which has
+        already validated the citizen's opaque session and asks on their
+        behalf with its own client-credentials token. An OFFICER token is
+        refused with 403: the citizen door must never widen an officer's
+        agency-scoped view. Cross-agency by design — a union across the three
+        ops schemas — which is precisely why the citizen edge cannot be
+        per-agency.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/list-applications.controller.ts (byApplicantRoute)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicantId"
+          in: "query"
+          required: true
+          description: "Opaque applicant UUID. Never a national ID or its hash."
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The citizen's applications."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ByApplicantOk"
+        "400":
+          description: "applicantId is absent or not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidApplicantId400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal — an officer token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationReadError500"
+
+  /v1/applications/by-id:
+    get:
+      operationId: "findApplicationById"
+      summary: "One application from the calling officer's own agency"
+      description: >-
+        The officer console detail screen's only data source. Nothing in the
+        platform returned a single application before this route existed.
+
+
+        THE 404 IS DELIBERATELY BARE. A sibling agency's real application id
+        and a wholly nonexistent one produce byte-identical responses, because
+        the query only touches the caller's own schema and the two cases are
+        therefore indistinguishable. Without that property an officer could
+        walk ids to learn what another agency is processing, and nothing in
+        the request log would look wrong. Do not add detail to this response.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/list-applications.controller.ts (byIdRoute)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The application detail, non-PII."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindApplicationOk"
+        "400":
+          description: "applicationId is absent or not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidApplicationId400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: >-
+            No such application in the caller's own agency schema. Also the
+            answer for another agency's real application. Bare by design.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFound404"
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationReadError500"
+
+  /v1/applications/status-history:
+    get:
+      operationId: "getApplicationStatusHistory"
+      summary: "The immutable transition trail for one application"
+      description: >-
+        The append-only status trail (rls/0007 — enforced by trigger AND by
+        revoked UPDATE/DELETE grant), oldest first, carrying actor, actor kind,
+        timestamp and note per entry.
+
+
+        THIS ROUTE IS THE PROCEDURAL JUSTICE SURFACE. Without it, "the
+        applicant can see who decided what, when, and on what ground" is
+        unimplementable no matter how good the UI is.
+
+
+        A missing application returns 404, never an empty history array. The
+        distinction matters: a blank timeline for a record that exists reads to
+        a reviewer as "nothing happened", which is a different and false claim.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/list-applications.controller.ts (statusHistoryRoute)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The transition trail, oldest first."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusHistoryOk"
+        "400":
+          description: "applicationId is absent or not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidApplicationId400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "Same bare 404 as by-id, for the same reason."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFound404"
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationReadError500"
+
+  # ───────────────────────────────────────────────────────────────
+  # Officer writes — four named operations, NOT one generic transition
+  #
+  # The deprecated frontend modelled a single PATCH /applications/:id/status
+  # with a {toStatus, note} body. No such endpoint exists or could exist: each
+  # of these four has its own guard, its own body and its own outcome union,
+  # and none of them returns an application object. They return the transition
+  # that was applied.
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/applications/medical-review:
+    post:
+      operationId: "recordMedicalReview"
+      summary: "Record the medical fitness outcome"
+      description: >-
+        applicationId travels in the BODY, not the path — shared-http has no
+        path-param syntax. The only one of the four transitions that can emit
+        422 INVALID_MEDICAL_INPUT.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-transitions.controller.ts (MEDICAL_REVIEW_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Transition applied: { status: APPLIED, fromStatus, toStatus }."
+        "400":
+          description: "Malformed body or applicationId."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "404":
+          description: "Not in the caller's agency, or nonexistent. Bare."
+        "409":
+          description: "NOT_APPLICABLE — the application is not in a reviewable state."
+        "422":
+          description: "INVALID_MEDICAL_INPUT."
+
+  /v1/applications/final-decision:
+    post:
+      operationId: "recordFinalDecision"
+      summary: "Record the final shortlist decision"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-transitions.controller.ts (FINAL_DECISION_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Transition applied."
+        "400":
+          description: "Malformed body."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "404":
+          description: "Not in the caller's agency, or nonexistent."
+        "409":
+          description: "NOT_APPLICABLE."
+
+  /v1/applications/accept:
+    post:
+      operationId: "acceptApplication"
+      summary: "Accept an applicant and stamp the cross-agency accept-lock"
+      description: >-
+        MISSING FROM EVERY EARLIER SURVEY OF THIS API, and the most
+        consequential omission: this is the route that stamps the ADR-014
+        cross-agency accept-lock and the ONLY source of 409
+        CROSS_AGENCY_LOCKED. Accepting here also triggers ADR-017
+        auto-withdrawal of the citizen's other in-flight applications, so the
+        UI must explain that a single accept ends every other application the
+        person has.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-transitions.controller.ts (ACCEPT_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Accepted; siblings auto-withdrawn asynchronously."
+        "400":
+          description: "Malformed body."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "404":
+          description: "Not in the caller's agency, or nonexistent."
+        "409":
+          description: >-
+            NOT_APPLICABLE, or CROSS_AGENCY_LOCKED when another agency already
+            holds the accept-lock on this citizen. Only this route emits the
+            latter.
+
+  /v1/applications/adjudicate:
+    post:
+      operationId: "adjudicateApplication"
+      summary: "Resolve an ADJUDICATION_REVIEW or amber document hold"
+      description: >-
+        The only exit from ADJUDICATION_REVIEW (ADR-011). A late disqualifying
+        verdict holds here for a human rather than auto-rejecting, so this is
+        where an accountable officer decides.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-transitions.controller.ts (ADJUDICATE_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Adjudicated."
+        "400":
+          description: "Malformed body."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "404":
+          description: "Not in the caller's agency, or nonexistent."
+        "409":
+          description: "NOT_APPLICABLE — not on an adjudication hold."
+
+  # ───────────────────────────────────────────────────────────────
+  # Walk-in lane — RDF ONLY (ADR-012), two steps
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/applications/walk-in/register:
+    post:
+      operationId: "registerWalkIn"
+      summary: "Register an exam-day walk-in applicant"
+      description: >-
+        RDF ONLY. An RNP or RCS officer receives 501 UNSUPPORTED_AGENCY, and
+        the UI must branch on agency rather than offering a door that cannot
+        open.
+
+
+        THE BODY IS { applicantId, category, nesaIndexNumber?,
+        hecRegistrationNumber? }. The deprecated frontend sent
+        { nationalIdHash, postCode }: nationalIdHash is an internal
+        cross-service key the browser must never see or compute, and postCode
+        is not a concept in this system.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/walk-in.controller.ts (WALK_IN_REGISTER_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "201":
+          description: >-
+            { status: REGISTERED, applicationId, processingCode,
+            qrInvitationCode }.
+        "400":
+          description: >-
+            Malformed field. NOTE the code spelling on this controller is
+            MISSING_APPLICANTID / INVALID_APPLICATIONID (built by
+            upper-casing the field name), which diverges from the
+            MISSING_APPLICANT_ID spelling every other controller emits.
+            Documented verbatim rather than silently normalised.
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "409":
+          description: "NO_WALK_IN_CAMPAIGN, or IDENTITY_NOT_VERIFIED."
+        "501":
+          description: "UNSUPPORTED_AGENCY — the caller is RNP or RCS."
+
+  /v1/applications/walk-in/vet:
+    post:
+      operationId: "vetWalkIn"
+      summary: "Record the on-site eligibility check for a walk-in"
+      description: "Step two. Body is { applicationId }."
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/walk-in.controller.ts (WALK_IN_VET_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: "Vetted."
+        "400":
+          description: "Malformed applicationId."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not an officer principal."
+        "404":
+          description: "Not in the caller's agency, or nonexistent."
+        "409":
+          description: "NOT_APPLICABLE."
+        "501":
+          description: "UNSUPPORTED_AGENCY."
+
+  # ───────────────────────────────────────────────────────────────
+  # Citizen self-service (ADR-020)
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/applications/withdraw-own:
+    post:
+      operationId: "withdrawOwnApplication"
+      summary: "The citizen's own voluntary withdrawal"
+      description: >-
+        SERVICE-INTERNAL. identity-service calls this with its
+        client-credentials token, carrying the citizen's authority derived from
+        their validated session — never a body claim about someone else. An
+        OFFICER token is refused with 403: an officer withdrawing on a
+        citizen's behalf would be an unaudited impersonation path.
+
+
+        THE BODY CARRIES BOTH applicantId AND applicationId. Ownership is the
+        row lookup (WHERE id = X AND applicant_id = Y FOR UPDATE), so a
+        mismatch on either column is the same 404 — the door is deliberately
+        not an ownership oracle.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/self-withdrawal.controller.ts (WITHDRAW_OWN_PATH)"
+      x-usrp-verified: "pending-controller-read"
+      responses:
+        "200":
+          description: >-
+            Withdrawn, or NO_CHANGE when already WITHDRAWN (idempotent — no
+            writes, no audit row).
+        "400":
+          description: "Malformed applicantId or applicationId."
+        "401":
+          description: "No or invalid bearer token."
+        "403":
+          description: "Not a system principal — an officer token lands here."
+        "404":
+          description: "NOT_FOUND — no such application for that applicant."
+        "409":
+          description: >-
+            NOT_APPLICABLE — the application is ACCEPTED, REJECTED or
+            WALK_IN_REJECTED. Terminal states cannot be withdrawn.
+
+  # ───────────────────────────────────────────────────────────────
+  # Probes — matched BEFORE the route table, so a wrong method 404s, not 405s
+  # ───────────────────────────────────────────────────────────────
+
+  /health:
+    get:
+      operationId: "health"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "ready"
+      summary: "Readiness — database reachable"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Dependencies reachable."
+        "503":
+          description: "A dependency is unreachable."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    Agency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    ApplicationStatus:
+      description: >-
+        All 19 states. Per-agency legality is NOT expressible here — rnp_ops
+        and rcs_ops carry no WALK_IN_* values. Use StatusFor<Agency> from
+        src/agency.ts to constrain by agency at compile time.
+      type: "string"
+      enum:
+        - "DRAFT"
+        - "SUBMITTED"
+        - "ACADEMIC_VETTING"
+        - "CRIMINAL_CLEARANCE"
+        - "DOCUMENT_REVIEW_GREEN"
+        - "DOCUMENT_REVIEW_AMBER"
+        - "SLOT_ASSIGNED"
+        - "PHYSICAL_TEST_SCHEDULED"
+        - "PHYSICAL_TEST_COMPLETE"
+        - "MEDICAL_REVIEW"
+        - "FINAL_SHORTLIST"
+        - "ACCEPTED"
+        - "ADJUDICATION_REVIEW"
+        - "REJECTED"
+        - "WITHDRAWN"
+        - "WALK_IN_REGISTERED"
+        - "WALK_IN_ON_SITE_VETTING"
+        - "WALK_IN_PHYSICAL_TEST"
+        - "WALK_IN_REJECTED"
+
+    # ── Row shapes, from ports/application-read-repository.ts ──
+
+    ApplicationSummary:
+      description: >-
+        A non-PII summary row. The anonymous processing code stands in for the
+        applicant — there is no name, no NID and no phone on any officer read.
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "processingCode", "category", "status", "submittedAt"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        processingCode:
+          type: "string"
+          description: "e.g. RDF-90823. The applicant's public handle."
+        category:
+          type: "string"
+          description: >-
+            Per-agency enum (rdf_ops: GENERAL_ENLISTMENT,
+            RESERVE_FORCE_ALEVEL, RESERVE_FORCE_UNIVERSITY,
+            RESERVE_FORCE_SPECIALIST). Typed as string here because the three
+            schemas diverge and no single union is honest.
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        submittedAt:
+          type: ["string", "null"]
+          format: "date-time"
+
+    ApplicantApplicationSummary:
+      description: "A summary plus the owning agency, for the cross-agency citizen read."
+      type: "object"
+      additionalProperties: false
+      required:
+        ["applicationId", "processingCode", "category", "status", "submittedAt", "agency"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        processingCode:
+          type: "string"
+        category:
+          type: "string"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        submittedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    AmberQueueEntry:
+      description: >-
+        One review-queue row: either an amber document hold (document fields
+        populated) or an ADJUDICATION_REVIEW hold (document fields null).
+      type: "object"
+      additionalProperties: false
+      required:
+        - "applicationId"
+        - "processingCode"
+        - "status"
+        - "documentType"
+        - "forensicsScore"
+        - "forensicsFlags"
+        - "queuedAt"
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        processingCode:
+          type: "string"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        documentType:
+          type: ["string", "null"]
+        forensicsScore:
+          type: ["number", "null"]
+        forensicsFlags:
+          description: "The stored ForensicsFlags jsonb, verbatim. Opaque by design."
+          type: ["object", "null"]
+          additionalProperties: true
+        queuedAt:
+          type: ["string", "null"]
+          format: "date-time"
+
+    ApplicationDetail:
+      description: >-
+        The full non-PII view of ONE application — what the officer console
+        detail screen renders.
+
+
+        TWO OMISSIONS ARE SECURITY DECISIONS, NOT OVERSIGHTS. applicant_id is
+        absent: the processing code stands in for the applicant and nothing
+        here reveals who. qr_invitation_code is absent even though the column
+        exists: it is a BEARER CREDENTIAL the field officer scans at the
+        venue, and returning it would publish an invitation token to every
+        console session able to open the record.
+
+
+        The column set is the INTERSECTION of the three ops schemas.
+        medical_reviewed_*, is_walk_in, document_review_notes and
+        sms_notification_status exist in rdf_ops but NOT rcs_ops — selecting
+        them would make this read throw for RCS officers and nobody else.
+        Three columns are typed string rather than an enum because the
+        per-agency enum VALUES diverge (rcs_ops adds FLAGGED_PROSECUTION to
+        criminal_clearance_status).
+      type: "object"
+      additionalProperties: false
+      required:
+        - "applicationId"
+        - "processingCode"
+        - "category"
+        - "status"
+        - "nesaIndexNumber"
+        - "nesaVerifiedAt"
+        - "hecRegistrationNumber"
+        - "hecVerifiedAt"
+        - "declaredSpecialistField"
+        - "academicStatus"
+        - "academicEligibilityDetail"
+        - "ageEligibilityStatus"
+        - "ageVerifiedAt"
+        - "ageEligibilityDetail"
+        - "criminalClearanceStatus"
+        - "criminalClearanceAt"
+        - "documentLane"
+        - "documentForensicsScore"
+        - "documentForensicsFlags"
+        - "documentReviewedById"
+        - "documentReviewedAt"
+        - "documentReviewDecision"
+        - "assignedDistrict"
+        - "assignedVenueName"
+        - "physicalTestScheduledAt"
+        - "physicalTestCompletedAt"
+        - "qrInvitationIssuedAt"
+        - "smsNotificationSentAt"
+        - "finalDecisionById"
+        - "finalDecisionAt"
+        - "finalDecisionNotes"
+        - "submittedAt"
+        - "createdAt"
+        - "updatedAt"
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        processingCode:
+          type: "string"
+        category:
+          type: "string"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        nesaIndexNumber:
+          type: ["string", "null"]
+        nesaVerifiedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        hecRegistrationNumber:
+          type: ["string", "null"]
+        hecVerifiedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        declaredSpecialistField:
+          type: ["string", "null"]
+        academicStatus:
+          type: "string"
+        academicEligibilityDetail:
+          description: "{ eligible, reason, details } jsonb, verbatim."
+          type: ["object", "null"]
+          additionalProperties: true
+        ageEligibilityStatus:
+          type: "string"
+        ageVerifiedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        ageEligibilityDetail:
+          description: >-
+            { eligible, ageAtEvaluation, appliedMaxAge, reason } — NEVER the
+            date of birth. The age gate is DOB-free by construction (ADR-006).
+          type: ["object", "null"]
+          additionalProperties: true
+        criminalClearanceStatus:
+          type: "string"
+        criminalClearanceAt:
+          type: ["string", "null"]
+          format: "date-time"
+        documentLane:
+          type: ["string", "null"]
+          description: "GREEN | AMBER | RED. Officer-facing only."
+        documentForensicsScore:
+          type: ["number", "null"]
+        documentForensicsFlags:
+          type: ["object", "null"]
+          additionalProperties: true
+        documentReviewedById:
+          type: ["string", "null"]
+        documentReviewedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        documentReviewDecision:
+          type: ["string", "null"]
+        assignedDistrict:
+          type: ["string", "null"]
+        assignedVenueName:
+          type: ["string", "null"]
+        physicalTestScheduledAt:
+          type: ["string", "null"]
+          format: "date-time"
+        physicalTestCompletedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        qrInvitationIssuedAt:
+          description: "WHEN the invitation was issued. Never the code itself."
+          type: ["string", "null"]
+          format: "date-time"
+        smsNotificationSentAt:
+          type: ["string", "null"]
+          format: "date-time"
+        finalDecisionById:
+          type: ["string", "null"]
+        finalDecisionAt:
+          type: ["string", "null"]
+          format: "date-time"
+        finalDecisionNotes:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+
+    StatusHistoryEntry:
+      description: >-
+        One entry of the immutable trail. This is the record a rejected
+        applicant is entitled to see reasons from, so every field answering
+        "who changed what, when, and why" is carried. actorKind is DERIVED so
+        the UI can distinguish a human step from an automated one without
+        string-matching 'SYSTEM' in three components.
+      type: "object"
+      additionalProperties: false
+      required:
+        ["entryId", "fromStatus", "toStatus", "note", "actor", "actorKind", "at", "correlationId"]
+      properties:
+        entryId:
+          $ref: "#/components/schemas/Uuid"
+        fromStatus:
+          description: "null on the first entry — nothing preceded it."
+          oneOf:
+            - $ref: "#/components/schemas/ApplicationStatus"
+            - type: "null"
+        toStatus:
+          $ref: "#/components/schemas/ApplicationStatus"
+        note:
+          description: "The stored reason. The ground for the decision."
+          type: ["string", "null"]
+        actor:
+          description: "'SYSTEM' or the officer token's sub (a UUID)."
+          type: "string"
+        actorKind:
+          type: "string"
+          enum: ["SYSTEM", "OFFICER"]
+        at:
+          type: "string"
+          format: "date-time"
+        correlationId:
+          description: "Ties the entry to the Kafka causal chain that produced it."
+          type: ["string", "null"]
+
+    # ── Success envelopes ──
+
+    ListApplicationsOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "applications"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        applications:
+          description: "Capped at 100. No total, no cursor — nothing here paginates."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ApplicationSummary"
+
+    AmberQueueOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "queue"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        queue:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AmberQueueEntry"
+
+    ByApplicantOk:
+      type: "object"
+      additionalProperties: false
+      required: ["applications"]
+      properties:
+        applications:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ApplicantApplicationSummary"
+
+    FindApplicationOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "application"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        application:
+          $ref: "#/components/schemas/ApplicationDetail"
+
+    StatusHistoryOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "applicationId", "history"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        history:
+          description: "Oldest first. Stably ordered by (performed_at, id)."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+
+    # ── Error envelopes ──
+    #
+    # 4xx bodies carry a caller-facing detail. 5xx bodies DO NOT: HttpError
+    # sets expose = status < 500, so every 5xx and 503 detail string written in
+    # the backend is discarded before it reaches the wire. Do not build UI that
+    # reads detail off a 5xx; there is never one there.
+
+    NotFound404:
+      description: >-
+        BARE BY DESIGN. Identical for a nonexistent application and for another
+        agency's real one. Adding a detail field here would turn 404 into a
+        cross-agency existence oracle.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_FOUND"
+
+    InvalidApplicationId400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_APPLICATION_ID"
+        detail:
+          type: "string"
+
+    InvalidApplicantId400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_APPLICANT_ID"
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      description: >-
+        The Ed25519 bearer kinds fail with this. Note that identity-service's
+        applicant-session routes fail with INVALID_SESSION instead — same
+        status, different code, same service.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      description: >-
+        Authenticated, wrong principal kind. NOT a discriminated union with the
+        other 403 shapes in the platform: withAuth emits { error, detail },
+        outcome branches emit { error } alone, and biometric-service emits
+        { status: AGENCY_MISMATCH }. Three incompatible bodies for one status
+        is a live platform inconsistency, recorded rather than smoothed over.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    ApplicationReadError500:
+      description: "Detail withheld. The server logs the real cause."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["APPLICATION_READ_ERROR", "INTERNAL_ERROR"]
