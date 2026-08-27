@@ -90,7 +90,7 @@ assert(
   'gamma: a COMMENTED-OUT route registration is not extracted',
 );
 
-// ── 2. Gate C catches a built-but-unmounted route ────────────────────
+// ── 2. Gate C catches a built-but-unmounted route ──────────────────────
 
 const extracted = extractAll(FIXTURE_SERVICES);
 const c = gateC(extracted);
@@ -108,7 +108,7 @@ assert(
   'gate C: a properly mounted route is NOT reported',
 );
 
-// ── 3. Gate B catches each drift kind ────────────────────────────
+// ── 3. Gate B catches each drift kind ─────────────────────────────────
 
 const cleanManifest: Manifest = {
   backendSha: 'fixture',
@@ -170,7 +170,7 @@ assert(
   'gate B goes RED on an undocumented new backend route',
 );
 
-// ── 4. Gate A catches each drift kind ────────────────────────────
+// ── 4. Gate A catches each drift kind ─────────────────────────────────
 
 const table: RouteFactLike[] = [
   { service: 'alpha-service', operationId: 'alphaOfficer', method: 'POST', path: '/v1/alpha/officer', auth: ['officer'], reach: 'browser' },
@@ -222,7 +222,7 @@ assert(
   'gate A goes RED when a service stops documenting a reserved probe',
 );
 
-// ── Report ──────────────────────────────────────────────────
+// ── Report ────────────────────────────────────────────────────────────
 
 if (failures.length > 0) {
   console.error(`contract-drift selftest FAILED — ${failures.length} of ${passed + failures.length}`);
