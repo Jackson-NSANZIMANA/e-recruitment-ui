@@ -1,0 +1,17 @@
+{
+  "name": "@usrp/contract-drift",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Diffs the frontend's OpenAPI documents against the backend's own route constants and registrations. Exits non-zero on any mismatch.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "check": "tsx src/cli.ts",
+    "selftest": "tsx src/selftest.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "~5.4.0"
+  }
+}
