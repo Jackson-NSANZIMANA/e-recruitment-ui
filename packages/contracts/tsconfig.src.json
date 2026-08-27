@@ -1,0 +1,11 @@
+{
+  "$comment": "The SHIPPED surface only — src/**, which imports nothing but zod and its own siblings. Split out from tsconfig.json so the compile-time agency guarantees in src/narrow.ts can be checked WITHOUT @types/node, i.e. anywhere. `pnpm typecheck` runs the full project; this one is the subset a consumer of this package actually compiles against.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
+}
