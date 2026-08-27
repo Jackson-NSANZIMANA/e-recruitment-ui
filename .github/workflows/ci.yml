@@ -6,12 +6,23 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Checkout pinned backend
+        uses: actions/checkout@v4
+        with:
+          repository: Jackson-NSANZIMANA/e-recruitment
+          ref: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
+          path: backend
+          token: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -22,7 +33,6 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # ── Turbo remote-cache directory — speeds up repeated CI runs ───────────
       - name: Restore Turbo cache
         uses: actions/cache@v4
         with:
@@ -35,7 +45,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type-check (all 8 packages)
+      - name: Verify contracts against pinned backend
+        run: pnpm --filter @usrp/contracts run verify -- --backend "${{ github.workspace }}/backend"
+
+      - name: Type-check (all packages)
         run: pnpm typecheck
 
       - name: Unit tests
@@ -44,14 +57,12 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # ── Playwright setup (Chromium) ──────────────────────────────────────────
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
       - name: E2E tests
         run: pnpm test:e2e
 
-      # ── Upload Playwright report as CI artifact on failure ───────────────────
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: failure()
