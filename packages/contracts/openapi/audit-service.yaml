@@ -1,0 +1,56 @@
+# ════════════════════════════════════════════════════════════════
+# audit-service — NO BUSINESS HTTP SURFACE.
+#
+# HAND-AUTHORED from src/main.ts at backend SHA 47d9ad3. This service has no
+# src/adapters/http directory and passes no business routes to startHttpServer.
+# It is authored here anyway, with an empty business surface, because an ABSENT
+# document and a document that says "nothing here" are different claims, and
+# only the second one can be verified. The drift checker asserts this emptiness
+# on every run: the day someone mounts a route here, this file goes red.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP audit-service"
+  version: "1.0.0"
+  description: >-
+    Consumes AUDIT_ENTRY and writes the append-only audit log, whose immutability is enforced by rls/0002 (trigger + revoked UPDATE/DELETE grant), not by this service.
+
+
+    THERE IS NO AUDIT READ ENDPOINT. The log is written and never served over HTTP. An officer console cannot show an audit trail from this service, and a compliance screen backed by it is unimplementable today. The per-application transition trail is a different artifact, served by application-service GET /v1/applications/status-history.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_AUDIT_SERVICE"
+  x-usrp-business-routes: 0
+
+paths:
+  /health:
+    get:
+      operationId: "auditHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "auditReady"
+      summary: "Readiness"
+      description: >-
+        Covers the datastore only. It does not cover the Kafka consumer that IS
+        this service's entire function, so a green probe here is compatible
+        with the service consuming nothing at all.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Dependencies reachable."
+        "503":
+          description: "A dependency is unreachable."

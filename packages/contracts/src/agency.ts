@@ -5,8 +5,8 @@
 // this file describes which of those values are LEGAL FOR WHICH AGENCY, which
 // is a domain fact no OpenAPI document can express.
 //
-// Every value below was read from backend source at SHA 18e468a. Provenance is
-// recorded per-constant. Nothing here was inferred from a name.
+// Every value below was read from backend source. Provenance is recorded
+// per-constant. Nothing here was inferred from a name.
 //
 // WHY THIS FILE EXISTS
 //
@@ -26,11 +26,12 @@
 //
 // The frontend equivalent of that bug is a component that renders a
 // WALK_IN_ON_SITE_VETTING lozenge in the RNP console. The types below make it
-// a compile error instead of a support ticket.
+// a compile error instead of a support ticket. src/narrow.ts binds them to the
+// generated wire rows.
 // ═════════════════════════════════════════════════════════════════
 
 /** The backend commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = '18e468a2afe779a4c2402e81ed8eda92b756e7e4';
+export const VERIFIED_BACKEND_SHA = '47d9ad3ab019f6d2f826cfae2136cbff898d733f';
 
 // ─── Agency ────────────────────────────────────────────────────────────
 
@@ -339,8 +340,13 @@ export type AuthKind = (typeof AUTH_KINDS)[number];
  * /v1/forensics/analyze and POST /v1/documents/upload are all system-only.
  *
  * Note that the citizen document upload IS system-internal: the browser talks
- * to citizen-bff, which holds the citizen's session and calls the ingress with
- * its own client-credentials token (the ADR-016 pattern, same as withdraw-own).
+ * to the edge tier, which holds the citizen's session and calls the ingress
+ * with its own client-credentials token (the ADR-016 pattern, same as
+ * withdraw-own).
+ *
+ * SERVICE_INTERNAL_ROUTES in ./generated/routes.ts exports the live set as
+ * data, so an edge-tier allowlist can assert against it instead of a reviewer
+ * remembering this list.
  */
 export const ROUTE_REACHES = ['browser', 'service-internal'] as const;
 export type RouteReach = (typeof ROUTE_REACHES)[number];
@@ -372,14 +378,10 @@ type _RnpIsShared = Assert<Eq<StatusFor<'RNP'>, SharedStatus>>;
 type _RcsIsShared = Assert<Eq<StatusFor<'RCS'>, SharedStatus>>;
 
 /** A WALK_IN_* value is genuinely unavailable to the other two agencies. */
-type _WalkInIsRdfOnly = Assert<
-  Eq<Extract<StatusFor<'RNP'>, 'WALK_IN_REGISTERED'>, never>
->;
+type _WalkInIsRdfOnly = Assert<Eq<Extract<StatusFor<'RNP'>, 'WALK_IN_REGISTERED'>, never>>;
 
 /** Agency-specific document sets stay inside the global union. */
-type _DocTypesAreSubsets = Assert<
-  Eq<Exclude<DocumentTypeFor<Agency>, DocumentType>, never>
->;
+type _DocTypesAreSubsets = Assert<Eq<Exclude<DocumentTypeFor<Agency>, DocumentType>, never>>;
 
 /** RDF does not accept RCS-only paperwork. */
 type _CelibacyIsRcsOnly = Assert<
@@ -387,6 +389,4 @@ type _CelibacyIsRcsOnly = Assert<
 >;
 
 /** RCS does not accept RDF-only paperwork. */
-type _OLevelIsRdfOnly = Assert<
-  Eq<Extract<DocumentTypeFor<'RCS'>, 'OLEVEL_CERTIFICATE'>, never>
->;
+type _OLevelIsRdfOnly = Assert<Eq<Extract<DocumentTypeFor<'RCS'>, 'OLEVEL_CERTIFICATE'>, never>>;

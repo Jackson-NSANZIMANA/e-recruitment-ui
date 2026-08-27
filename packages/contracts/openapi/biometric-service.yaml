@@ -1,0 +1,285 @@
+# ════════════════════════════════════════════════════════════════
+# biometric-service — one officer-authenticated check-in route.
+#
+# HAND-AUTHORED from src/adapters/http/verify-biometric.controller.ts and
+# src/main.ts at backend SHA 47d9ad3.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP biometric-service"
+  version: "1.0.0"
+  description: >-
+    Venue check-in: an officer scans the applicant's signed QR invitation,
+    captures a face, and this service returns liveness + face-match verdicts
+    and emits biometric.result. DB-FREE — identity-service records the outcome
+    off the backbone.
+
+
+    THE 403 ON THIS SERVICE IS THE ODD ONE OUT PLATFORM-WIDE. It is
+    { status: "AGENCY_MISMATCH" }, keyed on `status`, where every other 403 in
+    the system is keyed on `error` ({ error: "FORBIDDEN", detail } from withAuth
+    or { error: "FORBIDDEN" } from an outcome branch). Three incompatible
+    bodies share status 403 across the platform, so NO SINGLE DISCRIMINATED
+    UNION COVERS 403. That is recorded here rather than normalised away,
+    because normalising it in the contract would hide it from the only people
+    who can fix it.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_BIOMETRIC_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "Also EMPTY_BODY."
+
+paths:
+  /v1/biometric/verify:
+    post:
+      operationId: "verifyBiometric"
+      summary: "Verify a scanned QR invitation against a live face capture"
+      description: >-
+        THE OFFICER'S AGENCY COMES FROM THE VERIFIED TOKEN, NEVER THE BODY.
+        There is no agency field in the request and adding one would be the
+        cross-agency bypass this design exists to prevent.
+
+
+        A FAILED MATCH IS A 200. verified:false with livenessPass /
+        faceMatchPass breakdown is a successful evaluation, not an error. A
+        client with an assertOk-shaped wrapper reads a rejected impostor as a
+        successful check-in.
+
+
+        The raw captureRef is never echoed.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/verify-biometric.controller.ts (VERIFY_BIOMETRIC_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyBiometricRequest"
+      responses:
+        "200":
+          description: "Evaluated. verified may be true or false."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricEvaluated"
+        "400":
+          description: "MISSING_QR_TOKEN or MISSING_CAPTURE_REF."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: >-
+            TWO INCOMPATIBLE SHAPES ON ONE STATUS, and they are not a union:
+            withAuth emits { error: "FORBIDDEN", detail } for a non-officer
+            principal, while the AGENCY_MISMATCH outcome emits
+            { status: "AGENCY_MISMATCH" }. One is keyed `error`, the other
+            `status`. Modelled as an untagged oneOf because there is no shared
+            discriminator to tag it with.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricForbidden403"
+        "422":
+          description: >-
+            INVALID_INVITATION — the QR signature failed, expired, or names an
+            unknown session. Deliberately bare: distinguishing "forged" from
+            "expired" at the venue door would teach a forger which half worked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidInvitation422"
+        "503":
+          description: "BIOMETRIC_MATCH_UNAVAILABLE — the matcher is down."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatcherUnavailable503"
+        "500":
+          description: "INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /health:
+    get:
+      operationId: "biometricHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "biometricReady"
+      summary: "Readiness — WHICH THIS SERVICE DOES NOT ACTUALLY IMPLEMENT"
+      description: >-
+        THIS PROBE ALWAYS ANSWERS 200. biometric-service's startHttpServer call
+        passes NO readiness callback (verified in src/main.ts at this SHA), so
+        shared-http's default applies and the endpoint reports ready regardless
+        of whether the biometric matcher or the event bus is reachable.
+
+
+        It is a liveness check wearing a readiness name, and an orchestrator
+        reading it will route venue check-in traffic to a service whose matcher
+        is down. There is NO 503 branch on this operation — its absence below
+        is the finding, not an omission in this document.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (NO readiness callback passed)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Always. See the description."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    VerifyBiometricRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["qrSignedToken", "captureRef"]
+      properties:
+        qrSignedToken:
+          description: >-
+            The scanned QR payload, Ed25519-signed by scheduling-service. Verify
+            its signature offline with GET /v1/slots/invitation-key.
+          type: "string"
+          minLength: 1
+        captureRef:
+          description: "An opaque reference to the capture. Never echoed back."
+          type: "string"
+          minLength: 1
+
+    BiometricEvaluated:
+      type: "object"
+      additionalProperties: false
+      required:
+        ["status", "verified", "sessionId", "applicantId", "livenessPass", "faceMatchPass"]
+      properties:
+        status:
+          type: "string"
+          const: "EVALUATED"
+        verified:
+          description: "false is a legitimate 200. Do not treat non-2xx as the only failure."
+          type: "boolean"
+        sessionId:
+          $ref: "#/components/schemas/Uuid"
+        applicantId:
+          description: >-
+            The opaque applicant UUID. NOT a national id and NOT its hash —
+            this is the only route that hands an officer an applicantId, and it
+            does so because the officer is standing in front of the person.
+          $ref: "#/components/schemas/Uuid"
+        livenessPass:
+          type: "boolean"
+        faceMatchPass:
+          type: "boolean"
+
+    BiometricRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["MISSING_QR_TOKEN", "MISSING_CAPTURE_REF"]
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    AgencyMismatch403:
+      description: >-
+        The application belongs to another agency. UNIQUE IN THE PLATFORM for
+        keying a 403 on `status` rather than `error`.
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "AGENCY_MISMATCH"
+
+    BiometricForbidden403:
+      description: >-
+        NOT a discriminated union — the two members have no property in common.
+        A client must probe for `error` OR `status`. That is the live
+        inconsistency, faithfully modelled.
+      oneOf:
+        - $ref: "#/components/schemas/Forbidden403"
+        - $ref: "#/components/schemas/AgencyMismatch403"
+
+    InvalidInvitation422:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "INVALID_INVITATION"
+
+    MatcherUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "BIOMETRIC_MATCH_UNAVAILABLE"
+
+    InternalError500:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INTERNAL_ERROR"

@@ -1,0 +1,14 @@
+{
+  "service": "scheduling-service",
+  "cases": [
+    { "id": "invitation-key", "schema": "InvitationKeyOk", "expect": "accept",
+      "why": "The one read route on this service, declared inline in main.ts with NO withAuth wrapper — which is why every survey that walked services/*/src/adapters/http/** missed it.",
+      "value": { "keyId": "qr-2026-08", "algorithm": "Ed25519", "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA\n-----END PUBLIC KEY-----\n" } },
+    { "id": "invitation-key-rejects-private", "schema": "InvitationKeyOk", "expect": "reject",
+      "why": "A PUBLIC key endpoint. The signing private key lives only in scheduling-service's config.",
+      "value": { "keyId": "qr-2026-08", "algorithm": "Ed25519", "publicKeyPem": "pub", "privateKeyPem": "priv" } },
+    { "id": "invitation-key-rejects-other-alg", "schema": "InvitationKeyOk", "expect": "reject",
+      "why": "The controller hardcodes the literal 'Ed25519'. And note this is a DIFFERENT key from the token issuer's — verifying a bearer token with it will fail.",
+      "value": { "keyId": "k", "algorithm": "RS256", "publicKeyPem": "pub" } }
+  ]
+}

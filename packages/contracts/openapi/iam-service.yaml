@@ -1,0 +1,256 @@
+# ════════════════════════════════════════════════════════════════
+# iam-service — the token issuer, and the ONLY unauthenticated business
+# surface in the platform.
+#
+# HAND-AUTHORED from the controllers at backend SHA 47d9ad3. Every operation
+# records provenance in x-usrp-source and verification level in
+# x-usrp-verified. `controller-verbatim` means the request and response shapes
+# were transcribed from the named file field by field.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP iam-service"
+  version: "1.0.0"
+  description: >-
+    Mints the two Ed25519 bearer credentials every other service verifies with
+    a public key only (ADR-016). This service is the SOLE holder of the issuer
+    private key.
+
+
+    NEITHER ROUTE MINTS A CITIZEN CREDENTIAL. A citizen's credential is an
+    opaque revocable DB session issued by identity-service (ADR-018), and
+    nothing here can produce one. A frontend that tries to log a citizen in
+    against this service is targeting the wrong service entirely.
+
+
+    NEITHER TOKEN IS A COOKIE. Both are returned in a JSON body. There is no
+    Set-Cookie header anywhere in this document because there is no server in
+    the system that sets one.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_IAM_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: "Body-parsing operations only."
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+      note: "Body-parsing operations only."
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "Body-parsing operations only. Also EMPTY_BODY."
+
+paths:
+  /v1/auth/officer/login:
+    post:
+      operationId: "officerLogin"
+      summary: "Exchange officer credentials for an Ed25519 bearer token"
+      description: >-
+        UNAUTHENTICATED by necessity — this is what mints the token, so it
+        cannot itself require one.
+
+
+        THE RESPONSE CARRIES NO USER OBJECT. { token, expiresAt } and nothing
+        else: no name, no agency, no roles, no subject id. The officer console
+        therefore cannot render a name, an agency badge or a role-gated menu
+        from login alone. Decoding the JWT payload client-side to recover them
+        is NOT a substitute — an unverified client-side decode of a token this
+        frontend cannot verify is a claim from an untrusted source. A
+        GET /v1/auth/officer/me endpoint is the specced gap (see
+        openapi/proposed/iam-service.proposed.yaml).
+
+
+        THE 401 IS DELIBERATELY GENERIC. Unknown handle, wrong password and
+        disabled account are one byte-identical INVALID_CREDENTIALS. UI copy
+        must not narrow it: "no account with that handle" re-opens the
+        enumeration the backend closed.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-login.controller.ts (OFFICER_LOGIN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfficerLoginRequest"
+      responses:
+        "200":
+          description: "Authenticated. The token is a bearer credential — treat it as one."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenIssued"
+        "400":
+          description: >-
+            Shape error only: loginHandle or password absent, empty, or over
+            the length bound (128 / 256). Deliberately NOT a signal about
+            whether the handle exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidRequest400"
+        "401":
+          description: "Unknown handle, wrong password, or disabled account — one shape."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidCredentials401"
+
+  /v1/auth/service/token:
+    post:
+      operationId: "issueServiceToken"
+      summary: "Client-credentials grant for a service principal"
+      description: >-
+        UNAUTHENTICATED for the same reason as login. SERVICE-INTERNAL: the
+        clientSecret is a server-side secret and must never be shipped to a
+        browser bundle. Any frontend code path that calls this route is a
+        credential leak, not an integration.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/service-token.controller.ts (SERVICE_TOKEN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceTokenRequest"
+      responses:
+        "200":
+          description: "A system-principal bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenIssued"
+        "400":
+          description: "Shape error: clientId or clientSecret absent, empty, or over 128 / 256."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidRequest400"
+        "401":
+          description: "Unknown client, wrong secret, or disabled client — one shape."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidClient401"
+
+  /health:
+    get:
+      operationId: "iamHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "iamReady"
+      summary: "Readiness — the credential store is reachable"
+      description: >-
+        A real readiness check: main.ts passes a readiness callback that runs
+        SELECT 1. Contrast biometric-service, which passes none.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable."
+        "503":
+          description: "Database unreachable."
+
+components:
+  schemas:
+    OfficerLoginRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["loginHandle", "password"]
+      properties:
+        loginHandle:
+          description: "Max 128 chars — matches officer_accounts.login_handle."
+          type: "string"
+          minLength: 1
+          maxLength: 128
+        password:
+          description: "Max 256 chars. Never echoed, logged, or placed in an error."
+          type: "string"
+          minLength: 1
+          maxLength: 256
+
+    ServiceTokenRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["clientId", "clientSecret"]
+      properties:
+        clientId:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+        clientSecret:
+          type: "string"
+          minLength: 1
+          maxLength: 256
+
+    TokenIssued:
+      description: >-
+        The whole success body. Two fields. Nothing else is returned by either
+        grant — this is the shape, not an abridgement of it.
+      type: "object"
+      additionalProperties: false
+      required: ["token", "expiresAt"]
+      properties:
+        token:
+          description: "A compact Ed25519 JWS. Opaque to the frontend by policy."
+          type: "string"
+        expiresAt:
+          description: >-
+            Absolute expiry. There is NO refresh endpoint and no revocation
+            list for this credential kind: an officer token is valid until it
+            expires, by design (ADR-016). The UI must re-authenticate, not
+            refresh.
+          type: "string"
+          format: "date-time"
+
+    InvalidRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_REQUEST"
+        detail:
+          type: "string"
+
+    InvalidCredentials401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_CREDENTIALS"
+        detail:
+          type: "string"
+
+    InvalidClient401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_CLIENT"
+        detail:
+          type: "string"

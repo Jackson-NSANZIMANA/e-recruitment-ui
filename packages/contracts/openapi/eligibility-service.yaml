@@ -1,0 +1,688 @@
+# ════════════════════════════════════════════════════════════════
+# eligibility-service — the three vetting gates. ALL THREE ARE
+# SERVICE-INTERNAL: every route takes withAuth(verify, { kind: 'system' }).
+# An officer token gets 403 and a browser has no business calling any of them.
+#
+# HAND-AUTHORED from the controllers at backend SHA 47d9ad3.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP eligibility-service"
+  version: "1.0.0"
+  description: >-
+    Age, NESA education and HEC degree gates. Each also runs autonomously off
+    applicant.submitted when a broker is configured, so these HTTP routes are
+    the manual/replay door, not the primary path.
+
+
+    THE DATE OF BIRTH NEVER CROSSES THIS BOUNDARY, in either direction. The age
+    gate takes { applicantId, category } and returns the DERIVED
+    ageAtEvaluation and appliedMaxAge. It does not accept a DOB and it does not
+    return one. Any UI that asks a citizen for a birth date to compute
+    eligibility is duplicating a decision the platform makes from NIDA data it
+    already holds, and duplicating it against worse input.
+
+
+    LIKEWISE the school, the raw NESA index and the G2G subject hash are
+    request-only. Responses carry the verdict and the levels, never the source
+    record.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_ELIGIBILITY_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "Also EMPTY_BODY."
+
+paths:
+  /v1/eligibility/age-check:
+    post:
+      operationId: "checkAgeEligibility"
+      summary: "Evaluate the age gate for one applicant and category"
+      description: >-
+        SERVICE-INTERNAL. Note the response has NO 403 body of its own beyond
+        withAuth's, and no 422: an out-of-range age is a successful 200
+        EVALUATED with eligible:false, not an error. A client that treats
+        non-2xx as "ineligible" will read every ineligible applicant as a
+        transport failure and every transport failure as an ineligible
+        applicant.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/eligibility.controller.ts (AGE_CHECK_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgeCheckRequest"
+      responses:
+        "200":
+          description: "Evaluated. eligible may be true or false — both are 200."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgeEvaluated"
+        "400":
+          description: "Shape error on applicantId or category."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EligibilityRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal — an officer token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "No such applicant."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantNotFound404"
+        "409":
+          description: "The applicant's identity is not VERIFIED yet."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityNotVerified409"
+        "503":
+          description: >-
+            ELIGIBILITY_STORE_UNAVAILABLE. The detail string is written in the
+            controller and DISCARDED on the wire (HttpError.expose = status <
+            500), so there is no caller-facing hint here despite one existing
+            in source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreUnavailable503"
+        "500":
+          description: "INTERNAL_ERROR. Detail withheld."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /v1/eligibility/education-check:
+    post:
+      operationId: "checkEducationEligibility"
+      summary: "Verify A-Level (NESA) attainment against the category requirement"
+      description: >-
+        SERVICE-INTERNAL. 409 NESA_NOT_APPLICABLE means the category needs the
+        HEC degree road instead — a routing fact, not a candidate failure, and
+        the two must not share an error surface in the UI.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/education.controller.ts (EDUCATION_CHECK_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EducationCheckRequest"
+      responses:
+        "200":
+          description: "Evaluated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationEvaluated"
+        "400":
+          description: "Shape error on applicantId, applicationId, category or nesaIndexNumber."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EligibilityRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "No such applicant."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantNotFound404"
+        "409":
+          description: >-
+            Two distinct outcomes on one status, discriminated by `status`:
+            IDENTITY_NOT_VERIFIED (retry after verification) and
+            NESA_NOT_APPLICABLE (wrong road entirely — use degree-check).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationConflict409"
+        "422":
+          description: "NESA_RECORD_NOT_FOUND — no examination record for that index."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NesaRecordNotFound422"
+        "503":
+          description: >-
+            Two distinct upstreams on one status: NESA_UNAVAILABLE (the G2G
+            registry) and ELIGIBILITY_STORE_UNAVAILABLE (our own identity
+            store). Retry advice differs, so they are modelled apart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationUnavailable503"
+        "500":
+          description: "INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /v1/eligibility/degree-check:
+    post:
+      operationId: "checkDegreeEligibility"
+      summary: "Verify an HEC degree and its holder against the category requirement"
+      description: >-
+        SERVICE-INTERNAL. Carries the widest outcome set of the three gates,
+        including the only holder-identity failure in the platform
+        (422 DEGREE_HOLDER_MISMATCH: the degree is real and belongs to somebody
+        else). That is an accusation of impersonation and must not be rendered
+        with the same copy as "record not found".
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/degree.controller.ts (DEGREE_CHECK_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DegreeCheckRequest"
+      responses:
+        "200":
+          description: "Evaluated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DegreeEvaluated"
+        "400":
+          description: "Shape error on any of the four fields."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EligibilityRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "No such applicant."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantNotFound404"
+        "409":
+          description: >-
+            Three outcomes, discriminated by `status`: IDENTITY_NOT_VERIFIED,
+            G2G_SUBJECT_UNAVAILABLE (the identity predates the G2G subject
+            hash — re-verify identity) and HEC_NOT_APPLICABLE (wrong road; use
+            education-check).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DegreeConflict409"
+        "422":
+          description: >-
+            DEGREE_NOT_FOUND or DEGREE_HOLDER_MISMATCH. Same status, radically
+            different meaning.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DegreeUnprocessable422"
+        "503":
+          description: "HEC_UNAVAILABLE or ELIGIBILITY_STORE_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DegreeUnavailable503"
+        "500":
+          description: "INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /health:
+    get:
+      operationId: "eligibilityHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "eligibilityReady"
+      summary: "Readiness — database reachable"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable."
+        "503":
+          description: "Database unreachable."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    Agency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    ApplicationCategory:
+      description: >-
+        Validated against ALL_CATEGORIES (domain/category-agency.ts), the union
+        across all three agencies. WHICH categories belong to WHICH agency is
+        NOT expressible here and is not a free choice: agencyForCategory maps
+        each category to exactly one agency, and sending a category that maps
+        elsewhere is 422 WRONG_AGENCY_CATEGORY on the write side. Typed as
+        string because the per-agency partition is the divergence model's job.
+      type: "string"
+      minLength: 1
+
+    AcademicLevel:
+      description: >-
+        Transcribed as a string, not an enum: the controller returns
+        requiredMinLevel and evaluatedLevel straight from the domain and this
+        document does not have the domain enum in hand at controller level.
+        Narrowing it would be a guess.
+      type: "string"
+
+    AgeCheckRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId", "category"]
+      properties:
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+
+    EducationCheckRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId", "applicationId", "category", "nesaIndexNumber"]
+      properties:
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+        nesaIndexNumber:
+          description: "Controller pattern, verbatim. A short public examination index."
+          type: "string"
+          pattern: "^[A-Za-z0-9/-]{4,32}$"
+
+    DegreeCheckRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId", "applicationId", "category", "hecRegistrationNumber"]
+      properties:
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+        hecRegistrationNumber:
+          description: "Controller pattern, verbatim. e.g. UR/2023/CS/001."
+          type: "string"
+          pattern: "^[A-Za-z0-9/-]{4,40}$"
+
+    AgeEvaluated:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "status"
+        - "eligible"
+        - "category"
+        - "agency"
+        - "ageAtEvaluation"
+        - "appliedMaxAge"
+        - "reason"
+      properties:
+        status:
+          type: "string"
+          const: "EVALUATED"
+        eligible:
+          type: "boolean"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        ageAtEvaluation:
+          description: "The DERIVED age. The date of birth it came from is never returned."
+          type: "number"
+        appliedMaxAge:
+          description: "The ceiling actually applied, which varies by category."
+          type: "number"
+        reason:
+          type: ["string", "null"]
+
+    EducationEvaluated:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "status"
+        - "academicStatus"
+        - "eligible"
+        - "category"
+        - "agency"
+        - "requiredMinLevel"
+        - "evaluatedLevel"
+        - "reason"
+      properties:
+        status:
+          type: "string"
+          const: "EVALUATED"
+        academicStatus:
+          description: "The projected academic verdict written onto the application row."
+          type: "string"
+        eligible:
+          description: "From education.meetsRequirement. Renamed on the wire."
+          type: "boolean"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        requiredMinLevel:
+          $ref: "#/components/schemas/AcademicLevel"
+        evaluatedLevel:
+          $ref: "#/components/schemas/AcademicLevel"
+        reason:
+          type: ["string", "null"]
+
+    DegreeEvaluated:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "status"
+        - "academicStatus"
+        - "eligible"
+        - "category"
+        - "agency"
+        - "requiredMinLevel"
+        - "evaluatedLevel"
+        - "specialistField"
+        - "appliedMaxAge"
+        - "ageExceptionApplies"
+        - "reason"
+      properties:
+        status:
+          type: "string"
+          const: "EVALUATED"
+        academicStatus:
+          type: "string"
+        eligible:
+          type: "boolean"
+        category:
+          $ref: "#/components/schemas/ApplicationCategory"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        requiredMinLevel:
+          $ref: "#/components/schemas/AcademicLevel"
+        evaluatedLevel:
+          $ref: "#/components/schemas/AcademicLevel"
+        specialistField:
+          type: ["string", "null"]
+        appliedMaxAge:
+          description: >-
+            Present on the DEGREE response and not the age response's value:
+            a specialist degree can raise the ceiling, which is what
+            ageExceptionApplies records.
+          type: ["number", "null"]
+        ageExceptionApplies:
+          type: "boolean"
+        reason:
+          type: ["string", "null"]
+
+    ApplicantNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "APPLICANT_NOT_FOUND"
+
+    IdentityNotVerified409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "identityStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "IDENTITY_NOT_VERIFIED"
+        identityStatus:
+          description: "PENDING | VERIFIED | FAILED | EXPIRED — why it is not verified."
+          type: "string"
+
+    NesaNotApplicable409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "detail"]
+      properties:
+        status:
+          type: "string"
+          const: "NESA_NOT_APPLICABLE"
+        detail:
+          type: "string"
+
+    HecNotApplicable409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "detail"]
+      properties:
+        status:
+          type: "string"
+          const: "HEC_NOT_APPLICABLE"
+        detail:
+          type: "string"
+
+    G2gSubjectUnavailable409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "detail"]
+      properties:
+        status:
+          type: "string"
+          const: "G2G_SUBJECT_UNAVAILABLE"
+        detail:
+          type: "string"
+
+    EducationConflict409:
+      description: "A real discriminated union, not a flattened error type."
+      oneOf:
+        - $ref: "#/components/schemas/IdentityNotVerified409"
+        - $ref: "#/components/schemas/NesaNotApplicable409"
+      discriminator:
+        propertyName: "status"
+
+    DegreeConflict409:
+      oneOf:
+        - $ref: "#/components/schemas/IdentityNotVerified409"
+        - $ref: "#/components/schemas/G2gSubjectUnavailable409"
+        - $ref: "#/components/schemas/HecNotApplicable409"
+      discriminator:
+        propertyName: "status"
+
+    NesaRecordNotFound422:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NESA_RECORD_NOT_FOUND"
+
+    DegreeNotFound422:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "DEGREE_NOT_FOUND"
+
+    DegreeHolderMismatch422:
+      description: >-
+        The degree exists and is registered to a different person. This is an
+        allegation, not a missing record. UI copy must reflect that difference.
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "DEGREE_HOLDER_MISMATCH"
+
+    DegreeUnprocessable422:
+      oneOf:
+        - $ref: "#/components/schemas/DegreeNotFound422"
+        - $ref: "#/components/schemas/DegreeHolderMismatch422"
+      discriminator:
+        propertyName: "status"
+
+    EligibilityRequest400:
+      description: >-
+        withAuth and the controllers both key 400s on `error`, not `status`.
+        Business outcomes key on `status`. That split is real and load-bearing:
+        a body with `error` is a transport/shape complaint, a body with
+        `status` is a decision.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "INVALID_APPLICANT_ID"
+            - "INVALID_APPLICATION_ID"
+            - "INVALID_CATEGORY"
+            - "INVALID_NESA_INDEX"
+            - "INVALID_HEC_REGISTRATION"
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    StoreUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "ELIGIBILITY_STORE_UNAVAILABLE"
+
+    NesaUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "NESA_UNAVAILABLE"
+
+    HecUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "HEC_UNAVAILABLE"
+
+    EducationUnavailable503:
+      oneOf:
+        - $ref: "#/components/schemas/NesaUnavailable503"
+        - $ref: "#/components/schemas/StoreUnavailable503"
+      discriminator:
+        propertyName: "error"
+
+    DegreeUnavailable503:
+      oneOf:
+        - $ref: "#/components/schemas/HecUnavailable503"
+        - $ref: "#/components/schemas/StoreUnavailable503"
+      discriminator:
+        propertyName: "error"
+
+    InternalError500:
+      description: "Detail is written in source and discarded on the wire for every 5xx."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INTERNAL_ERROR"

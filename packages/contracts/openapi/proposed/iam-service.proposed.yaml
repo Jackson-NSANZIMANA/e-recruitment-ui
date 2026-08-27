@@ -1,0 +1,91 @@
+# ════════════════════════════════════════════════════════════════
+# PROPOSED — iam-service. THIS DOES NOT EXIST.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+info:
+  title: "PROPOSED USRP iam-service additions"
+  version: "0.0.0-proposal"
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
+paths:
+  /v1/auth/officer/me:
+    get:
+      operationId: "proposedOfficerMe"
+      summary: "Who is this officer?"
+      description: >-
+        WHAT BREAKS WITHOUT IT: NOTHING IN THE PLATFORM TELLS AN OFFICER WHO THEY
+        ARE. POST /v1/auth/officer/login returns { token, expiresAt } and no user
+        object — no display name, no agency, no roles, no subject id. So the
+        officer console cannot render a name, cannot show an agency badge, and
+        cannot gate a menu by role.
+
+
+        THIS IS ALSO A CORRECTNESS BLOCKER, NOT JUST CHROME. The medical-review
+        body DIFFERS BY AGENCY MODE (ADR-013): RDF sends fitnessStatus, RNP and
+        RCS send certVerdict, and the wrong one is a 422. The form must branch on
+        the officer's agency, and the officer's agency is not obtainable. The same
+        applies to the walk-in lane, which 501s for RNP and RCS: the UI is
+        supposed to branch on agency rather than offer a door that cannot open,
+        and it cannot.
+
+
+        DECODING THE JWT CLIENT-SIDE IS NOT AN ACCEPTABLE SUBSTITUTE. The token
+        is Ed25519-signed and this frontend holds no public key and has no
+        business verifying it. An unverified client-side decode is a claim from
+        an untrusted source used to pick a security-relevant code path. Do not
+        ship it, and do not let this proposal be closed by someone suggesting it.
+
+
+        DESIGN NOTES. Officer-token auth, so the answer is derived from the
+        verified principal and takes no parameters — there is no shape of this
+        request that can ask about another officer. Do not include the login
+        handle: it is the credential half of an authentication pair and echoing
+        it into every console session adds nothing the UI needs.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      responses:
+        "200":
+          description: "The calling officer, derived from their own verified token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedOfficerMe"
+        "401":
+          description: "UNAUTHENTICATED."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+components:
+  schemas:
+    ProposedError:
+      type: "object"
+      additionalProperties: true
+    ProposedOfficerMe:
+      type: "object"
+      additionalProperties: false
+      required: ["officerId", "displayName", "agency", "roles"]
+      properties:
+        officerId:
+          description: "The token's sub. Already appears in status-history as `actor`, so the console can finally resolve a trail entry to a person."
+          type: "string"
+          format: "uuid"
+        displayName:
+          type: "string"
+        agency:
+          description: "THE LOAD-BEARING FIELD. The medical-review mode and the walk-in lane both branch on it."
+          type: "string"
+          enum: ["RDF", "RNP", "RCS"]
+        roles:
+          description: "The token's `roles: string[]`, verbatim. NOTE there is no SUPERADMIN and no RLS-bypass principal; the old frontend's OfficerRole enum invented one."
+          type: "array"
+          items:
+            type: "string"

@@ -2,57 +2,47 @@
 
 **The only legal source of domain types in this frontend.**
 
-OpenAPI 3.1 documents hand-authored from the backend controllers and
-selfchecks, plus the per-agency divergence model that no OpenAPI document can
-express.
+OpenAPI 3.1 documents hand-authored from the backend controllers, Zod schemas
+generated from those documents, TypeScript types inferred from those schemas, the
+per-agency divergence model no OpenAPI document can express, and a drift checker
+that fails the build when any of it stops matching the backend.
 
 Verified against backend SHA
-[`18e468a`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/18e468a2afe779a4c2402e81ed8eda92b756e7e4)
-(`main`, PR #3, gate 38/38).
+[`47d9ad3`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/47d9ad3ab019f6d2f826cfae2136cbff898d733f)
+(`main`).
+
+```bash
+pnpm --filter @usrp/contracts verify     # 6 gates, 1188 assertions
+pnpm --filter @usrp/contracts generate   # openapi -> zod -> types
+pnpm --filter @usrp/contracts typecheck
+pnpm --filter @usrp/contracts drift -- --backend ../e-recruitment
+```
 
 ---
 
-## Read this before you use it
-
-**This package is incomplete, and the table below is the honest state.** Two of
-eleven services are authored. Nothing here has been through `tsc` yet, and
-there is no `verify` harness, so the compile-time guarantees in `src/agency.ts`
-are *designed and unproven*. Do not take them on trust; run `pnpm typecheck`
-first.
-
-The backend's own doctrine
-([`ci-quality-gate.md`](https://github.com/Jackson-NSANZIMANA/e-recruitment/blob/main/docs/architecture/ci-quality-gate.md))
-is that a green-but-hollow gate is worse than no gate. A contract package that
-implies more coverage than it has is the same failure, so the ledger lives at
-the top of the file rather than the bottom.
-
-### Status ledger
+## State: proven, with two named exceptions
 
 | Artifact | State |
 |---|---|
-| `src/agency.ts` — divergence model | **Written.** Never compiled. |
-| `openapi/application-service.yaml` | **Written.** 5 read routes + 2 probes verbatim; 8 write routes path/method/auth verified, bodies pending. |
-| `openapi/document-forensics-service.yaml` | **Written.** Upload route verbatim; analyze route pending. |
-| iam-service | Not authored |
-| identity-service | Not authored |
-| eligibility-service | Not authored |
-| biometric-service | Not authored |
-| field-sync-service | Not authored |
-| scheduling-service | Not authored |
-| audit / background-vetting / notification | Not authored (`routes: []`, probes only) |
-| `scripts/generate.ts` — OpenAPI → Zod → TS | Not built |
-| `tooling/contract-drift` | Not built |
-| Response fixtures mined from selfchecks | Not built |
-| `scripts/verify.ts` | Not built |
-| **Assertions proven** | **0.** The backend's bar is ~130 across 38 gates. |
+| `openapi/*.yaml` — 11 documents, 58 operations, 208 schemas | **Authored.** Every operation `controller-verbatim` except one, marked `proxy-derived` and named below. |
+| `src/generated/**` — 24 files | **Generated.** Deterministic; `verify` asserts a zero diff. |
+| `src/agency.ts` — divergence model | **Compiles** under the workspace's ultra-strict config. Previously written and never compiled. |
+| `src/narrow.ts` — wire types x agency | **Compiles**, and the compile error was observed firing. |
+| `tooling/contract-drift` | **Built**, with a selftest that proves it goes red. |
+| Fixtures | **148 cases**, 44 of them negative. |
+| **Assertions proven** | **1188** across 6 gates, plus `tsc` clean. |
 
-Every operation carries `x-usrp-verified`, so the gap is machine-readable:
+**The two exceptions, stated plainly:**
 
-- `controller-verbatim` — request and response shapes transcribed from the named
-  controller, field by field.
-- `pending-controller-read` — path, method and auth kind verified; bodies
-  derived from selfcheck output and commit messages. **Must be transcribed
-  before generating a client for that route.**
+1. **Drift gates B and C did not run in the authoring environment** — they need
+   an `e-recruitment` checkout on disk. Gate A (OpenAPI vs pinned manifest, 177
+   assertions) ran green. Run `pnpm --filter @usrp/contracts drift -- --backend
+   ../e-recruitment` before treating the drift check as complete.
+2. **`GET /v1/applicants/me/applications` is `proxy-derived`.** Its envelope is
+   verbatim; its array element is `application-service`'s
+   `ApplicantApplicationSummary`, asserted rather than re-read, because this pass
+   did not open `adapters/applications.http-gateway.ts`. Everything else is
+   transcribed field by field.
 
 A contract that guesses is worse than one that admits a gap, because a guess
 type-checks.
@@ -67,165 +57,195 @@ drifted until it described a different system:
 | | Frontend `shared-types` | Reality |
 |---|---|---|
 | Application statuses | 17, of which **5 exist** | **19** |
-| Invented statuses | 12 (`UNDER_REVIEW`, `SHORTLISTED`, `PHYSICAL_PASSED`, `VETTING_IN_PROGRESS`, `EXPIRED`, …) | — |
-| Missing statuses | 14, including the whole green/amber lane, all four `WALK_IN_*`, and `ADJUDICATION_REVIEW` | — |
+| Invented statuses | 12 (`UNDER_REVIEW`, `SHORTLISTED`, `EXPIRED`, ...) | — |
 | `TERMINAL_STATUSES` | contains `EXPIRED` (never existed), omits `WALK_IN_REJECTED` (real) | 4 for RDF, 3 for RNP/RCS |
-| `DocumentType` | 6, of which **1 exists**, modelled as agency-agnostic | **11**, genuinely **per-agency** |
-| `gender` | `MALE \| FEMALE \| OTHER` | `MALE \| FEMALE` — `OTHER` is unrepresentable end to end |
+| `DocumentType` | 6, of which **1** exists, modelled agency-agnostic | **11**, genuinely per-agency |
+| `gender` | `MALE\|FEMALE\|OTHER` | `MALE\|FEMALE` — `OTHER` is unrepresentable end to end |
 | `PaginatedResult<T>` | used everywhere | **nothing in the platform paginates** |
-| `OfficerRole` | 5 roles incl. `SUPERADMIN` "no RLS" | token carries `roles: string[]`, RLS is FORCE'd, no bypass principal exists |
+| `OfficerRole` | 5 roles incl. `SUPERADMIN` "no RLS" | `roles: string[]`; RLS is FORCE'd, no bypass principal exists |
 
 In this domain a drifted type is not a rendering bug. Nineteen statuses, three
-agencies with divergent enums, and RLS-enforced isolation add up to a citizen
+agencies with divergent enums and RLS-enforced isolation add up to a citizen
 wrongly rejected from a career in the national security services.
 
-**`packages/shared-types` is deprecated and slated for deletion.** It is not
-deleted yet: its consumers migrate in a later job. Do not add to it, and do not
+**`packages/shared-types` is DEPRECATED and slated for deletion.** It is not
+deleted yet — its consumers migrate in a later job. Do not add to it and do not
 import it in new code.
+
+---
+
+## The layers, and why they are separate
+
+```
+openapi/*.yaml           WIRE TRUTH, hand-authored from controllers
+   | generate
+src/generated/*.zod.ts   Zod schemas (runtime validators)
+   | z.infer
+src/generated/*.types.ts TypeScript types
+src/agency.ts            WHICH VALUES ARE LEGAL FOR WHICH AGENCY
+src/narrow.ts            the JOIN — makes an unreachable status a COMPILE ERROR
+```
+
+Types are inferred from the schemas, never written beside them. One description
+of each wire shape, so a schema that is wrong is wrong in both places at once and
+cannot pass one gate while failing the other.
+
+```ts
+import { type Agency, type StatusFor, narrowRow } from '@usrp/contracts';
+
+declare function lozengeFor<A extends Agency>(agency: A, status: StatusFor<A>): Appearance;
+
+lozengeFor('RDF', 'WALK_IN_REGISTERED');  // ok
+lozengeFor('RNP', 'WALK_IN_REGISTERED');  // TS2345 — the whole point
+```
+
+`rnp_ops` and `rcs_ops` carry no `WALK_IN_*` values. This is why the backend
+compares `status::text` instead of casting to an enum: an enum-cast comparison
+against `WALK_IN_REJECTED` is a hard error for two agencies out of three and
+works fine for RDF, so it passes every test run against RDF fixtures and fails in
+production for RNP and RCS. Adding a status without classifying it as shared or
+RDF-only fails the build.
+
+Generated schemas are **namespaced per service** — eleven services independently
+name a schema `Uuid`, and three genuinely different bodies share the name
+`Forbidden403`. A flat barrel would have to pick a winner and would silently hand
+callers the wrong 403.
 
 ---
 
 ## The six invariants this package encodes
 
 1. **Exact-path routing only.** `shared-http` matches paths exactly and has no
-   param syntax (ADR-005). IDs travel in the request body (POST) or a query
-   param (GET, `?applicationId=`). Any `/resource/${id}` URL is a bug — the
-   frontend's `GET /applications/${id}` and `PATCH /applications/${id}/status`
-   cannot route at all. Restoring REST ergonomics for the browser is the edge
-   tier's job.
+   param syntax (ADR-005). IDs travel in the request body (POST) or a query param
+   (GET, `?applicationId=`). The loader **rejects** a templated path outright.
 2. **The raw National ID is request-only**, and `nationalIdHash` is an internal
-   cross-service key that must never reach the browser. The old `useWalkIn`
-   asked the browser to *compute* it.
+   cross-service key that must never reach the browser. Referenced by request
+   bodies and by no response anywhere in these documents.
 3. **Agency isolation is Postgres RLS.** Frontend guards are presentational and
    must never be documented as security.
 4. **Two human credential kinds, not interchangeable.** Officers carry an
    Ed25519 bearer JWT (non-revocable until expiry, by design); citizens carry an
-   opaque 32-byte revocable DB session (ADR-018). Neither is a cookie today.
-   Both JWT kinds fail `401 UNAUTHENTICATED`; the session kind fails
+   opaque 32-byte revocable DB session with a sliding TTL (ADR-018). Neither is a
+   cookie. Both JWT kinds fail `401 UNAUTHENTICATED`; the session kind fails
    `401 INVALID_SESSION` — same status, different code, same service.
 5. **Browser-reachable vs service-internal is load-bearing.** Getting it wrong
-   exposes a system-token route to a citizen, so it is modelled
-   (`x-usrp-reach`) rather than left to reviewer memory.
+   exposes a system-token route to a citizen, so it is modelled (`x-usrp-reach`,
+   exported as `SERVICE_INTERNAL_ROUTES`) rather than left to reviewer memory.
+   Drift gate A fails if a system-token route is marked browser-reachable.
 6. **No-enumeration is a designed property.** Both single-record 404s are
-   deliberately bare: a sibling agency's real application ID and a nonexistent
-   one return byte-identical responses. Adding a detail field turns 404 into a
-   cross-agency existence oracle. The OTP request returns one identical `202`
-   across four different input classes. **UI copy must not leak what the API
-   refused to leak.**
+   deliberately bare: a sibling agency's real application ID and a nonexistent one
+   return byte-identical responses. The OTP request returns one identical `202`
+   across at least four input classes. **UI copy must not leak what the API
+   refused to leak.** Negative fixtures pin each of these.
 
 ---
 
-## Using the divergence model
+## Fixtures: the negatives are the proof
 
-```ts
-import { type Agency, type StatusFor, isTerminal } from '@usrp/contracts/agency';
+`fixtures/*.fixtures.json` — 148 cases, **44 of them `"expect": "reject"`**. A
+schema of `z.unknown()` accepts every positive fixture ever written, so a suite
+of valid examples proves close to nothing. The negatives encode specific bugs
+that shipped and specific invariants that must hold:
 
-declare function lozengeFor<A extends Agency>(agency: A, status: StatusFor<A>): Appearance;
+- `nationalIdHash` / raw NID / NIDA PII in a response — **rejected**
+- the twelve invented statuses, including `EXPIRED` — **rejected**
+- the `PaginatedResult` envelope — **rejected**
+- a forensics score on the citizen upload response (the forgery-tuning oracle) — **rejected**
+- venue and datetime on the citizen's application list (they exist nowhere) — **rejected**
+- a user object on the officer login response — **rejected**
+- `detail` on a 5xx (`expose = status < 500` discards every one) — **rejected**
+- `detail` on the bare 404 (it would become a cross-agency existence oracle) — **rejected**
+- the two `NOT_FOUND` shapes (`{error}` on reads, `{status}` on writes) crossed over — **rejected**
+- the underscored / un-underscored `MISSING_APPLICANT_ID` spellings crossed over — **rejected**
 
-lozengeFor('RDF', 'WALK_IN_REGISTERED');  // ok
-lozengeFor('RNP', 'WALK_IN_REGISTERED');  // compile error — the whole point
-```
-
-`rnp_ops` and `rcs_ops` carry no `WALK_IN_*` values. This is why the backend
-compares `status::text` instead of casting to an enum: an enum-cast comparison
-against `WALK_IN_REJECTED` is a hard error for two agencies out of three and
-works fine for RDF, so it passes every test run against RDF fixtures and fails
-in production for RNP and RCS. The frontend equivalent is a
-`WALK_IN_ON_SITE_VETTING` lozenge rendering in the RNP console.
-
-Adding a status without classifying it as shared or RDF-only fails the build.
-
----
-
-## Nine endpoints the designed UI still needs
-
-Three landed in PR #3. Six remain. All follow the `?applicantId=` precedent:
-query param on GET, exact path, no path params.
-
-| | Endpoint | Status |
-|---|---|---|
-| 1 | `GET /v1/applications/by-id?applicationId=` | ✅ **landed** |
-| 2 | `GET /v1/applications/status-history?applicationId=` | ✅ **landed** |
-| 3 | `POST /v1/documents/upload` | ✅ **landed** (multipart, not the presigned-URL flow originally proposed) |
-| 4 | `GET /v1/applications/documents?applicationId=` | needed — `document_records` is written and never read |
-| 5 | `GET /v1/auth/officer/me` | needed — **nothing tells an officer who they are.** Login returns `{token, expiresAt}` and no user object, so the console cannot render a name, an agency badge, or a role-gated menu |
-| 6 | `GET /v1/applicants/me/slot?applicationId=` | needed — `SLOT_ASSIGNED` is projected onto the row and **the citizen cannot see where or when to show up.** Arguably the most consequential gap for an actual applicant |
-| 7 | `GET /v1/applicants/me/profile` | needed — must exclude name, DOB and phone (encrypted at rest; invariant 2 forbids the hash) |
-| 8 | `GET /v1/applications/search?processingCode=` | needed — the list caps at 100 with no filter, so past ~100 rows an officer cannot find a specific application |
-| 9 | `GET /v1/applications/metrics` | **blocked on a decision.** Only `pendingReview` is derivable (from `amber-queue`); `requiresAction`, `scheduledToday` and `acceptedThisWeek` have no source in any schema and cannot be specced until someone defines them |
+Every case runs through **both** the zero-dependency structural validator and the
+generated Zod schema, and `verify` fails if the two readers disagree.
 
 ---
 
-## Live backend inconsistencies found while reading
+## Two deliberate omissions in the generated output
 
-Recorded verbatim in the documents rather than silently normalised, because a
-contract that smooths over a real inconsistency hides it from the only people
-who can fix it.
+**No `.datetime()` on any response timestamp.** The backend does not validate the
+format of any timestamp it *returns*, so asserting one client-side would be a
+constraint the platform never promised — and a validator that rejects real server
+data is an outage with our name on it. Constraints the backend genuinely enforces
+on the way *in* (UUID patterns, the NESA/HEC regexes, the length bounds) **are**
+emitted. Two fixtures pin this so nobody "fixes" it by accident.
+
+**`.strict()` on every closed object.** An unexpected key means the wire grew a
+field this package has never read. That is the drift being hunted; it should fail
+loudly, in development, on the first response that carries it.
+
+---
+
+## Live backend inconsistencies recorded, not smoothed over
+
+Each is documented verbatim in the relevant operation and pinned by a fixture.
 
 1. **`analyze-document.controller.ts` keys business outcomes on `error`, not
-   `status`** — unique among fifteen controllers. On that route a client cannot
-   distinguish a business outcome from a transport fault. **Zero frontend
-   consumers today, so this is the cheapest it will ever be to re-key.**
+   `status`** — unique among fifteen controllers, so a client there cannot tell a
+   business outcome from a transport fault. **Zero frontend consumers today, so
+   re-keying it is the cheapest it will ever be.**
 2. **Same file: `mapOutcome` has no `default`/`assertNever`.** Add an outcome
    variant and it compiles, returns `undefined` as an `HttpResult`, and the
    transport answers `200` with an empty body.
 3. **`officer-transitions.controller.ts` header says "Three OFFICER-authenticated
    write endpoints"** and lists three; the file exports **four** and the factory
-   returns four. Stale doc on the most safety-critical controller in the
-   platform.
+   returns four. Stale doc on the most safety-critical controller in the platform.
 4. **`self-withdrawal.controller.ts:87`: `mapDomainError` throws** inside a
-   function declared `: HttpError`, called as `throw mapDomainError(err)`.
-   Behaviour is accidentally identical to every sibling; the declared contract
-   is violated and the return path is dead.
+   function declared `: HttpError`, called as `throw mapDomainError(err)`. The
+   declared contract is violated and the return path is dead code.
 5. **`walk-in.controller.ts` builds codes by upper-casing field names**, yielding
-   `MISSING_APPLICANTID` and `INVALID_NESAINDEXNUMBER` where every other
-   controller emits `MISSING_APPLICANT_ID`. Two spellings of the same code on
-   one service.
-6. **`runTransition` erases per-command outcome narrowing.** medical-review,
-   final-decision and accept share one `mapOutcome`, so at the type level every
-   one can emit `422 INVALID_MEDICAL_INPUT` and `409 CROSS_AGENCY_LOCKED`. The
-   selfcheck proves the real narrowing. The HTTP layer is strictly looser than
-   the behaviour it implements.
-7. **Every 5xx/503 `detail` string is written and silently discarded**
-   (`HttpError.expose = status < 500`). `NIDA_UNAVAILABLE`,
-   `SCANNER_UNAVAILABLE`, `OBJECT_STORE_UNAVAILABLE` and five others pass
-   caller-facing hints nobody receives. Either `expose: true` or delete them —
-   the error UI depends on which.
-8. **403 has three incompatible bodies platform-wide:**
-   `{error:'FORBIDDEN', detail}` from `withAuth`, `{error:'FORBIDDEN'}` from
-   outcome branches, `{status:'AGENCY_MISMATCH'}` from biometric-service. No
-   single discriminated union covers 403.
+   `MISSING_APPLICANTID` where every other controller emits
+   `MISSING_APPLICANT_ID`. Two spellings of one code on one service.
+6. **`runTransition` erases per-command outcome narrowing.** All four transitions
+   share one `mapOutcome`, so at the type level every one can emit
+   `422 INVALID_MEDICAL_INPUT` and `409 CROSS_AGENCY_LOCKED`. These documents
+   record the real per-route narrowing; the HTTP layer is strictly looser than the
+   behaviour it implements.
+7. **Every 5xx/503 `detail` string is written and silently discarded.**
+   `NIDA_UNAVAILABLE`, `SCANNER_UNAVAILABLE`, `ELIGIBILITY_STORE_UNAVAILABLE` and
+   five others pass caller-facing hints nobody receives. Either `expose: true` or
+   delete them — the error UI depends on which.
+8. **403 has three incompatible bodies platform-wide:** `{error:'FORBIDDEN',
+   detail}` from `withAuth`, `{error:'FORBIDDEN'}` from outcome branches, and
+   `{status:'AGENCY_MISMATCH'}` from biometric-service. **No single discriminated
+   union covers 403**, which is why `BiometricForbidden403` is an untagged
+   `oneOf`.
 9. **`POST /v1/field-sync/scores` returns `200 {status:'SYNCED'}` even when every
-   record was `REJECTED` for `BAD_SIGNATURE`.** Correct batch semantics; means
-   an `assertOk`-shaped client reads a wholly-forged upload as success.
-10. **`NOT_A_CITIZEN → 422` on `/v1/identities/verify` is unproven** — no
+   record was `REJECTED` for `BAD_SIGNATURE`.** Correct batch semantics; means an
+   `assertOk`-shaped client reads a wholly forged upload as success and tells a
+   field officer their exam-day scores are saved when none of them are.
+10. **`NOT_A_CITIZEN -> 422` on `/v1/identities/verify` is unproven** — no
     selfcheck exercises it and the NIDA mock has no non-citizen fixture. An
     unproven branch on the route that gates eligibility.
 11. **`biometric-service` registers no readiness probe**, so `GET /ready` always
-    answers `200` regardless of dependency health. A liveness check wearing a
-    readiness name; an orchestrator will route traffic to a service whose
-    matcher is down.
+    answers `200` regardless of dependency health. Drift gate B asserts this fact,
+    so the day it changes, the manifest goes red.
+12. **`enroll-device.controller.ts` has no `try/catch` and no `mapDomainError`**,
+    unlike every sibling, so a persistence fault surfaces as the transport's
+    generic 500 with no service-specific code.
 
----
+## Two decisions still needed
 
-## Two decisions needed before the next pass
-
-1. **Item 6** — narrow `mapOutcome` per command, or accept that the contract
+1. **Item 6** — narrow `mapOutcome` per command, or accept that the HTTP contract
    documents a wider union than any single route can emit?
-2. **Item 7** — are the 502/503 `detail` strings wanted (`expose: true`) or
-   dead? The wire shape differs either way, and the error UI is built on the
-   answer.
+2. **Item 7** — are the 502/503 `detail` strings wanted (`expose: true`) or dead?
+   The wire shape differs either way, and the error UI is built on the answer.
 
 ---
 
-## Scripts
+## `openapi/proposed/` — endpoints that do not exist
 
-```bash
-pnpm --filter @usrp/contracts typecheck   # the only one that runs today
-pnpm --filter @usrp/contracts generate    # not built
-pnpm --filter @usrp/contracts verify      # not built
-```
+Six specced operations the designed UI needs, **deliberately outside the loader's
+glob** so nothing there can generate a client. `verify`'s proposed-isolation gate
+asserts it on every run. A generated client for a nonexistent endpoint is worse
+than no client: it type-checks, it looks finished, and it 404s in production.
 
-`generate` and `verify` are deliberately zero-dependency beyond `zod`: a
-contract tool that pulls a supply chain into a national deployment is the wrong
-trade for a few hundred lines of parsing.
+See `openapi/proposed/README.md`. The two that hurt most:
+
+- **`GET /v1/applicants/me/status-history`** — the transition trail is *this
+  platform's own Procedural Justice surface* and it is **officer-authenticated**.
+  The rejected applicant, the one person with an interest in it, cannot read it.
+- **`GET /v1/applicants/me/slot`** — `SLOT_ASSIGNED` is projected onto the row and
+  **no endpoint tells the citizen where or when to show up.**

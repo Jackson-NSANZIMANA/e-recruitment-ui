@@ -1,0 +1,1343 @@
+# ════════════════════════════════════════════════════════════════
+# identity-service — THE CITIZEN'S ENTIRE WORLD, plus the DPO surface.
+#
+# HAND-AUTHORED from four controllers and src/main.ts at backend SHA 47d9ad3.
+#
+# x-usrp-verified levels used in this document:
+#   controller-verbatim  request and response shapes transcribed from the named
+#                        controller file, field by field
+#   proxy-derived        the ENVELOPE is verbatim, but the payload is proxied
+#                        from another service through a gateway port this pass
+#                        did not open. The element shape is stated as the other
+#                        service's contract, and that link is an assumption
+#                        recorded rather than hidden.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP identity-service"
+  version: "1.0.0"
+  description: >-
+    Three unrelated jobs live in one service, and conflating them is the fastest
+    way to build the wrong client:
+
+
+    1. NIDA identity verification (system OR officer token).
+
+    2. The CITIZEN's own authentication and self-service (ADR-018/ADR-020) — OTP
+    request/verify, an opaque revocable session, their applications, their
+    withdrawal, their erasure demand.
+
+    3. The officer/DPO erasure surface (ADR-015) — the accountable human road.
+
+
+    THE CITIZEN CREDENTIAL IS NOT A JWT AND NOT A COOKIE. otp/verify returns
+    { sessionToken, expiresAt } in a JSON body: a 32-byte opaque handle to a row
+    in public_core.applicant_sessions with a 30-minute sliding TTL, validated
+    LIVE on every request so revocation is honoured immediately. Nothing sets a
+    Set-Cookie header. A frontend built on httpOnly cookies has no server in
+    this system that will implement it.
+
+
+    THE TWO CREDENTIAL KINDS FAIL DIFFERENTLY ON THE SAME SERVICE. Officer and
+    system JWTs fail 401 { error: "UNAUTHENTICATED" } via withAuth. The citizen
+    session fails 401 { error: "INVALID_SESSION" }. Same status, different code,
+    same service, and no route accepts both.
+
+
+    THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
+    response in this document. The hash is an internal cross-service key; a
+    browser that computes or receives one is a leak of a cross-service join key.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: "Body-parsing operations only."
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+      note: "Body-parsing operations only."
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "Body-parsing operations only. Also EMPTY_BODY."
+
+paths:
+  # ───────────────────────────────────────────────────────────────
+  # 1. NIDA identity verification
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/identities/verify:
+    post:
+      operationId: "verifyIdentity"
+      summary: "Resolve a National ID against NIDA to an opaque applicant UUID"
+      description: >-
+        ACCEPTS TWO PRINCIPAL KINDS, which is unusual and deliberate:
+        withAuth(verify, { kind: ['system','officer'] }). system is the
+        pre-registered digital flow; officer is the walk-in lane's on-site NIDA
+        lookup at the exam venue (ADR-012). The caller kind changes nothing
+        below the edge.
+
+
+        THE RESPONSE RETURNS ONLY applicantId. Not the name, not the DOB, not
+        the gender, not the nationalIdHash. The old frontend's walk-in hook
+        asked the BROWSER to compute nationalIdHash — that is not a shape
+        mismatch, it is a request to leak the platform's cross-service join key
+        into a bundle.
+
+
+        `channel` IS REQUIRED. Omitting it is 400 INVALID_CHANNEL, so a client
+        that does not send one fails 100% of the time.
+
+
+        422 NOT_A_CITIZEN IS UNPROVEN. No selfcheck exercises it and the NIDA
+        mock ships no non-citizen fixture, so this branch is documented from
+        source and has never been observed over a socket. It gates eligibility
+        for the whole platform.
+      x-usrp-auth: ["system", "officer"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/verify-identity.controller.ts (VERIFY_IDENTITY_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyIdentityRequest"
+      responses:
+        "201":
+          description: "A new applicant identity was created."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityCreated201"
+        "200":
+          description: >-
+            Idempotent replay — this identity already existed. Same applicantId
+            as the original 201.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityAlreadyExists200"
+        "400":
+          description: >-
+            Three distinct codes on `error`: MISSING_NATIONAL_ID (field absent
+            or blank), INVALID_CHANNEL (not one of the four), and
+            INVALID_NATIONAL_ID (present, well-shaped at the edge, rejected by
+            the domain's checksum). The third is a real judgement about the
+            number and must not be rendered as "please fill in this field".
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyIdentity400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Authenticated but neither system nor officer."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "NOT_FOUND_IN_NIDA — the register has no such number."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundInNida404"
+        "422":
+          description: "NOT_A_CITIZEN. Found in NIDA, not a citizen. UNPROVEN branch."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotACitizen422"
+        "503":
+          description: >-
+            NIDA_UNAVAILABLE — a G2G fault, retryable. The `detail` written in
+            source is discarded on the wire (expose = status < 500).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NidaUnavailable503"
+        "500":
+          description: "IDENTITY_PERSISTENCE_ERROR or INTERNAL_ERROR. Detail withheld."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityError500"
+
+  # ───────────────────────────────────────────────────────────────
+  # 2. Citizen authentication (ADR-018) — PUBLIC, then session-bearing
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/applicants/auth/otp/request:
+    post:
+      operationId: "requestApplicantOtp"
+      summary: "Send a one-time code to the citizen's registered phone"
+      description: >-
+        UNAUTHENTICATED — this is what authenticates a citizen, so it cannot
+        require a token.
+
+
+        ONE 202 COVERS AT LEAST FOUR DIFFERENT INPUT CLASSES: a known verified
+        applicant, an unknown national id, a known applicant with no phone on
+        record, and a rate-limited repeat. All produce a byte-identical
+        { status: "CHALLENGED" }. That is a designed no-enumeration property.
+
+
+        THE UI MUST NOT LEAK WHAT THE API REFUSED TO LEAK. "We sent a code to
+        your phone" is the only honest copy. "No account found for that ID" and
+        "we don't have a phone number for you" are both existence oracles built
+        in the client for an API that carefully avoided being one.
+
+
+        The raw phone number is never returned. Neither is the code.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (OTP_REQUEST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequestBody"
+      responses:
+        "202":
+          description: "Uniform. See the description — this says nothing about the input."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpChallenged202"
+        "400":
+          description: >-
+            Shape errors only: INVALID_REQUEST (nationalId absent/blank/over
+            32), INVALID_CHANNEL, INVALID_NATIONAL_ID (domain checksum).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuth400"
+        "502":
+          description: "UPSTREAM_UNAVAILABLE — a dependent service is down."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+        "503":
+          description: "NIDA_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NidaUnavailable503"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/applicants/auth/otp/verify:
+    post:
+      operationId: "verifyApplicantOtp"
+      summary: "Exchange the one-time code for an opaque session token"
+      description: >-
+        UNAUTHENTICATED. THE ONLY PLACE THE SESSION TOKEN EVER APPEARS. It is
+        returned once, in this body, and never again by any endpoint. It is not
+        logged. If the client loses it the citizen must re-authenticate.
+
+
+        EVERY FAILURE IS ONE BYTE-IDENTICAL 401 INVALID_OTP: wrong code, expired
+        code, no challenge outstanding, unknown national id. Do not build copy
+        that distinguishes them.
+
+
+        Requires nationalId AND channel alongside otp — the same three fields as
+        the request step, not just the code.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (OTP_VERIFY_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyBody"
+      responses:
+        "200":
+          description: "Authenticated. Store the sessionToken; it is never reissued."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantSessionIssued200"
+        "400":
+          description: "Shape errors, as for otp/request, plus a missing/oversized otp."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuth400"
+        "401":
+          description: "INVALID_OTP. One shape for every cause."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidOtp401"
+        "502":
+          description: "UPSTREAM_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+        "503":
+          description: "NIDA_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NidaUnavailable503"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/applicants/auth/logout:
+    post:
+      operationId: "logoutApplicant"
+      summary: "Revoke the current citizen session"
+      description: >-
+        THIS ROUTE IS ABSENT FROM EVERY EARLIER SURVEY OF THIS API, and it is
+        the thing that makes the opaque-session choice worth its cost: an
+        officer JWT cannot be revoked before expiry, a citizen session can be,
+        and this is the door that does it.
+
+
+        It authenticates FIRST and revokes second, so a bogus token cannot be
+        used to probe. Returns 204 WITH NO BODY — a client that unconditionally
+        parses JSON on this response will throw on success.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (LOGOUT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "204":
+          description: "Session revoked. NO BODY."
+        "401":
+          description: "INVALID_SESSION — absent, malformed, expired or already revoked."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/applicants/me/applications:
+    get:
+      operationId: "listMyApplications"
+      summary: "The citizen's own applications, across all three agencies"
+      description: >-
+        SESSION-AUTHENTICATED. THE APPLICANT ID IS NEVER A PARAMETER — it is
+        derived from the session inside the handler, so there is no shape of
+        this request that can ask about somebody else.
+
+
+        Cross-agency by design: identity-service proxies to application-service
+        GET /v1/applications/by-applicant with its OWN client-credentials token
+        (the ADR-016/ADR-018 pattern). An officer token cannot reach that
+        route, which is why the citizen door cannot be per-agency.
+
+
+        WHAT THIS DOES NOT RETURN, AND WHY IT MATTERS: status and nothing
+        actionable. When status is SLOT_ASSIGNED the citizen learns that a slot
+        exists and cannot learn WHERE or WHEN. There is no endpoint in the
+        platform that tells them. That is the most consequential read gap for an
+        actual applicant and it is specced in openapi/proposed/.
+
+
+        NOTHING PAGINATES. No total, no cursor, no limit parameter. The
+        deprecated frontend's PaginatedResult<T> has no counterpart anywhere in
+        this platform.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_APPLICATIONS_PATH)"
+      x-usrp-verified: "proxy-derived"
+      responses:
+        "200":
+          description: "The citizen's applications. Element shape is application-service's."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyApplicationsOk"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "502":
+          description: >-
+            UPSTREAM_UNAVAILABLE — application-service is unreachable. Distinct
+            from 500: the citizen's own data is fine, the hop failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/applicants/me/applications/withdraw:
+    post:
+      operationId: "withdrawMyApplication"
+      summary: "The citizen withdraws their own application (ADR-020)"
+      description: >-
+        SESSION-AUTHENTICATED. The body carries applicationId ONLY; the
+        applicant identity comes from the session and travels with the proxied
+        call, so this door can only move the caller's own row.
+
+
+        NOT-MINE AND NOT-REAL ARE THE SAME 404. Ownership is the row lookup
+        (WHERE id = X AND applicant_id = Y FOR UPDATE), so the door is
+        deliberately not an ownership oracle. Do not write copy that implies the
+        application exists but belongs to someone else.
+
+
+        ALREADY-WITHDRAWN IS A 200 NO_CHANGE, not an error: idempotent, no
+        writes, no audit row. A client that treats only WITHDRAWN as success
+        will show a failure for a repeat click that did exactly what was asked.
+
+
+        409 NOT_APPLICABLE carries currentStatus and means the application is
+        terminal (ACCEPTED, REJECTED, WALK_IN_REJECTED). That is the only place
+        this route explains itself.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_WITHDRAW_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawMineRequest"
+      responses:
+        "200":
+          description: >-
+            WITHDRAWN (with fromStatus) or NO_CHANGE (idempotent). Discriminated
+            on `status` — two different bodies on one status code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawMineOk200"
+        "400":
+          description: "INVALID_REQUEST — applicationId is not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuth400"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "NOT_FOUND. Also the answer for another citizen's real application."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawNotFound404"
+        "409":
+          description: "NOT_APPLICABLE — terminal state, with currentStatus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawNotApplicable409"
+        "502":
+          description: "UPSTREAM_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/applicants/me/erasure-request:
+    post:
+      operationId: "fileMyErasureRequest"
+      summary: "The data subject files a right-to-erasure demand"
+      description: >-
+        SESSION-AUTHENTICATED. 202 BOTH WAYS: filing is idempotent, so a live
+        request is RETURNED rather than duplicated, and the response cannot tell
+        you which happened. A client must not report "request submitted" versus
+        "already submitted" — it does not know.
+
+
+        Filing is not execution. A human decides next; execution runs down the
+        gated ADR-015 erasure road.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/erasure-request.controller.ts (ME_ERASURE_REQUEST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "202":
+          description: "On record, pending a human decision. Same body for a fresh or existing request."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureRequestFiled202"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+    get:
+      operationId: "getMyErasureRequest"
+      summary: "The data subject reads the status of their own demand"
+      description: >-
+        SESSION-AUTHENTICATED. SHARES ITS PATH WITH THE POST — shared-http keys
+        its table by (path -> method), so both coexist on one exact path.
+
+
+        404 { status: "NONE" } MEANS "YOU HAVE NEVER FILED ONE". It is not an
+        error and not a missing page; it is the normal state for almost every
+        citizen. Rendering it as a failure is wrong.
+
+
+        decisionNote is the DPO's stated ground and is deliberately exposed to
+        the citizen — it answers THEIR demand.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/erasure-request.controller.ts (ME_ERASURE_REQUEST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The citizen's request record."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyErasureRequestOk"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "NONE — never filed. A normal state, not a fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureRequestNone404"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  # ───────────────────────────────────────────────────────────────
+  # 3. Officer / DPO erasure surface (ADR-015)
+  # ───────────────────────────────────────────────────────────────
+
+  /v1/identities/erasure:
+    post:
+      operationId: "eraseIdentity"
+      summary: "Execute an erasure against an applicant identity"
+      description: >-
+        OFFICER-ONLY — an accountable human, never a system token. THE BODY
+        TAKES ONLY applicantId. A raw national id is not accepted here;
+        resolving one is the verify road's job.
+
+
+        BOTH 409s ARE LAWFUL REFUSALS, NOT ERRORS. An active application or a
+        cross-agency accept-lock outranks the erasure demand, and the response
+        names the agency responsible so the DPO can explain the refusal to the
+        data subject. This is the surface where a legal right meets a legal
+        retention duty, and flattening the two refusals loses which duty won.
+
+
+        ALREADY_ERASED is a 200, not a 404: the demanded end-state holds.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/erasure.controller.ts (ERASURE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EraseIdentityRequest"
+      responses:
+        "200":
+          description: "ERASED or ALREADY_ERASED — discriminated on `status`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EraseOk200"
+        "400":
+          description: "INVALID_APPLICANT_ID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidApplicantId400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal — a system token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "NOT_FOUND — no such applicant identity."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureNotFound404"
+        "409":
+          description: >-
+            REFUSED_ACTIVE_APPLICATION (with agency + currentStatus) or
+            REFUSED_ACCEPT_LOCKED (with lockedByAgency). Different grounds,
+            different fields, one status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EraseRefused409"
+        "500":
+          description: "IDENTITY_PERSISTENCE_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityError500"
+
+  /v1/identities/erasure-requests:
+    get:
+      operationId: "listErasureRequests"
+      summary: "The DPO's pending-request queue"
+      description: >-
+        OFFICER-ONLY. TAKES NO PARAMETERS and is NOT agency-scoped: erasure is a
+        platform-level data-protection duty, not an agency workflow, so this
+        queue is every pending request. Note this differs from every officer
+        read on application-service, which are RLS-scoped to the caller's own
+        agency.
+
+
+        Returns applicantId — an opaque UUID and the only identifier a DPO gets.
+        No name, no national id, no hash. Deciding an erasure demand from this
+        queue means deciding it without knowing who the person is, by design.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/erasure-request.controller.ts (ERASURE_REQUESTS_QUEUE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "Pending requests. No total, no pagination."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureQueueOk"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /v1/identities/erasure-requests/decline:
+    post:
+      operationId: "declineErasureRequest"
+      summary: "The DPO refuses an erasure demand, on the record"
+      description: >-
+        OFFICER-ONLY. `note` IS MANDATORY (1..200 chars, non-blank) — a refusal
+        without a stated ground is not accepted by the API. The UI cannot make
+        that field optional; a blank note is a 400.
+
+
+        THERE IS NO APPROVE ROUTE, AND THAT IS INTENTIONAL. Approval is not a
+        decision recorded here — execution IS the gated erasure road above
+        (POST /v1/identities/erasure), which stamps the request through the use
+        case. A DPO console with an "Approve" button pointing at this controller
+        is targeting an endpoint that does not exist.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/erasure-request.controller.ts (ERASURE_REQUEST_DECLINE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclineErasureRequest"
+      responses:
+        "200":
+          description: "DECLINED."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureDeclined200"
+        "400":
+          description: "INVALID_REQUEST — requestId not a UUID, or note absent/blank/over 200."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuth400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "NOT_FOUND — no such request."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureNotFound404"
+        "409":
+          description: >-
+            NOT_PENDING — already decided. Carries currentStatus so the UI can
+            say which way it went instead of just refusing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureNotPending409"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
+  /health:
+    get:
+      operationId: "identityHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "identityReady"
+      summary: "Readiness — database reachable"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable."
+        "503":
+          description: "Database unreachable."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    Agency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    ApplicationChannel:
+      description: >-
+        REQUIRED on both verify and OTP request/verify. 400 INVALID_CHANNEL
+        otherwise. Source: APPLICATION_CHANNELS in backend shared-types.
+      type: "string"
+      enum: ["WEB", "USSD", "IREMBO_KIOSK", "WALK_IN"]
+
+    ApplicationStatus:
+      description: >-
+        All 19 states. Per-agency legality is NOT expressible in OpenAPI —
+        rnp_ops and rcs_ops carry no WALK_IN_* values. Use StatusFor<Agency>
+        from src/agency.ts to constrain by agency at compile time.
+      type: "string"
+      enum:
+        - "DRAFT"
+        - "SUBMITTED"
+        - "ACADEMIC_VETTING"
+        - "CRIMINAL_CLEARANCE"
+        - "DOCUMENT_REVIEW_GREEN"
+        - "DOCUMENT_REVIEW_AMBER"
+        - "SLOT_ASSIGNED"
+        - "PHYSICAL_TEST_SCHEDULED"
+        - "PHYSICAL_TEST_COMPLETE"
+        - "MEDICAL_REVIEW"
+        - "FINAL_SHORTLIST"
+        - "ACCEPTED"
+        - "ADJUDICATION_REVIEW"
+        - "REJECTED"
+        - "WITHDRAWN"
+        - "WALK_IN_REGISTERED"
+        - "WALK_IN_ON_SITE_VETTING"
+        - "WALK_IN_PHYSICAL_TEST"
+        - "WALK_IN_REJECTED"
+
+    RawNationalId:
+      description: >-
+        REQUEST-ONLY. This schema is referenced by request bodies and by NO
+        response in this document. If it ever appears under a response, that is
+        the bug invariant 2 exists to catch.
+      type: "string"
+      minLength: 1
+      maxLength: 32
+
+    VerifyIdentityRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["nationalId", "channel"]
+      properties:
+        nationalId:
+          $ref: "#/components/schemas/RawNationalId"
+        channel:
+          $ref: "#/components/schemas/ApplicationChannel"
+
+    OtpRequestBody:
+      type: "object"
+      additionalProperties: false
+      required: ["nationalId", "channel"]
+      properties:
+        nationalId:
+          $ref: "#/components/schemas/RawNationalId"
+        channel:
+          $ref: "#/components/schemas/ApplicationChannel"
+
+    OtpVerifyBody:
+      type: "object"
+      additionalProperties: false
+      required: ["nationalId", "otp", "channel"]
+      properties:
+        nationalId:
+          $ref: "#/components/schemas/RawNationalId"
+        otp:
+          description: "Max 12 chars. Never echoed, never logged."
+          type: "string"
+          minLength: 1
+          maxLength: 12
+        channel:
+          $ref: "#/components/schemas/ApplicationChannel"
+
+    WithdrawMineRequest:
+      description: >-
+        applicationId ONLY. There is no applicantId field, by design — see the
+        operation description.
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+
+    EraseIdentityRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId"]
+      properties:
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+
+    DeclineErasureRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["requestId", "note"]
+      properties:
+        requestId:
+          $ref: "#/components/schemas/Uuid"
+        note:
+          description: "MANDATORY. Non-blank, max 200 (decision_note varchar(200))."
+          type: "string"
+          minLength: 1
+          maxLength: 200
+
+    IdentityCreated201:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "applicantId"]
+      properties:
+        status:
+          type: "string"
+          const: "CREATED"
+        applicantId:
+          description: >-
+            The OPAQUE applicant UUID. This is the entire payload — no name, no
+            DOB, no gender, and above all no nationalIdHash.
+          $ref: "#/components/schemas/Uuid"
+
+    IdentityAlreadyExists200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "applicantId"]
+      properties:
+        status:
+          type: "string"
+          const: "ALREADY_EXISTS"
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+
+    NotFoundInNida404:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_FOUND_IN_NIDA"
+
+    NotACitizen422:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_A_CITIZEN"
+
+    OtpChallenged202:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "CHALLENGED"
+
+    ApplicantSessionIssued200:
+      type: "object"
+      additionalProperties: false
+      required: ["sessionToken", "expiresAt"]
+      properties:
+        sessionToken:
+          description: >-
+            An OPAQUE 32-byte handle, not a JWT. Do not attempt to decode it;
+            there is nothing inside. 30-minute SLIDING TTL, revalidated live on
+            every request, revocable via logout (ADR-018).
+          type: "string"
+        expiresAt:
+          description: >-
+            The CURRENT expiry. Because the TTL slides, this value is stale the
+            moment the next authenticated request lands. Do not build a
+            countdown from it and call it accurate.
+          type: "string"
+          format: "date-time"
+
+    ApplicantApplicationSummary:
+      description: >-
+        PROXIED from application-service GET /v1/applications/by-applicant. This
+        is that service's ApplicantApplicationSummary; the link is stated, not
+        re-derived, and the operation is marked proxy-derived because this pass
+        did not open adapters/applications.http-gateway.ts.
+      type: "object"
+      additionalProperties: false
+      required:
+        ["applicationId", "processingCode", "category", "status", "submittedAt", "agency"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        processingCode:
+          description: "e.g. RDF-90823. The citizen's public handle for the application."
+          type: "string"
+        category:
+          type: "string"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        submittedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    MyApplicationsOk:
+      type: "object"
+      additionalProperties: false
+      required: ["applications"]
+      properties:
+        applications:
+          description: "No total, no cursor. Nothing in this platform paginates."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ApplicantApplicationSummary"
+
+    WithdrawnOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency", "fromStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "WITHDRAWN"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        fromStatus:
+          description: "What it was withdrawn FROM. The only place this is reported."
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    WithdrawNoChangeOk:
+      description: "Idempotent success — already WITHDRAWN. No writes, no audit row."
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency"]
+      properties:
+        status:
+          type: "string"
+          const: "NO_CHANGE"
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    WithdrawMineOk200:
+      oneOf:
+        - $ref: "#/components/schemas/WithdrawnOk"
+        - $ref: "#/components/schemas/WithdrawNoChangeOk"
+      discriminator:
+        propertyName: "status"
+
+    WithdrawNotFound404:
+      description: "Bare. Not an ownership oracle — see the operation description."
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_FOUND"
+
+    WithdrawNotApplicable409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency", "currentStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_APPLICABLE"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        currentStatus:
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    ErasureRequestFiled202:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "requestId"]
+      properties:
+        status:
+          type: "string"
+          const: "PENDING"
+        requestId:
+          $ref: "#/components/schemas/Uuid"
+
+    MyErasureRequestOk:
+      description: >-
+        NOTE the shape: no `status` discriminator wrapper, unlike every sibling.
+        `status` here is the REQUEST's lifecycle state, not an outcome code.
+      type: "object"
+      additionalProperties: false
+      required: ["requestId", "status", "requestedAt", "decidedAt", "decisionNote"]
+      properties:
+        requestId:
+          $ref: "#/components/schemas/Uuid"
+        status:
+          description: >-
+            The stored request status. Typed string rather than an enum: the
+            controller passes record.status through untouched and the enum is
+            not visible at the transport layer. Narrowing it would be a guess.
+          type: "string"
+        requestedAt:
+          type: "string"
+          format: "date-time"
+        decidedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        decisionNote:
+          description: "The DPO's ground. Exposed to the citizen deliberately."
+          type: ["string", "null"]
+
+    ErasureRequestNone404:
+      description: "Never filed. A normal state for almost every citizen."
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NONE"
+
+    ErasureQueueEntry:
+      type: "object"
+      additionalProperties: false
+      required: ["requestId", "applicantId", "requestedAt"]
+      properties:
+        requestId:
+          $ref: "#/components/schemas/Uuid"
+        applicantId:
+          description: "Opaque. The DPO decides without learning who the person is."
+          $ref: "#/components/schemas/Uuid"
+        requestedAt:
+          type: "string"
+          format: "date-time"
+
+    ErasureQueueOk:
+      type: "object"
+      additionalProperties: false
+      required: ["requests"]
+      properties:
+        requests:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ErasureQueueEntry"
+
+    ErasureDeclined200:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "DECLINED"
+
+    ErasureNotPending409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "currentStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_PENDING"
+        currentStatus:
+          type: "string"
+
+    ErasureNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_FOUND"
+
+    ErasedOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "ERASED"
+
+    AlreadyErasedOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "ALREADY_ERASED"
+
+    EraseOk200:
+      oneOf:
+        - $ref: "#/components/schemas/ErasedOk"
+        - $ref: "#/components/schemas/AlreadyErasedOk"
+      discriminator:
+        propertyName: "status"
+
+    RefusedActiveApplication409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency", "currentStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "REFUSED_ACTIVE_APPLICATION"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        currentStatus:
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    RefusedAcceptLocked409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "lockedByAgency"]
+      properties:
+        status:
+          type: "string"
+          const: "REFUSED_ACCEPT_LOCKED"
+        lockedByAgency:
+          $ref: "#/components/schemas/Agency"
+
+    EraseRefused409:
+      oneOf:
+        - $ref: "#/components/schemas/RefusedActiveApplication409"
+        - $ref: "#/components/schemas/RefusedAcceptLocked409"
+      discriminator:
+        propertyName: "status"
+
+    VerifyIdentity400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["MISSING_NATIONAL_ID", "INVALID_CHANNEL", "INVALID_NATIONAL_ID"]
+        detail:
+          type: "string"
+
+    ApplicantAuth400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["INVALID_REQUEST", "INVALID_CHANNEL", "INVALID_NATIONAL_ID"]
+        detail:
+          type: "string"
+
+    InvalidApplicantId400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_APPLICANT_ID"
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      description: "The JWT kinds. Citizen sessions fail INVALID_SESSION instead."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    InvalidSession401:
+      description: >-
+        THE CITIZEN'S 401. Distinct code from the JWT kinds' UNAUTHENTICATED,
+        same status, same service. Absent, malformed, expired and revoked are
+        all this one shape.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_SESSION"
+        detail:
+          type: "string"
+
+    InvalidOtp401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_OTP"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    NidaUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "NIDA_UNAVAILABLE"
+
+    UpstreamUnavailable502:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UPSTREAM_UNAVAILABLE"
+
+    IdentityError500:
+      description: "Detail is written in source and discarded on the wire."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["IDENTITY_PERSISTENCE_ERROR", "INTERNAL_ERROR"]
+
+    ApplicantAuthError500:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["PERSISTENCE_ERROR", "INTERNAL_ERROR"]
