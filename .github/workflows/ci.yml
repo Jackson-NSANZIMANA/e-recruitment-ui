@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout frontend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -38,7 +38,7 @@ jobs:
           fi
 
       - name: Checkout pinned backend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Jackson-NSANZIMANA/e-recruitment
           ref: ${{ env.BACKEND_SHA }}
@@ -46,11 +46,10 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
@@ -77,11 +76,12 @@ jobs:
         run: pnpm test:e2e
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
           path: |
             apps/officer-console/playwright-report/
             apps/applicant-portal/playwright-report/
+          if-no-files-found: ignore
           retention-days: 7
