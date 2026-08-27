@@ -9,19 +9,41 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
+
 jobs:
   ci:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate backend checkout credential
+        env:
+          BACKEND_REPO_READ_TOKEN: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKEND_REPO_READ_TOKEN:-}" ]; then
+            echo "BACKEND_REPO_READ_TOKEN is not configured. Full contract drift verification cannot run." >&2
+            echo "Create a read-only fine-grained token for Jackson-NSANZIMANA/e-recruitment and add it as the BACKEND_REPO_READ_TOKEN repository secret." >&2
+            exit 1
+          fi
 
       - name: Checkout pinned backend
         uses: actions/checkout@v4
         with:
           repository: Jackson-NSANZIMANA/e-recruitment
-          ref: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
+          ref: ${{ env.BACKEND_SHA }}
           path: backend
+          fetch-depth: 1
           token: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
 
       - uses: pnpm/action-setup@v4
@@ -33,20 +55,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Restore Turbo cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ github.ref_name }}-
-            turbo-${{ runner.os }}-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Verify contracts against pinned backend
-        run: pnpm --filter @usrp/contracts run verify -- --backend "${{ github.workspace }}/backend"
+        run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
       - name: Type-check (all packages)
         run: pnpm typecheck
