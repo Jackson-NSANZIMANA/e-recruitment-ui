@@ -1,0 +1,558 @@
+# ════════════════════════════════════════════════════════════════
+# field-sync-service — three officer-authenticated routes for the offline
+# physical-test tablet.
+#
+# HAND-AUTHORED from the three controllers and src/main.ts at backend SHA
+# 47d9ad3.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP field-sync-service"
+  version: "1.0.0"
+  description: >-
+    Owns the offline physical-test score log: enroll a device, batch-sync signed
+    score records, adjudicate a conflict. Writes physical_test_scores /
+    field_devices and emits field.score.captured.
+
+
+    THE DEVICE SIGNATURE IS THE INTEGRITY GATE, NOT THIS TRANSPORT. Shape
+    validation happens at the edge (400); cryptographic verification happens in
+    the core and a well-formed but FORGED record is rejected PER-RECORD inside
+    a 200. See the sync-scores operation — that asymmetry is the single most
+    dangerous thing in this document for a client author.
+
+
+    On every route the officer's agency and subject id come from the verified
+    token, never the body.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_FIELD_SYNC_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: >-
+        Server-wide 64 KiB default applies here. A large offline batch can hit
+        it, and there is no documented batch-size limit to chunk against.
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "Also EMPTY_BODY."
+
+paths:
+  /v1/field-sync/devices:
+    post:
+      operationId: "enrollFieldDevice"
+      summary: "Enroll a capture tablet's public key"
+      description: >-
+        Idempotent: a re-enrollment of a known deviceId is 200
+        ALREADY_ENROLLED, and the returned agency is the agency the device is
+        ALREADY bound to — which may not be the caller's. That is the only
+        signal a client gets that a device belongs to a sibling agency.
+
+
+        The device's PRIVATE key never touches the server. Only publicKeyPem is
+        submitted.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/enroll-device.controller.ts (ENROLL_DEVICE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollDeviceRequest"
+      responses:
+        "201":
+          description: "Newly enrolled, bound to the caller's agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceEnrolled201"
+        "200":
+          description: "Already enrolled. `agency` is the EXISTING binding."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceAlreadyEnrolled200"
+        "400":
+          description: "INVALID_FIELD — deviceId (max 64) or publicKeyPem (max 4096)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidField400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: >-
+            INTERNAL_ERROR. NOTE: this controller has no try/catch and no
+            mapDomainError, unlike every sibling. A persistence fault surfaces
+            as shared-http's generic 500, so there is no service-specific error
+            code on this route at all.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /v1/field-sync/scores:
+    post:
+      operationId: "syncFieldScores"
+      summary: "Batch-upload signed physical-test scores captured offline"
+      description: >-
+        READ THIS BEFORE WRITING A CLIENT FOR IT.
+
+
+        THE ROUTE RETURNS 200 { status: "SYNCED" } EVEN WHEN EVERY RECORD IN
+        THE BATCH WAS REJECTED FOR BAD_SIGNATURE. `status` reports that the
+        batch was PROCESSED, not that anything was accepted. Correct batch
+        semantics — and it means an assertOk-shaped client reads a wholly
+        forged upload as a successful sync and tells a field officer their
+        exam-day scores are saved when none of them are.
+
+
+        THE PER-RECORD `results` ARRAY IS THE ONLY PLACE THE TRUTH LIVES. Any
+        UI over this route MUST render per-record outcomes. A single success
+        toast is a correctness bug, not a polish issue.
+
+
+        A malformed record shape is a whole-batch 400: one bad object rejects
+        the entire upload, so partial-shape tolerance does not exist and the
+        client must validate before sending.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/sync-scores.controller.ts (SYNC_SCORES_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncScoresRequest"
+      responses:
+        "200":
+          description: >-
+            The batch was processed. Inspect `results` per record — this status
+            is not an acceptance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncScoresOk"
+        "400":
+          description: >-
+            INVALID_BATCH (records absent or empty) or INVALID_RECORD (any one
+            record's shape). Whole-batch rejection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncScoresRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "500":
+          description: "INTERNAL_ERROR. Same no-catch caveat as enroll."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /v1/field-sync/conflicts/resolve:
+    post:
+      operationId: "resolveFieldConflict"
+      summary: "Pick the authoritative score row after concurrent offline captures"
+      description: >-
+        TWO DISTINCT 404s ON THIS ROUTE, and they mean different things:
+        NOT_FOUND (no such application in the caller's agency) and
+        SCORE_NOT_FOUND (the application exists, the chosen scoreId does not).
+        A client that collapses them tells the officer the wrong thing about
+        which id was wrong.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/resolve-conflict.controller.ts (RESOLVE_CONFLICT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveConflictRequest"
+      responses:
+        "200":
+          description: "Resolved. The application can now advance."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictResolved200"
+        "400":
+          description: "INVALID_FIELD — applicationId, scoreId (UUIDs) or resolution (<=50 chars)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidField400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "NOT_FOUND or SCORE_NOT_FOUND — discriminated on `status`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveNotFound404"
+        "409":
+          description: "NO_CONFLICT — there is nothing held to adjudicate."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoConflict409"
+        "500":
+          description: "INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError500"
+
+  /health:
+    get:
+      operationId: "fieldSyncHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "fieldSyncReady"
+      summary: "Readiness — database reachable, with retry"
+      description: >-
+        The only readiness callback in the platform that RETRIES (3 attempts,
+        exponential backoff from 100ms). Every other service probes once.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (checkDatabaseReadiness)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable."
+        "503":
+          description: "Database unreachable after 3 attempts."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    Agency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    EnrollDeviceRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["deviceId", "publicKeyPem"]
+      properties:
+        deviceId:
+          type: "string"
+          minLength: 1
+          maxLength: 64
+        publicKeyPem:
+          type: "string"
+          minLength: 1
+          maxLength: 4096
+
+    DeviceEnrolled201:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "deviceId", "agency"]
+      properties:
+        status:
+          type: "string"
+          const: "ENROLLED"
+        deviceId:
+          type: "string"
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    DeviceAlreadyEnrolled200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "deviceId", "agency"]
+      properties:
+        status:
+          type: "string"
+          const: "ALREADY_ENROLLED"
+        deviceId:
+          type: "string"
+        agency:
+          description: "The EXISTING binding, which may differ from the caller's agency."
+          $ref: "#/components/schemas/Agency"
+
+    PhysicalTestMetrics:
+      description: >-
+        Transcribed from the controller's parseMetrics. Every numeric field is
+        required and must be finite; additionalNotes is the only optional.
+      type: "object"
+      additionalProperties: false
+      required:
+        ["heightCm", "weightKg", "run3kmTimeSeconds", "chestCm", "medicalFitnessStatus"]
+      properties:
+        heightCm:
+          type: "number"
+        weightKg:
+          type: "number"
+        run3kmTimeSeconds:
+          type: "number"
+        chestCm:
+          type: "number"
+        medicalFitnessStatus:
+          type: "string"
+          enum: ["FIT", "UNFIT", "PENDING_REVIEW"]
+        additionalNotes:
+          type: "string"
+
+    FieldScoreRecord:
+      description: >-
+        UNTRUSTED INPUT by construction. Shape-checked here; the deviceSignature
+        is what the core actually trusts.
+      type: "object"
+      additionalProperties: false
+      required:
+        - "applicationId"
+        - "qrInvitationCode"
+        - "metrics"
+        - "capturedAt"
+        - "deviceId"
+        - "capturingOfficerId"
+        - "vectorClock"
+        - "deviceSignature"
+        - "signedPayloadHash"
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        qrInvitationCode:
+          description: >-
+            THE BEARER CREDENTIAL FROM THE VENUE QR. The officer read
+            deliberately withholds it, so a browser cannot obtain one from any
+            read endpoint — it comes from scanning the physical invitation.
+          type: "string"
+          minLength: 1
+        metrics:
+          $ref: "#/components/schemas/PhysicalTestMetrics"
+        capturedAt:
+          description: >-
+            Typed `string` and NOT date-time: the controller only checks it is a
+            non-empty string. Documenting a format the service does not enforce
+            would be a guess.
+          type: "string"
+          minLength: 1
+        deviceId:
+          type: "string"
+          minLength: 1
+        capturingOfficerId:
+          description: >-
+            A body claim, unlike every other actor id in the platform. The
+            AUTHORISING officer is the token holder; this field records who
+            physically ran the test on the tablet and is not authenticated.
+          type: "string"
+          minLength: 1
+        vectorClock:
+          description: "deviceId -> non-negative integer counter. Drives conflict detection."
+          type: "object"
+          additionalProperties: true
+        deviceSignature:
+          type: "string"
+          minLength: 1
+        signedPayloadHash:
+          type: "string"
+          minLength: 1
+
+    SyncScoresRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["records"]
+      properties:
+        records:
+          description: "Non-empty. One malformed member rejects the WHOLE batch with 400."
+          type: "array"
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/FieldScoreRecord"
+
+    FieldScoreResult:
+      description: >-
+        Per-record outcome. Modelled permissively on purpose: the controller
+        returns outcome.results straight from the core and the member shape is
+        NOT visible at the transport layer, so pinning it here would be
+        invention. BAD_SIGNATURE is the rejection reason named in the source
+        commentary. Transcribing this array element precisely is a REQUEST to
+        the backend agent, recorded in the drift tool's open items.
+      type: "object"
+      additionalProperties: true
+
+    SyncScoresOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "results"]
+      properties:
+        status:
+          description: >-
+            ALWAYS "SYNCED" on 200, including when every record was rejected.
+            This field is not an acceptance signal.
+          type: "string"
+          const: "SYNCED"
+        results:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/FieldScoreResult"
+
+    ResolveConflictRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "scoreId", "resolution"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        scoreId:
+          $ref: "#/components/schemas/Uuid"
+        resolution:
+          description: "Free text, max 50 chars. The officer's stated ground."
+          type: "string"
+          minLength: 1
+          maxLength: 50
+
+    ConflictResolved200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "applicationId", "scoreId"]
+      properties:
+        status:
+          type: "string"
+          const: "RESOLVED"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        scoreId:
+          $ref: "#/components/schemas/Uuid"
+
+    NotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_FOUND"
+
+    ScoreNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "SCORE_NOT_FOUND"
+
+    ResolveNotFound404:
+      oneOf:
+        - $ref: "#/components/schemas/NotFound404"
+        - $ref: "#/components/schemas/ScoreNotFound404"
+      discriminator:
+        propertyName: "status"
+
+    NoConflict409:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NO_CONFLICT"
+
+    InvalidField400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_FIELD"
+        detail:
+          type: "string"
+
+    SyncScoresRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["INVALID_BATCH", "INVALID_RECORD"]
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    InternalError500:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "INTERNAL_ERROR"

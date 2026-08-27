@@ -1,0 +1,119 @@
+# ════════════════════════════════════════════════════════════════
+# scheduling-service — an EVENT-DRIVEN stage gate with one read route.
+#
+# HAND-AUTHORED from src/main.ts at backend SHA 47d9ad3. This service has NO
+# adapters/http directory: its single business route is declared inline in the
+# composition root, which is why every survey that walked
+# services/*/src/adapters/http/** missed it.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP scheduling-service"
+  version: "1.0.0"
+  description: >-
+    Consumes APPLICATION_ELIGIBILITY_CLEARED, resolves the applicant's home
+    district to an exam venue, and emits SLOT_ASSIGNED + AUDIT_ENTRY. It never
+    writes application state; application-service's projection applies the
+    SLOT_ASSIGNED it emits (ADR-006).
+
+
+    THE CITIZEN CANNOT SEE THEIR SLOT. This service assigns the venue and the
+    time, application-service projects SLOT_ASSIGNED onto the row, and no
+    endpoint anywhere returns the venue or the datetime to the applicant. The
+    officer detail read exposes assignedDistrict / assignedVenueName /
+    physicalTestScheduledAt; the citizen's own reads expose status and nothing
+    else. That is the most consequential read gap in the platform for an actual
+    applicant, and it is specced in openapi/proposed/.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_SCHEDULING_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+      note: "Route table is keyed (path -> method). Carries an Allow header."
+
+paths:
+  /v1/slots/invitation-key:
+    get:
+      operationId: "getSlotInvitationKey"
+      summary: "The Ed25519 public key that verifies a slot-invitation QR"
+      description: >-
+        UNAUTHENTICATED — and correctly so. The handler is declared inline in
+        main.ts with no withAuth wrapper, so there is no 401 and no 403 branch
+        on this route. It publishes a PUBLIC key so a venue, biometric or
+        physical-test station can verify a signed QR invitation OFFLINE
+        (ADR-009). No PII, no state.
+
+
+        This is a distinct key from the officer/system token issuer key.
+        Verifying a bearer token with it will fail; it verifies QR invitation
+        signatures only.
+
+
+        Note what this key CANNOT do for the frontend: the QR payload it
+        verifies is a bearer credential the field officer scans at the venue,
+        and the officer detail read deliberately withholds
+        qr_invitation_code. Holding the verification key does not give the
+        browser anything to verify.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/main.ts (inline route, startHttpServer routes[0])"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The active QR-signing public key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationKeyOk"
+
+  /health:
+    get:
+      operationId: "schedulingHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "schedulingReady"
+      summary: "Readiness — database reachable"
+      description: >-
+        READ WHAT THIS DOES NOT COVER. The readiness callback runs SELECT 1
+        only. This service's actual job is consuming application.cleared from
+        Kafka, and with KAFKA_BROKERS unset it starts no consumer at all yet
+        still answers 200 here. A green /ready on this service does not mean
+        applications are being scheduled.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable. Says nothing about the event consumer."
+        "503":
+          description: "Database unreachable."
+
+components:
+  schemas:
+    InvitationKeyOk:
+      type: "object"
+      additionalProperties: false
+      required: ["keyId", "algorithm", "publicKeyPem"]
+      properties:
+        keyId:
+          description: "QR_SIGNING_KEY_ID. Identifies which key signed a given QR."
+          type: "string"
+        algorithm:
+          type: "string"
+          const: "Ed25519"
+        publicKeyPem:
+          description: "PEM-encoded SPKI public key. Public by design."
+          type: "string"

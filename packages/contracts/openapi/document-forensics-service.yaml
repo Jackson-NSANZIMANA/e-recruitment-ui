@@ -1,0 +1,624 @@
+# ════════════════════════════════════════════════════════════════
+# document-forensics-service — TWO system-token front doors.
+#
+# HAND-AUTHORED from both controllers and src/main.ts at backend SHA 47d9ad3.
+# Both routes are registered (verified in main.ts) — worth stating, because this
+# repository has already shipped controllers that were built and never mounted.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "USRP document-forensics-service"
+  version: "1.0.0"
+  description: >-
+    Ingests citizen document bytes, scans for malware, seals them (AES-256-GCM),
+    stores them, scores them forensically, and emits document.forensics for
+    application-service to route into the GREEN or AMBER lane.
+
+
+    THE UPLOAD RESPONSE WITHHOLDS THE VERDICT, DELIBERATELY. 201 carries
+    { status, documentId, documentType } — no lane, no score, no flags. A
+    forensics score handed to the person who uploaded the file is a
+    FORGERY-TUNING ORACLE: edit, re-upload, watch the number move, repeat until
+    GREEN. Do not build an applicant-facing document-quality indicator; there is
+    no endpoint that will ever feed it.
+
+
+    MALWARE IS THE ONE EXCEPTION and is reported plainly
+    (422 DOCUMENT_REJECTED_MALWARE). A binary antivirus verdict teaches a forger
+    nothing, and silently accepting an infected file the citizen believes was
+    received is unusable for a legal process.
+
+
+    THE TWO ROUTES DISAGREE ABOUT HOW TO KEY AN OUTCOME, and this document does
+    not paper over it — see the analyze operation.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-service-port-var: "PORT_DOCUMENT_FORENSICS_SERVICE"
+  x-usrp-transport-faults:
+    - status: 405
+      code: "METHOD_NOT_ALLOWED"
+    - status: 413
+      code: "PAYLOAD_TOO_LARGE"
+      note: >-
+        Server-wide default 64 KiB, EXCEPT /v1/documents/upload which carries its
+        own cap (FORENSICS_MAX_FILE_SIZE_MB + 8 KiB multipart framing). No other
+        route inherits that budget.
+    - status: 415
+      code: "UNSUPPORTED_MEDIA_TYPE"
+    - status: 400
+      code: "MALFORMED_JSON"
+      note: "JSON operations only. Also EMPTY_BODY."
+
+paths:
+  /v1/documents/upload:
+    post:
+      operationId: "uploadDocument"
+      summary: "Ingest a citizen's document (multipart/form-data)"
+      description: >-
+        SYSTEM-TOKEN ONLY, and this is the ADR-016 pattern rather than an
+        oversight: the browser talks to the edge tier, which holds the citizen's
+        opaque session and calls this ingress with its own client-credentials
+        token. An OFFICER token is refused with 403 — this door carries the
+        citizen's authority over their own application and must never become an
+        unaudited path for an officer to inject documents into a case they
+        review.
+
+
+        THE ONLY MULTIPART OPERATION IN THE PLATFORM. Every other route is JSON.
+
+
+        THE CLIENT'S FILENAME IS VALIDATED AND THEN IGNORED. The object key is
+        derived from closed-set inputs; a filename-derived key would be a path
+        traversal and a write-into-someone-else's-record primitive. Do not
+        expect the filename back.
+
+
+        WHICH documentType is legal depends on the OWNING AGENCY, derived from
+        application ownership and never from the request. RDF does not accept
+        CELIBACY_CERTIFICATE; RCS does not accept OLEVEL_CERTIFICATE. A wizard
+        that offers the wrong slot produces a 422 the citizen cannot act on, so
+        drive the upload UI from AGENCY_DOCUMENT_TYPES in src/agency.ts.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentForm"
+      responses:
+        "201":
+          description: "Received and sealed. NO lane, NO score, NO flags — by design."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploaded201"
+        "400":
+          description: >-
+            Six distinct codes: MISSING_FILE (absent, or a file part not named
+            "file"), INVALID_FILENAME (over 255 or containing control
+            characters), EMPTY_FILE, INVALID_DOCUMENT_TYPE, INVALID_REQUEST
+            (applicantId/applicationId not a UUID). Each is separately
+            actionable in a wizard.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal — an officer token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "APPLICATION_NOT_FOUND."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationNotFound404"
+        "409":
+          description: >-
+            NOT_ACCEPTING_DOCUMENTS with currentStatus — the application is in a
+            terminal or non-collecting state. The status is the explanation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotAcceptingDocuments409"
+        "413":
+          description: >-
+            FILE_TOO_LARGE. Note this is the CONTRACT check inside the handler,
+            distinct from the socket-level cap: exceeding the socket budget is
+            shared-http's own PAYLOAD_TOO_LARGE with a different code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileTooLarge413"
+        "422":
+          description: >-
+            FIVE distinct rejections, discriminated on `error`:
+            UNSUPPORTED_FILE_TYPE (declared media type not allowed),
+            UNSUPPORTED_DOCUMENT_TYPE (not legal for the owning agency),
+            UNSUPPORTED_FILE_CONTENT (bytes are not what any allowed type looks
+            like), CONTENT_TYPE_MISMATCH (declared vs sniffed disagree, carries
+            `declared`), DOCUMENT_REJECTED_MALWARE. The last one is an
+            accusation and must not share copy with the other four.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUnprocessable422"
+        "503":
+          description: "SCANNER_UNAVAILABLE or OBJECT_STORE_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUnavailable503"
+        "500":
+          description: >-
+            DOCUMENT_ENCRYPTION_ERROR, FORENSICS_PERSISTENCE_ERROR or
+            INTERNAL_ERROR. Detail withheld on the wire.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForensicsError500"
+
+  /v1/forensics/analyze:
+    post:
+      operationId: "analyzeDocument"
+      summary: "Score an already-stored document's real bytes"
+      description: >-
+        SERVICE-INTERNAL. Takes a REFERENCE (objectKey in the store), not bytes.
+
+
+        THIS CONTROLLER IS THE ODD ONE OUT AND IT IS A REAL DEFECT, RECORDED
+        RATHER THAN NORMALISED. It keys its BUSINESS OUTCOMES on `error`, not
+        `status` — unique among the fifteen controllers in this platform. On
+        this route a client CANNOT distinguish a business outcome
+        (APPLICATION_NOT_FOUND, UNSUPPORTED_DOCUMENT_TYPE) from a transport
+        fault, because both arrive as { error }. Everywhere else `status` means
+        "a decision was made" and `error` means "the request was refused".
+
+
+        THERE ARE ZERO FRONTEND CONSUMERS OF THIS ROUTE TODAY, so re-keying it
+        to `status` is the cheapest it will ever be. That is a REQUEST to the
+        backend, not a change this package can make.
+
+
+        SECOND DEFECT, SAME FILE: mapOutcome has no `default` and no
+        assertNever. Add an outcome variant and it compiles, returns undefined
+        as an HttpResult, and the transport answers 200 with an empty body.
+        Every sibling controller guards this with assertNever.
+
+
+        THE RESPONSE DOES EXPOSE lane, forensicsScore AND flags — legitimately,
+        because the caller is a service, not the document's author. Do not proxy
+        this response to a browser: that reconstructs the forgery-tuning oracle
+        the upload route was designed to prevent.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/analyze-document.controller.ts (ANALYZE_DOCUMENT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeDocumentRequest"
+      responses:
+        "200":
+          description: "Analyzed. Officer-grade verdict — never proxy this to a browser."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentAnalyzed200"
+        "400":
+          description: >-
+            MISSING_FIELD, FIELD_TOO_LONG, INVALID_APPLICATION_ID,
+            INVALID_AGENCY, INVALID_DOCUMENT_TYPE.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: >-
+            APPLICATION_NOT_FOUND or OBJECT_NOT_FOUND — the record exists, the
+            bytes do not. Both keyed on `error`; see the operation description.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeNotFound404"
+        "422":
+          description: "UNSUPPORTED_DOCUMENT_TYPE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnsupportedDocumentType422"
+        "503":
+          description: >-
+            SCANNER_UNAVAILABLE (an OUTCOME branch, not a thrown fault, on this
+            route) or OBJECT_STORE_UNAVAILABLE.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUnavailable503"
+        "500":
+          description: "FORENSICS_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForensicsError500"
+
+  /health:
+    get:
+      operationId: "forensicsHealth"
+      summary: "Liveness"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "@usrp/shared-http (reserved probe)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Process is up."
+
+  /ready:
+    get:
+      operationId: "forensicsReady"
+      summary: "Readiness — database reachable"
+      description: >-
+        Covers the verdict's durable home only. It does NOT cover the object
+        store or the malware scanner, so a green probe here is compatible with
+        every upload failing 503.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/main.ts (readiness callback)"
+      x-usrp-verified: "controller-verbatim"
+      x-usrp-transport-faults: "none"
+      responses:
+        "200":
+          description: "Database reachable."
+        "503":
+          description: "Database unreachable."
+
+components:
+  schemas:
+    Uuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    Agency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    DocumentType:
+      description: >-
+        All 11 types any agency models, from the controller's DOCUMENT_TYPES set
+        (analyze) and KNOWN_DOCUMENT_TYPES derived from AGENCY_DOCUMENT_TYPES
+        (upload). WHICH are legal for WHICH agency is per-agency and lives in
+        src/agency.ts — this enum is only the "is that a word at all" gate.
+      type: "string"
+      enum:
+        - "NATIONAL_ID"
+        - "APPLICATION_FORM_WITH_PHOTO"
+        - "ALEVEL_CERTIFICATE"
+        - "OLEVEL_CERTIFICATE"
+        - "DEGREE_DIPLOMA_COPY"
+        - "DEGREE_DIPLOMA_NOTARIZED"
+        - "GOOD_CONDUCT_CERTIFICATE"
+        - "NON_CONVICTION_CERTIFICATE"
+        - "CELIBACY_CERTIFICATE"
+        - "MEDICAL_CERTIFICATE_GOVT"
+        - "BIRTH_CERTIFICATE"
+
+    DocumentLane:
+      description: "OFFICER-facing triage lane. Never returned to a document's author."
+      type: "string"
+      enum: ["GREEN", "AMBER", "RED"]
+
+    UploadDocumentForm:
+      description: >-
+        multipart/form-data. The file part MUST be named exactly "file"; a
+        differently named file part is 400 MISSING_FILE, not a warning. Max 8
+        parts, max 1 file, max 4 KiB per text field.
+      type: "object"
+      additionalProperties: false
+      required: ["file", "applicantId", "applicationId", "documentType"]
+      properties:
+        file:
+          description: "The bytes. Filename is validated then IGNORED."
+          type: "string"
+          format: "binary"
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+
+    AnalyzeDocumentRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "agency", "documentType", "objectKey"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        agency:
+          description: >-
+            A BODY CLAIM on this route, unlike every officer route where agency
+            comes from the token. Safe only because the caller is a system
+            principal.
+          $ref: "#/components/schemas/Agency"
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+        objectKey:
+          description: "Max 512 — matches minio_object_key varchar(512)."
+          type: "string"
+          minLength: 1
+          maxLength: 512
+        objectBucket:
+          description: "Optional. Defaults to 'usrp-documents'. Max 100."
+          type: "string"
+          minLength: 1
+          maxLength: 100
+
+    DocumentUploaded201:
+      description: "THE WHOLE BODY. Three fields. No verdict, by design."
+      type: "object"
+      additionalProperties: false
+      required: ["status", "documentId", "documentType"]
+      properties:
+        status:
+          type: "string"
+          const: "UPLOADED"
+        documentId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          description: "Echoed from the request, not re-derived from the bytes."
+          $ref: "#/components/schemas/DocumentType"
+
+    DocumentAnalyzed200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "documentId", "lane", "forensicsScore", "flags"]
+      properties:
+        status:
+          description: >-
+            The ONLY `status`-keyed body on the analyze route. Every non-200
+            outcome on this route keys on `error` instead — the inconsistency
+            this document records rather than smooths.
+          type: "string"
+          const: "ANALYZED"
+        documentId:
+          $ref: "#/components/schemas/Uuid"
+        lane:
+          $ref: "#/components/schemas/DocumentLane"
+        forensicsScore:
+          type: "number"
+        flags:
+          description: "The ForensicsFlags object, verbatim. Opaque by design."
+          type: "object"
+          additionalProperties: true
+
+    ApplicationNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "APPLICATION_NOT_FOUND"
+
+    ObjectNotFound404:
+      description: "The record exists; its bytes are missing from the store."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "OBJECT_NOT_FOUND"
+
+    AnalyzeNotFound404:
+      oneOf:
+        - $ref: "#/components/schemas/ApplicationNotFound404"
+        - $ref: "#/components/schemas/ObjectNotFound404"
+      discriminator:
+        propertyName: "error"
+
+    NotAcceptingDocuments409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "currentStatus"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_ACCEPTING_DOCUMENTS"
+        currentStatus:
+          description: "The application status that closed the door."
+          type: "string"
+
+    FileTooLarge413:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FILE_TOO_LARGE"
+        detail:
+          type: "string"
+
+    UnsupportedFileType422:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNSUPPORTED_FILE_TYPE"
+        detail:
+          type: "string"
+
+    UnsupportedDocumentType422:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNSUPPORTED_DOCUMENT_TYPE"
+
+    UnsupportedFileContent422:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNSUPPORTED_FILE_CONTENT"
+
+    ContentTypeMismatch422:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "declared"]
+      properties:
+        error:
+          type: "string"
+          const: "CONTENT_TYPE_MISMATCH"
+        declared:
+          description: "What the client claimed. The sniffed type is NOT returned."
+          type: "string"
+
+    DocumentRejectedMalware422:
+      description: >-
+        THE ONE VERDICT REPORTED PLAINLY TO THE UPLOADER. A binary antivirus
+        result teaches a forger nothing, and silently accepting an infected file
+        is unusable for a legal process.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "DOCUMENT_REJECTED_MALWARE"
+
+    UploadUnprocessable422:
+      oneOf:
+        - $ref: "#/components/schemas/UnsupportedFileType422"
+        - $ref: "#/components/schemas/UnsupportedDocumentType422"
+        - $ref: "#/components/schemas/UnsupportedFileContent422"
+        - $ref: "#/components/schemas/ContentTypeMismatch422"
+        - $ref: "#/components/schemas/DocumentRejectedMalware422"
+      discriminator:
+        propertyName: "error"
+
+    UploadRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "MISSING_FILE"
+            - "INVALID_FILENAME"
+            - "EMPTY_FILE"
+            - "INVALID_DOCUMENT_TYPE"
+            - "INVALID_REQUEST"
+        detail:
+          type: "string"
+
+    AnalyzeRequest400:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "MISSING_FIELD"
+            - "FIELD_TOO_LONG"
+            - "INVALID_APPLICATION_ID"
+            - "INVALID_AGENCY"
+            - "INVALID_DOCUMENT_TYPE"
+        detail:
+          type: "string"
+
+    Unauthenticated401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "UNAUTHENTICATED"
+        detail:
+          type: "string"
+
+    Forbidden403:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "FORBIDDEN"
+        detail:
+          type: "string"
+
+    ScannerUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "SCANNER_UNAVAILABLE"
+
+    ObjectStoreUnavailable503:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "OBJECT_STORE_UNAVAILABLE"
+
+    UploadUnavailable503:
+      oneOf:
+        - $ref: "#/components/schemas/ScannerUnavailable503"
+        - $ref: "#/components/schemas/ObjectStoreUnavailable503"
+      discriminator:
+        propertyName: "error"
+
+    ForensicsError500:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "DOCUMENT_ENCRYPTION_ERROR"
+            - "FORENSICS_PERSISTENCE_ERROR"
+            - "INTERNAL_ERROR"

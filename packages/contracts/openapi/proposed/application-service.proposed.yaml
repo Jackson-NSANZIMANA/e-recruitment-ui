@@ -1,0 +1,316 @@
+# ════════════════════════════════════════════════════════════════
+# PROPOSED — application-service. NONE OF THIS EXISTS.
+#
+# Four operations the designed officer console cannot be built without, ordered
+# by how badly the absence hurts. Specced against the conventions the landed
+# routes already follow: exact path, query param on GET, no path params, bodies
+# discriminated on `status` for outcomes and `error` for refusals.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+
+info:
+  title: "PROPOSED USRP application-service additions"
+  version: "0.0.0-proposal"
+  description: >-
+    Written to be handed to the backend team as-is. Each operation states WHAT
+    BREAKS WITHOUT IT, because a proposal that only describes a shape invites a
+    shape argument instead of a priority decision.
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
+
+paths:
+  /v1/applications/search:
+    get:
+      operationId: "proposedSearchApplications"
+      summary: "Find an application by its processing code"
+      description: >-
+        WHAT BREAKS WITHOUT IT: GET /v1/applications takes no parameters and caps
+        at 100 rows. Past roughly a hundred applications an officer CANNOT LOCATE
+        A SPECIFIC ONE — and the processing code is the only handle the citizen
+        was ever given, so "quote your reference number" is advice the console
+        cannot act on. This is the highest-value officer gap.
+
+
+        DESIGN NOTES FOR THE IMPLEMENTER. Scope it to the caller's own agency
+        under the officer DB role, exactly like the list read, so RLS does the
+        isolation. Return the SAME ApplicationSummary shape as the list read
+        rather than a new one. An EXACT-match lookup on processing_code is
+        enough and is the safe choice: a prefix or fuzzy search over a
+        cross-agency-unique code is an enumeration primitive, and a 404 must be
+        as bare as by-id's for the same reason.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      parameters:
+        - name: "processingCode"
+          in: "query"
+          required: true
+          description: "Exact match. e.g. RDF-90823."
+          schema:
+            type: "string"
+            minLength: 3
+            maxLength: 32
+      responses:
+        "200":
+          description: "The matching application from the caller's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedSearchOk"
+        "400":
+          description: "processingCode absent or malformed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "404":
+          description: >-
+            BARE, like by-id. A sibling agency's real code and a nonexistent one
+            must be byte-identical or this becomes a cross-agency oracle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+
+  /v1/applications/documents:
+    get:
+      operationId: "proposedListApplicationDocuments"
+      summary: "The documents attached to one application"
+      description: >-
+        WHAT BREAKS WITHOUT IT: document_records is WRITTEN BY THE UPLOAD ROUTE
+        AND NEVER READ BY ANYTHING. An officer reviewing an amber hold can see a
+        forensics score on the application row but cannot list which documents
+        exist, which are missing, or which one produced the score. The amber
+        queue names a single documentType per row; a real review needs the set.
+
+
+        DESIGN NOTES. Officer-only and agency-scoped. Return lane, score and
+        flags here — the audience is the reviewer, not the author, so the
+        forgery-tuning-oracle argument that governs the upload response does not
+        apply. Do NOT return the object key: a browser holding one is a read
+        primitive into the object store. A separate signed-URL operation is the
+        right way to serve bytes and is deliberately not proposed here.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/ProposedUuid"
+      responses:
+        "200":
+          description: "The document set, officer-grade."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedDocumentsOk"
+        "400":
+          description: "applicationId absent or not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "404":
+          description: "Bare, as above."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+
+  /v1/applicants/me/status-history:
+    get:
+      operationId: "proposedMyStatusHistory"
+      summary: "The citizen's own transition trail"
+      description: >-
+        WHAT BREAKS WITHOUT IT — AND THIS IS THE FINDING NO EARLIER SURVEY
+        RECORDED. GET /v1/applications/status-history exists, is mounted, and is
+        OFFICER-AUTHENTICATED. The trail is described in this platform's own
+        documentation as the Procedural Justice surface: the record a rejected
+        applicant is entitled to see the reasons from. THE APPLICANT CANNOT
+        REACH IT. The person with the interest in the trail is the one principal
+        kind that cannot read it.
+
+
+        A rejected candidate can currently see the word REJECTED on their own
+        applications list and nothing else — not who decided, not when, not on
+        what ground — even though every one of those facts is stored, immutable,
+        and already served to a different audience.
+
+
+        DESIGN NOTES. This belongs on identity-service beside the other
+        me-routes (session auth, applicant id from the session, proxied with the
+        service's own client-credentials token), OR as a system-token variant
+        here that takes both ids like withdraw-own does. It is filed under
+        application-service because that is where the data and the existing
+        query live; the routing decision is the backend team's.
+
+
+        ONE FILTERING DECISION IS REQUIRED BEFORE IMPLEMENTATION and this
+        proposal will not guess it: `note` is officer-authored free text up to
+        1000 chars, truncated to 200 in the history row. Some of it is written
+        for colleagues, not for the applicant. Either every note is
+        citizen-visible (and officers must be told so at the point of writing),
+        or the trail needs a citizen-visible flag. Shipping it without deciding
+        publishes internal review commentary to the person it is about.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/ProposedUuid"
+      responses:
+        "200":
+          description: "The citizen's own trail, oldest first."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedMyHistoryOk"
+        "400":
+          description: "applicationId absent or not a UUID."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "404":
+          description: "Not this citizen's application, or nonexistent. One shape, like withdraw."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+
+  /v1/applications/metrics:
+    get:
+      operationId: "proposedApplicationMetrics"
+      summary: "BLOCKED ON A PRODUCT DECISION — do not implement yet"
+      description: >-
+        THIS OPERATION IS DELIBERATELY UNSPECCED BELOW, and that is the
+        deliverable. The designed officer dashboard shows four tiles:
+        pendingReview, requiresAction, scheduledToday, acceptedThisWeek.
+
+
+        Only ONE of the four is derivable from anything that exists.
+        pendingReview is the length of the amber queue. `requiresAction`,
+        `scheduledToday` and `acceptedThisWeek` have NO SOURCE in any schema:
+        nothing defines what "requires action" means, "today" needs a timezone
+        policy the platform has never stated (Africa/Kigali is the obvious
+        answer and obvious is not the same as decided), and "this week" needs a
+        week-start convention.
+
+
+        Guessing definitions here would produce a dashboard that is precisely
+        wrong rather than visibly incomplete, on a screen officers use to decide
+        where to spend a day. Someone with authority over the workflow must
+        define the three terms first. Until then the honest UI ships one tile.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL — BLOCKED"
+      x-usrp-verified: "proposal-blocked"
+      responses:
+        "501":
+          description: >-
+            Placeholder. There is no response schema because there is no agreed
+            definition of three of the four numbers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+
+components:
+  schemas:
+    ProposedUuid:
+      type: "string"
+      format: "uuid"
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    ProposedAgency:
+      type: "string"
+      enum: ["RDF", "RNP", "RCS"]
+
+    ProposedError:
+      description: "Placeholder. Real proposals inherit the existing discriminated shapes."
+      type: "object"
+      additionalProperties: true
+
+    ProposedSearchOk:
+      description: "Reuses the LANDED ApplicationSummary shape rather than inventing one."
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "application"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/ProposedAgency"
+        application:
+          type: "object"
+          additionalProperties: true
+
+    ProposedDocumentRecord:
+      type: "object"
+      additionalProperties: false
+      required:
+        ["documentId", "documentType", "uploadStatus", "lane", "forensicsScore", "flags", "uploadedAt"]
+      properties:
+        documentId:
+          $ref: "#/components/schemas/ProposedUuid"
+        documentType:
+          type: "string"
+        uploadStatus:
+          description: "The DocumentUploadStatus enum: 8 values, already modelled in src/agency.ts."
+          type: "string"
+        lane:
+          description: "Officer-grade. GREEN | AMBER | RED, or null before forensics ran."
+          type: ["string", "null"]
+        forensicsScore:
+          type: ["number", "null"]
+        flags:
+          type: ["object", "null"]
+          additionalProperties: true
+        uploadedAt:
+          type: "string"
+          format: "date-time"
+
+    ProposedDocumentsOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "applicationId", "documents"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/ProposedAgency"
+        applicationId:
+          $ref: "#/components/schemas/ProposedUuid"
+        documents:
+          description: "NO objectKey. Serving bytes needs its own signed-URL operation."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProposedDocumentRecord"
+
+    ProposedMyHistoryOk:
+      description: >-
+        The same StatusHistoryEntry shape the officer route returns, subject to
+        the note-visibility decision in the operation description.
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "agency", "history"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/ProposedUuid"
+        agency:
+          $ref: "#/components/schemas/ProposedAgency"
+        history:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: true

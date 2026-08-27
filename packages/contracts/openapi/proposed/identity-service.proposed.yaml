@@ -1,0 +1,163 @@
+# ════════════════════════════════════════════════════════════════
+# PROPOSED — identity-service. NONE OF THIS EXISTS.
+# ════════════════════════════════════════════════════════════════
+openapi: "3.1.0"
+info:
+  title: "PROPOSED USRP identity-service additions"
+  version: "0.0.0-proposal"
+  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
+paths:
+  /v1/applicants/me/slot:
+    get:
+      operationId: "proposedMySlot"
+      summary: "Where and when the citizen must show up"
+      description: >-
+        WHAT BREAKS WITHOUT IT, AND THIS IS THE MOST CONSEQUENTIAL GAP IN THE
+        PLATFORM FOR AN ACTUAL APPLICANT. scheduling-service resolves the
+        applicant's district to an exam venue and emits SLOT_ASSIGNED.
+        application-service projects it onto the row. The officer detail read
+        exposes assignedDistrict, assignedVenueName and physicalTestScheduledAt.
+        THE CITIZEN'S OWN READS EXPOSE THE WORD "SLOT_ASSIGNED" AND NOTHING ELSE.
+
+
+        A person is told a slot exists and cannot find out where or when it is.
+        The only channel that carries it is an SMS from notification-service,
+        which has no read endpoint and no resend endpoint — so if the message
+        does not arrive, or arrives and is deleted, the information is
+        unreachable and the candidate misses the test.
+
+
+        DESIGN NOTES. Session-authenticated me-route: applicant id from the
+        session, applicationId as the query param, proxied to application-service
+        with this service's own client-credentials token like the other
+        me-routes. Return the venue name, the district and the datetime.
+
+
+        DO NOT RETURN qr_invitation_code. It is the bearer credential the field
+        officer scans, the officer detail read deliberately withholds it, and the
+        walk-in register response is the only place in the platform that emits
+        one. Returning it here would put an invitation token in a browser. If the
+        citizen needs a scannable code, that is a separate, deliberate decision
+        with its own threat model.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "The assigned slot."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedMySlot"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+        "404":
+          description: >-
+            No slot assigned yet, OR not this citizen's application. ONE SHAPE
+            FOR BOTH, matching the withdraw route's refusal to be an ownership
+            oracle. The UI distinguishes them from the application's own status,
+            not from this response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+  /v1/applicants/me/profile:
+    get:
+      operationId: "proposedMyProfile"
+      summary: "The citizen's own identity record, minus everything sensitive"
+      description: >-
+        WHAT BREAKS WITHOUT IT: a citizen cannot confirm the portal is showing
+        them their own record, and cannot see whether their identity verification
+        actually succeeded. identityStatus drives whether a submission will 409
+        IDENTITY_NOT_VERIFIED, and today the applicant discovers that by failing.
+
+
+        THIS ONE NEEDS THE MOST CARE OF ANY PROPOSAL HERE. The identity row holds
+        the name, the date of birth and the phone number, ENCRYPTED AT REST, and
+        the nationalIdHash. The hash is an internal cross-service join key and
+        INVARIANT 2 FORBIDS IT REACHING A BROWSER — including this browser,
+        including the browser of the person it derives from. The raw national ID
+        is request-only everywhere in the platform and must stay that way.
+
+
+        DESIGN NOTES. Return identityStatus, the channel of record, the
+        verification timestamp, and at most a MASKED national id if product
+        genuinely requires a confirmation affordance — masked server-side, never
+        by shipping the full value and hiding it in the DOM. Name, DOB and phone
+        are out of scope for this proposal precisely because "the data subject
+        may see their own data" and "the browser is a safe place to put it" are
+        different claims, and only the first one is obviously true.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "PROPOSAL"
+      x-usrp-verified: "proposal"
+      responses:
+        "200":
+          description: "The citizen's own non-sensitive identity facts."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedMyProfile"
+        "401":
+          description: "INVALID_SESSION."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposedError"
+components:
+  schemas:
+    ProposedError:
+      type: "object"
+      additionalProperties: true
+    ProposedMySlot:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "agency", "district", "venueName", "scheduledAt"]
+      properties:
+        applicationId:
+          type: "string"
+          format: "uuid"
+        agency:
+          type: "string"
+          enum: ["RDF", "RNP", "RCS"]
+        district:
+          type: "string"
+        venueName:
+          type: "string"
+        scheduledAt:
+          type: "string"
+          format: "date-time"
+    ProposedMyProfile:
+      description: "NO nationalIdHash. NO raw national id. NO name, DOB or phone in this proposal."
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId", "identityStatus", "registrationChannel", "verifiedAt"]
+      properties:
+        applicantId:
+          type: "string"
+          format: "uuid"
+        identityStatus:
+          type: "string"
+          enum: ["PENDING", "VERIFIED", "FAILED", "EXPIRED"]
+        registrationChannel:
+          type: "string"
+          enum: ["WEB", "USSD", "IREMBO_KIOSK", "WALK_IN"]
+        verifiedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        maskedNationalId:
+          description: "OPTIONAL and masked SERVER-SIDE if product requires it. e.g. 1199****5678."
+          type: "string"
