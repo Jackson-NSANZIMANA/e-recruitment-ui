@@ -1,0 +1,112 @@
+{
+  "$comment": [
+    "Single source of truth for every USRP frontend hygiene gate.",
+    "CI reads this file. So does a developer running `pnpm verify:hygiene`.",
+    "There is no second copy of these numbers in the workflow YAML, because a",
+    "second copy is how a gate quietly stops matching the gate it claims to be."
+  ],
+
+  "largeFiles": {
+    "maxBytes": 5242880,
+    "$comment": "5 MiB. Nothing a browser app needs to build belongs above this. The 73.9 MB vendored ADS mirror at repo root is exactly what this exists to have prevented.",
+    "allow": []
+  },
+
+  "boundaries": {
+    "$comment": "The domain-free layer. Adding a path here means promising it has no idea what an agency, an applicant or an application status is.",
+    "roots": ["packages/design-system/src"],
+    "extensions": [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"]
+  },
+
+  "hexScan": {
+    "$comment": "Invariant 5: zero raw hex. Scoped to the paths this branch owns. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts contains theme_color '#0052CC' and background_color '#FFFFFF'. Those are the one defensible exception - a PWA manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but they should be marked with a hygiene-allow-hex comment stating that, and the value should be derived from the ADS brand token rather than typed by hand.",
+    "roots": ["packages/design-system", "packages/eslint-config", "tooling/repo-hygiene"],
+    "extensions": [".ts", ".tsx", ".css", ".json", ".svg"],
+    "allowPaths": []
+  },
+
+  "touchTargets": {
+    "minPx": 48,
+    "$comment": "WCAG 2.1 AA SC 2.5.5 asks 44. The extra 4px are for outdoor, one-handed, gloved use - see packages/design-system/src/a11y/index.ts.",
+    "roots": ["packages/design-system/src"],
+    "extensions": [".ts", ".tsx"]
+  },
+
+  "scriptCoverage": {
+    "$comment": [
+      "THE ANTI-HOLLOW GATE. `turbo run test` reports success for packages that",
+      "declare no test script at all. The backend was bitten by exactly this:",
+      "`pnpm test` printed '6 successful' while running zero tests. Rather than",
+      "delete the job, the frontend keeps it honest by asserting that every",
+      "workspace package DECLARES the scripts the aggregate gate claims to run.",
+      "Exemptions are a visible debt ledger with an owner, not an amnesty.",
+      "New packages are strict by default: absence from this map means required."
+    ],
+    "required": ["typecheck", "lint", "test"],
+    "exempt": {
+      "@usrp/eslint-config": {
+        "scripts": ["lint", "test"],
+        "reason": "Lint config itself; its correctness is proven by the rule unit tests in tooling/repo-hygiene/test.",
+        "owner": "agent-3"
+      },
+      "@usrp/contracts": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Has `verify` + `drift:selftest` (real proofs) but no lint/test script, so `pnpm lint` and `pnpm test` skip it silently.",
+        "owner": "agent-1"
+      },
+      "@usrp/auth": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Declares only typecheck. Auth is the last package that should be untested; officer JWT vs opaque citizen session (ADR-018) needs unit proof.",
+        "owner": "agent-2"
+      },
+      "@usrp/api-client": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Declares only typecheck and clean.",
+        "owner": "agent-2"
+      },
+      "@usrp/i18n": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Declares only typecheck and clean.",
+        "owner": "agent-4"
+      },
+      "@usrp/shared-types": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Type-only package; typecheck is most of its value, but lint still applies.",
+        "owner": "agent-1"
+      },
+      "@usrp/ui": {
+        "scripts": ["test"],
+        "reason": "DEBT, and expiring. Being split; the domain-free half moves to @usrp/design-system (tested), the rest to feature slices per MIGRATION-MAP.md.",
+        "owner": "agent-4"
+      }
+    }
+  },
+
+  "bundles": {
+    "$comment": [
+      "Per-app ceilings on the SHIPPED payload, gzipped, because gzip is what a",
+      "recruit on a Rwandan mobile network actually downloads. These numbers are",
+      "PROVISIONAL and must be calibrated from the first real CI build: a ceiling",
+      "nobody has calibrated either never fires or always does. See README",
+      "'Calibrating bundle budgets'."
+    ],
+    "apps/applicant-portal": {
+      "distDir": "dist",
+      "maxTotalGzipKb": 700,
+      "maxChunkGzipKb": 300,
+      "$comment": "Tightest budget in the repo, deliberately: citizen-facing PWA, offline-first, opened on low-end Android over metered data."
+    },
+    "apps/officer-console": {
+      "distDir": "dist",
+      "maxTotalGzipKb": 1200,
+      "maxChunkGzipKb": 500,
+      "$comment": "Institutional desktop clients on agency networks; heavier ADS surface (navigation-system, dynamic-table, form) buys a looser ceiling."
+    }
+  },
+
+  "compiledExtraction": {
+    "$comment": "Proves the architecture doc's build-time-extraction claim instead of trusting it. Runs against a real build.",
+    "apps": ["apps/applicant-portal", "apps/officer-console"],
+    "distDir": "dist"
+  }
+}
