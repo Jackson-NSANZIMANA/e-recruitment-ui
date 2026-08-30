@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "//include": "test/ and .storybook/ are in scope on purpose: story files and story config are real code, and typechecking them here means Storybook does not have to duplicate the work on every reload.",
+  "include": ["src/**/*", "test/**/*", ".storybook/**/*"]
+}
