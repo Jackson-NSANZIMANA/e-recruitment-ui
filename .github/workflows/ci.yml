@@ -1,38 +1,183 @@
-name: CI
+# USRP Frontend CI — the real gate.
+#
+# Modelled on the backend's .github/workflows/ci-backend.yml and the doctrine in
+# docs/architecture/ci-quality-gate.md. Two rules from that document govern
+# everything below:
+#
+#   1. "A green-but-hollow gate is worse than no gate." The backend DELETED its
+#      test and lint jobs rather than let them report green while running
+#      nothing. Every job here runs something real, and the `hygiene` job
+#      actively asserts that the aggregate `pnpm test` / `pnpm lint` are not
+#      hollow (see check-script-coverage.mjs).
+#
+#   2. "It runs the SAME scripts a developer runs — no CI-only reimplementation
+#      to drift." There is no logic in this file. Every step is a script that
+#      exists in the repo and is runnable locally. Thresholds live in
+#      tooling/repo-hygiene/gates.config.json, not in YAML.
+#
+# WHERE THIS DEPARTS FROM THE BACKEND, DELIBERATELY: the backend recorded "no
+# eslint revival" as a scope boundary. The frontend does not inherit that pass.
+# ADS conformance IS the frontend's correctness contract — nothing at runtime
+# catches a hardcoded colour or a 40px touch target, and TypeScript compiles
+# both happily. So `ads-lint` is a required, error-level job here.
+
+name: USRP Frontend CI
 
 on:
   push:
-    branches: ["**"]
+    # feat/** is where slices land first — gate them BEFORE main.
+    branches: [main, develop, 'feat/**']
   pull_request:
-    branches: ["**"]
+    branches: [main, develop]
+
+# A superseded push's run is dead weight — cancel it, keep the newest.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
+  NODE_VERSION: '22'
+  # Contract drift is verified against a pinned backend commit so a backend
+  # change cannot turn the frontend red without someone moving this pin.
   BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
 
 jobs:
-  ci:
+
+  # ===========================================================================
+  # 1. HYGIENE — runs FIRST, needs NO node_modules.
+  #
+  # Deliberately placed before install. These gates use only Node's standard
+  # library, so a dependency resolution failure, a registry outage or a
+  # lockfile conflict can never silently disable them. It is also the fastest
+  # possible feedback: an oversized blob or a raw hex fails in ~10 seconds
+  # instead of after a four-minute install.
+  # ===========================================================================
+  hygiene:
+    name: Hygiene (large files, ADS boundaries, anti-hollow)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 5
     steps:
-      - name: Checkout frontend
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
+          # The large-file check inspects the git index, which needs the real
+          # repository — not a tarball export.
           fetch-depth: 1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
+      # Unit tests for the gate rules themselves. If the rules are broken, every
+      # gate below is meaningless, so this runs before them.
+      - name: Prove the gate rules (node:test, zero dependencies)
+        run: node --test tooling/repo-hygiene/test/*.test.mjs
+
+      # The same command a developer runs: `pnpm verify:hygiene`.
+      - name: Hygiene gates
+        run: node tooling/repo-hygiene/verify.mjs
+
+  # ===========================================================================
+  # 2. INSTALL — one shared, cached install for every job that needs deps.
+  # ===========================================================================
+  install:
+    name: Install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      # pnpm version comes from package.json "packageManager" (single source of
+      # truth) — passing `version:` too makes action-setup hard-fail.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+  # ===========================================================================
+  # 3. TYPECHECK — the source-correctness gate. Zero errors, ultra-strict.
+  #
+  # tsconfig.base.json runs with exactOptionalPropertyTypes,
+  # noUncheckedIndexedAccess and noPropertyAccessFromIndexSignature. This job is
+  # the frontend's equivalent of the backend's typecheck job and is not
+  # negotiable.
+  # ===========================================================================
+  typecheck:
+    name: Typecheck (strict, zero errors)
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # turbo's affected-graph filter compares against the merge base, which
+          # needs history. Shallow clones make --affected silently match nothing.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck affected packages
+        run: pnpm typecheck:affected
+
+  # ===========================================================================
+  # 4. ADS LINT — error-level design-system conformance.
+  #
+  # @atlaskit/eslint-plugin-design-system + ui-styling-standard, every rule
+  # promoted to "error" by packages/eslint-config/flat.cjs, plus the four local
+  # usrp/* rules.
+  # ===========================================================================
+  ads-lint:
+    name: ADS conformance (errors, not warnings)
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: ESLint (ADS + USRP rules)
+        run: pnpm lint:affected
+      # Compiled's cssMap must be statically analysable or styles silently fall
+      # back to runtime. The scanner uses the SAME babel chain as vite.config.ts.
+      - name: cssMap staticness sweep
+        run: pnpm scan:cssmap
+
+  # ===========================================================================
+  # 5. CONTRACT DRIFT (Agent 1's machinery) — frontend types vs real backend.
+  #
+  # The most valuable job in this file, because the brief records that the
+  # frontend currently targets NONE of the real HTTP surface. This is what
+  # catches that class of error.
+  # ===========================================================================
+  contract-drift:
+    name: Contract drift vs pinned backend
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      # Fail loudly and early on a missing credential rather than skipping the
+      # verification and reporting green. A skipped contract check is exactly
+      # the hollow gate this workflow exists to eliminate.
       - name: Validate backend checkout credential
         env:
           BACKEND_REPO_READ_TOKEN: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
         run: |
           set -euo pipefail
           if [ -z "${BACKEND_REPO_READ_TOKEN:-}" ]; then
-            echo "BACKEND_REPO_READ_TOKEN is not configured. Full contract drift verification cannot run." >&2
+            echo "::error::BACKEND_REPO_READ_TOKEN is not configured. Contract drift verification cannot run, and this job will not pretend otherwise." >&2
             echo "Create a read-only fine-grained token for Jackson-NSANZIMANA/e-recruitment and add it as the BACKEND_REPO_READ_TOKEN repository secret." >&2
             exit 1
           fi
@@ -46,37 +191,156 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
-          cache: pnpm
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # The drift tool's own selftest first: a drift checker that cannot detect
+      # planted drift is decoration.
+      - name: Drift tool selftest
+        run: pnpm --filter @usrp/contracts run drift:selftest
 
       - name: Verify contracts against pinned backend
         run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
-      - name: Type-check (all packages)
-        run: pnpm typecheck
+  # ===========================================================================
+  # 6. UNIT + INTEGRATION TESTS (Agent 4's suites).
+  # ===========================================================================
+  test:
+    name: Unit + integration tests
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Tests
+        run: pnpm test:affected
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage
+          path: '**/coverage/**'
+          if-no-files-found: ignore
+          retention-days: 7
 
-      - name: Unit tests
-        run: pnpm test
+  # ===========================================================================
+  # 7. ACCESSIBILITY — axe-core over every Storybook story, WCAG 2.1 AA.
+  #
+  # WCAG 2.1 AA is the floor for a government service, so this is a required
+  # job and not an advisory report. The test-runner throws on any violation;
+  # .storybook/test-runner.ts also rejects a story that tries to opt out.
+  # ===========================================================================
+  a11y:
+    name: Accessibility (axe-core, WCAG 2.1 AA)
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      # The design system's own zero-dependency contract tests: the 48px floor,
+      # the contrast constants and the light-theme decision, asserted as
+      # arithmetic. Fast, and they fail before a browser is ever launched.
+      - name: Design-system a11y contract tests
+        run: pnpm --filter @usrp/design-system run test
 
-      - name: Install Playwright browsers
+      - name: Install Playwright chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: E2E tests
-        run: pnpm test:e2e
+      - name: Build Storybook
+        run: pnpm --filter @usrp/design-system run build-storybook --quiet
 
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
+      # Serves the static build and runs axe against every story. Same script a
+      # developer runs as `pnpm --filter @usrp/design-system test:a11y`.
+      - name: axe-core over all stories
+        run: pnpm a11y
+
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: storybook-static
+          path: packages/design-system/storybook-static
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ===========================================================================
+  # 8. BUILD + BUDGETS + EXTRACTION PROOF.
+  #
+  # One build, three assertions: it compiles, it fits the gzipped budget, and
+  # @compiled really extracted styles at build time (the architecture doc claims
+  # this; the brief says treat that doc as aspiration, so it is measured).
+  # ===========================================================================
+  build:
+    name: Build + bundle budget + compiled extraction
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build all apps
+        run: pnpm build
+
+      # Proves the pipeline, not the prose. Fails if the runtime leaked into a
+      # bundle or if no atomic CSS was extracted at all.
+      - name: Prove build-time style extraction
+        run: pnpm verify:extraction
+
+      - name: Enforce bundle budgets (gzipped, per app)
+        run: pnpm size
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: dist
+          path: apps/*/dist
+          if-no-files-found: error
+          retention-days: 3
+
+  # ===========================================================================
+  # 9. END-TO-END — Playwright against real built apps.
+  # ===========================================================================
+  e2e:
+    name: Playwright E2E
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: E2E
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
@@ -85,3 +349,60 @@ jobs:
             apps/applicant-portal/playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+  # ===========================================================================
+  # 10. SECURITY SCAN — identical policy to the backend's job.
+  # ===========================================================================
+  security-scan:
+    name: Security Scan (Trivy CRITICAL/HIGH)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      # Pinned to a release — @master is an unpinned supply-chain dependency.
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true
+
+  # ===========================================================================
+  # 11. GATE — the single required status check.
+  #
+  # Branch protection points at THIS job only. Without it, adding a job to this
+  # file would silently make it optional, because protection rules name jobs
+  # explicitly. `if: always()` plus an explicit result test means a skipped or
+  # cancelled upstream job fails the gate instead of passing it by omission —
+  # which is the "green because nothing ran" failure mode in workflow form.
+  # ===========================================================================
+  gate:
+    name: Quality Gate
+    if: always()
+    needs:
+      - hygiene
+      - typecheck
+      - ads-lint
+      - contract-drift
+      - test
+      - a11y
+      - build
+      - e2e
+      - security-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assert every required job succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "$RESULTS"
+          failed=$(echo "$RESULTS" | grep -o '"result": *"[a-z]*"' | grep -v '"success"' || true)
+          if [ -n "$failed" ]; then
+            echo "::error::Quality gate RED. Not every required job succeeded."
+            exit 1
+          fi
+          echo "Quality gate GREEN — every required job ran and succeeded."
