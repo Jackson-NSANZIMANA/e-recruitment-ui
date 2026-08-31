@@ -2,7 +2,7 @@
   "name": "@usrp/shared-types",
   "version": "1.0.0",
   "private": true,
-  "description": "USRP domain types shared across all frontend packages",
+  "description": "DEPRECATED — quarantined and frozen. Use @usrp/contracts. Kept only until @usrp/api-client, @usrp/ui, @usrp/officer-console and @usrp/applicant-portal have migrated off it.",
   "license": "UNLICENSED",
   "type": "module",
   "exports": {
@@ -13,6 +13,8 @@
   },
   "main": "./src/index.ts",
   "scripts": {
+    "lint": "node --experimental-strip-types ../contracts/scripts/lint/cli.ts --package shared-types",
+    "test": "node --experimental-strip-types --import ../contracts/test/register.mjs --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
