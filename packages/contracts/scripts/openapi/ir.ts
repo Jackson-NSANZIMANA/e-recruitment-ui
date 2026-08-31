@@ -5,6 +5,19 @@
 // route table and the drift checker all consume this. That is deliberate: the
 // failure this package exists to prevent is two hand-maintained copies of one
 // truth, and rebuilding it once per tool would reintroduce exactly that.
+//
+// A NOTE ON `noUncheckedIndexedAccess`, because it shaped every signature here.
+// `Record<string, YamlValue>` is an INDEX SIGNATURE: `doc['info']` is typed
+// `YamlValue | undefined`, and that `undefined` is the whole point — an OpenAPI
+// document is allowed to be missing `info`, and the loader's job is to say so
+// with a filename and a field name rather than to crash three frames later.
+// So the guards below take `YamlValue | undefined` and reject `undefined`
+// EXPLICITLY, as a first-class malformed-document case. They used to take
+// `YamlValue` and every caller papered over the gap with `?? null` or a `!`,
+// which type-checked by suppressing the compiler rather than by handling the
+// case — and cost 7 of this package's 15 errors the moment the strict flags
+// were actually enforced. If you find yourself adding a `!` to an index access
+// in this file, widen the guard instead.
 // ════════════════════════════════════════════════════════════════
 
 import { readFileSync, readdirSync } from 'node:fs';
@@ -64,14 +77,25 @@ export class ContractError extends Error {
   }
 }
 
-function asRecord(value: YamlValue, what: string, file: string): Record<string, YamlValue> {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+/**
+ * Demand a mapping. `undefined` — an ABSENT key, which is what indexing a
+ * `Record` under `noUncheckedIndexedAccess` yields — is rejected with the same
+ * message as a present-but-wrong-shape value, because to a document author they
+ * are the same mistake.
+ */
+function asRecord(
+  value: YamlValue | undefined,
+  what: string,
+  file: string,
+): Record<string, YamlValue> {
+  if (value === undefined || value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new ContractError(`${what} must be a mapping`, file);
   }
   return value as Record<string, YamlValue>;
 }
 
-function requireString(value: YamlValue, what: string, file: string): string {
+/** Demand a non-empty string. Absent and empty are both refused, by name. */
+function requireString(value: YamlValue | undefined, what: string, file: string): string {
   if (typeof value !== 'string' || value.length === 0) {
     throw new ContractError(`${what} must be a non-empty string`, file);
   }
@@ -92,16 +116,16 @@ export function refName(ref: string, file: string): string {
 }
 
 function readSchemaRef(
-  container: Record<string, YamlValue> | undefined,
+  container: YamlValue | undefined,
   file: string,
 ): { schema: string | null; mediaType: string | null } {
   if (container === undefined) return { schema: null, mediaType: null };
-  const content = container['content'];
+  const content = asRecord(container, 'requestBody/response', file)['content'];
   if (content === undefined) return { schema: null, mediaType: null };
   const media = asRecord(content, 'content', file);
   const mediaType = Object.keys(media)[0];
   if (mediaType === undefined) return { schema: null, mediaType: null };
-  const entry = asRecord(media[mediaType]!, `content.${mediaType}`, file);
+  const entry = asRecord(media[mediaType], `content.${mediaType}`, file);
   const schema = entry['schema'];
   if (schema === undefined) return { schema: null, mediaType };
   const ref = asRecord(schema, 'schema', file)['$ref'];
@@ -114,7 +138,11 @@ function readSchemaRef(
   return { schema: refName(ref, file), mediaType };
 }
 
-function readAuth(raw: YamlValue, operationId: string, file: string): readonly AuthKind[] {
+function readAuth(
+  raw: YamlValue | undefined,
+  operationId: string,
+  file: string,
+): readonly AuthKind[] {
   if (!Array.isArray(raw) || raw.length === 0) {
     throw new ContractError(`${operationId}: x-usrp-auth must be a non-empty array`, file);
   }
@@ -134,7 +162,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
   if (doc['openapi'] !== '3.1.0') {
     throw new ContractError('every document must declare openapi: "3.1.0"', file);
   }
-  const info = asRecord(doc['info'] ?? null, 'info', file);
+  const info = asRecord(doc['info'], 'info', file);
   const title = requireString(info['title'], 'info.title', file);
   const backendSha = requireString(info['x-usrp-backend-sha'], 'info.x-usrp-backend-sha', file);
 
@@ -150,7 +178,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
   }
 
   const operations: OperationFact[] = [];
-  const paths = asRecord(doc['paths'] ?? null, 'paths', file);
+  const paths = asRecord(doc['paths'], 'paths', file);
   for (const [path, pathItemRaw] of Object.entries(paths)) {
     if (path.includes('{') || path.includes('$')) {
       throw new ContractError(
@@ -169,11 +197,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
         throw new ContractError(`${operationId}: x-usrp-reach must be browser|service-internal`, file);
       }
 
-      const requestBody = op['requestBody'];
-      const request = readSchemaRef(
-        requestBody === undefined ? undefined : asRecord(requestBody, 'requestBody', file),
-        file,
-      );
+      const request = readSchemaRef(op['requestBody'], file);
 
       const queryParams: string[] = [];
       const parameters = op['parameters'];
@@ -195,7 +219,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
 
       const responses: ResponseFact[] = [];
       for (const [status, resRaw] of Object.entries(
-        asRecord(op['responses'] ?? null, `${operationId}.responses`, file),
+        asRecord(op['responses'], `${operationId}.responses`, file),
       )) {
         if (!/^[1-5]\d\d$/.test(status)) {
           throw new ContractError(`${operationId}: "${status}" is not an HTTP status code`, file);
@@ -218,7 +242,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
         path,
         method,
         summary: typeof op['summary'] === 'string' ? op['summary'] : '',
-        auth: readAuth(op['x-usrp-auth'] ?? null, operationId, file),
+        auth: readAuth(op['x-usrp-auth'], operationId, file),
         reach,
         source: requireString(op['x-usrp-source'], `${operationId} x-usrp-source`, file),
         verified: requireString(op['x-usrp-verified'], `${operationId} x-usrp-verified`, file),
