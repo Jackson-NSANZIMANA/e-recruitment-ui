@@ -16,6 +16,9 @@
     "verify": "tsx scripts/verify.ts",
     "drift": "tsx ../../tooling/contract-drift/src/cli.ts",
     "drift:selftest": "tsx ../../tooling/contract-drift/src/selftest.ts",
+    "lint": "node --experimental-strip-types scripts/lint/cli.ts --package contracts",
+    "lint:selftest": "node --experimental-strip-types scripts/lint/selftest.ts",
+    "test": "node --experimental-strip-types scripts/lint/selftest.ts && node --experimental-strip-types --import ./test/register.mjs --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.src.json",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
