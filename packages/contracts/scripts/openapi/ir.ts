@@ -7,13 +7,13 @@
 // truth, and rebuilding it once per tool would reintroduce exactly that.
 // ════════════════════════════════════════════════════════════════
 
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { parseYaml, type YamlValue } from './yaml.ts';
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { parseYaml, type YamlValue } from "./yaml.ts";
 
-export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
-export type AuthKind = 'officer' | 'system' | 'applicant-session' | 'none';
-export type Reach = 'browser' | 'service-internal';
+export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
+export type AuthKind = "officer" | "system" | "applicant-session" | "none";
+export type Reach = "browser" | "service-internal";
 
 export interface SchemaNode {
   readonly [key: string]: YamlValue;
@@ -51,28 +51,43 @@ export interface ServiceContract {
   readonly schemas: ReadonlyMap<string, SchemaNode>;
 }
 
-const METHODS: readonly HttpMethod[] = ['get', 'post', 'put', 'patch', 'delete'];
-const AUTH_KINDS: readonly AuthKind[] = ['officer', 'system', 'applicant-session', 'none'];
+const METHODS: readonly HttpMethod[] = [
+  "get",
+  "post",
+  "put",
+  "patch",
+  "delete",
+];
+const AUTH_KINDS: readonly AuthKind[] = [
+  "officer",
+  "system",
+  "applicant-session",
+  "none",
+];
 
 export class ContractError extends Error {
   readonly file: string;
 
   constructor(message: string, file: string) {
     super(`${file}: ${message}`);
-    this.name = 'ContractError';
+    this.name = "ContractError";
     this.file = file;
   }
 }
 
-function asRecord(value: YamlValue, what: string, file: string): Record<string, YamlValue> {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+function asRecord(
+  value: YamlValue,
+  what: string,
+  file: string,
+): Record<string, YamlValue> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new ContractError(`${what} must be a mapping`, file);
   }
   return value as Record<string, YamlValue>;
 }
 
 function requireString(value: YamlValue, what: string, file: string): string {
-  if (typeof value !== 'string' || value.length === 0) {
+  if (typeof value !== "string" || value.length === 0) {
     throw new ContractError(`${what} must be a non-empty string`, file);
   }
   return value;
@@ -80,12 +95,15 @@ function requireString(value: YamlValue, what: string, file: string): string {
 
 /** `#/components/schemas/Foo` -> `Foo`. Anything else is rejected. */
 export function refName(ref: string, file: string): string {
-  const prefix = '#/components/schemas/';
+  const prefix = "#/components/schemas/";
   if (!ref.startsWith(prefix)) {
-    throw new ContractError(`only local component refs are supported, got "${ref}"`, file);
+    throw new ContractError(
+      `only local component refs are supported, got "${ref}"`,
+      file,
+    );
   }
   const name = ref.slice(prefix.length);
-  if (name.length === 0 || name.includes('/')) {
+  if (name.length === 0 || name.includes("/")) {
     throw new ContractError(`malformed ref "${ref}"`, file);
   }
   return name;
@@ -96,16 +114,16 @@ function readSchemaRef(
   file: string,
 ): { schema: string | null; mediaType: string | null } {
   if (container === undefined) return { schema: null, mediaType: null };
-  const content = container['content'];
+  const content = container["content"];
   if (content === undefined) return { schema: null, mediaType: null };
-  const media = asRecord(content, 'content', file);
+  const media = asRecord(content, "content", file);
   const mediaType = Object.keys(media)[0];
   if (mediaType === undefined) return { schema: null, mediaType: null };
   const entry = asRecord(media[mediaType]!, `content.${mediaType}`, file);
-  const schema = entry['schema'];
+  const schema = entry["schema"];
   if (schema === undefined) return { schema: null, mediaType };
-  const ref = asRecord(schema, 'schema', file)['$ref'];
-  if (typeof ref !== 'string') {
+  const ref = asRecord(schema, "schema", file)["$ref"];
+  if (typeof ref !== "string") {
     throw new ContractError(
       `every request/response schema must be a $ref to a named component (media type ${mediaType})`,
       file,
@@ -114,14 +132,21 @@ function readSchemaRef(
   return { schema: refName(ref, file), mediaType };
 }
 
-function readAuth(raw: YamlValue, operationId: string, file: string): readonly AuthKind[] {
+function readAuth(
+  raw: YamlValue,
+  operationId: string,
+  file: string,
+): readonly AuthKind[] {
   if (!Array.isArray(raw) || raw.length === 0) {
-    throw new ContractError(`${operationId}: x-usrp-auth must be a non-empty array`, file);
+    throw new ContractError(
+      `${operationId}: x-usrp-auth must be a non-empty array`,
+      file,
+    );
   }
   return raw.map((kind) => {
-    if (typeof kind !== 'string' || !AUTH_KINDS.includes(kind as AuthKind)) {
+    if (typeof kind !== "string" || !AUTH_KINDS.includes(kind as AuthKind)) {
       throw new ContractError(
-        `${operationId}: unknown auth kind "${String(kind)}" (expected one of ${AUTH_KINDS.join(', ')})`,
+        `${operationId}: unknown auth kind "${String(kind)}" (expected one of ${AUTH_KINDS.join(", ")})`,
         file,
       );
     }
@@ -130,29 +155,45 @@ function readAuth(raw: YamlValue, operationId: string, file: string): readonly A
 }
 
 export function loadContract(dir: string, file: string): ServiceContract {
-  const doc = asRecord(parseYaml(readFileSync(join(dir, file), 'utf8'), file), 'document', file);
-  if (doc['openapi'] !== '3.1.0') {
-    throw new ContractError('every document must declare openapi: "3.1.0"', file);
+  const doc = asRecord(
+    parseYaml(readFileSync(join(dir, file), "utf8"), file),
+    "document",
+    file,
+  );
+  if (doc["openapi"] !== "3.1.0") {
+    throw new ContractError(
+      'every document must declare openapi: "3.1.0"',
+      file,
+    );
   }
-  const info = asRecord(doc['info'] ?? null, 'info', file);
-  const title = requireString(info['title'], 'info.title', file);
-  const backendSha = requireString(info['x-usrp-backend-sha'], 'info.x-usrp-backend-sha', file);
+  const info = asRecord(doc["info"] ?? null, "info", file);
+  const title = requireString(info["title"] ?? null, "info.title", file);
+  const backendSha = requireString(
+    info["x-usrp-backend-sha"] ?? null,
+    "info.x-usrp-backend-sha",
+    file,
+  );
 
   const schemas = new Map<string, SchemaNode>();
-  const components = doc['components'];
+  const components = doc["components"];
   if (components !== undefined) {
-    const raw = asRecord(components, 'components', file)['schemas'];
+    const raw = asRecord(components, "components", file)["schemas"];
     if (raw !== undefined) {
-      for (const [name, node] of Object.entries(asRecord(raw, 'components.schemas', file))) {
-        schemas.set(name, asRecord(node, `components.schemas.${name}`, file) as SchemaNode);
+      for (const [name, node] of Object.entries(
+        asRecord(raw, "components.schemas", file),
+      )) {
+        schemas.set(
+          name,
+          asRecord(node, `components.schemas.${name}`, file) as SchemaNode,
+        );
       }
     }
   }
 
   const operations: OperationFact[] = [];
-  const paths = asRecord(doc['paths'] ?? null, 'paths', file);
+  const paths = asRecord(doc["paths"] ?? null, "paths", file);
   for (const [path, pathItemRaw] of Object.entries(paths)) {
-    if (path.includes('{') || path.includes('$')) {
+    if (path.includes("{") || path.includes("$")) {
       throw new ContractError(
         `INVARIANT 1: "${path}" looks templated. shared-http routes by EXACT path only; ids travel in the body or a query param.`,
         file,
@@ -163,48 +204,74 @@ export function loadContract(dir: string, file: string): ServiceContract {
       const opRaw = pathItem[method];
       if (opRaw === undefined) continue;
       const op = asRecord(opRaw, `paths.${path}.${method}`, file);
-      const operationId = requireString(op['operationId'], `${path} ${method} operationId`, file);
-      const reach = requireString(op['x-usrp-reach'], `${operationId} x-usrp-reach`, file);
-      if (reach !== 'browser' && reach !== 'service-internal') {
-        throw new ContractError(`${operationId}: x-usrp-reach must be browser|service-internal`, file);
+      const operationId = requireString(
+        op["operationId"] ?? null,
+        `${path} ${method} operationId`,
+        file,
+      );
+      const reach = requireString(
+        op["x-usrp-reach"] ?? null,
+        `${operationId} x-usrp-reach`,
+        file,
+      );
+      if (reach !== "browser" && reach !== "service-internal") {
+        throw new ContractError(
+          `${operationId}: x-usrp-reach must be browser|service-internal`,
+          file,
+        );
       }
 
-      const requestBody = op['requestBody'];
+      const requestBody = op["requestBody"];
       const request = readSchemaRef(
-        requestBody === undefined ? undefined : asRecord(requestBody, 'requestBody', file),
+        requestBody === undefined
+          ? undefined
+          : asRecord(requestBody, "requestBody", file),
         file,
       );
 
       const queryParams: string[] = [];
-      const parameters = op['parameters'];
+      const parameters = op["parameters"];
       if (parameters !== undefined) {
         if (!Array.isArray(parameters)) {
-          throw new ContractError(`${operationId}: parameters must be an array`, file);
+          throw new ContractError(
+            `${operationId}: parameters must be an array`,
+            file,
+          );
         }
         for (const p of parameters) {
-          const param = asRecord(p, 'parameter', file);
-          if (param['in'] !== 'query') {
+          const param = asRecord(p, "parameter", file);
+          if (param["in"] !== "query") {
             throw new ContractError(
-              `${operationId}: only query parameters exist in this platform (got in: ${String(param['in'])})`,
+              `${operationId}: only query parameters exist in this platform (got in: ${String(param["in"])})`,
               file,
             );
           }
-          queryParams.push(requireString(param['name'], 'parameter.name', file));
+          queryParams.push(
+            requireString(param["name"] ?? null, "parameter.name", file),
+          );
         }
       }
 
       const responses: ResponseFact[] = [];
       for (const [status, resRaw] of Object.entries(
-        asRecord(op['responses'] ?? null, `${operationId}.responses`, file),
+        asRecord(op["responses"] ?? null, `${operationId}.responses`, file),
       )) {
         if (!/^[1-5]\d\d$/.test(status)) {
-          throw new ContractError(`${operationId}: "${status}" is not an HTTP status code`, file);
+          throw new ContractError(
+            `${operationId}: "${status}" is not an HTTP status code`,
+            file,
+          );
         }
-        const res = asRecord(resRaw, `${operationId}.responses.${status}`, file);
+        const res = asRecord(
+          resRaw,
+          `${operationId}.responses.${status}`,
+          file,
+        );
         const { schema, mediaType } = readSchemaRef(res, file);
         responses.push({
           status,
-          description: typeof res['description'] === 'string' ? res['description'] : '',
+          description:
+            typeof res["description"] === "string" ? res["description"] : "",
           schema,
           mediaType,
         });
@@ -217,11 +284,19 @@ export function loadContract(dir: string, file: string): ServiceContract {
         operationId,
         path,
         method,
-        summary: typeof op['summary'] === 'string' ? op['summary'] : '',
-        auth: readAuth(op['x-usrp-auth'] ?? null, operationId, file),
+        summary: typeof op["summary"] === "string" ? op["summary"] : "",
+        auth: readAuth(op["x-usrp-auth"] ?? null, operationId, file),
         reach,
-        source: requireString(op['x-usrp-source'], `${operationId} x-usrp-source`, file),
-        verified: requireString(op['x-usrp-verified'], `${operationId} x-usrp-verified`, file),
+        source: requireString(
+          op["x-usrp-source"] ?? null,
+          `${operationId} x-usrp-source`,
+          file,
+        ),
+        verified: requireString(
+          op["x-usrp-verified"] ?? null,
+          `${operationId} x-usrp-verified`,
+          file,
+        ),
         requestSchema: request.schema,
         requestMediaType: request.mediaType,
         queryParams,
@@ -233,21 +308,25 @@ export function loadContract(dir: string, file: string): ServiceContract {
   // Every referenced component must exist, and every component must be reachable.
   const referenced = new Set<string>();
   const walk = (node: YamlValue): void => {
-    if (node === null || typeof node !== 'object') return;
+    if (node === null || typeof node !== "object") return;
     if (Array.isArray(node)) {
       node.forEach(walk);
       return;
     }
     for (const [key, value] of Object.entries(node)) {
-      if (key === '$ref' && typeof value === 'string') referenced.add(refName(value, file));
+      if (key === "$ref" && typeof value === "string")
+        referenced.add(refName(value, file));
       else walk(value);
     }
   };
-  walk(doc['paths'] ?? null);
+  walk(doc["paths"] ?? null);
   for (const node of schemas.values()) walk(node as unknown as YamlValue);
   for (const name of referenced) {
     if (!schemas.has(name)) {
-      throw new ContractError(`$ref to undefined component schema "${name}"`, file);
+      throw new ContractError(
+        `$ref to undefined component schema "${name}"`,
+        file,
+      );
     }
   }
   for (const name of schemas.keys()) {
@@ -260,7 +339,7 @@ export function loadContract(dir: string, file: string): ServiceContract {
   }
 
   return {
-    service: file.replace(/\.yaml$/, ''),
+    service: file.replace(/\.yaml$/, ""),
     file,
     title,
     backendSha,
@@ -271,14 +350,15 @@ export function loadContract(dir: string, file: string): ServiceContract {
 
 export function loadAllContracts(dir: string): readonly ServiceContract[] {
   const files = readdirSync(dir)
-    .filter((name) => name.endsWith('.yaml'))
+    .filter((name) => name.endsWith(".yaml"))
     .sort();
-  if (files.length === 0) throw new ContractError('no OpenAPI documents found', dir);
+  if (files.length === 0)
+    throw new ContractError("no OpenAPI documents found", dir);
   const contracts = files.map((file) => loadContract(dir, file));
   const shas = new Set(contracts.map((c) => c.backendSha));
   if (shas.size !== 1) {
     throw new ContractError(
-      `documents disagree about the verified backend SHA: ${[...shas].join(', ')}. A contract pinned to two commits is pinned to neither.`,
+      `documents disagree about the verified backend SHA: ${[...shas].join(", ")}. A contract pinned to two commits is pinned to neither.`,
       dir,
     );
   }
@@ -304,13 +384,14 @@ export function topoSortSchemas(contract: ServiceContract): readonly string[] {
   for (const [name, node] of contract.schemas) {
     const set = new Set<string>();
     const walk = (value: YamlValue): void => {
-      if (value === null || typeof value !== 'object') return;
+      if (value === null || typeof value !== "object") return;
       if (Array.isArray(value)) {
         value.forEach(walk);
         return;
       }
       for (const [key, child] of Object.entries(value)) {
-        if (key === '$ref' && typeof child === 'string') set.add(refName(child, contract.file));
+        if (key === "$ref" && typeof child === "string")
+          set.add(refName(child, contract.file));
         else walk(child);
       }
     };
@@ -318,19 +399,20 @@ export function topoSortSchemas(contract: ServiceContract): readonly string[] {
     deps.set(name, set);
   }
   const ordered: string[] = [];
-  const state = new Map<string, 'visiting' | 'done'>();
+  const state = new Map<string, "visiting" | "done">();
   const visit = (name: string, trail: readonly string[]): void => {
     const current = state.get(name);
-    if (current === 'done') return;
-    if (current === 'visiting') {
+    if (current === "done") return;
+    if (current === "visiting") {
       throw new ContractError(
-        `schema reference cycle: ${[...trail, name].join(' -> ')}. Zod would need a lazy() thunk; break the cycle instead.`,
+        `schema reference cycle: ${[...trail, name].join(" -> ")}. Zod would need a lazy() thunk; break the cycle instead.`,
         contract.file,
       );
     }
-    state.set(name, 'visiting');
-    for (const dep of [...(deps.get(name) ?? [])].sort()) visit(dep, [...trail, name]);
-    state.set(name, 'done');
+    state.set(name, "visiting");
+    for (const dep of [...(deps.get(name) ?? [])].sort())
+      visit(dep, [...trail, name]);
+    state.set(name, "done");
     ordered.push(name);
   };
   for (const name of [...contract.schemas.keys()].sort()) visit(name, []);

@@ -1,11 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": ".",
     "noEmit": true,
+    "types": ["node"],
     "allowImportingTsExtensions": true,
-    "tsBuildInfoFile": "dist/.tsbuildinfo"
+    "jsx": "preserve"
   },
-  "include": ["src", "selfcheck"]
+  "include": ["src", "mocks", "selfcheck", "scripts"]
 }

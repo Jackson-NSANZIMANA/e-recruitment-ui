@@ -310,25 +310,31 @@ importers:
       '@tanstack/react-query':
         specifier: 5.56.2
         version: 5.56.2(react@18.3.1)
-      '@usrp/shared-types':
+      '@usrp/contracts':
         specifier: workspace:*
-        version: link:../shared-types
+        version: link:../contracts
       react:
         specifier: ^18.3.1
         version: 18.3.1
     devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
       '@types/react':
         specifier: ^18.3.0
         version: 18.3.0
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.9
       typescript:
         specifier: ~5.4.0
         version: 5.4.5
 
   packages/auth:
     dependencies:
-      '@usrp/shared-types':
+      '@usrp/contracts':
         specifier: workspace:*
-        version: link:../shared-types
+        version: link:../contracts
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -336,6 +342,9 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
       '@types/react':
         specifier: ^18.3.0
         version: 18.3.0
@@ -345,6 +354,9 @@ importers:
       react-router-dom:
         specifier: 6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.9
       typescript:
         specifier: ~5.4.0
         version: 5.4.5
@@ -355,6 +367,9 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
       '@usrp/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
@@ -2259,6 +2274,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
 
   '@types/node@26.1.2':
     resolution: {integrity: sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==}
@@ -4587,6 +4605,9 @@ packages:
 
   unbzip2-stream@1.4.3:
     resolution: {integrity: sha512-mlExGW4w71ebDJviH16lQLtZS32VKqsSfk80GCfUlwT/4/hNRFsoscrF/c++9xinkMzECL1uL9DDwXqFWkruPg==}
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
@@ -7377,6 +7398,10 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/node@26.1.2':
     dependencies:
       undici-types: 8.3.0
@@ -7401,7 +7426,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
     optional: true
 
   '@typescript-eslint/parser@7.18.0(eslint@9.39.5)(typescript@5.4.5)':
@@ -9948,6 +9973,8 @@ snapshots:
     dependencies:
       buffer: 5.7.1
       through: 2.3.8
+
+  undici-types@6.21.0: {}
 
   undici-types@8.3.0:
     optional: true
