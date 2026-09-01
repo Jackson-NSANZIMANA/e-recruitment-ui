@@ -1,0 +1,1 @@
+import type {InvitationKey} from '../model/invitation.ts';import type {SliceTransport} from './transport.ts';export const getInvitationKey=(t:SliceTransport):Promise<InvitationKey>=>t.call('getSlotInvitationKey');
