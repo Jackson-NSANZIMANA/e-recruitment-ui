@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+import {readdirSync} from 'node:fs';import {join} from 'node:path';const root=process.cwd(),d=join(root,'packages/testing/proofs'),files=readdirSync(d).filter(x=>/^0[1-9]-.*\.mjs$/.test(x)).sort();let total=0;for(const f of files){const r=await import(`file://${join(d,f)}`);void r;/* each proof owns its exit code */}console.log(`Frontend proof runner completed ${files.length} proofs`);
