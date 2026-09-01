@@ -25,24 +25,20 @@ export const WrapsASmallControl: Story = {
 };
 
 export const InARow: Story = {
-  name: 'Several targets in a row stay independently tappable',
+  name: "Several targets in a row stay independently tappable",
+  args: { children: <SmallGlyph /> },
   render: () => (
     <Inline space="space.100">
-      <TouchTarget testId="t1">
-        <SmallGlyph />
-      </TouchTarget>
-      <TouchTarget testId="t2">
-        <SmallGlyph />
-      </TouchTarget>
-      <TouchTarget testId="t3">
-        <SmallGlyph />
-      </TouchTarget>
+      <TouchTarget testId="t1"><SmallGlyph /></TouchTarget>
+      <TouchTarget testId="t2"><SmallGlyph /></TouchTarget>
+      <TouchTarget testId="t3"><SmallGlyph /></TouchTarget>
     </Inline>
   ),
 };
 
 export const TheFloorIsDocumented: Story = {
-  name: 'Floor is ' + String(MIN_TOUCH_TARGET_PX) + 'px',
+  name: "Floor is " + String(MIN_TOUCH_TARGET_PX) + "px",
+  args: { children: <SmallGlyph /> },
   render: () => (
     <Text>
       Interactive targets never go below {MIN_TOUCH_TARGET_PX} CSS pixels. WCAG 2.1 AA asks

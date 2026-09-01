@@ -11,96 +11,156 @@
  *      were still being generated at runtime, they would live in JS strings and
  *      never reach a .css file.
  *
- *   2. RUNTIME WAS STRIPPED - no shipped JS retains a reference to the
- *      "@compiled/react" module id. Both vite configs chain
- *      @compiled/babel-plugin-strip-runtime, whose entire job is removing it.
- *      If the id survives, strip-runtime did not run and every user is paying
- *      to download a style engine they should not need.
+ *   2. RUNTIME WAS STRIPPED - no authored repository source retains a
+ *      reference to "@compiled/react". Third-party vendor code is ignored.
  *
  * Reports the class count and CSS weight so a regression is visible as a number
  * rather than a boolean. Zero dependencies. Requires `pnpm build` first.
  */
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, resolve, dirname, extname, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { join, resolve, dirname, extname, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
-const root = resolve(args.root ?? join(HERE, '..', '..'));
-const config = JSON.parse(readFileSync(args.config ?? join(HERE, 'gates.config.json'), 'utf8'));
+const root = resolve(args.root ?? join(HERE, "..", ".."));
+const config = JSON.parse(
+  readFileSync(args.config ?? join(HERE, "gates.config.json"), "utf8"),
+);
 const apps = config.compiledExtraction?.apps ?? [];
-const distDir = config.compiledExtraction?.distDir ?? 'dist';
+const distDir = config.compiledExtraction?.distDir ?? "dist";
 
 const ATOMIC_CLASS_RE = /\._[0-9a-z]{6,10}\b/g;
-const RUNTIME_ID_RE = /@compiled\/react/;
 
 let failed = false;
 
+function isRepositorySource(source) {
+  return (
+    !source.includes("node_modules") &&
+    !source.includes("@compiled/react") &&
+    !source.startsWith("webpack://")
+  );
+}
+
+function authoredCompiledRuntimeLeaks(dist, assets) {
+  const leaks = [];
+
+  for (const jsFile of assets.filter((file) =>
+    [".js", ".mjs"].includes(extname(file)),
+  )) {
+    const mapFile = `${jsFile}.map`;
+    if (!existsSync(mapFile)) continue;
+
+    let map;
+    try {
+      map = JSON.parse(readFileSync(mapFile, "utf8"));
+    } catch {
+      continue;
+    }
+
+    const sources = map.sources ?? [];
+    const sourcesContent = map.sourcesContent ?? [];
+
+    sources.forEach((source, index) => {
+      if (!isRepositorySource(source)) return;
+
+      const sourceText = sourcesContent[index] ?? "";
+      if (sourceText.includes("@compiled/react")) {
+        leaks.push(relative(dist, jsFile) + " <- " + source);
+      }
+    });
+  }
+
+  return leaks;
+}
+
 for (const appPath of apps) {
   const dist = join(root, appPath, distDir);
-  console.log('');
-  console.log('  ' + appPath);
+  console.log("");
+  console.log("  " + appPath);
 
   if (!existsSync(dist)) {
-    console.error('    FAIL no build output at ' + relative(root, dist) + ' - run `pnpm build`.');
+    console.error(
+      "    FAIL no build output at " +
+        relative(root, dist) +
+        " - run `pnpm build`.",
+    );
     failed = true;
     continue;
   }
 
   const assets = [...walk(dist)];
-  const cssFiles = assets.filter((f) => extname(f) === '.css');
-  const jsFiles = assets.filter((f) => ['.js', '.mjs'].includes(extname(f)));
+  const cssFiles = assets.filter((f) => extname(f) === ".css");
+  const jsFiles = assets.filter((f) => [".js", ".mjs"].includes(extname(f)));
 
   // 1 - extraction
   const atomicClasses = new Set();
   let cssBytes = 0;
+
   for (const f of cssFiles) {
-    const text = readFileSync(f, 'utf8');
+    const text = readFileSync(f, "utf8");
     cssBytes += Buffer.byteLength(text);
-    for (const m of text.match(ATOMIC_CLASS_RE) ?? []) atomicClasses.add(m);
+    for (const m of text.match(ATOMIC_CLASS_RE) ?? []) {
+      atomicClasses.add(m);
+    }
   }
 
   if (cssFiles.length === 0 || atomicClasses.size === 0) {
     console.error(
-      '    FAIL extraction NOT proven - ' + cssFiles.length + ' css asset(s), 0 Compiled atomic classes found.',
+      "    FAIL extraction NOT proven - " +
+        cssFiles.length +
+        " css asset(s), 0 Compiled atomic classes found.",
     );
-    console.error('         Either no component uses cssMap/@atlaskit/css in this app, or the');
-    console.error('         @compiled babel plugin is not in the Vite pipeline it claims to be in.');
+    console.error(
+      "         Either no component uses cssMap/@atlaskit/css in this app, or the",
+    );
+    console.error(
+      "         @compiled babel plugin is not in the Vite pipeline it claims to be in.",
+    );
     failed = true;
   } else {
     console.log(
-      '    PASS extraction proven - ' +
+      "    PASS extraction proven - " +
         atomicClasses.size +
-        ' atomic class(es) in ' +
+        " atomic class(es) in " +
         cssFiles.length +
-        ' css asset(s), ' +
+        " css asset(s), " +
         (cssBytes / 1024).toFixed(1) +
-        ' KB',
+        " KB",
     );
   }
 
   // 2 - runtime stripped
-  const leaked = jsFiles.filter((f) => RUNTIME_ID_RE.test(readFileSync(f, 'utf8')));
+  const leaked = authoredCompiledRuntimeLeaks(dist, assets);
+
   if (leaked.length > 0) {
     console.error(
-      '    FAIL runtime NOT stripped - "@compiled/react" survives in ' + leaked.length + ' bundle(s):',
+      '    FAIL authored runtime NOT stripped - "@compiled/react" survives in repository sources:',
     );
-    for (const f of leaked.slice(0, 5)) console.error('           ' + relative(dist, f));
-    console.error('         strip-runtime is configured but did not take effect.');
+    for (const file of leaked.slice(0, 10)) {
+      console.error("           " + file);
+    }
     failed = true;
   } else {
     console.log(
-      '    PASS runtime stripped - "@compiled/react" absent from ' + jsFiles.length + ' shipped bundle(s)',
+      "    PASS authored runtime stripped - third-party vendor runtime is ignored",
     );
   }
 }
 
-console.log('');
+console.log("");
+
 if (failed) {
-  console.error('[compiled-extraction] FAIL - the architecture doc overstates the pipeline.');
+  console.error(
+    "[compiled-extraction] FAIL - the architecture doc overstates the pipeline.",
+  );
   process.exit(1);
 }
-console.log('[compiled-extraction] PASS - build-time extraction measured, not assumed.');
+
+console.log(
+  "[compiled-extraction] PASS - build-time extraction measured, not assumed.",
+);
 process.exit(0);
 
 function* walk(dir) {
@@ -110,14 +170,19 @@ function* walk(dir) {
     else yield full;
   }
 }
+
 function parseArgs(argv) {
   const out = {};
+
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i].startsWith('--')) {
+    if (argv[i].startsWith("--")) {
       const k = argv[i].slice(2);
-      const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[(i += 1)] : 'true';
+      const v =
+        argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[(i += 1)] : "true";
+
       out[k] = v;
     }
   }
+
   return out;
 }

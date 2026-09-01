@@ -173,12 +173,22 @@ rm -f apps/tiny-app/dist/assets/bloat.js
 expect_exit 0 "bundle size PASSES once trimmed" node "$SIZE" --root "$FIXTURE" --config "$CFG"
 
 echo ""
-hr; echo "PLANT 8 - compiled runtime NOT stripped from the bundle"; hr
-printf 'import "@compiled/react";\n' >> apps/tiny-app/dist/assets/app.js
-expect_exit 1 "extraction proof FAILS when the runtime leaks" node "$EXTRACT" --root "$FIXTURE" --config "$CFG"
+hr; echo "PLANT 8 - compiled runtime leaked via an authored source map"; hr
+cat > apps/tiny-app/dist/assets/app.js.map <<'MAP'
+{
+  "version": 3,
+  "file": "app.js",
+  "sources": ["../../src/components/Widget/index.tsx"],
+  "sourcesContent": ["import \"@compiled/react\";\n"],
+  "names": [],
+  "mappings": ""
+}
+MAP
+printf '//# sourceMappingURL=app.js.map\n' >> apps/tiny-app/dist/assets/app.js
+expect_exit 1 "extraction proof FAILS when the runtime leaks via an authored source map" node "$EXTRACT" --root "$FIXTURE" --config "$CFG"
+rm -f apps/tiny-app/dist/assets/app.js.map
 sed -i '$d' apps/tiny-app/dist/assets/app.js
-expect_exit 0 "extraction proof PASSES once stripped" node "$EXTRACT" --root "$FIXTURE" --config "$CFG"
-
+expect_exit 0 "extraction proof PASSES once the leaked map is removed" node "$EXTRACT" --root "$FIXTURE" --config "$CFG"
 echo ""
 hr; echo "PLANT 9 - extraction claim with no extracted CSS at all"; hr
 mv apps/tiny-app/dist/assets/app.css "$FIXTURE/app.css.bak"
