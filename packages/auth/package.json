@@ -13,9 +13,12 @@
   },
   "main": "./src/index.ts",
   "scripts": {
+    "lint": "node scripts/lint-auth.mjs",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
     "selfcheck": "tsx selfcheck/verify-auth.ts",
-    "verify": "pnpm run selfcheck",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run verify",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "peerDependencies": {

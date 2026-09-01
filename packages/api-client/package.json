@@ -13,10 +13,13 @@
   },
   "main": "./src/index.ts",
   "scripts": {
+    "lint": "node scripts/lint-api-client.mjs",
     "typecheck": "tsc --noEmit",
     "check:paths": "tsx scripts/check-exact-paths.ts",
+    "test": "node scripts/test.mjs",
     "selfcheck": "tsx selfcheck/verify-api-client.ts",
-    "verify": "pnpm run check:paths && pnpm run selfcheck",
+    "verify": "pnpm run check:paths && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run verify",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
