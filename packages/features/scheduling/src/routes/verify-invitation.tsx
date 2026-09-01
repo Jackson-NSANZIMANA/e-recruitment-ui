@@ -1,0 +1,1 @@
+import React from 'react';import {Stack,Text} from '@atlaskit/primitives/compiled';import {useTranslation} from '@usrp/i18n';export default function VerifyInvitation():React.ReactElement{const {t}=useTranslation('scheduling');return <Stack space="space.200"><Text as="p">{t('scheduling.verify.title')}</Text><Text as="p">{t('scheduling.verify.offline_capable')}</Text></Stack>}

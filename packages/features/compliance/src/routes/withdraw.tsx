@@ -1,0 +1,1 @@
+import React from 'react';import {Stack,Text} from '@atlaskit/primitives/compiled';import {useTranslation} from '@usrp/i18n';export default function Withdraw():React.ReactElement{const {t}=useTranslation('compliance');return <Stack space="space.200"><Text as="p">{t('compliance.withdraw.title')}</Text><Text as="p">{t('compliance.withdraw.irreversible')}</Text></Stack>}
