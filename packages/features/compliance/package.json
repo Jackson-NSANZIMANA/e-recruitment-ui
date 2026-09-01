@@ -1,0 +1,12 @@
+{
+  "name": "@usrp/feature-compliance",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Erasure requests, the DPO queue with mandatory decline grounds, self-withdrawal, retention.",
+  "license": "UNLICENSED",
+  "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit", "lint": "eslint .", "test": "vitest run", "test:model": "node --experimental-strip-types --test src/model/*.test.ts" },
+  "dependencies": { "@atlaskit/button": "*", "@atlaskit/css": "^0.10.0", "@atlaskit/dynamic-table": "*", "@atlaskit/modal-dialog": "*", "@atlaskit/primitives": "*", "@atlaskit/section-message": "*", "@atlaskit/textarea": "*", "@compiled/react": "^0.18.0", "@usrp/contracts": "workspace:*", "@usrp/i18n": "workspace:*", "react": "^18.3.1", "react-router-dom": "^6.26.0" },
+  "devDependencies": { "@usrp/eslint-config": "workspace:*", "@usrp/testing": "workspace:*", "typescript": "~5.4.0" }
+}

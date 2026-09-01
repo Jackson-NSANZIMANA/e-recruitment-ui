@@ -1,0 +1,12 @@
+{
+  "name": "@usrp/feature-applications",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The 19-status lifecycle: officer list, detail, status history, citizen wizard drafts.",
+  "license": "UNLICENSED",
+  "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit", "lint": "eslint .", "test": "vitest run", "test:model": "node --experimental-strip-types --test src/model/*.test.ts" },
+  "dependencies": { "@atlaskit/css": "^0.10.0", "@atlaskit/dynamic-table": "*", "@atlaskit/lozenge": "*", "@atlaskit/primitives": "*", "@compiled/react": "^0.18.0", "@usrp/contracts": "workspace:*", "@usrp/i18n": "workspace:*", "react": "^18.3.1", "react-router-dom": "^6.26.0" },
+  "devDependencies": { "@usrp/eslint-config": "workspace:*", "@usrp/testing": "workspace:*", "typescript": "~5.4.0" }
+}
