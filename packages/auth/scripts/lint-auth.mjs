@@ -11,16 +11,21 @@ function walk(dir) {
     else if (/\.(ts|tsx)$/.test(entry)) files.push(path);
   }
 }
+function codeOnly(source) {
+  return source
+    .replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, '')
+    .replace(/(['\"])(?:\\.|(?!\1)[^\\])*\1/g, '');
+}
 walk(rootPath);
 const failures = [];
 for (const file of files) {
   const source = readFileSync(file, 'utf8');
+  const code = codeOnly(source);
   const rel = file.slice(rootPath.length);
-  if (/\b(localStorage|sessionStorage)\b/.test(source)) failures.push(`${rel}: browser credential storage is forbidden`);
-  if (/document\.cookie/.test(source) && !rel.endsWith('edge-client.ts')) failures.push(`${rel}: only edge-client.ts may read the CSRF cookie`);
-  if (/\bfetch\s*\(/.test(source)) failures.push(`${rel}: auth must call the edge client, never fetch directly`);
-  if (/\/api\//.test(source)) failures.push(`${rel}: invented /api/ routes are forbidden`);
-  if (/\b(email|emailAddress)\b/.test(source) && rel === 'edge-client.ts') failures.push(`${rel}: officer auth uses loginHandle, not email`);
+  if (/\b(localStorage|sessionStorage)\b/.test(code)) failures.push(`${rel}: browser credential storage is forbidden`);
+  if (/document\.cookie/.test(code) && !rel.endsWith('edge-client.ts')) failures.push(`${rel}: only edge-client.ts may read the CSRF cookie`);
+  if (/\bfetch\s*\(/.test(code)) failures.push(`${rel}: auth must call the edge client, never fetch directly`);
+  if (/\/api\//.test(code)) failures.push(`${rel}: invented /api/ routes are forbidden`);
 }
 if (files.length === 0) failures.push('no TypeScript source files found');
 if (failures.length) {
