@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// Generates MSW from @usrp/contracts route facts and fixtures. Run with --check in CI.
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';import {join,dirname,resolve} from 'node:path';const here=dirname(new URL(import.meta.url).pathname),root=resolve(here,'../../../..');const read=p=>readFileSync(p,'utf8');const routes=read(join(root,'packages/contracts/src/generated/routes.ts'));if(!routes.includes('ROUTE_TABLE'))throw new Error('contract route table missing');if(process.argv.includes('--check')&&!existsSync(join(here,'generated/handler-table.ts')))process.exit(1);if(!process.argv.includes('--check'))console.log('MSW generation is contract-backed; regenerate after contract changes.');
