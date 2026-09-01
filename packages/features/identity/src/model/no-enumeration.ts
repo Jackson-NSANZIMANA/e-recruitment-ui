@@ -1,0 +1,1 @@
+export const OTP_CHALLENGE_MESSAGE_KEY='identity.otp.challenged_uniform';export const NOT_FOUND_MESSAGE_KEY='identity.not_found_uniform';export const FORBIDDEN_OTP_PHRASES=['no such','not found','unknown national','not registered','no phone','try a different'] as const;export const otpChallengeMessageKey=():string=>OTP_CHALLENGE_MESSAGE_KEY;
