@@ -1,0 +1,1 @@
+import React,{lazy} from 'react';import type {RouteObject} from 'react-router-dom';const Verify=lazy(()=>import('./verify-invitation.tsx'));export const SchedulingRoutes:readonly RouteObject[]=[{path:'scheduling/verify-invitation',element:<Verify/>}];

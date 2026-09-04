@@ -1,0 +1,1 @@
+import React,{lazy} from 'react';import type {RouteObject} from 'react-router-dom';const Officer=lazy(()=>import('./officer-login.tsx'));const Citizen=lazy(()=>import('./citizen-otp.tsx'));export const IdentityOfficerRoutes:readonly RouteObject[]=[{path:'login',element:<Officer/>}];export const IdentityCitizenRoutes:readonly RouteObject[]=[{path:'sign-in',element:<Citizen/>}];

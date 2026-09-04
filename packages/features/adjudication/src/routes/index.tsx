@@ -1,0 +1,1 @@
+import React,{lazy} from 'react';import type {RouteObject} from 'react-router-dom';const Queue=lazy(()=>import('./amber-queue.tsx'));export const AdjudicationRoutes:readonly RouteObject[]=[{path:'adjudication/amber-queue',element:<Queue/>}];
