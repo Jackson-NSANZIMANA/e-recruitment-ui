@@ -1,9 +1,10 @@
 {
+  "$comment": "rootDir is deliberately absent: the quarantine suite in test/ must be held to the same strict config as src/, and a rootDir of src/ would reject it (TS6059). Nothing is emitted from this package — consumers import the .ts directly via the exports map — so rootDir bought nothing anyway.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": true,
     "outDir": "dist",
-    "rootDir": "src",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

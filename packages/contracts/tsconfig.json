@@ -1,11 +1,13 @@
 {
+  "$comment": "allowImportingTsExtensions is not a convenience here, it is a requirement. scripts/** is EXECUTED by `node --experimental-strip-types` (see the node() helper in scripts/verify.ts), and node does no .js->.ts remapping, so a sibling import inside scripts/ must be spelled `./yaml.ts`. Without this flag tsc rejects exactly those specifiers (TS5097) while node requires them — the two halves of the toolchain disagreeing, which is what produced 8 of this package's 15 errors. The flag needs noEmit, which is set below. src/** is the opposite case and uses `.js`; see tsconfig.src.json and the runtime-import-extension lint rule.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }
