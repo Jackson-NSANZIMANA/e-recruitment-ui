@@ -2,13 +2,19 @@
   "name": "@usrp/eslint-config",
   "version": "1.0.0",
   "private": true,
-  "description": "Shared ESLint config — ADS rules + UI styling standard + USRP conventions",
+  "description": "Shared ESLint config - ADS rules promoted to ERROR, the ui-styling-standard, and the four local usrp/* boundary rules that share their predicates with tooling/repo-hygiene.",
   "license": "UNLICENSED",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
-    "./flat": "./flat.cjs"
+    "./flat": "./flat.cjs",
+    "./rules": "./rules/index.cjs"
   },
+  "files": [
+    "index.js",
+    "flat.cjs",
+    "rules/"
+  ],
   "scripts": {
     "typecheck": "echo 'no ts in eslint-config'"
   },

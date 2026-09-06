@@ -1,0 +1,71 @@
+{
+  "name": "@usrp/design-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "USRP domain-free presentation layer. Atlassian Design System primitives plus the accessibility floor a government service owes its users. Knows nothing about agencies, applicants or application statuses - by lint rule, not by convention.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./tokens": {
+      "import": "./src/tokens/index.ts",
+      "types": "./src/tokens/index.ts"
+    },
+    "./a11y": {
+      "import": "./src/a11y/index.ts",
+      "types": "./src/a11y/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "node --test test/*.test.mjs",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build",
+    "test:a11y": "test-storybook --config-dir .storybook --maxWorkers=2 --url http://127.0.0.1:6006",
+    "scan:cssmap": "node ../ui/scripts/scan-cssmap.cjs src",
+    "clean": "rm -rf dist storybook-static *.tsbuildinfo"
+  },
+  "//dependencies": "NOTE: there is deliberately no @usrp/* entry here, and the usrp/no-domain-imports lint rule enforces that. See src/tokens/index.ts.",
+  "dependencies": {
+    "@atlaskit/css": "^1.0.0",
+    "@atlaskit/primitives": "^22.2.1",
+    "@atlaskit/section-message": "^10.0.0",
+    "@atlaskit/tokens": "^16.4.0",
+    "@compiled/react": "^1.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@atlaskit/app-provider": "^5.3.0",
+    "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@atlaskit/eslint-plugin-ui-styling-standard": "^1.0.0",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-react": "^7.29.0",
+    "@babel/preset-typescript": "^7.29.0",
+    "@compiled/babel-plugin": "^2.0.0",
+    "@compiled/babel-plugin-strip-runtime": "^2.0.0",
+    "@storybook/addon-a11y": "^8.4.0",
+    "@storybook/addon-essentials": "^8.4.0",
+    "@storybook/react-vite": "^8.4.0",
+    "@storybook/test-runner": "^0.21.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@usrp/eslint-config": "workspace:*",
+    "@vitejs/plugin-react": "^4.3.0",
+    "axe-playwright": "^2.0.3",
+    "eslint": "^9.9.0",
+    "react-router-dom": "6.26.2",
+    "storybook": "^8.4.0",
+    "@storybook/react": "^8.4.0",
+    "typescript": "~5.4.0",
+    "vite": "^5.4.0"
+  }
+}

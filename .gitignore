@@ -4,7 +4,45 @@ dist/
 coverage/
 playwright-report/
 test-results/
+storybook-static/
 .env.local
 .env.*.local
 *.tsbuildinfo
 .cache/
+
+# ─── Never commit a binary archive ───────────────────────────────────────────
+# A 70.45 MiB vendored ADS mirror was committed at repo root and became the
+# overwhelming majority of clone weight. Git history is effectively append-only:
+# the only way to remove it is a history rewrite that invalidates every existing
+# clone. See tooling/repo-hygiene/PURGE-RUNBOOK.md.
+#
+# These patterns stop the accident. They do NOT stop `git add -f`, which is why
+# CI also fails on any tracked file over 5 MiB
+# (tooling/repo-hygiene/check-large-files.mjs). The ignore rule is the fence;
+# the CI check is the lock.
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.iso
+*.dmg
+*.gz
+*.bz2
+*.xz
+
+# The specific offender, named so an attempted re-add is unmistakable.
+atlassian-atlassian-frontend-mirror-*.zip
+
+# Reference clones belong beside the repo, never inside it:
+#   git clone --depth 1 https://github.com/atlassian/atlassian-frontend-mirror.git ~/reference/
+/reference/
+/vendor/
+
+# ─── Local tooling noise ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.eslintcache
+.vite/
