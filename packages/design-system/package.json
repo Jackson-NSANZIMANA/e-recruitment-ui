@@ -6,18 +6,9 @@
   "license": "UNLICENSED",
   "type": "module",
   "exports": {
-    ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
-    },
-    "./tokens": {
-      "import": "./src/tokens/index.ts",
-      "types": "./src/tokens/index.ts"
-    },
-    "./a11y": {
-      "import": "./src/a11y/index.ts",
-      "types": "./src/a11y/index.ts"
-    }
+    ".": { "import": "./src/index.ts", "types": "./src/index.ts" },
+    "./tokens": { "import": "./src/tokens/index.ts", "types": "./src/tokens/index.ts" },
+    "./a11y": { "import": "./src/a11y/index.ts", "types": "./src/a11y/index.ts" }
   },
   "main": "./src/index.ts",
   "scripts": {
@@ -33,6 +24,7 @@
   "//dependencies": "NOTE: there is deliberately no @usrp/* entry here, and the usrp/no-domain-imports lint rule enforces that. See src/tokens/index.ts.",
   "dependencies": {
     "@atlaskit/css": "^1.0.0",
+    "@atlaskit/css-reset": "^8.1.2",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
     "@atlaskit/tokens": "^16.4.0",
@@ -62,7 +54,7 @@
     "@vitejs/plugin-react": "^4.3.0",
     "axe-playwright": "^2.0.3",
     "eslint": "^9.9.0",
-    "react-router-dom": "6.26.2",
+    "react-router-dom": "6.30.1",
     "storybook": "^8.4.0",
     "@storybook/react": "^8.4.0",
     "typescript": "~5.4.0",
