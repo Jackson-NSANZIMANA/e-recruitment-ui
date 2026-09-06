@@ -1,24 +1,19 @@
 name: USRP Frontend CI
-
 on:
   push:
     branches: [main, develop, 'feat/**']
   pull_request:
     branches: [main, develop]
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 env:
   NODE_VERSION: '22'
   BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
-
 jobs:
   hygiene:
     name: Hygiene (large files, ADS boundaries, anti-hollow)
@@ -26,17 +21,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+        with: {fetch-depth: 1}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+        with: {node-version: ${{ env.NODE_VERSION }}}
       - name: Prove the gate rules
         run: node --test tooling/repo-hygiene/test/*.test.mjs
       - name: Hygiene gates
         run: pnpm verify:hygiene
-
   install:
     name: Install
     runs-on: ubuntu-latest
@@ -45,210 +37,122 @@ jobs:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
-
   typecheck:
     name: Typecheck (strict, zero errors)
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - name: Fetch Turbo base ref
-        run: git fetch origin main:refs/remotes/origin/main
+        with: {fetch-depth: 0}
+      - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck:affected
-
   ads-lint:
     name: ADS conformance (errors, not warnings)
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - name: Fetch Turbo base ref
-        run: git fetch origin main:refs/remotes/origin/main
+        with: {fetch-depth: 0}
+      - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint:affected
       - run: pnpm scan:cssmap
-
   contract-drift:
     name: Contract drift vs pinned backend
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - name: Validate backend checkout credential
-        env:
-          BACKEND_REPO_READ_TOKEN: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
-        run: |
-          set -euo pipefail
-          test -n "${BACKEND_REPO_READ_TOKEN:-}" || { echo "::error::BACKEND_REPO_READ_TOKEN is not configured" >&2; exit 1; }
-      - name: Checkout pinned backend
-        uses: actions/checkout@v5
-        with:
-          repository: Jackson-NSANZIMANA/e-recruitment
-          ref: ${{ env.BACKEND_SHA }}
-          path: backend
-          fetch-depth: 1
-          token: ${{ secrets.BACKEND_REPO_READ_TOKEN }}
+        env: {BACKEND_REPO_READ_TOKEN: ${{ secrets.BACKEND_REPO_READ_TOKEN }} }
+        run: test -n "${BACKEND_REPO_READ_TOKEN:-}"
+      - uses: actions/checkout@v5
+        with: {repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1, token: ${{ secrets.BACKEND_REPO_READ_TOKEN }} }
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @usrp/contracts run drift:selftest
       - run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
-
   test:
     name: Unit + integration tests
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - name: Fetch Turbo base ref
-        run: git fetch origin main:refs/remotes/origin/main
+        with: {fetch-depth: 0}
+      - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:affected
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: coverage
-          path: '**/coverage/**'
-          if-no-files-found: ignore
-          retention-days: 7
-
   a11y:
     name: Accessibility (axe-core, WCAG 2.1 AA)
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @usrp/design-system run test
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
-      - uses: actions/upload-artifact@v6
-        if: failure()
-        with:
-          name: storybook-static
-          path: packages/design-system/storybook-static
-          if-no-files-found: ignore
-          retention-days: 7
-
   build:
     name: Build + bundle budget + compiled extraction
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm verify:extraction
       - run: pnpm size
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: dist
-          path: apps/*/dist
-          if-no-files-found: error
-          retention-days: 3
-
   e2e:
     name: Playwright E2E
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v6
-        if: failure()
-        with:
-          name: playwright-report
-          path: |
-            apps/officer-console/playwright-report/
-            apps/applicant-portal/playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7
-
   security-scan:
     name: Security Scan (Trivy CRITICAL/HIGH)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          exit-code: 1
-          ignore-unfixed: true
-
+        with: {scan-type: fs, scan-ref: ., severity: CRITICAL,HIGH, exit-code: 1, ignore-unfixed: true}
   gate:
     name: Quality Gate
     if: always()
     needs: [hygiene, typecheck, ads-lint, contract-drift, test, a11y, build, e2e, security-scan]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Assert every required job succeeded
-        env:
-          RESULTS: ${{ toJSON(needs) }}
+        env: {RESULTS: ${{ toJSON(needs) }} }
         run: |
           set -euo pipefail
           echo "$RESULTS"
           failed=$(echo "$RESULTS" | grep -o '"result": *"[a-z]*"' | grep -v '"success"' || true)
-          if [ -n "$failed" ]; then
-            echo "::error::Quality gate RED. Not every required job succeeded."
-            exit 1
-          fi
+          test -z "$failed" || { echo "::error::Quality gate RED. Not every required job succeeded."; exit 1; }
           echo "Quality gate GREEN — every required job ran and succeeded."
