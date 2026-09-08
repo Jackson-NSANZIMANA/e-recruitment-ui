@@ -28,11 +28,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-        with: { fetch-depth: 1 }
+        with:
+          fetch-depth: 1
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
-      # Intentionally no pnpm here. These gates are dependency-free by design.
       - name: Run dependency-free predicate tests
         run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
       - name: Run dependency-free hygiene gate
@@ -69,12 +69,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -93,12 +98,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -119,11 +129,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/checkout@v5
-        with: { repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1 }
+        with:
+          repository: Jackson-NSANZIMANA/e-recruitment
+          ref: ${{ env.BACKEND_SHA }}
+          path: backend
+          fetch-depth: 1
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -143,12 +161,17 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -168,9 +191,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -193,9 +220,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -209,7 +240,11 @@ jobs:
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
-        with: { name: frontend-production-dist, path: apps/*/dist, if-no-files-found: error, retention-days: 7 }
+        with:
+          name: frontend-production-dist
+          path: apps/*/dist
+          if-no-files-found: error
+          retention-days: 7
 
   e2e:
     name: Playwright E2E
@@ -219,9 +254,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -232,7 +271,8 @@ jobs:
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - uses: actions/download-artifact@v4
-        with: { name: frontend-production-dist }
+        with:
+          name: frontend-production-dist
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
 
@@ -248,7 +288,12 @@ jobs:
         continue-on-error: true
         run: bash tooling/security/security-scan.sh --no-audit
       - uses: aquasecurity/trivy-action@v0.36.0
-        with: { scan-type: fs, scan-ref: ., severity: CRITICAL,HIGH, exit-code: 1, ignore-unfixed: true }
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          ignore-unfixed: true
 
   gate:
     name: Quality Gate
@@ -258,7 +303,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Assert every required job succeeded
-        env: { RESULTS: ${{ toJSON(needs) }} }
+        env:
+          RESULTS: '${{ toJSON(needs) }}'
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
