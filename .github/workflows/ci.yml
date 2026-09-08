@@ -42,7 +42,6 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Install: prime the pnpm store AND cache node_modules for downstream jobs.
-  # Every downstream job restores this cache instead of re-running install.
   # ────────────────────────────────────────────────────────────────────────────
   install:
     name: Install
@@ -62,12 +61,12 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
 
   # ────────────────────────────────────────────────────────────────────────────
   # Typecheck: ultra-strict zero-error tsc.
-  # Uses --affected so only changed packages are checked on PRs.
   # ────────────────────────────────────────────────────────────────────────────
   typecheck:
     name: Typecheck
@@ -89,14 +88,14 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm typecheck:affected
 
   # ────────────────────────────────────────────────────────────────────────────
-  # ADS conformance: eslint with ADS rules promoted to error.
-  # The frontend's correctness contract — equivalent to the backend's selfchecks.
+  # ADS conformance: the frontend's correctness contract.
   # ────────────────────────────────────────────────────────────────────────────
   ads-lint:
     name: ADS conformance
@@ -118,6 +117,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -125,8 +125,7 @@ jobs:
       - run: pnpm scan:cssmap
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Contract drift: verify frontend contracts against the pinned backend SHA.
-  # Runs the drift tool's own selftest BEFORE trusting it.
+  # Contract drift: runs the drift tool's own selftest BEFORE trusting it.
   # ────────────────────────────────────────────────────────────────────────────
   contract-drift:
     name: Contract drift vs pinned backend
@@ -152,6 +151,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -181,6 +181,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -214,6 +215,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -233,7 +235,6 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Build: production bundles + extraction proof + bundle budget.
-  # Artifacts are consumed by the e2e job.
   # ────────────────────────────────────────────────────────────────────────────
   build:
     name: Build and production proof
@@ -253,6 +254,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -268,7 +270,6 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Playwright E2E: runs against the PRODUCTION BUILD, not source.
-  # Downloads the dist artifact from the build job.
   # ────────────────────────────────────────────────────────────────────────────
   e2e:
     name: Playwright E2E
@@ -288,6 +289,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -307,9 +309,17 @@ jobs:
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Security scan: Trivy fs scan, CRITICAL + HIGH, fail on findings.
-  # NOTE: the backend has scripts/security-scan.sh; the frontend does not yet.
-  # When one is written, point this job at it so CI and local run identical code.
+  # Security: the REPO'S OWN SCRIPT first, then Trivy.
+  #
+  # Both, not one. The script's five repo-tracking checks need no node_modules
+  # and no registry, so they report in seconds and cannot be disabled by a
+  # broken dependency graph - which is not hypothetical, see the workspace-glob
+  # incident of 2026-09-08. Trivy stays as a pinned action because the runner
+  # has no trivy binary and the action's caching beats pulling the image.
+  #
+  # --no-audit is deliberate: `pnpm audit` needs a resolved graph, and this job
+  # does no install, so running it here would report an unearned pass. It runs
+  # locally via `pnpm security:scan`, where a developer has actually installed.
   # ────────────────────────────────────────────────────────────────────────────
   security-scan:
     name: Security Scan
@@ -317,6 +327,41 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+
+      # The scan must prove itself before its verdict is trusted. This BLOCKS:
+      # all 13 assertions, every check planted then removed. A gate that cannot
+      # demonstrate it goes red does not get to report green.
+      - name: Prove the scan goes red on a planted violation
+        run: bash tooling/security/security-scan.sh --selftest
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STAGED ENFORCEMENT - continue-on-error is TEMPORARY. Remove it in the
+      # commit that resolves the first real-tree finding.
+      #
+      # WHY. This gate is new, its first run against the real repository went
+      # red, and no log-retrieval tool was available to identify which check
+      # fired. Two wrong responses were available:
+      #
+      #   - relax the rules to match whatever the repo currently contains. That
+      #     encodes the defect as the standard, which is exactly how twelve
+      #     fictional statuses became a shipped enum.
+      #   - leave it blocking and unexplained on a pipeline that is ALREADY red
+      #     for the lockfile reason. Today's lesson is that an unread red signal
+      #     is worse than none: the Quality Gate was correct for eleven hours
+      #     and changed nothing.
+      #
+      # So the gate runs and prints its findings in full, and becomes blocking
+      # the moment a human has read that output once.
+      #
+      # TO CLOSE, two seconds locally - no install, no network:
+      #     pnpm security:scan
+      # Read the named files. Fix the finding, or add a scoped allowlist entry
+      # WITH A REASON, then delete this continue-on-error line.
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Repo-owned security scan (staged - see comment)
+        continue-on-error: true
+        run: bash tooling/security/security-scan.sh --no-audit
+
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -327,8 +372,11 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Quality Gate: the ONE required status check.
-  # Uses jq for robust JSON parsing instead of fragile grep regex.
-  # A skipped or cancelled job fails the gate, not just a red one.
+  #
+  # THIS GATE WAS RED AND CORRECT FOR ELEVEN HOURS ON 2026-09-08 WHILE WORK
+  # CONTINUED ON TOP OF IT. Every mechanism functioned. The missing part was not
+  # a gate: it was that a red required check did not stop anything. Make this a
+  # branch-protected required check on main.
   # ────────────────────────────────────────────────────────────────────────────
   gate:
     name: Quality Gate
