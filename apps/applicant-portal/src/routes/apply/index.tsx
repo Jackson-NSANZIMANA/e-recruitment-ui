@@ -68,7 +68,7 @@ function StepAgency({ data, onNext }: {
               isRequired
               {...(data.agency !== undefined ? { defaultValue: data.agency } : {})}
             >
-              {({ fieldProps }) => <TextField {...fieldProps} placeholder="RDF / RNP / RCS" />}
+              {({ fieldProps }) => <TextField {...fieldProps} />}
             </Field>
             <Field
               name="category"
@@ -107,7 +107,7 @@ function StepContact({ data, onNext, onBack }: {
                 {...(data.phone !== undefined ? { defaultValue: data.phone } : {})}
               >
                 {({ fieldProps }) => (
-                  <TextField {...fieldProps} type="tel" inputMode="tel" placeholder="+250 7XX XXX XXX" />
+                  <TextField {...fieldProps} type="tel" inputMode="tel" autoComplete="tel" />
                 )}
               </Field>
               <AudioTooltip audioSrc="/audio/phone-guidance-rw.mp3" label="Listen in Kinyarwanda" />
@@ -118,7 +118,7 @@ function StepContact({ data, onNext, onBack }: {
               {...(data.emergencyContact !== undefined ? { defaultValue: data.emergencyContact } : {})}
             >
               {({ fieldProps }) => (
-                <TextField {...fieldProps} type="tel" inputMode="tel" placeholder="+250 7XX XXX XXX" />
+                <TextField {...fieldProps} type="tel" inputMode="tel" autoComplete="tel" />
               )}
             </Field>
             <FormFooter>
@@ -141,7 +141,7 @@ function StepDeclaration({ onNext, onBack }: {
   const { t } = useTranslation();
   return (
     <Stack space="space.400">
-      <SectionMessage title="Declaration">
+      <SectionMessage title="Declaration" headingLevel={3}>
         <Text>
           I declare that all information provided in this application is true and
           accurate. I understand that a false declaration may result in
@@ -203,7 +203,7 @@ export default function ApplyPage(): React.ReactElement {
       {step === 3 && <StepDeclaration onNext={advance} onBack={back} />}
       {step === 4 && (
         <Stack space="space.400">
-          <SectionMessage title="Review your draft">
+          <SectionMessage title="Review your draft" headingLevel={3}>
             <Stack space="space.100">
               <Text>Agency: {data.agency ?? "-"}</Text>
               <Text>Category: {data.category ?? "-"}</Text>
@@ -217,7 +217,7 @@ export default function ApplyPage(): React.ReactElement {
             operation that files an application, so a button here could only
             fail or lie. A disabled button with a tooltip is still a promise.
           */}
-          <SectionMessage appearance="warning" title="Filing is not yet available">
+          <SectionMessage appearance="warning" title="Filing is not yet available" headingLevel={3}>
             <Text>
               Your draft is saved on this device. Applications cannot yet be filed
               from this portal: the submission endpoint is not reachable from a
