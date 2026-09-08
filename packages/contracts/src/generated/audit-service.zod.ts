@@ -27,7 +27,7 @@ import { z } from 'zod';
 
 /**
  * Every operation on this service, with the schema for each documented status.
- * A status ABSENT from a map is a status this service is not documented to
+ * A status ABSENT from a map is a status this package is not documented to
  * return on that route — treat receiving one as a contract breach worth
  * reporting, not as an unknown to swallow.
  */
