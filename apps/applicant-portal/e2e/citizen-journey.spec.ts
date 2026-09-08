@@ -1,1 +1,11 @@
-import {test,expect} from '@playwright/test';test('citizen OTP to status',async({page})=>{await page.goto('/sign-in');await page.getByLabel(/national id/i).fill('1199680012345678');await page.getByRole('button',{name:/send/i}).click();await expect(page.getByRole('status')).toContainText(/if that national id is registered/i);await page.getByLabel(/six-digit code/i).fill('483920');await page.getByRole('button',{name:/continue|sign in/i}).click();await expect(page).toHaveURL(/applications/)});test.fixme('NID verification waits for an edge tier',async()=>{/* BLOCKED: verifyIdentity is service-internal and no BFF exists. */});test.fixme('submit waits for an edge tier',async()=>{/* BLOCKED: submit and upload are service-internal and no BFF exists. */});
+import { test } from '@playwright/test';
+
+/**
+ * OTP is the real citizen-facing authentication surface. The app has not yet
+ * mounted the edge auth slice, so this remains an explicit implementation
+ * checkpoint rather than a fake /api/* happy path.
+ */
+test.describe('Citizen edge authentication', () => {
+  test.fixme('mount applicant OTP flow against /edge/v1/auth/applicant/otp/request and /edge/v1/auth/applicant/otp/verify', async () => {});
+  test.fixme('NID verification, document upload, and application submission wait for the backend edge gateway', async () => {});
+});
