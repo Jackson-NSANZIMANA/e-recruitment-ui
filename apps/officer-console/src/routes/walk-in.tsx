@@ -8,38 +8,220 @@ import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
-import { createApiClient, useRegisterWalkIn, useVerifyIdentity } from "@usrp/api-client";
+import {
+  ApiError,
+  createApiClient,
+  useRegisterWalkIn,
+  useVerifyIdentity,
+  useVetWalkIn,
+} from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 import { EDGE_BASE_URL } from "../env.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
-const pageStyles = cssMap({ base: { maxWidth: "600px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") }, successSpacing: { marginTop: token("space.300") } });
-interface WalkInFormValues { readonly nationalId: string; readonly category: string; }
 
+const pageStyles = cssMap({
+  base: {
+    maxWidth: "600px",
+    marginInline: "auto",
+    paddingBlock: token("space.500"),
+    paddingInline: token("space.400"),
+  },
+  spacing: {
+    marginTop: token("space.300"),
+  },
+});
+
+interface WalkInFormValues {
+  readonly nationalId: string;
+  readonly category: string;
+}
+
+interface Registered {
+  readonly applicationId: string;
+  readonly processingCode: string;
+  readonly qrInvitationCode: string;
+}
+
+/**
+ * The walk-in lane. RDF only - rnp_ops and rcs_ops carry no WALK_IN_* status, so
+ * the other two agencies answer 501 UNSUPPORTED_AGENCY here, which is a permanent
+ * answer and not a fault.
+ *
+ * Three calls, shown as three states, because the officer must be able to act
+ * between them:
+ *   1. verifyIdentity  -> opaque applicantId. No name, no date of birth.
+ *   2. registerWalkIn  -> applicationId + the on-site QR ticket.
+ *   3. vetWalkIn       -> may answer 409 AGE_PENDING, which is the officer's
+ *                         retry while the candidate waits at the desk.
+ */
 export default function WalkInPage(): React.ReactElement {
   const { t } = useTranslation();
   const session = useOfficerSession();
   const agency = session?.agency ?? "RDF";
+
   const verifyMutation = useVerifyIdentity(client);
   const registerMutation = useRegisterWalkIn(client, agency);
-  const [registeredId, setRegisteredId] = useState<string | null>(null);
+  const vetMutation = useVetWalkIn(client, agency);
+
+  const [registered, setRegistered] = useState<Registered | null>(null);
+  const [agePending, setAgePending] = useState(false);
+  const [vetted, setVetted] = useState(false);
 
   const handleSubmit = async (values: WalkInFormValues): Promise<void> => {
-    const identity = await verifyMutation.mutateAsync({ nationalId: values.nationalId, channel: "WALK_IN" });
-    const registered = await registerMutation.mutateAsync({ applicantId: identity.applicantId, category: values.category });
-    setRegisteredId(registered.applicationId);
+    const identity = await verifyMutation.mutateAsync({
+      nationalId: values.nationalId.trim(),
+      channel: "WALK_IN",
+    });
+    const created = await registerMutation.mutateAsync({
+      applicantId: identity.applicantId,
+      category: values.category.trim(),
+    });
+    setRegistered({
+      applicationId: created.applicationId,
+      processingCode: created.processingCode,
+      qrInvitationCode: created.qrInvitationCode,
+    });
+    // Haptic confirmation: the record exists. Vetting is the next, separate step.
     if (navigator.vibrate !== undefined) navigator.vibrate([100, 50, 100]);
   };
 
-  if (registeredId !== null) return <Box xcss={pageStyles.base}><SectionMessage appearance="success" title="Walk-in registered">Application {registeredId} has been added to the queue.</SectionMessage><Box xcss={pageStyles.successSpacing}><Button appearance="primary" onClick={() => { setRegisteredId(null); verifyMutation.reset(); registerMutation.reset(); }}>Next candidate</Button></Box></Box>;
+  const handleVet = async (applicationId: string): Promise<void> => {
+    setAgePending(false);
+    try {
+      await vetMutation.mutateAsync({ applicationId });
+      setVetted(true);
+    } catch (error) {
+      // AGE_PENDING is a 409 whose outcome is named in the body. It is the one
+      // conflict in this platform worth retrying, and the officer decides when.
+      if (
+        error instanceof ApiError &&
+        error.normalised.kind === "conflict" &&
+        error.normalised.outcome === "AGE_PENDING"
+      ) {
+        setAgePending(true);
+        return;
+      }
+      throw error;
+    }
+  };
+
+  const reset = (): void => {
+    setRegistered(null);
+    setAgePending(false);
+    setVetted(false);
+    verifyMutation.reset();
+    registerMutation.reset();
+    vetMutation.reset();
+  };
+
+  if (registered !== null) {
+    return (
+      <Box xcss={pageStyles.base}>
+        <Stack space="space.400">
+          <SectionMessage appearance="success" title="Walk-in registered">
+            <Stack space="space.100">
+              <Text>{t("application.id")}: {registered.processingCode}</Text>
+              {/* The on-site ticket. Field-score capture binds to this. */}
+              <Text>Invitation code: {registered.qrInvitationCode}</Text>
+            </Stack>
+          </SectionMessage>
+
+          {agePending && (
+            <SectionMessage appearance="warning" title="Age verification still in progress">
+              <Text>
+                The age check has not landed yet. This is normal and usually clears
+                within seconds. Try the vetting step again.
+              </Text>
+            </SectionMessage>
+          )}
+
+          {vetMutation.isError && !agePending && (
+            <SectionMessage appearance="error">{t("errors.generic")}</SectionMessage>
+          )}
+
+          {vetted && (
+            <SectionMessage appearance="success" title="On-site vetting recorded" />
+          )}
+
+          <Box xcss={pageStyles.spacing}>
+            <Inline space="space.200">
+              {!vetted && (
+                <LoadingButton
+                  appearance="primary"
+                  isLoading={vetMutation.isPending}
+                  onClick={() => {
+                    void handleVet(registered.applicationId);
+                  }}
+                >
+                  {agePending ? "Retry vetting" : "Record on-site vetting"}
+                </LoadingButton>
+              )}
+              <Button appearance={vetted ? "primary" : "subtle"} onClick={reset}>
+                Next candidate
+              </Button>
+            </Inline>
+          </Box>
+        </Stack>
+      </Box>
+    );
+  }
 
   const isPending = verifyMutation.isPending || registerMutation.isPending;
-  return <Box xcss={pageStyles.base}><Stack space="space.400"><Heading size="large" as="h1">{t("nav.walk_in")}</Heading>{(verifyMutation.isError || registerMutation.isError) && <SectionMessage appearance="error">{t("errors.generic")}</SectionMessage>}
-    <Form<WalkInFormValues> onSubmit={handleSubmit}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.400">
-      <Field name="nationalId" label="National ID number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} placeholder="16-digit NID" maxLength={16} autoFocus />}</Field>
-      <Field name="category" label="Recruitment category" isRequired>{({ fieldProps }) => <TextField {...fieldProps} placeholder="Category" />}</Field>
-      <FormFooter><Inline space="space.200"><LoadingButton type="submit" appearance="primary" isLoading={submitting || isPending} isDisabled={session === null}>Register walk-in</LoadingButton><Button href="/dashboard" appearance="subtle">{t("actions.cancel")}</Button></Inline></FormFooter>
-    </Stack></form>}</Form>
-  </Stack></Box>;
+
+  return (
+    <Box xcss={pageStyles.base}>
+      <Stack space="space.400">
+        <Heading size="large" as="h1">{t("nav.walk_in")}</Heading>
+
+        {(verifyMutation.isError || registerMutation.isError) && (
+          <SectionMessage appearance="error">{t("errors.generic")}</SectionMessage>
+        )}
+
+        <Text size="small" color="color.text.subtle">
+          Confirm the candidate&apos;s identity document in person. The registry
+          returns no name or date of birth to check against.
+        </Text>
+
+        <Form<WalkInFormValues> onSubmit={handleSubmit}>
+          {({ formProps, submitting }) => (
+            <form {...formProps}>
+              <Stack space="space.400">
+                <Field name="nationalId" label="National ID number" isRequired>
+                  {({ fieldProps }) => (
+                    <TextField
+                      {...fieldProps}
+                      inputMode="numeric"
+                      maxLength={16}
+                      autoComplete="off"
+                      autoFocus
+                    />
+                  )}
+                </Field>
+                <Field name="category" label="Recruitment category" isRequired>
+                  {({ fieldProps }) => <TextField {...fieldProps} />}
+                </Field>
+                <FormFooter>
+                  <Inline space="space.200">
+                    <LoadingButton
+                      type="submit"
+                      appearance="primary"
+                      isLoading={submitting || isPending}
+                      isDisabled={session === null}
+                    >
+                      Register walk-in
+                    </LoadingButton>
+                    <Button href="/dashboard" appearance="subtle">
+                      {t("actions.cancel")}
+                    </Button>
+                  </Inline>
+                </FormFooter>
+              </Stack>
+            </form>
+          )}
+        </Form>
+      </Stack>
+    </Box>
+  );
 }
