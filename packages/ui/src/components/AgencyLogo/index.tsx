@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Inline, Text } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
-import type { Agency } from "@usrp/shared-types";
+import type { Agency } from "@usrp/contracts";
 import { agencyTokens } from "../../tokens/usrp-tokens.js";
 import type { BackgroundColor, TextColor } from "@atlaskit/primitives/compiled";
 
@@ -21,13 +21,18 @@ const SIZE_PX: Record<NonNullable<AgencyLogoProps["size"]>, number> = {
   lg: 64,
 };
 
+/**
+ * Keyed by Record<Agency, string>, so the three agencies must stay exhaustive.
+ * There is no fourth agency and no superadmin agency - see
+ * packages/contracts/src/agency.ts for why that is unrepresentable end to end.
+ */
 const AGENCY_NAMES: Record<Agency, string> = {
   RDF: "Rwanda Defence Force",
   RNP: "Rwanda National Police",
   RCS: "Rwanda Correctional Service",
 };
 
-// Static badge styles — dynamic width/height are applied via the `style` prop
+// Static badge styles - dynamic width/height are applied via the `style` prop
 // because they depend on a runtime prop value. The @compiled babel plugin
 // cannot extract template-literal dimensions at build time.
 const badgeStyles = cssMap({
@@ -43,12 +48,11 @@ const badgeStyles = cssMap({
 /**
  * Agency identity badge.
  *
- * Design constraint: agency branding must be clearly distinguishable so that
- * officers can instantly confirm they are acting in the correct agency context
- * — a cognitive safeguard against cross-agency data entry errors.
- *
- * Dynamic dimensions (width/height) use the `style` prop as an escape hatch —
- * the ADS-endorsed pattern when values cannot be expressed as design tokens.
+ * Design constraint: agency branding must be clearly distinguishable so an
+ * officer can confirm at a glance which agency context they are acting in. That
+ * is a cognitive safeguard against cross-agency data entry, NOT a security
+ * control - agency isolation is enforced by FORCE'd row-level security in
+ * PostgreSQL, and this component defends nothing.
  */
 export function AgencyLogo({
   agency,
@@ -59,7 +63,7 @@ export function AgencyLogo({
   const tokens = agencyTokens[agency];
   const px = SIZE_PX[size];
 
-  // These token values are narrowly typed in agencyTokens — safe to assert.
+  // These token values are narrowly typed in agencyTokens - safe to assert.
   const bg = tokens.background as BackgroundColor;
   const textColor = tokens.text as TextColor;
 
@@ -67,7 +71,7 @@ export function AgencyLogo({
     <Box
       backgroundColor={bg}
       xcss={badgeStyles['base']}
-      // width/height are dynamic (runtime prop) — style prop is correct here.
+      // width/height are dynamic (runtime prop) - style prop is correct here.
       style={{ width: `${px}px`, height: `${px}px` }}
       {...(testId !== undefined ? { testId } : {})}
     >
@@ -83,8 +87,6 @@ export function AgencyLogo({
 
   if (compact) return badge;
 
-  // Inline is the correct primitive for a horizontal flex row — replaces
-  // the old `Box display="flex"` pattern which is not a Box prop in compiled.
   return (
     <Inline space="space.150" alignBlock="center">
       {badge}
