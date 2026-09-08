@@ -187,14 +187,14 @@ export function DocumentUpload({
         aria-hidden="true"
       />
 
-      {/* Drop zone — border handled via style because StrictXCSSProp rejects the shorthand */}
+      {/* Drop zone — border uses token vars for theming compliance */}
       <Box
         xcss={isDragOver ? cx(dropzoneStyles['base'], dropzoneStyles['active']) : dropzoneStyles['base']}
         style={{
           borderRadius: "var(--ds-border-radius-200, 8px)",
           border: isDragOver
-            ? "2px dashed var(--ds-border-selected, #0c66e4)"
-            : "2px dashed var(--ds-border, #ccc)",
+            ? `2px dashed ${token("color.border.selected")}`
+            : `2px dashed ${token("color.border")}`,
         }}
         role="button"
         tabIndex={0}
