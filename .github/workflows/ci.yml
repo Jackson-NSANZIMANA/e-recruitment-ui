@@ -22,7 +22,7 @@ env:
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
-  # Hygiene: zero-dependency gates that need no node_modules.
+  # Hygiene: zero-dependency gates that need no pnpm, registry, or node_modules.
   # Runs FIRST so a bad blob or boundary violation fails in ~10s.
   # ────────────────────────────────────────────────────────────────────────────
   hygiene:
@@ -32,13 +32,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { fetch-depth: 1 }
-      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: node --test tooling/repo-hygiene/test/*.test.mjs
-      - run: pnpm verify:hygiene
+      - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
+      - run: node tooling/repo-hygiene/verify.mjs
 
   # ────────────────────────────────────────────────────────────────────────────
   # Install: prime the pnpm store AND cache node_modules for downstream jobs.
