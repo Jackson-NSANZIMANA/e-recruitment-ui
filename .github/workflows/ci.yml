@@ -43,12 +43,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with:
+          version: 9.15.0
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Resolve one workspace dependency graph
+        run: pnpm install --no-frozen-lockfile
       - uses: actions/cache/save@v4
         with:
           path: |
@@ -68,11 +71,9 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -81,7 +82,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm typecheck:affected
 
   ads-lint:
@@ -94,11 +95,9 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -107,7 +106,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm lint:affected
       - run: pnpm scan:cssmap
 
@@ -125,11 +124,9 @@ jobs:
           path: backend
           fetch-depth: 1
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -138,7 +135,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/contracts run drift:selftest
       - run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
@@ -152,11 +149,9 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -165,7 +160,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm test:affected
 
   a11y:
@@ -176,11 +171,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -189,7 +182,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/design-system exec playwright install --with-deps chromium
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
@@ -203,11 +196,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -216,7 +207,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm build
       - run: pnpm verify:extraction
       - run: pnpm size
@@ -231,11 +222,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { run_install: false }
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -244,7 +233,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - uses: actions/download-artifact@v4
         with: { name: frontend-production-dist }
       - run: pnpm exec playwright install --with-deps chromium
@@ -275,7 +264,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \(.key): \(.value.result)"')
+          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \\(.key): \\(.value.result)"')
           if [ -n "$failed" ]; then
             echo "::error::Quality gate RED. Required jobs did not succeed:"
             echo "$failed"
