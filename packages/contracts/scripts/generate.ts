@@ -21,7 +21,7 @@ function emitZodModule(contract: ServiceContract): string {
 // Route table (method, path, auth kinds, reach):
 ${describeOperationTable(contract)}
 //
-// \\.strict() on every closed object is intentional: an unexpected key means
+// \`.strict()\` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -38,7 +38,7 @@ ${describeOperationTable(contract)}
   }
   parts.push(`/**
  * Every operation on this service, with the schema for each documented status.
- * A status ABSENT from a map is a status this service is not documented to
+ * A status ABSENT from a map is a status this package is not documented to
  * return on that route — treat receiving one as a contract breach worth
  * reporting, not as an unknown to swallow.
  */
@@ -73,7 +73,7 @@ function emitTypesModule(contract: ServiceContract): string {
 `);
   parts.push(`import type { z } from 'zod';`);
   parts.push(`import type {\n${order.map((n) => `  ${schemaConst(n)},`).join('\n')}\n} from './${contract.service}.zod.js';\n`);
-  for (const name of order) parts.push(`export type ${name} = z.infer<typeof ${schemaConst(name)}>`);
+  for (const name of order) parts.push(`export type ${name} = z.infer<typeof ${schemaConst(name)}>;`);
   parts.push('');
   return parts.join('\n');
 }
