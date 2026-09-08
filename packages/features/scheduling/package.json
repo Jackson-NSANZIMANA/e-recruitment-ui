@@ -1,0 +1,12 @@
+{
+  "name": "@usrp/feature-scheduling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Slot invitation key, signed QR invitations, offline verification.",
+  "license": "UNLICENSED",
+  "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit", "lint": "eslint .", "test": "vitest run", "test:model": "node --experimental-strip-types --test src/model/*.test.ts" },
+  "dependencies": { "@atlaskit/css": "^0.10.0", "@atlaskit/primitives": "*", "@atlaskit/section-message": "*", "@compiled/react": "^0.18.0", "@usrp/contracts": "workspace:*", "@usrp/i18n": "workspace:*", "react": "^18.3.1", "react-router-dom": "^6.26.0" },
+  "devDependencies": { "@usrp/eslint-config": "workspace:*", "@usrp/testing": "workspace:*", "typescript": "~5.4.0" }
+}

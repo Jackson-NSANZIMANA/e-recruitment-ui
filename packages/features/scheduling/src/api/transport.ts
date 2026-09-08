@@ -1,0 +1,1 @@
+export interface CallOptions{readonly body?:unknown;readonly query?:Readonly<Record<string,string>>;readonly signal?:AbortSignal}export interface SliceTransport{call<T>(operationId:string,options?:CallOptions):Promise<T>}export const SCHEDULING_OPERATIONS=['getSlotInvitationKey'] as const;export type SchedulingOperation=(typeof SCHEDULING_OPERATIONS)[number];

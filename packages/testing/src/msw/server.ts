@@ -1,0 +1,1 @@
+import {setupServer} from 'msw/node';import {handlers,scenario} from './generated/handlers.ts';export const server=setupServer(...handlers);export {scenario};export {MOCK_OUTCOMES,DEFAULT_OUTCOMES,outcomeFor} from './generated/handler-table.ts';

@@ -1,0 +1,1 @@
+import React from 'react';import {Stack,Text} from '@atlaskit/primitives/compiled';import {useTranslation} from '@usrp/i18n';export default function OfficerLogin():React.ReactElement{const {t}=useTranslation('identity');return <Stack space="space.200"><Text as="p">{t('identity.officer.title')}</Text><Text as="p">{t('identity.officer.handle_label')}</Text></Stack>}

@@ -1,0 +1,1 @@
+import React from 'react';import {Stack,Text} from '@atlaskit/primitives/compiled';import {useTranslation} from '@usrp/i18n';export default function WalkIn():React.ReactElement{const {t}=useTranslation('field_ops');return <Stack space="space.200"><Text as="p">{t('field_ops.walk_in.title')}</Text></Stack>}

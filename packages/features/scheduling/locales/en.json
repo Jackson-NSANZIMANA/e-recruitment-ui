@@ -1,0 +1,1 @@
+{"scheduling":{"verify":{"title":"Verify a QR invitation","offline_capable":"The signing key is cached on this device, so verification works with no signal."},"slot":{"ASSIGNED_DETAILS_UNAVAILABLE":"You have been given a test slot. The platform cannot yet tell you the venue or the time: you will receive an SMS.","NOT_ASSIGNED":"No test slot has been assigned yet."}}}
