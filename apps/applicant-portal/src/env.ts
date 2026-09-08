@@ -2,19 +2,15 @@
 
 /**
  * Runtime environment for the applicant portal.
+ *
+ * The browser talks to the single edge origin. It never targets a service,
+ * agency BFF, or system-token endpoint directly.
  */
-
 function requireEnv(key: string): string {
-  const value =
-    (import.meta.env as Record<string, string | undefined>)[key] ?? "";
-  if (value === "") {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
+  const value = (import.meta.env as Record<string, string | undefined>)[key] ?? "";
+  if (value === "") throw new Error(`Missing required environment variable: ${key}`);
   return value;
 }
 
-/** Base URL of the applicant-facing BFF endpoint. */
-export const BFF_BASE_URL: string =
-  import.meta.env.DEV
-    ? "/api"
-    : requireEnv("VITE_BFF_URL");
+/** Base URL of the browser-facing edge gateway. */
+export const EDGE_BASE_URL: string = import.meta.env.DEV ? "/edge" : requireEnv("VITE_EDGE_URL");
