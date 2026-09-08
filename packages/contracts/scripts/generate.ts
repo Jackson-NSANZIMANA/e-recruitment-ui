@@ -9,6 +9,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const OPENAPI_DIR = join(ROOT, 'openapi');
 const OUT_DIR = join(ROOT, 'src/generated');
 const identifier = (service: string): string => service.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+const generatedRoutesImport = './routes' + '.js';
 
 function emitZodModule(contract: ServiceContract): string {
   const order = topoSortSchemas(contract);
@@ -20,7 +21,7 @@ function emitZodModule(contract: ServiceContract): string {
 // Route table (method, path, auth kinds, reach):
 ${describeOperationTable(contract)}
 //
-// \`.strict()\` on every closed object is intentional: an unexpected key means
+// \\.strict() on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -72,7 +73,7 @@ function emitTypesModule(contract: ServiceContract): string {
 `);
   parts.push(`import type { z } from 'zod';`);
   parts.push(`import type {\n${order.map((n) => `  ${schemaConst(n)},`).join('\n')}\n} from './${contract.service}.zod.js';\n`);
-  for (const name of order) parts.push(`export type ${name} = z.infer<typeof ${schemaConst(name)}>;`);
+  for (const name of order) parts.push(`export type ${name} = z.infer<typeof ${schemaConst(name)}>`);
   parts.push('');
   return parts.join('\n');
 }
@@ -120,8 +121,8 @@ function emitBarrel(contracts: readonly ServiceContract[]): string {
   const lines = contracts.flatMap((contract) => [`export * as ${identifier(contract.service)} from './${contract.service}.zod.js';`, `export type * as ${identifier(contract.service)}Types from './${contract.service}.types.js';`]);
   return `${BANNER('index', contracts[0]!.backendSha, '*.yaml')}
 ${lines.join('\n')}
-export { ROUTE_TABLE, BROWSER_ROUTES, SERVICE_INTERNAL_ROUTES } from './routes.js';
-export type { RouteFact } from './routes.js';
+export { ROUTE_TABLE, BROWSER_ROUTES, SERVICE_INTERNAL_ROUTES } from '${generatedRoutesImport}';
+export type { RouteFact } from '${generatedRoutesImport}';
 `;
 }
 
