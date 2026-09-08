@@ -74,6 +74,7 @@ export default function LoginPage(): React.ReactElement {
           {applicant.message !== null && (
             <SectionMessage
               appearance={otp.status === "challenged" ? "information" : "warning"}
+              headingLevel={3}
             >
               <Text>{applicant.message}</Text>
             </SectionMessage>
@@ -161,7 +162,7 @@ export default function LoginPage(): React.ReactElement {
           )}
 
           {applicant.offerWalkIn && (
-            <SectionMessage appearance="information" title={WALK_IN_FALLBACK_TITLE}>
+            <SectionMessage appearance="information" title={WALK_IN_FALLBACK_TITLE} headingLevel={3}>
               <Stack space="space.200">
                 <Text>{WALK_IN_FALLBACK_BODY}</Text>
                 <Button appearance="subtle" onClick={applicant.reset}>
