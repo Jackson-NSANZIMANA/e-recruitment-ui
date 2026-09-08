@@ -11,13 +11,6 @@
 // ║  divergence. Change openapi/*.yaml instead.                  ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-//
-// NAMESPACED ON PURPOSE. Eleven services independently name a schema `Uuid`,
-// and six of them name one `Forbidden403` — with THREE genuinely different
-// shapes behind that name across the platform. A flat barrel would have to pick
-// a winner and would silently hand callers the wrong 403. Namespaces make the
-// service you are talking to part of the type you import.
-
 export * as applicationService from './application-service.zod.js';
 export type * as applicationServiceTypes from './application-service.types.js';
 export * as auditService from './audit-service.zod.js';
