@@ -13,6 +13,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   NODE_VERSION: '22'
@@ -27,16 +28,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+        with: { fetch-depth: 1 }
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
-      - name: Run dependency-free predicate tests
-        run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
-      - name: Run dependency-free hygiene gate
-        run: node tooling/repo-hygiene/verify.mjs
+      - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
+      - run: node tooling/repo-hygiene/verify.mjs
 
   install:
     name: Install
@@ -45,12 +43,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - uses: actions/cache/save@v4
         with:
@@ -68,16 +63,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -96,16 +87,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -126,18 +113,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/checkout@v5
-        with:
-          repository: Jackson-NSANZIMANA/e-recruitment
-          ref: ${{ env.BACKEND_SHA }}
-          path: backend
-          fetch-depth: 1
+        with: { repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1 }
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -157,16 +137,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -186,12 +162,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -201,7 +174,7 @@ jobs:
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @usrp/design-system exec playwright install --with-deps chromium
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
@@ -214,12 +187,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -233,11 +203,7 @@ jobs:
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
-        with:
-          name: frontend-production-dist
-          path: apps/*/dist
-          if-no-files-found: error
-          retention-days: 7
+        with: { name: frontend-production-dist, path: apps/*/dist, if-no-files-found: error, retention-days: 7 }
 
   e2e:
     name: Playwright E2E
@@ -247,12 +213,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+        with: { run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -263,8 +226,7 @@ jobs:
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - uses: actions/download-artifact@v4
-        with:
-          name: frontend-production-dist
+        with: { name: frontend-production-dist }
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
 
@@ -274,18 +236,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Prove the scan goes red on a planted violation
-        run: bash tooling/security/security-scan.sh --selftest
-      - name: Repo-owned security scan (staged - see comment)
+      - run: bash tooling/security/security-scan.sh --selftest
+      - run: bash tooling/security/security-scan.sh --no-audit
         continue-on-error: true
-        run: bash tooling/security/security-scan.sh --no-audit
       - uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          exit-code: 1
-          ignore-unfixed: true
+        with: { scan-type: fs, scan-ref: ., severity: CRITICAL,HIGH, exit-code: 1, ignore-unfixed: true }
 
   gate:
     name: Quality Gate
