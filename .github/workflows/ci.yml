@@ -45,7 +45,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - uses: actions/cache/save@v4
         with:
@@ -68,7 +70,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -92,7 +96,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -113,11 +119,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/checkout@v5
-        with: { repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1 }
+        with:
+          repository: Jackson-NSANZIMANA/e-recruitment
+          ref: ${{ env.BACKEND_SHA }}
+          path: backend
+          fetch-depth: 1
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -142,7 +154,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -164,7 +178,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -189,7 +205,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
@@ -215,7 +233,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
       - uses: actions/setup-node@v5
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - uses: actions/cache/restore@v4
         with:
           path: |
