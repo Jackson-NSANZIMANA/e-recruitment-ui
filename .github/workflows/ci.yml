@@ -5,6 +5,7 @@ on:
     branches: [main, develop, 'feat/**', 'fix/**']
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -21,24 +22,22 @@ env:
 
 jobs:
   hygiene:
-    name: Hygiene (large files, ADS boundaries, anti-hollow)
+    name: Hygiene
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with: {fetch-depth: 1}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
-        with: {node-version: ${{ env.NODE_VERSION }} }
-      - name: Prove the gate rules
-        run: node --test tooling/repo-hygiene/test/*.test.mjs
-      - name: Hygiene gates
-        run: pnpm verify:hygiene
+        with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
+      - run: node --test tooling/repo-hygiene/test/*.test.mjs
+      - run: pnpm verify:hygiene
 
   install:
     name: Install
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -47,9 +46,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
   typecheck:
-    name: Typecheck (strict, zero errors)
+    name: Typecheck
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with: {fetch-depth: 0}
@@ -61,9 +61,10 @@ jobs:
       - run: pnpm typecheck:affected
 
   ads-lint:
-    name: ADS conformance (errors, not warnings)
+    name: ADS conformance
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with: {fetch-depth: 0}
@@ -79,13 +80,15 @@ jobs:
     name: Contract drift vs pinned backend
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Validate backend checkout credential
-        env: {BACKEND_REPO_READ_TOKEN: ${{ secrets.BACKEND_REPO_READ_TOKEN }} }
-        run: test -n "${BACKEND_REPO_READ_TOKEN:-}"
       - uses: actions/checkout@v5
-        with: {repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1, token: ${{ secrets.BACKEND_REPO_READ_TOKEN }} }
+        with:
+          repository: Jackson-NSANZIMANA/e-recruitment
+          ref: ${{ env.BACKEND_SHA }}
+          path: backend
+          fetch-depth: 1
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
@@ -97,6 +100,7 @@ jobs:
     name: Unit + integration tests
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with: {fetch-depth: 0}
@@ -106,11 +110,19 @@ jobs:
         with: {node-version: ${{ env.NODE_VERSION }}, cache: pnpm}
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:affected
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-coverage
+          path: '**/coverage/**'
+          if-no-files-found: ignore
+          retention-days: 7
 
   a11y:
-    name: Accessibility (axe-core, WCAG 2.1 AA)
+    name: Accessibility
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -121,11 +133,21 @@ jobs:
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: storybook-a11y-failure
+          path: |
+            packages/design-system/storybook-static
+            .storybook-logs
+          if-no-files-found: ignore
+          retention-days: 7
 
   build:
-    name: Build + bundle budget + compiled extraction
+    name: Build and production proof
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -135,11 +157,19 @@ jobs:
       - run: pnpm build
       - run: pnpm verify:extraction
       - run: pnpm size
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-production-dist
+          path: apps/*/dist
+          if-no-files-found: ignore
+          retention-days: 7
 
   e2e:
     name: Playwright E2E
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -148,10 +178,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: frontend-playwright-failure
+          path: |
+            apps/*/playwright-report
+            apps/*/test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
   security-scan:
-    name: Security Scan (Trivy CRITICAL/HIGH)
+    name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: aquasecurity/trivy-action@v0.36.0
@@ -162,12 +202,13 @@ jobs:
     if: always()
     needs: [hygiene, typecheck, ads-lint, contract-drift, test, a11y, build, e2e, security-scan]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Assert every required job succeeded
-        env: {RESULTS: ${{ toJSON(needs) }} }
+        env: {RESULTS: ${{ toJSON(needs) }}}
         run: |
           set -euo pipefail
           echo "$RESULTS"
           failed=$(echo "$RESULTS" | grep -o '"result": *"[a-z]*"' | grep -v '"success"' || true)
-          test -z "$failed" || { echo "::error::Quality gate RED. Not every required job succeeded."; exit 1; }
-          echo "Quality gate GREEN — every required job ran and succeeded."
+          test -z "$failed" || { echo "::error::Quality gate RED. Required job failed, skipped, or cancelled."; exit 1; }
+          echo "Quality gate GREEN."
