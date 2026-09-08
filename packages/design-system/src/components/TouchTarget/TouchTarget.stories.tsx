@@ -8,7 +8,7 @@ const meta = {
   title: 'Primitives/TouchTarget',
   component: TouchTarget,
   parameters: {
-    a11y: { config: { rules: [{ id: 'target-size', enabled: true }] } },
+    a11y: { config: { rules: { 'target-size': { enabled: true } } } },
   },
 } satisfies Meta<typeof TouchTarget>;
 
