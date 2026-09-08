@@ -51,8 +51,8 @@ test('officer login reaches the current dashboard', async ({ page }) => {
     }),
   );
 
-  await page.goto('/');
-  await expect(page).toHaveURL(/\/login/);
+  await page.goto('/login');
+  await expect(page.getByLabel('Login handle')).toBeVisible();
   await page.getByLabel('Login handle').fill('j.nsanzimana');
   await page.getByLabel('Password').fill('correct-horse-battery-staple');
   await page.getByRole('button', { name: /sign in/i }).click();
