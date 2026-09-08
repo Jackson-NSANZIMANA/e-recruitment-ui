@@ -3,12 +3,19 @@
     "Single source of truth for every USRP frontend hygiene gate.",
     "CI reads this file. So does a developer running `pnpm verify:hygiene`.",
     "There is no second copy of these numbers in the workflow YAML, because a",
-    "second copy is how a gate quietly stops matching the gate it claims to be."
+    "second copy is how a gate quietly stops matching the gate it claims to be.",
+    "",
+    "THIS FILE SCANS ITSELF. hexScan.roots includes tooling/repo-hygiene and",
+    "hexScan.extensions includes .json, so check-boundaries.mjs reads this file",
+    "as source. A `$comment` in JSON is an ordinary string value, NOT a comment,",
+    "so stripComments() cannot exempt it. Do not write a literal colour value",
+    "anywhere in this file - describe it instead. That is not pedantry: it is the",
+    "defect that kept the boundaries gate red once the tracked archive was gone."
   ],
 
   "largeFiles": {
     "maxBytes": 5242880,
-    "$comment": "5 MiB. Nothing a browser app needs to build belongs above this. Two separate incidents justify it: the 73.9 MB vendored ADS mirror, and usrp-edge-agent2-feat-edge-and-auth.tar.gz, which reached main through `git add -f` despite a .gitignore rule naming *.tar.gz explicitly. The ignore rule is the fence; this is the lock.",
+    "$comment": "5 MiB. Nothing a browser app needs to build belongs above this. TWO separate incidents justify it: the 70.45 MiB vendored ADS mirror, and usrp-edge-agent2-feat-edge-and-auth.tar.gz, which reached main through `git add -f` despite a .gitignore rule naming *.tar.gz explicitly. The ignore rule is the fence; this is the lock.",
     "allow": []
   },
 
@@ -19,7 +26,7 @@
   },
 
   "hexScan": {
-    "$comment": "Invariant 5: zero raw hex. Scoped to the paths this branch owns. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts contains theme_color '#0052CC' and background_color '#FFFFFF'. Those are the one defensible exception - a PWA manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but they should be marked with a hygiene-allow-hex comment stating that, and the value should be derived from the ADS brand token rather than typed by hand.",
+    "$comment": "Invariant 5: zero raw colour literals; use @atlaskit/tokens. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts sets a hard-coded brand colour in the PWA manifest's theme_color, and an opaque white in background_color. Those are the one defensible exception - a web manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but each should carry a hygiene-allow-hex marker stating that, and the brand value should be derived from the resolved ADS token rather than typed by hand. The values are deliberately not reproduced here, because this file is itself scanned by the rule.",
     "roots": ["packages/design-system", "packages/eslint-config", "tooling/repo-hygiene"],
     "extensions": [".ts", ".tsx", ".css", ".json", ".svg"],
     "allowPaths": []
