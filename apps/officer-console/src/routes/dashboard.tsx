@@ -24,16 +24,7 @@ export default function DashboardPage(): React.ReactElement {
   const isError = applications.isError || amber.isError;
   const total = applications.data?.applications.length ?? 0;
   const requiresAction = amber.data?.queue.length ?? 0;
-
   if (isLoading) return <Box xcss={pageStyles.base}><Spinner label={t("a11y.loading")} /></Box>;
-  if (isError) return <Box xcss={pageStyles.base}><SectionMessage appearance="error" title={t("errors.generic")}>{t("errors.generic")}</SectionMessage></Box>;
-
-  return <Box xcss={pageStyles.base}><Stack space="space.500">
-    <PageHeader {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}>{t("dashboard.title")}</PageHeader>
-    <Inline space="space.300" shouldWrap>
-      <DashboardMetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />
-      <DashboardMetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" />
-    </Inline>
-    {requiresAction === 0 && <SectionMessage appearance="success">{t("dashboard.no_exceptions")}</SectionMessage>}
-  </Stack></Box>;
+  if (isError) return <Box xcss={pageStyles.base}><SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage></Box>;
+  return <Box xcss={pageStyles.base}><Stack space="space.500"><PageHeader {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}>{t("dashboard.title")}</PageHeader><Inline space="space.300" shouldWrap><DashboardMetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" /><DashboardMetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" /></Inline>{requiresAction === 0 && <SectionMessage appearance="success" headingLevel="h3">{t("dashboard.no_exceptions")}</SectionMessage>}</Stack></Box>;
 }
