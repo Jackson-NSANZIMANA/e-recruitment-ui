@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
         with:
-          version: 9.15.0
+          version: '9.15.0'
           run_install: false
       - uses: actions/setup-node@v5
         with:
@@ -71,7 +71,7 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -95,7 +95,7 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -124,7 +124,7 @@ jobs:
           path: backend
           fetch-depth: 1
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -149,7 +149,7 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -171,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -196,7 +196,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -222,7 +222,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with: { version: 9.15.0, run_install: false }
+        with: { version: '9.15.0', run_install: false }
       - uses: actions/setup-node@v5
         with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
@@ -264,7 +264,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \\(.key): \\(.value.result)"')
+          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \(.key): \(.value.result)"')
           if [ -n "$failed" ]; then
             echo "::error::Quality gate RED. Required jobs did not succeed:"
             echo "$failed"
