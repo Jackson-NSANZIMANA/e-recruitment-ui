@@ -9,24 +9,15 @@ import "@atlaskit/css-reset";
 import "@usrp/i18n";
 import { AuthProvider } from "@usrp/auth";
 import { RouterLink, ErrorBoundary } from "@usrp/ui";
-import { BFF_BASE_URL } from "./env.js";
+import { EDGE_BASE_URL } from "./env.js";
 import { App } from "./app.js";
 
-// Resolve all ADS feature flags to false — prevents the Statsig
-// "Client must be initialized" crash inside AppProvider on first render.
 setBooleanFeatureFlagResolver(() => false);
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 300_000,
-      retry: 2,
-      refetchOnWindowFocus: false,
-      throwOnError: false,
-    },
-    mutations: {
-      retry: 0,
-    },
+    queries: { staleTime: 300_000, retry: 2, refetchOnWindowFocus: false, throwOnError: false },
+    mutations: { retry: 0 },
   },
 });
 
@@ -39,7 +30,7 @@ createRoot(container).render(
       <AppProvider routerLinkComponent={RouterLink} defaultColorMode="light">
         <FlagGroup>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider bffBaseUrl={BFF_BASE_URL}>
+            <AuthProvider edgeBaseUrl={EDGE_BASE_URL}>
               <App />
             </AuthProvider>
           </QueryClientProvider>
