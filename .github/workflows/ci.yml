@@ -16,15 +16,12 @@ permissions:
 
 env:
   NODE_VERSION: '22'
+  PNPM_VERSION: '9.15.0'
   BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
 
 jobs:
-  # ────────────────────────────────────────────────────────────────────────────
-  # Hygiene: zero-dependency gates that need no pnpm, registry, or node_modules.
-  # Runs FIRST so a bad blob or boundary violation fails in ~10s.
-  # ────────────────────────────────────────────────────────────────────────────
   hygiene:
     name: Hygiene
     runs-on: ubuntu-latest
@@ -35,12 +32,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
-      - run: node tooling/repo-hygiene/verify.mjs
+      # Intentionally no pnpm here. These gates are dependency-free by design.
+      - name: Run dependency-free predicate tests
+        run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
+      - name: Run dependency-free hygiene gate
+        run: node tooling/repo-hygiene/verify.mjs
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Install: prime the pnpm store AND cache node_modules for downstream jobs.
-  # ────────────────────────────────────────────────────────────────────────────
   install:
     name: Install
     runs-on: ubuntu-latest
@@ -48,6 +45,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -59,13 +59,9 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Typecheck: ultra-strict zero-error tsc.
-  # ────────────────────────────────────────────────────────────────────────────
   typecheck:
     name: Typecheck
     needs: install
@@ -76,25 +72,20 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm typecheck:affected
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # ADS conformance: the frontend's correctness contract.
-  # ────────────────────────────────────────────────────────────────────────────
   ads-lint:
     name: ADS conformance
     needs: install
@@ -105,26 +96,21 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm lint:affected
       - run: pnpm scan:cssmap
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Contract drift: runs the drift tool's own selftest BEFORE trusting it.
-  # ────────────────────────────────────────────────────────────────────────────
   contract-drift:
     name: Contract drift vs pinned backend
     needs: install
@@ -133,32 +119,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/checkout@v5
-        with:
-          repository: Jackson-NSANZIMANA/e-recruitment
-          ref: ${{ env.BACKEND_SHA }}
-          path: backend
-          fetch-depth: 1
+        with: { repository: Jackson-NSANZIMANA/e-recruitment, ref: ${{ env.BACKEND_SHA }}, path: backend, fetch-depth: 1 }
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/contracts run drift:selftest
       - run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Unit + integration tests.
-  # ────────────────────────────────────────────────────────────────────────────
   test:
     name: Unit + integration tests
     needs: install
@@ -169,32 +146,20 @@ jobs:
         with: { fetch-depth: 0 }
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm test:affected
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: frontend-test-coverage
-          path: '**/coverage/**'
-          if-no-files-found: ignore
-          retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Accessibility: axe-core over every Storybook story in a real browser.
-  # ────────────────────────────────────────────────────────────────────────────
   a11y:
     name: Accessibility
     needs: install
@@ -203,17 +168,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -221,19 +184,7 @@ jobs:
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: storybook-a11y-failure
-          path: |
-            packages/design-system/storybook-static
-            .storybook-logs
-          if-no-files-found: ignore
-          retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Build: production bundles + extraction proof + bundle budget.
-  # ────────────────────────────────────────────────────────────────────────────
   build:
     name: Build and production proof
     needs: install
@@ -242,17 +193,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -260,15 +209,8 @@ jobs:
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
-        with:
-          name: frontend-production-dist
-          path: apps/*/dist
-          if-no-files-found: error
-          retention-days: 7
+        with: { name: frontend-production-dist, path: apps/*/dist, if-no-files-found: error, retention-days: 7 }
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Playwright E2E: runs against the PRODUCTION BUILD, not source.
-  # ────────────────────────────────────────────────────────────────────────────
   e2e:
     name: Playwright E2E
     needs: build
@@ -277,105 +219,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }}, run_install: false }
       - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             apps/*/node_modules
             packages/*/node_modules
-            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - uses: actions/download-artifact@v4
-        with:
-          name: frontend-production-dist
+        with: { name: frontend-production-dist }
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: frontend-playwright-failure
-          path: |
-            apps/*/playwright-report
-            apps/*/test-results
-          if-no-files-found: ignore
-          retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Security: the REPO'S OWN SCRIPT first, then Trivy.
-  #
-  # Both, not one. The script's five repo-tracking checks need no node_modules
-  # and no registry, so they report in seconds and cannot be disabled by a
-  # broken dependency graph - which is not hypothetical, see the workspace-glob
-  # incident of 2026-09-08. Trivy stays as a pinned action because the runner
-  # has no trivy binary and the action's caching beats pulling the image.
-  #
-  # --no-audit is deliberate: `pnpm audit` needs a resolved graph, and this job
-  # does no install, so running it here would report an unearned pass. It runs
-  # locally via `pnpm security:scan`, where a developer has actually installed.
-  # ────────────────────────────────────────────────────────────────────────────
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-
-      # The scan must prove itself before its verdict is trusted. This BLOCKS:
-      # all 13 assertions, every check planted then removed. A gate that cannot
-      # demonstrate it goes red does not get to report green.
       - name: Prove the scan goes red on a planted violation
         run: bash tooling/security/security-scan.sh --selftest
-
-      # ─────────────────────────────────────────────────────────────────────
-      # STAGED ENFORCEMENT - continue-on-error is TEMPORARY. Remove it in the
-      # commit that resolves the first real-tree finding.
-      #
-      # WHY. This gate is new, its first run against the real repository went
-      # red, and no log-retrieval tool was available to identify which check
-      # fired. Two wrong responses were available:
-      #
-      #   - relax the rules to match whatever the repo currently contains. That
-      #     encodes the defect as the standard, which is exactly how twelve
-      #     fictional statuses became a shipped enum.
-      #   - leave it blocking and unexplained on a pipeline that is ALREADY red
-      #     for the lockfile reason. Today's lesson is that an unread red signal
-      #     is worse than none: the Quality Gate was correct for eleven hours
-      #     and changed nothing.
-      #
-      # So the gate runs and prints its findings in full, and becomes blocking
-      # the moment a human has read that output once.
-      #
-      # TO CLOSE, two seconds locally - no install, no network:
-      #     pnpm security:scan
-      # Read the named files. Fix the finding, or add a scoped allowlist entry
-      # WITH A REASON, then delete this continue-on-error line.
-      # ─────────────────────────────────────────────────────────────────────
       - name: Repo-owned security scan (staged - see comment)
         continue-on-error: true
         run: bash tooling/security/security-scan.sh --no-audit
-
       - uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          exit-code: 1
-          ignore-unfixed: true
+        with: { scan-type: fs, scan-ref: ., severity: CRITICAL,HIGH, exit-code: 1, ignore-unfixed: true }
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Quality Gate: the ONE required status check.
-  #
-  # THIS GATE WAS RED AND CORRECT FOR ELEVEN HOURS ON 2026-09-08 WHILE WORK
-  # CONTINUED ON TOP OF IT. Every mechanism functioned. The missing part was not
-  # a gate: it was that a red required check did not stop anything. Make this a
-  # branch-protected required check on main.
-  # ────────────────────────────────────────────────────────────────────────────
   gate:
     name: Quality Gate
     if: always()
@@ -384,8 +258,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Assert every required job succeeded
-        env:
-          RESULTS: ${{ toJSON(needs) }}
+        env: { RESULTS: ${{ toJSON(needs) }} }
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
