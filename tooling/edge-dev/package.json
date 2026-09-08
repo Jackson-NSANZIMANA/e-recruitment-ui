@@ -1,0 +1,20 @@
+{
+  "name": "@usrp/edge-dev",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev-only fan-out proxy implementing docs/architecture/edge-contract.md against the real USRP services, plus contract mocks so the UI is testable with no Postgres, Kafka or G2G stack. ZERO dependencies — runnable from a bare checkout.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-strip-types src/main.ts --deployment=agency --agency=RDF",
+    "dev:citizen": "node --experimental-strip-types src/main.ts --deployment=citizen",
+    "dev:mocks": "node --experimental-strip-types src/main.ts --deployment=agency --agency=RDF --mocks",
+    "selfcheck": "node --experimental-strip-types selfcheck/verify-edge.ts",
+    "check:contracts": "tsx scripts/check-against-contracts.ts",
+    "ports": "node --experimental-strip-types -e \"import('./src/ports.ts').then(m=>{m.assertNoPortCollisions();console.log(m.renderPortTable());})\"",
+    "verify": "node --experimental-strip-types selfcheck/verify-edge.ts"
+  },
+  "engines": {
+    "node": ">=22.6"
+  }
+}
