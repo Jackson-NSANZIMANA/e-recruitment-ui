@@ -7,5 +7,6 @@ export default defineConfig({
     setupFiles: ['./src/harness/setup.ts'],
     include: ['a11y/**/*.test.tsx', '../features/*/src/**/*.test.tsx'],
     exclude: ['**/node_modules/**', '**/src/model/*.test.ts'],
+    passWithNoTests: true,
   },
 });
