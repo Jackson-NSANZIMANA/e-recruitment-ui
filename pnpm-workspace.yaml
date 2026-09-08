@@ -1,3 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# USRP frontend workspace globs.
+#
+# A pnpm workspace glob matches ONE path segment. `packages/*` matches
+# `packages/features` and does NOT match `packages/features/identity`, so the
+# six vertical feature slices need their own nested glob. Without it,
+# packages/testing's six `@usrp/feature-*: workspace:*` dependencies cannot
+# resolve and `pnpm install --frozen-lockfile` fails before it fetches anything.
+#
+# That is not hypothetical: it is the defect that made main un-installable from
+# 2026-09-08 13:41 until this commit, with every downstream CI job skipped.
+#
+# `tooling/*` is here because tooling/edge-dev is a real workspace package
+# (@usrp/edge-dev) that docs/architecture/edge-contract.md §12 invokes by
+# `pnpm --filter`. Directories under these globs without a package.json — such
+# as tooling/repo-hygiene, whose scripts are called from the root manifest — are
+# ignored by pnpm and cost nothing.
+#
+# ADDING A PACKAGE UNDER A NEW DEPTH? Add its glob here in the same commit, and
+# assume nothing until `pnpm install --frozen-lockfile` has actually run.
+# ─────────────────────────────────────────────────────────────────────────────
 packages:
   - "apps/*"
   - "packages/*"
+  - "packages/features/*"
+  - "tooling/*"

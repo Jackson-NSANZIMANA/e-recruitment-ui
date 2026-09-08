@@ -6,7 +6,38 @@
   "description": "The 19-status lifecycle: officer list, detail, status history, citizen wizard drafts.",
   "license": "UNLICENSED",
   "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
-  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit", "lint": "eslint .", "test": "vitest run", "test:model": "node --experimental-strip-types --test src/model/*.test.ts" },
-  "dependencies": { "@atlaskit/css": "^0.10.0", "@atlaskit/dynamic-table": "*", "@atlaskit/lozenge": "*", "@atlaskit/primitives": "*", "@compiled/react": "^0.18.0", "@usrp/contracts": "workspace:*", "@usrp/i18n": "workspace:*", "react": "^18.3.1", "react-router-dom": "^6.26.0" },
-  "devDependencies": { "@usrp/eslint-config": "workspace:*", "@usrp/testing": "workspace:*", "typescript": "~5.4.0" }
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
+  },
+  "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
+  "dependencies": {
+    "@atlaskit/css": "^1.0.0",
+    "@atlaskit/dynamic-table": "^19.1.5",
+    "@atlaskit/lozenge": "^15.0.1",
+    "@atlaskit/primitives": "^22.2.1",
+    "@compiled/react": "^1.0.0",
+    "@usrp/contracts": "workspace:*",
+    "@usrp/i18n": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@usrp/eslint-config": "workspace:*",
+    "@usrp/testing": "workspace:*",
+    "eslint": "^9.9.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.1",
+    "typescript": "~5.4.0",
+    "vitest": "^2.1.0"
+  }
 }
