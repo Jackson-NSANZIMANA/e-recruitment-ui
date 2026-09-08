@@ -14,10 +14,21 @@ test('draft persists offline without credentials', async ({ page, context }) => 
   );
 
   await page.goto('/apply');
-  await page.getByLabel('Which agency are you applying to?').fill('RDF');
-  await page.getByLabel('Recruitment category').fill('Infantry');
+
+  // Wait for the lazy-loaded wizard form to render.
+  const agencyInput = page.locator('input[name="agency"]');
+  await expect(agencyInput).toBeVisible({ timeout: 15_000 });
+  await agencyInput.fill('RDF');
+
+  const categoryInput = page.locator('input[name="category"]');
+  await categoryInput.fill('Infantry');
+
   await page.getByRole('button', { name: /next/i }).click();
-  await page.getByLabel('Your phone number').fill('+250 700 000 000');
+
+  // Step 2: contact
+  const phoneInput = page.locator('input[name="phone"]');
+  await expect(phoneInput).toBeVisible({ timeout: 10_000 });
+  await phoneInput.fill('+250 700 000 000');
 
   await context.setOffline(true);
   const stored = await page.evaluate(() => sessionStorage.getItem('usrp_apply_draft'));
