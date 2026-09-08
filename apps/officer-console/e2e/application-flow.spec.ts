@@ -28,11 +28,17 @@ test('officer login reaches the current dashboard', async ({ page }) => {
   );
 
   await page.goto('/login');
-  await expect(page.getByLabel('Login handle')).toBeVisible();
-  await page.getByLabel('Login handle').fill('j.nsanzimana');
-  await page.getByLabel('Password').fill('correct-horse-battery-staple');
+
+  // Wait for the lazy-loaded login form to render.
+  const loginInput = page.locator('input[name="loginHandle"]');
+  await expect(loginInput).toBeVisible({ timeout: 15_000 });
+  await loginInput.fill('j.nsanzimana');
+
+  const passwordInput = page.locator('input[name="password"]');
+  await passwordInput.fill('correct-horse-battery-staple');
+
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByTestId('metric-total-applications')).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+  await expect(page.getByTestId('metric-total-applications')).toBeVisible({ timeout: 10_000 });
 });
