@@ -13,7 +13,10 @@
     "./locales/*": "./src/locales/*"
   },
   "main": "./src/index.ts",
+  "//scripts": "lint and test are zero-dependency on purpose: node:fs and node:test only, no vitest, no eslint. They run on a bare checkout with no node_modules, which is the property that keeps translation completeness provable when the dependency graph is broken - and it was broken, repo-wide, for the whole of 2026-09-08.",
   "scripts": {
+    "lint": "node scripts/lint-i18n.mjs",
+    "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
