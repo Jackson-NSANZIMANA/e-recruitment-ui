@@ -142,7 +142,12 @@ export default function WalkInPage(): React.ReactElement {
           )}
 
           {vetted && (
-            <SectionMessage appearance="success" title="On-site vetting recorded" />
+            <SectionMessage appearance="success" title="On-site vetting recorded">
+              <Text>
+                The application has moved into on-site vetting. The candidate keeps
+                the invitation code above for the physical test.
+              </Text>
+            </SectionMessage>
           )}
 
           <Box xcss={pageStyles.spacing}>
