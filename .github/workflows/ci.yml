@@ -62,12 +62,12 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
 
   # ────────────────────────────────────────────────────────────────────────────
   # Typecheck: ultra-strict zero-error tsc.
-  # Uses --affected so only changed packages are checked on PRs.
   # ────────────────────────────────────────────────────────────────────────────
   typecheck:
     name: Typecheck
@@ -89,14 +89,14 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm typecheck:affected
 
   # ────────────────────────────────────────────────────────────────────────────
-  # ADS conformance: eslint with ADS rules promoted to error.
-  # The frontend's correctness contract — equivalent to the backend's selfchecks.
+  # ADS conformance: the frontend's correctness contract.
   # ────────────────────────────────────────────────────────────────────────────
   ads-lint:
     name: ADS conformance
@@ -118,6 +118,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -125,8 +126,7 @@ jobs:
       - run: pnpm scan:cssmap
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Contract drift: verify frontend contracts against the pinned backend SHA.
-  # Runs the drift tool's own selftest BEFORE trusting it.
+  # Contract drift: runs the drift tool's own selftest BEFORE trusting it.
   # ────────────────────────────────────────────────────────────────────────────
   contract-drift:
     name: Contract drift vs pinned backend
@@ -152,6 +152,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -181,6 +182,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -214,6 +216,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -253,6 +256,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -268,7 +272,6 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Playwright E2E: runs against the PRODUCTION BUILD, not source.
-  # Downloads the dist artifact from the build job.
   # ────────────────────────────────────────────────────────────────────────────
   e2e:
     name: Playwright E2E
@@ -288,6 +291,7 @@ jobs:
             node_modules
             apps/*/node_modules
             packages/*/node_modules
+            packages/features/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
@@ -307,9 +311,20 @@ jobs:
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Security scan: Trivy fs scan, CRITICAL + HIGH, fail on findings.
-  # NOTE: the backend has scripts/security-scan.sh; the frontend does not yet.
-  # When one is written, point this job at it so CI and local run identical code.
+  # Security: the REPO'S OWN SCRIPT first, then Trivy.
+  #
+  # Both, not one. The script's five repo-tracking checks need no node_modules
+  # and no registry, so they report in seconds and cannot be disabled by a
+  # broken dependency graph - which is not hypothetical, see the workspace-glob
+  # incident of 2026-09-08. Trivy stays as a pinned action because the runner
+  # has no trivy binary and the action's caching beats pulling the image.
+  #
+  # The script detects the absent binary and SKIPS its own Trivy step loudly, so
+  # the two never double-scan and the skip is visible rather than silent.
+  #
+  # --no-audit is deliberate: `pnpm audit` needs a resolved graph, and this job
+  # does no install, so running it here would report an unearned pass. It runs
+  # locally via `pnpm security:scan`, where a developer has actually installed.
   # ────────────────────────────────────────────────────────────────────────────
   security-scan:
     name: Security Scan
@@ -317,6 +332,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - name: Prove the scan goes red on a planted violation
+        run: bash tooling/security/security-scan.sh --selftest
+      - name: Repo-owned security scan
+        run: bash tooling/security/security-scan.sh --no-audit
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -327,8 +346,11 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # Quality Gate: the ONE required status check.
-  # Uses jq for robust JSON parsing instead of fragile grep regex.
-  # A skipped or cancelled job fails the gate, not just a red one.
+  #
+  # THIS GATE WAS RED AND CORRECT FOR ELEVEN HOURS ON 2026-09-08 WHILE WORK
+  # CONTINUED ON TOP OF IT. Every mechanism functioned. The missing part was not
+  # a gate: it was that a red required check did not stop anything. Make this a
+  # branch-protected required check on main.
   # ────────────────────────────────────────────────────────────────────────────
   gate:
     name: Quality Gate
