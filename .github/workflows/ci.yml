@@ -235,7 +235,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-production-dist
-          path: apps/*/dist
+          path: apps
           if-no-files-found: error
           retention-days: 7
 
@@ -266,18 +266,7 @@ jobs:
         with:
           name: frontend-production-dist
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Run e2e suites
-        run: pnpm exec turbo run test:e2e --continue
-      - name: Upload Playwright results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results
-          path: |
-            apps/*/test-results
-            apps/*/playwright-report
-          if-no-files-found: ignore
-          retention-days: 7
+      - run: pnpm test:e2e
 
   security-scan:
     name: Security Scan
