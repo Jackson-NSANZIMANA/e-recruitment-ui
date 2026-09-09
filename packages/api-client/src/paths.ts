@@ -11,7 +11,20 @@ export interface EdgeOperation {
   readonly retryOnG2G: boolean;
 }
 
-export const EDGE_OPERATIONS: readonly EdgeOperation[] = [
+// ══════════════════════════════════════════════════════════════════════════
+// WHY `as const satisfies` AND NOT `: readonly EdgeOperation[]`
+//
+// The annotation this used to carry erased the id literals to `string`. That
+// made `operation('getSlotInvitationKey')` a WELL-TYPED call to an operation
+// that does not exist — it threw at runtime, inside a click handler, in front of
+// a citizen. Four packages were shipping ids like that (see ADR-FE-006).
+//
+// `satisfies` keeps the shape check AND the literals, so `EdgeOperationId`
+// below is derivable and a fictional id is a COMPILE error. This is the
+// frontend counterpart of the backend's exhaustive Kafka topic map, where an
+// unrouted event type fails the build rather than going unconsumed (000.md §9).
+// ══════════════════════════════════════════════════════════════════════════
+export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false },
   { id: 'officerLogout', method: 'POST', edgePath: '/edge/v1/auth/officer/logout', upstreamOperationId: null, session: 'officer', retryOnG2G: false },
   { id: 'requestOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/request', upstreamOperationId: 'requestApplicantOtp', session: 'anonymous', retryOnG2G: true },
@@ -39,9 +52,33 @@ export const EDGE_OPERATIONS: readonly EdgeOperation[] = [
 
   { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false },
   { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false },
-] as const;
+] as const satisfies readonly EdgeOperation[];
 
-const BY_ID = new Map(EDGE_OPERATIONS.map((operation) => [operation.id, operation]));
+/**
+ * Every operation id the edge actually serves.
+ *
+ * THE WHITELIST. Any package that calls the edge should type its operation
+ * constants as this union, so an id the edge does not serve fails `pnpm
+ * typecheck` instead of a citizen's click. Four of the six feature slices were
+ * naming ids that do not exist — 11 of 27 calls — and nothing caught it.
+ */
+export type EdgeOperationId = (typeof EDGE_OPERATIONS)[number]['id'];
+
+/** Operations the browser may reach without any session at all. */
+export type AnonymousEdgeOperationId = Extract<
+  (typeof EDGE_OPERATIONS)[number],
+  { readonly session: 'anonymous' }
+>['id'];
+
+/**
+ * Widened to `string` KEYS on purpose.
+ *
+ * `operation()` keeps its runtime guard for callers reached from JavaScript, or
+ * from an id assembled at runtime. The type is the first gate, not the only one.
+ */
+const BY_ID: ReadonlyMap<string, EdgeOperation> = new Map(
+  EDGE_OPERATIONS.map((edgeOperation): readonly [string, EdgeOperation] => [edgeOperation.id, edgeOperation]),
+);
 
 export function operation(id: string): EdgeOperation {
   const found = BY_ID.get(id);
@@ -49,7 +86,12 @@ export function operation(id: string): EdgeOperation {
   return found;
 }
 
-export const EDGE_PATHS: readonly string[] = [...new Set(EDGE_OPERATIONS.map((operation) => operation.edgePath))];
+/** True when `id` is an operation the edge serves. Use at a runtime boundary. */
+export function isEdgeOperationId(id: string): id is EdgeOperationId {
+  return BY_ID.has(id);
+}
+
+export const EDGE_PATHS: readonly string[] = [...new Set(EDGE_OPERATIONS.map((edgeOperation) => edgeOperation.edgePath))];
 
 export class ContractMismatchError extends Error {
   readonly problems: readonly string[];
@@ -70,7 +112,11 @@ export function assertPathsMatchContract(): void {
   if (BROWSER_ROUTES.length === 0) problems.push('BROWSER_ROUTES is empty.');
   if (SERVICE_INTERNAL_ROUTES.length === 0) problems.push('SERVICE_INTERNAL_ROUTES is empty.');
 
+  const seen = new Set<string>();
   for (const edgeOperation of EDGE_OPERATIONS) {
+    if (seen.has(edgeOperation.id)) problems.push(`${edgeOperation.id}: duplicate operation id.`);
+    seen.add(edgeOperation.id);
+
     if (edgeOperation.edgePath.includes('${') || edgeOperation.edgePath.includes(':')) {
       problems.push(`${edgeOperation.id}: edge path is templated.`);
     }
