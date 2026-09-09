@@ -37,7 +37,7 @@ test('officer login reaches the current dashboard', async ({ page }) => {
   const passwordInput = page.locator('input[name="password"]');
   await passwordInput.fill('correct-horse-battery-staple');
 
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole("button", { name: /injira/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
   await expect(page.getByTestId('metric-total-applications')).toBeVisible({ timeout: 10_000 });

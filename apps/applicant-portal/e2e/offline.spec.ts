@@ -23,7 +23,7 @@ test('draft persists offline without credentials', async ({ page, context }) => 
   const categoryInput = page.locator('input[name="category"]');
   await categoryInput.fill('Infantry');
 
-  await page.getByRole('button', { name: /next/i }).click();
+  await page.getByRole("button", { name: /komeza|next/i }).click();
 
   // Step 2: contact
   const phoneInput = page.locator('input[name="phone"]');
