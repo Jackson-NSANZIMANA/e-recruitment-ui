@@ -60,6 +60,7 @@
     "overrides": {
       "@remix-run/router": "^1.23.2",
       "@types/react": "18.3.0",
+      "js-yaml@4.3.1": "4.3.2",
       "@types/react-dom": "18.3.0"
     }
   }
