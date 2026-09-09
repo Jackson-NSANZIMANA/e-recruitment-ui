@@ -8,9 +8,10 @@ import {
 import Spinner from "@atlaskit/spinner";
 import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
-import { RouteGuard } from "@usrp/auth";
+import { RouteGuard, OfficerGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 import { AppShell } from "./components/AppShell/index.js";
+import { OFFICER_SLICE_ROUTES } from "./routes/slices.js";
 
 
 const spinnerStyles = cssMap({
@@ -55,6 +56,27 @@ const router = createBrowserRouter([
       { path: "applications", element: <ApplicationsPage /> },
       { path: "applications/:id", element: <ApplicationDetailPage /> },
       { path: "walk-in", element: <WalkInPage /> },
+
+      // ── Feature slices (ADR-FE-006) ──────────────────────────────────────
+      //
+      // Wrapped in OfficerGuard rather than relying on the RouteGuard above,
+      // because RouteGuard accepts ANY authenticated session. A citizen session
+      // reaching an officer screen would render controls whose every request
+      // 401s at the edge, which reads as a broken product rather than a wrong
+      // door.
+      //
+      // PRESENTATION ONLY. Cross-agency isolation is FORCE'd PostgreSQL RLS with
+      // no bypass principal; an officer whose browser is tricked into rendering
+      // another agency's screen sees an empty list because the database returns
+      // no rows.
+      {
+        element: (
+          <OfficerGuard redirectTo="/login" fallback={<FullPageSpinner />}>
+            <Outlet />
+          </OfficerGuard>
+        ),
+        children: [...OFFICER_SLICE_ROUTES],
+      },
     ],
   },
 ]);

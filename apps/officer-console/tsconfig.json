@@ -3,7 +3,20 @@
   "compilerOptions": {
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
-    "noEmit": true
+    "noEmit": true,
+
+    // Required to consume the feature slices.
+    //
+    // They are consumed as TypeScript SOURCE (`exports: './src/index.ts'`) and
+    // use explicit `.ts` / `.tsx` import specifiers internally. compilerOptions
+    // are per-PROGRAM, not per-file, so once a slice barrel enters this
+    // program its specifiers are checked under THESE options — and without this
+    // flag `tsc --noEmit` fails TS5097 on the first slice import, before Vite
+    // ever runs.
+    //
+    // The flag is only legal when nothing is emitted, and `noEmit` above is
+    // exactly that: Vite owns emit. See ADR-FE-006 §4.
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "vite.config.ts"]
 }

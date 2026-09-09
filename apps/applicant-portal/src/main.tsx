@@ -7,13 +7,23 @@ import { FlagsProvider } from "@atlaskit/flag/flags-provider";
 import "@atlaskit/css-reset";
 
 import "@usrp/i18n";
+import { assertNamespaceRegistered } from "@usrp/i18n";
 import { AuthProvider } from "@usrp/auth";
 import { RouterLink, ErrorBoundary } from "@usrp/ui";
 
+import { registerComplianceLocales } from "@usrp/feature-compliance";
+
 import { EDGE_BASE_URL } from "./env.js";
+import { CITIZEN_SLICE_NAMESPACES } from "./routes/slices.js";
 import { App } from "./app.js";
 
 setBooleanFeatureFlagResolver(() => false);
+
+// See the officer-console entrypoint for why this happens before render and why
+// it is asserted. A citizen portal that renders `compliance.withdraw.title` as
+// visible text is worse than one that refuses to boot.
+registerComplianceLocales();
+assertNamespaceRegistered(...CITIZEN_SLICE_NAMESPACES);
 
 const queryClient = new QueryClient({
   defaultOptions: {

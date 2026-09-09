@@ -4,7 +4,12 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "noEmit": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+
+    // Required to consume the feature slices. See the note in
+    // apps/officer-console/tsconfig.json and ADR-FE-006 §4. Legal here because
+    // `noEmit` is set: Vite owns emit.
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "public", "vite.config.ts"]
 }
