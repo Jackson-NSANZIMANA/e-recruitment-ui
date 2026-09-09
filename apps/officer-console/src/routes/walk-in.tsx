@@ -8,175 +8,30 @@ import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
-import { createApiClient, useNidaVerification, useWalkIn } from "@usrp/api-client";
+import { ApiError, createApiClient, useRegisterWalkIn, useVerifyIdentity, useVetWalkIn } from "@usrp/api-client";
+import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { BFF_BASE_URL } from "../env.js";
+import { EDGE_BASE_URL } from "../env.js";
 
-const client = createApiClient({ baseUrl: BFF_BASE_URL });
+const client = createApiClient({ baseUrl: EDGE_BASE_URL });
+const pageStyles = cssMap({ base: { maxWidth: "600px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") }, spacing: { marginTop: token("space.300") } });
+interface WalkInFormValues { readonly nationalId: string; readonly category: string; }
+interface Registered { readonly applicationId: string; readonly processingCode: string; readonly qrInvitationCode: string; }
 
-// Module-level — xcss prop requires cssMap output, not css().
-const pageStyles = cssMap({
-  base: {
-    maxWidth: "600px",
-    marginInline: "auto",
-    paddingBlock: token("space.500"),
-    paddingInline: token("space.400"),
-  },
-  successSpacing: {
-    marginTop: token("space.300"),
-  },
-});
-
-interface WalkInFormValues {
-  nationalIdInput: string;
-  postCode: string;
-}
-
-/**
- * Walk-in lane — field officer intake form.
- *
- * HCI field tablet mandates applied:
- * - NIDA pre-submission validation fires as the officer types the NID —
- *   green "Verified ✓" checkmark appears instantly (anticipatory feedback,
- *   reduces queue anxiety).
- * - 48×48 px minimum touch targets enforced by ADS Button defaults.
- * - Haptic confirmation on successful walk-in registration (vibrate API).
- * - Single-screen form; no pagination needed (officer is processing 1 candidate).
- */
 export default function WalkInPage(): React.ReactElement {
   const { t } = useTranslation();
-  const [nidInput, setNidInput] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  const verifyMutation = useNidaVerification(client);
-  const walkInMutation = useWalkIn(client);
-
-  const handleNidBlur = (): void => {
-    if (nidInput.length === 16) {
-      void verifyMutation.mutateAsync({ nationalId: nidInput });
-    }
-  };
-
-  const handleSubmit = async (values: WalkInFormValues): Promise<void> => {
-    const result = await walkInMutation.mutateAsync({
-      nationalIdHash: values.nationalIdInput,
-      postCode: values.postCode,
-    });
-    if (result !== undefined) {
-      if (navigator.vibrate !== undefined) navigator.vibrate([100, 50, 100]);
-      setSuccess(true);
-    }
-  };
-
-  if (success) {
-    return (
-      <Box xcss={pageStyles.base}>
-        <SectionMessage appearance="success" title="Walk-in registered">
-          The applicant has been added to the queue. You can now process the
-          next candidate.
-        </SectionMessage>
-        <Box xcss={pageStyles.successSpacing}>
-          <Button
-            appearance="primary"
-            onClick={() => {
-              setSuccess(false);
-              setNidInput("");
-              verifyMutation.reset();
-              walkInMutation.reset();
-            }}
-          >
-            Next candidate
-          </Button>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
-    <Box xcss={pageStyles.base}>
-      <Stack space="space.400">
-        <Heading size="large" as="h1">
-          {t("nav.walk_in")}
-        </Heading>
-
-        {walkInMutation.isError && (
-          <SectionMessage appearance="error">
-            {t("errors.generic")}
-          </SectionMessage>
-        )}
-
-        <Form<WalkInFormValues> onSubmit={handleSubmit}>
-          {({ formProps, submitting }) => (
-            <form {...formProps}>
-              <Stack space="space.400">
-                <Field
-                  name="nationalIdInput"
-                  label="National ID number"
-                  isRequired
-                >
-                  {({ fieldProps }) => (
-                    <Stack space="space.100">
-                      <TextField
-                        {...fieldProps}
-                        value={nidInput}
-                        onChange={(e) =>
-                          setNidInput((e.target as HTMLInputElement).value)
-                        }
-                        onBlur={handleNidBlur}
-                        placeholder="16-digit NID"
-                        maxLength={16}
-                        autoFocus
-                      />
-                      {verifyMutation.isPending && (
-                        <Text size="small" color="color.text.subtle">
-                          Verifying with NIDA…
-                        </Text>
-                      )}
-                      {verifyMutation.isSuccess &&
-                        verifyMutation.data?.verified === true && (
-                          <Text size="small" color="color.text.success">
-                            ✓ Verified — {verifyMutation.data.displayName}
-                          </Text>
-                        )}
-                      {verifyMutation.isSuccess &&
-                        verifyMutation.data?.verified === false && (
-                          <Text size="small" color="color.text.danger">
-                            ✗ NID not found in NIDA registry
-                          </Text>
-                        )}
-                    </Stack>
-                  )}
-                </Field>
-
-                <Field name="postCode" label="Recruitment post code" isRequired>
-                  {({ fieldProps }) => (
-                    <TextField {...fieldProps} placeholder="e.g. RDF-98001" />
-                  )}
-                </Field>
-
-                <FormFooter>
-                  <Inline space="space.200">
-                    <LoadingButton
-                      type="submit"
-                      appearance="primary"
-                      isLoading={submitting || walkInMutation.isPending}
-                      isDisabled={
-                        verifyMutation.isSuccess &&
-                        verifyMutation.data?.verified === false
-                      }
-                    >
-                      Register walk-in
-                    </LoadingButton>
-                    <Button href="/dashboard" appearance="subtle">
-                      {t("actions.cancel")}
-                    </Button>
-                  </Inline>
-                </FormFooter>
-              </Stack>
-            </form>
-          )}
-        </Form>
-      </Stack>
-    </Box>
-  );
+  const session = useOfficerSession();
+  const agency = session?.agency ?? "RDF";
+  const verifyMutation = useVerifyIdentity(client);
+  const registerMutation = useRegisterWalkIn(client, agency);
+  const vetMutation = useVetWalkIn(client, agency);
+  const [registered, setRegistered] = useState<Registered | null>(null);
+  const [agePending, setAgePending] = useState(false);
+  const [vetted, setVetted] = useState(false);
+  const handleSubmit = async (values: WalkInFormValues): Promise<void> => { const identity = await verifyMutation.mutateAsync({ nationalId: values.nationalId.trim(), channel: "WALK_IN" }); const created = await registerMutation.mutateAsync({ applicantId: identity.applicantId, category: values.category.trim() }); setRegistered({ applicationId: created.applicationId, processingCode: created.processingCode, qrInvitationCode: created.qrInvitationCode }); if (navigator.vibrate !== undefined) navigator.vibrate([100, 50, 100]); };
+  const handleVet = async (applicationId: string): Promise<void> => { setAgePending(false); try { await vetMutation.mutateAsync({ applicationId }); setVetted(true); } catch (error) { if (error instanceof ApiError && error.normalised.kind === "conflict" && error.normalised.outcome === "AGE_PENDING") { setAgePending(true); return; } throw error; } };
+  const reset = (): void => { setRegistered(null); setAgePending(false); setVetted(false); verifyMutation.reset(); registerMutation.reset(); vetMutation.reset(); };
+  if (registered !== null) return <Box xcss={pageStyles.base}><Stack space="space.400"><SectionMessage appearance="success" title="Walk-in registered" headingLevel="h3"><Stack space="space.100"><Text>{t("application.id")}: {registered.processingCode}</Text><Text>Invitation code: {registered.qrInvitationCode}</Text></Stack></SectionMessage>{agePending && <SectionMessage appearance="warning" title="Age verification still in progress" headingLevel="h3"><Text>The age check has not landed yet. This is normal and usually clears within seconds. Try the vetting step again.</Text></SectionMessage>}{vetMutation.isError && !agePending && <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>}{vetted && <SectionMessage appearance="success" title="On-site vetting recorded" headingLevel="h3"><Text>The application has moved into on-site vetting. The candidate keeps the invitation code above for the physical test.</Text></SectionMessage>}<Box xcss={pageStyles.spacing}><Inline space="space.200">{!vetted && <LoadingButton appearance="primary" isLoading={vetMutation.isPending} onClick={() => { void handleVet(registered.applicationId); }}>{agePending ? "Retry vetting" : "Record on-site vetting"}</LoadingButton>}<Button appearance={vetted ? "primary" : "subtle"} onClick={reset}>Next candidate</Button></Inline></Box></Stack></Box>;
+  const isPending = verifyMutation.isPending || registerMutation.isPending;
+  return <Box xcss={pageStyles.base}><Stack space="space.400"><Heading size="large" as="h1">{t("nav.walk_in")}</Heading>{(verifyMutation.isError || registerMutation.isError) && <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>}<Text size="small" color="color.text.subtle">Confirm the candidate&apos;s identity document in person. The registry returns no name or date of birth to check against.</Text><Form<WalkInFormValues> onSubmit={handleSubmit}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.400"><Field name="nationalId" label="National ID number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} inputMode="numeric" maxLength={16} autoComplete="off" autoFocus />}</Field><Field name="category" label="Recruitment category" isRequired>{({ fieldProps }) => <TextField {...fieldProps} />}</Field><FormFooter><Inline space="space.200"><LoadingButton type="submit" appearance="primary" isLoading={submitting || isPending} isDisabled={session === null}>Register walk-in</LoadingButton><Button href="/dashboard" appearance="subtle">{t("actions.cancel")}</Button></Inline></FormFooter></Stack></form>}</Form></Stack></Box>;
 }

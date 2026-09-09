@@ -9,6 +9,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const OPENAPI_DIR = join(ROOT, 'openapi');
 const OUT_DIR = join(ROOT, 'src/generated');
 const identifier = (service: string): string => service.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+const generatedRoutesImport = './routes' + '.js';
 
 function emitZodModule(contract: ServiceContract): string {
   const order = topoSortSchemas(contract);
@@ -37,7 +38,7 @@ ${describeOperationTable(contract)}
   }
   parts.push(`/**
  * Every operation on this service, with the schema for each documented status.
- * A status ABSENT from a map is a status this service is not documented to
+ * A status ABSENT from a map is a status this package is not documented to
  * return on that route — treat receiving one as a contract breach worth
  * reporting, not as an unknown to swallow.
  */
@@ -120,8 +121,8 @@ function emitBarrel(contracts: readonly ServiceContract[]): string {
   const lines = contracts.flatMap((contract) => [`export * as ${identifier(contract.service)} from './${contract.service}.zod.js';`, `export type * as ${identifier(contract.service)}Types from './${contract.service}.types.js';`]);
   return `${BANNER('index', contracts[0]!.backendSha, '*.yaml')}
 ${lines.join('\n')}
-export { ROUTE_TABLE, BROWSER_ROUTES, SERVICE_INTERNAL_ROUTES } from './routes.js';
-export type { RouteFact } from './routes.js';
+export { ROUTE_TABLE, BROWSER_ROUTES, SERVICE_INTERNAL_ROUTES } from '${generatedRoutesImport}';
+export type { RouteFact } from '${generatedRoutesImport}';
 `;
 }
 

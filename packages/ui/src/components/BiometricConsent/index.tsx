@@ -5,9 +5,10 @@ import ModalDialog, {
   ModalTitle,
   ModalBody,
   ModalFooter,
+  CloseButton,
 } from "@atlaskit/modal-dialog";
 import Button from "@atlaskit/button";
-import { Inline, Stack } from "@atlaskit/primitives/compiled";
+import { Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import { useTranslation } from "@usrp/i18n";
 import { AudioTooltip } from "../AudioTooltip/index.js";
 
@@ -52,11 +53,12 @@ export function BiometricConsent({
         >
           <ModalHeader>
             <ModalTitle>{t("biometric_consent.title")}</ModalTitle>
+            <CloseButton onClick={handleClose} />
           </ModalHeader>
 
           <ModalBody>
             <Stack space="space.300">
-              <p>{t("biometric_consent.body", { agencyName })}</p>
+              <Text as="p">{t("biometric_consent.body", { agencyName })}</Text>
 
               {/* Kinyarwanda voice reading — HCI mandate for semi-literate applicants */}
               <AudioTooltip

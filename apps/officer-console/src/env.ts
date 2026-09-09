@@ -13,4 +13,4 @@ function requireEnv(key: string): string {
 }
 
 /** Base URL of the browser-facing edge gateway. */
-export const EDGE_BASE_URL: string = import.meta.env.DEV ? "/edge" : requireEnv("VITE_EDGE_URL");
+export const EDGE_BASE_URL: string = import.meta.env.DEV ? "" : requireEnv("VITE_EDGE_URL");

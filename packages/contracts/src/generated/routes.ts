@@ -1105,12 +1105,7 @@ export const BROWSER_ROUTES: readonly RouteFact[] = ROUTE_TABLE.filter(
   (route) => route.reach === 'browser',
 );
 
-/**
- * System-token routes. PROXYING ONE OF THESE TO A BROWSER IS A SECURITY
- * INCIDENT, not a convenience — that is why the set is exported as data an
- * edge-tier check can assert against instead of a comment reviewers must
- * remember.
- */
+/** System-token routes. */
 export const SERVICE_INTERNAL_ROUTES: readonly RouteFact[] = ROUTE_TABLE.filter(
   (route) => route.reach === 'service-internal',
 );

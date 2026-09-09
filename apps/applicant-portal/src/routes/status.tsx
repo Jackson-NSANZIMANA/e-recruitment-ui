@@ -4,15 +4,14 @@ import Heading from "@atlaskit/heading";
 import SectionMessage from "@atlaskit/section-message";
 import Spinner from "@atlaskit/spinner";
 import { token } from "@atlaskit/tokens";
-import { cssMap, cx } from "@atlaskit/css";
-import { createApiClient, useApplicationList } from "@usrp/api-client";
+import { cssMap } from "@atlaskit/css";
+import { createApiClient, useMyApplications } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
 import { ApplicationStatusBadge } from "@usrp/ui";
-import { BFF_BASE_URL } from "../env.js";
+import { EDGE_BASE_URL } from "../env.js";
 
-const client = createApiClient({ baseUrl: BFF_BASE_URL });
+const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 
-// Module-level — xcss prop requires cssMap output, not css().
 const pageStyles = cssMap({
   base: {
     maxWidth: "640px",
@@ -22,35 +21,24 @@ const pageStyles = cssMap({
   },
 });
 
-// Per-card border styles — borderRadius in cssMap, borderColor via cssMap variants.
 const cardStyles = cssMap({
   base: {
     borderWidth: token("border.width"),
     borderStyle: "solid",
-    borderRadius: token("radius.medium"),
-  },
-  normal: {
     borderColor: token("color.border"),
-  },
-  warning: {
-    borderColor: token("color.border.warning"),
+    borderRadius: token("radius.medium"),
   },
 });
 
 /**
- * Applicant status page — "Procedural Justice UI" applied.
+ * The citizen's own applications, across all three agencies.
  *
- * HCI mandate:
- *   "Instead of 'Application Rejected', implement Visual Compliance Check.
- *    Show side-by-side graphic of required standard vs applicant's value.
- *    This shifts user's anger from 'The system is corrupt' to 'I did not meet
- *    the standard', preserving institutional trust."
+ * Reads GET /edge/v1/me/applications. There is no per-agency variant and no
+ * pagination: the citizen surface is a single cross-agency list, capped upstream.
  */
 export default function StatusPage(): React.ReactElement {
   const { t } = useTranslation();
-  const { data, isLoading, isError } = useApplicationList(client, {
-    pageSize: 5,
-  });
+  const { data, isLoading, isError } = useMyApplications(client);
 
   if (isLoading) {
     return (
@@ -68,60 +56,57 @@ export default function StatusPage(): React.ReactElement {
     );
   }
 
-  const applications = data?.items ?? [];
+  const applications = data?.applications ?? [];
 
   return (
     <Box xcss={pageStyles.base}>
       <Stack space="space.500">
-        <Heading size="large" as="h1">
-          My Applications
-        </Heading>
+        <Heading size="large" as="h1">{t("nav.applications")}</Heading>
 
         {applications.length === 0 && (
           <SectionMessage>
-            <Text>You have no active applications.</Text>
+            <Text>You have no applications on file.</Text>
           </SectionMessage>
         )}
 
-        {applications.map((app) => (
+        {applications.map((application) => (
           <Box
-            key={app.id}
+            key={application.applicationId}
             padding="space.300"
             backgroundColor="color.background.neutral"
-            xcss={cx(cardStyles.base, app.requiresAction ? cardStyles.warning : cardStyles.normal)}
+            xcss={cardStyles.base}
           >
             <Stack space="space.200">
               <Inline spread="space-between" alignBlock="center">
-                <Text weight="bold">{app.agency}</Text>
-                <ApplicationStatusBadge status={app.status} />
+                <Text weight="bold">{application.agency}</Text>
+                <ApplicationStatusBadge status={application.status} />
               </Inline>
 
               <Text size="small" color="color.text.subtle">
-                {t("application.submitted")}:{" "}
-                {new Date(app.submittedAt).toLocaleDateString()}
+                {t("application.id")}: {application.processingCode}
               </Text>
 
-              {app.requiresAction && (
-                <SectionMessage appearance="warning">
-                  <Text>
-                    Action required — a document needs to be corrected. Check
-                    your SMS for instructions.
-                  </Text>
-                </SectionMessage>
-              )}
-
-              {app.status === "REJECTED" && (
-                <SectionMessage appearance="error" title="Application outcome">
-                  <Text>
-                    Your application did not meet the required criteria. An SMS
-                    with the specific reason has been sent to your registered
-                    phone number.
-                  </Text>
-                </SectionMessage>
-              )}
+              <Text size="small" color="color.text.subtle">
+                {t("application.submitted")}:{" "}
+                {new Date(application.submittedAt).toLocaleDateString()}
+              </Text>
             </Stack>
           </Box>
         ))}
+
+        {/*
+          Stated rather than hidden: the transition trail this platform built for
+          Procedural Justice is officer-only today. Claiming a reason was sent
+          would be inventing a message we cannot see.
+        */}
+        {applications.length > 0 && (
+          <SectionMessage appearance="information">
+            <Text>
+              A detailed decision history is not yet available to applicants. If a
+              status is unclear, contact the agency handling your application.
+            </Text>
+          </SectionMessage>
+        )}
       </Stack>
     </Box>
   );

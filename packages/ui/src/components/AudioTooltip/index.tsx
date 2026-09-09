@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import { Box, Inline, Text } from "@atlaskit/primitives/compiled";
+import { Box, Inline, Pressable, Text } from "@atlaskit/primitives/compiled";
 import Tooltip from "@atlaskit/tooltip";
 import { cssMap, cx } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
@@ -90,20 +90,18 @@ export function AudioTooltip({
   return (
     <Tooltip content={t("a11y.play_audio_help")}>
       <Inline space="space.050" alignBlock="center" {...(testId !== undefined ? { testId } : {})}>
-        <button
-          type="button"
+        <Pressable
           aria-label={t("a11y.play_audio_help")}
           aria-pressed={playing}
           onClick={handlePlay}
+          xcss={cx(buttonStyles['base'], playing ? buttonStyles['playing'] : buttonStyles['idle'])}
         >
-          <Box
-            xcss={cx(buttonStyles['base'], playing ? buttonStyles['playing'] : buttonStyles['idle'])}
-          >
-            <span role="img" aria-hidden="true">
+          <Box>
+            <Text aria-hidden="true">
               {playing ? "🔊" : "🔈"}
-            </span>
+            </Text>
           </Box>
-        </button>
+        </Pressable>
         {label !== undefined && (
           <Text size="small" color="color.text.subtle">{label}</Text>
         )}

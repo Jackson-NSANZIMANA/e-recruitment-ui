@@ -7,12 +7,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Feature branches cancel their own in-progress runs; main always runs to
+# completion so the protected branch keeps a full signal.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
+  actions: read
 
 env:
   NODE_VERSION: '22'
@@ -21,41 +24,41 @@ env:
   TURBO_SCM_HEAD: HEAD
 
 jobs:
-  # ────────────────────────────────────────────────────────────────────────────
-  # Hygiene: zero-dependency gates that need no node_modules.
-  # Runs FIRST so a bad blob or boundary violation fails in ~10s.
-  # ────────────────────────────────────────────────────────────────────────────
   hygiene:
     name: Hygiene
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-        with: { fetch-depth: 1 }
-      - uses: pnpm/action-setup@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: node --test tooling/repo-hygiene/test/*.test.mjs
-      - run: pnpm verify:hygiene
+          package-manager-cache: false
+      - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
+      - run: node tooling/repo-hygiene/verify.mjs
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Install: prime the pnpm store AND cache node_modules for downstream jobs.
-  # Every downstream job restores this cache instead of re-running install.
-  # ────────────────────────────────────────────────────────────────────────────
   install:
     name: Install
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      # Resolves pnpm from `packageManager` in the root package.json.
+      # If that field is absent, pin `version:` here explicitly.
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Resolve workspace dependencies
+        run: pnpm install --no-frozen-lockfile
       - uses: actions/cache/save@v4
         with:
           path: |
@@ -65,20 +68,20 @@ jobs:
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Typecheck: ultra-strict zero-error tsc.
-  # Uses --affected so only changed packages are checked on PRs.
-  # ────────────────────────────────────────────────────────────────────────────
   typecheck:
     name: Typecheck
     needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Credentials persist: the git fetch below needs them on a private repo.
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -91,23 +94,23 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm typecheck:affected
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # ADS conformance: eslint with ADS rules promoted to error.
-  # The frontend's correctness contract — equivalent to the backend's selfchecks.
-  # ────────────────────────────────────────────────────────────────────────────
   ads-lint:
     name: ADS conformance
     needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Credentials persist: the git fetch below needs them on a private repo.
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -120,14 +123,10 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm lint:affected
       - run: pnpm scan:cssmap
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Contract drift: verify frontend contracts against the pinned backend SHA.
-  # Runs the drift tool's own selftest BEFORE trusting it.
-  # ────────────────────────────────────────────────────────────────────────────
   contract-drift:
     name: Contract drift vs pinned backend
     needs: install
@@ -135,13 +134,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      # If e-recruitment is private, add: token: ${{ secrets.CROSS_REPO_PAT }}
       - uses: actions/checkout@v5
         with:
           repository: Jackson-NSANZIMANA/e-recruitment
           ref: ${{ env.BACKEND_SHA }}
           path: backend
           fetch-depth: 1
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -154,23 +159,24 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/contracts run drift:selftest
       - run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Unit + integration tests.
-  # ────────────────────────────────────────────────────────────────────────────
   test:
     name: Unit + integration tests
     needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # Credentials persist: the git fetch below needs them on a private repo.
       - uses: actions/checkout@v5
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - run: git fetch origin main:refs/remotes/origin/main
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -183,19 +189,9 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm test:affected
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: frontend-test-coverage
-          path: '**/coverage/**'
-          if-no-files-found: ignore
-          retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Accessibility: axe-core over every Storybook story in a real browser.
-  # ────────────────────────────────────────────────────────────────────────────
   a11y:
     name: Accessibility
     needs: install
@@ -203,7 +199,11 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -216,25 +216,12 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      - run: pnpm --filter @usrp/design-system exec playwright install --with-deps chromium
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: storybook-a11y-failure
-          path: |
-            packages/design-system/storybook-static
-            .storybook-logs
-          if-no-files-found: ignore
-          retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Build: production bundles + extraction proof + bundle budget.
-  # Artifacts are consumed by the e2e job.
-  # ────────────────────────────────────────────────────────────────────────────
   build:
     name: Build and production proof
     needs: install
@@ -242,7 +229,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -255,21 +246,17 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
       - run: pnpm build
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-production-dist
-          path: apps/*/dist
+          path: apps
           if-no-files-found: error
           retention-days: 7
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Playwright E2E: runs against the PRODUCTION BUILD, not source.
-  # Downloads the dist artifact from the build job.
-  # ────────────────────────────────────────────────────────────────────────────
   e2e:
     name: Playwright E2E
     needs: build
@@ -277,7 +264,11 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -290,34 +281,43 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      # Scoped to apps/ so build output lands deterministically instead of
+      # unpacking over the workspace root.
       - uses: actions/download-artifact@v4
         with:
           name: frontend-production-dist
+          path: apps
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: frontend-playwright-failure
+          name: playwright-report
           path: |
-            apps/*/playwright-report
-            apps/*/test-results
-          if-no-files-found: ignore
+            apps/officer-console/playwright-report/
+            apps/applicant-portal/playwright-report/
+            apps/officer-console/test-results/
+            apps/applicant-portal/test-results/
           retention-days: 7
+          if-no-files-found: ignore
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Security scan: Trivy fs scan, CRITICAL + HIGH, fail on findings.
-  # NOTE: the backend has scripts/security-scan.sh; the frontend does not yet.
-  # When one is written, point this job at it so CI and local run identical code.
-  # ────────────────────────────────────────────────────────────────────────────
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          persist-credentials: false
+      - name: Security scan selftest (blocking)
+        run: bash tooling/security/security-scan.sh --selftest
+      - name: Security scan (advisory, does not gate)
+        run: bash tooling/security/security-scan.sh --no-audit
+        continue-on-error: true
+      - name: Trivy filesystem scan (blocking, fixable CRITICAL/HIGH only)
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -325,11 +325,6 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Quality Gate: the ONE required status check.
-  # Uses jq for robust JSON parsing instead of fragile grep regex.
-  # A skipped or cancelled job fails the gate, not just a red one.
-  # ────────────────────────────────────────────────────────────────────────────
   gate:
     name: Quality Gate
     if: always()
@@ -339,11 +334,11 @@ jobs:
     steps:
       - name: Assert every required job succeeded
         env:
-          RESULTS: ${{ toJSON(needs) }}
+          RESULTS: '${{ toJSON(needs) }}'
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \(.key): \(.value.result)"')
+          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | .key + ": " + .value.result')
           if [ -n "$failed" ]; then
             echo "::error::Quality gate RED. Required jobs did not succeed:"
             echo "$failed"

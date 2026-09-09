@@ -3,12 +3,19 @@
     "Single source of truth for every USRP frontend hygiene gate.",
     "CI reads this file. So does a developer running `pnpm verify:hygiene`.",
     "There is no second copy of these numbers in the workflow YAML, because a",
-    "second copy is how a gate quietly stops matching the gate it claims to be."
+    "second copy is how a gate quietly stops matching the gate it claims to be.",
+    "",
+    "THIS FILE SCANS ITSELF. hexScan.roots includes tooling/repo-hygiene and",
+    "hexScan.extensions includes .json, so check-boundaries.mjs reads this file",
+    "as source. A `$comment` in JSON is an ordinary string value, NOT a comment,",
+    "so stripComments() cannot exempt it. Do not write a literal colour value",
+    "anywhere in this file - describe it instead. That is not pedantry: it is the",
+    "defect that kept the boundaries gate red once the tracked archive was gone."
   ],
 
   "largeFiles": {
     "maxBytes": 5242880,
-    "$comment": "5 MiB. Nothing a browser app needs to build belongs above this. The 73.9 MB vendored ADS mirror at repo root is exactly what this exists to have prevented.",
+    "$comment": "5 MiB. Nothing a browser app needs to build belongs above this. TWO separate incidents justify it: the 70.45 MiB vendored ADS mirror, and usrp-edge-agent2-feat-edge-and-auth.tar.gz, which reached main through `git add -f` despite a .gitignore rule naming *.tar.gz explicitly. The ignore rule is the fence; this is the lock.",
     "allow": []
   },
 
@@ -19,7 +26,7 @@
   },
 
   "hexScan": {
-    "$comment": "Invariant 5: zero raw hex. Scoped to the paths this branch owns. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts contains theme_color '#0052CC' and background_color '#FFFFFF'. Those are the one defensible exception - a PWA manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but they should be marked with a hygiene-allow-hex comment stating that, and the value should be derived from the ADS brand token rather than typed by hand.",
+    "$comment": "Invariant 5: zero raw colour literals; use @atlaskit/tokens. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts sets a hard-coded brand colour in the PWA manifest's theme_color, and an opaque white in background_color. Those are the one defensible exception - a web manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but each should carry a hygiene-allow-hex marker stating that, and the brand value should be derived from the resolved ADS token rather than typed by hand. The values are deliberately not reproduced here, because this file is itself scanned by the rule.",
     "roots": ["packages/design-system", "packages/eslint-config", "tooling/repo-hygiene"],
     "extensions": [".ts", ".tsx", ".css", ".json", ".svg"],
     "allowPaths": []
@@ -40,44 +47,43 @@
       "delete the job, the frontend keeps it honest by asserting that every",
       "workspace package DECLARES the scripts the aggregate gate claims to run.",
       "Exemptions are a visible debt ledger with an owner, not an amnesty.",
-      "New packages are strict by default: absence from this map means required."
+      "New packages are strict by default: absence from this map means required.",
+      "",
+      "REVIEWED 2026-09-08 against every workspace package.json. Four entries",
+      "(@usrp/contracts, @usrp/shared-types, @usrp/auth, @usrp/api-client) were",
+      "STALE - those packages have declared lint and test since 2026-08-31 - and",
+      "were removed. Two (@usrp/contract-drift, @usrp/edge-dev) were absent and",
+      "were added; they became visible when tooling/* entered the workspace",
+      "globs. Real remaining gap count: 10.",
+      "",
+      "KNOWN LIMIT OF THIS GATE, recorded so it is not mistaken for coverage: it",
+      "asserts a script is DECLARED, never that the declaration can RUN. All six",
+      "packages/features/* slices declared `test: vitest run` without vitest as a",
+      "dependency and passed this gate while failing with 'command not found'.",
+      "Fixed in the slice manifests; the gate's blind spot remains and closing it",
+      "needs a resolve check, not another exemption."
     ],
     "required": ["typecheck", "lint", "test"],
     "exempt": {
       "@usrp/eslint-config": {
         "scripts": ["lint", "test"],
-        "reason": "Lint config itself; its correctness is proven by the rule unit tests in tooling/repo-hygiene/test.",
-        "owner": "agent-3"
-      },
-      "@usrp/contracts": {
-        "scripts": ["lint", "test"],
-        "reason": "DEBT. Has `verify` + `drift:selftest` (real proofs) but no lint/test script, so `pnpm lint` and `pnpm test` skip it silently.",
-        "owner": "agent-1"
-      },
-      "@usrp/auth": {
-        "scripts": ["lint", "test"],
-        "reason": "DEBT. Declares only typecheck. Auth is the last package that should be untested; officer JWT vs opaque citizen session (ADR-018) needs unit proof.",
-        "owner": "agent-2"
-      },
-      "@usrp/api-client": {
-        "scripts": ["lint", "test"],
-        "reason": "DEBT. Declares only typecheck and clean.",
-        "owner": "agent-2"
-      },
-      "@usrp/i18n": {
-        "scripts": ["lint", "test"],
-        "reason": "DEBT. Declares only typecheck and clean.",
-        "owner": "agent-4"
-      },
-      "@usrp/shared-types": {
-        "scripts": ["lint", "test"],
-        "reason": "DEBT. Type-only package; typecheck is most of its value, but lint still applies.",
-        "owner": "agent-1"
+        "reason": "Lint config itself; its correctness is proven by the rule unit tests in tooling/repo-hygiene/test/predicates.test.mjs. NOTE: its `typecheck` is `echo 'no ts in eslint-config'`, which is the stub this gate's own error message calls the hollow gate in disguise. Defensible only because the package is genuinely CommonJS-only with no .ts file; if a single .ts lands here, that echo must become a real tsc invocation.",
+        "owner": "frontend-architect"
       },
       "@usrp/ui": {
         "scripts": ["test"],
-        "reason": "DEBT, and expiring. Being split; the domain-free half moves to @usrp/design-system (tested), the rest to feature slices per MIGRATION-MAP.md.",
-        "owner": "agent-4"
+        "reason": "DEBT, and expiring. Being split: the domain-free half has already moved to @usrp/design-system (which has a real test), the rest is assigned to feature slices per tooling/repo-hygiene/MIGRATION-MAP.md. Declares typecheck and lint. Do not invest in tests for code scheduled for deletion; finish the migration instead.",
+        "owner": "frontend-architect"
+      },
+      "@usrp/contract-drift": {
+        "scripts": ["lint", "test"],
+        "reason": "DEBT. Declares typecheck. Its real proof is `selftest` (30 assertions that plant every kind of drift and assert each gate goes red), which ci.yml runs as drift:selftest BEFORE trusting the tool - so the package is genuinely proven, just not under the script names this gate looks for. Renaming selftest to test is the cheap close; it was not done here because ci.yml and packages/contracts both invoke the current name.",
+        "owner": "frontend-architect"
+      },
+      "@usrp/edge-dev": {
+        "scripts": ["typecheck", "lint", "test"],
+        "reason": "DEBT, and the MISSING TYPECHECK IS THE URGENT ONE. This package ships a tsconfig.json and every script runs it through `node --experimental-strip-types`, which ERASES types without checking them - so nothing anywhere verifies the types of the dev edge gateway that terminates the session cookie and brokers system tokens. It has a real 143-assertion `selfcheck` over live sockets, so behaviour is proven; types are not. Closing this needs typescript as a devDependency, which is a lockfile change, so it is deliberately not bundled into a config-only commit.",
+        "owner": "frontend-architect"
       }
     }
   },
@@ -88,7 +94,12 @@
       "recruit on a Rwandan mobile network actually downloads. These numbers are",
       "PROVISIONAL and must be calibrated from the first real CI build: a ceiling",
       "nobody has calibrated either never fires or always does. See README",
-      "'Calibrating bundle budgets'."
+      "'Calibrating bundle budgets'.",
+      "",
+      "STILL UNCALIBRATED as of 2026-09-08, because no CI build has completed:",
+      "the Install job has failed on every run since 2026-09-08 13:41, so the",
+      "build job has never produced a dist to measure. Calibrate on the first",
+      "green run after the lockfile is regenerated."
     ],
     "apps/applicant-portal": {
       "distDir": "dist",
@@ -105,7 +116,7 @@
   },
 
   "compiledExtraction": {
-    "$comment": "Proves the architecture doc's build-time-extraction claim instead of trusting it. Runs against a real build.",
+    "$comment": "Proves the architecture doc's build-time-extraction claim instead of trusting it. Runs against a real build. NOTE: this gate could not have passed once any packages/features/* slice was mounted in an app, because those slices declared @compiled/react ^0.18.0 against the apps' ^1.0.0 - two majors of the styling runtime in one graph. Aligned 2026-09-08.",
     "apps": ["apps/applicant-portal", "apps/officer-console"],
     "distDir": "dist"
   }
