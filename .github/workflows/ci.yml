@@ -235,11 +235,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-production-dist
-          path: apps/*/dist
+          path: apps
           if-no-files-found: error
           retention-days: 7
 
-  e2e:
+    e2e:
     name: Playwright E2E
     needs: build
     runs-on: ubuntu-latest
@@ -265,8 +265,25 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: frontend-production-dist
+          path: apps                       # <-- FIX
+      - name: Verify built dist exists      # <-- diagnostic
+        run: |
+          set -euo pipefail
+          ls -la apps/officer-console/dist
+          ls -la apps/applicant-portal/dist
+          test -f apps/officer-console/dist/index.html
+          test -f apps/applicant-portal/dist/index.html
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4    # <-- capture results
+        if: always()
+        with:
+          name: playwright-results
+          path: |
+            apps/*/test-results
+            apps/*/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
 
   security-scan:
     name: Security Scan
