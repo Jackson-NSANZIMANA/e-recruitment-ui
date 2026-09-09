@@ -1,1 +1,8 @@
-export * from './model/sync-result.ts';export * from './model/conflict.ts';export * from './model/biometric.ts';export * from './api/transport.ts';export * from './api/field-ops.ts';export {SyncOutcome} from './ui/SyncOutcome.tsx';export {FieldOpsRoutes} from './routes/index.tsx';
+export * from './model/sync-result.ts';
+export * from './model/conflict.ts';
+export * from './model/biometric.ts';
+export * from './api/transport.ts';
+export * from './api/field-ops.ts';
+export { FIELD_OPS_NAMESPACE, registerFieldOpsLocales } from './locales.ts';
+export { SyncOutcome } from './ui/SyncOutcome.tsx';
+export { FieldOpsRoutes } from './routes/index.tsx';

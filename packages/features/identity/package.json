@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
+  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport; this slice used to declare a phantom SliceTransport with no implementation, which is how three of its four operation ids came to name routes the edge does not serve. @usrp/auth owns officer login and the citizen OTP pair (ADR-016, ADR-018) and returns a session view with NO token — this slice consumes it and must never reimplement it.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/button": "^25.0.2",
@@ -21,6 +22,8 @@
     "@atlaskit/section-message": "^10.0.0",
     "@atlaskit/textfield": "^10.0.1",
     "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
+    "@usrp/auth": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/i18n": "workspace:*"
   },
