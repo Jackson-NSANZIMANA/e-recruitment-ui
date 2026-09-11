@@ -14,20 +14,13 @@ import ModalDialog, {
   ModalTitle,
   CloseButton,
 } from '@atlaskit/modal-dialog';
-import { Inline, Stack, Text, Box, Flex } from '@atlaskit/primitives/compiled';
-import { cssMap } from '@atlaskit/css';
+import { Stack, Text, Box, Flex } from '@atlaskit/primitives/compiled';
 import { useTranslation } from '@usrp/i18n';
 import { DECLINE_NOTE_MAX, validateDecline } from '../model/erasure.ts';
 
 interface FormValues {
   note: string;
 }
-
-const dialogFormStyles = cssMap({
-  contents: {
-    display: 'contents',
-  },
-});
 
 export function DeclineGroundsDialog({
   onCancel,
@@ -51,7 +44,7 @@ export function DeclineGroundsDialog({
 
         return (
           <ModalDialog onClose={onCancel}>
-            <form {...formProps} css={dialogFormStyles.contents}>
+            <form {...formProps}>
               <ModalHeader>
                 <ModalTitle appearance="warning">
                   {t('compliance.decline.title')}
