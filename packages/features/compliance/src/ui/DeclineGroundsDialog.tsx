@@ -1,20 +1,33 @@
 import React from 'react';
 import Button from '@atlaskit/button/new';
 import TextArea from '@atlaskit/textarea';
-import Form, { Field, ErrorMessage, HelperMessage } from '@atlaskit/form';
+import Form, {
+  Field,
+  ErrorMessage,
+  HelperMessage,
+  MessageWrapper,
+} from '@atlaskit/form';
 import ModalDialog, {
   ModalBody,
   ModalFooter,
   ModalHeader,
   ModalTitle,
+  CloseButton,
 } from '@atlaskit/modal-dialog';
 import { Inline, Stack, Text, Box, Flex } from '@atlaskit/primitives/compiled';
+import { cssMap } from '@atlaskit/css';
 import { useTranslation } from '@usrp/i18n';
 import { DECLINE_NOTE_MAX, validateDecline } from '../model/erasure.ts';
 
 interface FormValues {
   note: string;
 }
+
+const dialogFormStyles = cssMap({
+  contents: {
+    display: 'contents',
+  },
+});
 
 export function DeclineGroundsDialog({
   onCancel,
@@ -25,35 +38,34 @@ export function DeclineGroundsDialog({
 }): React.ReactElement {
   const { t } = useTranslation('compliance');
 
-  const handleSubmit = (values: FormValues) => {
-    const v = validateDecline(values.note);
-    if (v.ok) {
-      onConfirm(v.note);
-    }
+  const handleSubmit = (values: FormValues): void => {
+    const result = validateDecline(values.note);
+    if (result.ok) onConfirm(result.note);
   };
 
   return (
     <Form<FormValues> onSubmit={handleSubmit}>
       {({ formProps, submitting, getState }) => {
         const { errors, dirty } = getState();
-        const hasErrors = Object.keys(errors || {}).length > 0;
+        const hasErrors = Object.keys(errors ?? {}).length > 0;
 
         return (
           <ModalDialog onClose={onCancel}>
-            <form {...formProps} style={{ display: 'contents' }}>
+            <form {...formProps} css={dialogFormStyles.contents}>
               <ModalHeader>
                 <ModalTitle appearance="warning">
                   {t('compliance.decline.title')}
                 </ModalTitle>
+                <CloseButton onClick={onCancel} />
               </ModalHeader>
-              
+
               <ModalBody>
                 <Stack space="space.150">
                   <Text as="p">{t('compliance.decline.ground_required')}</Text>
-                  
+
                   <Field<string>
-                    name="note" 
-                    label={t('compliance.decline.note_label')} 
+                    name="note"
+                    label={t('compliance.decline.note_label')}
                     isRequired
                     validate={(value) => {
                       if (!value) return 'required';
@@ -61,42 +73,34 @@ export function DeclineGroundsDialog({
                     }}
                   >
                     {({ fieldProps: { onChange, ...restFieldProps }, error }) => {
-                      const currentLength = (restFieldProps.value || '').length;
-                      
+                      const value = typeof restFieldProps.value === 'string' ? restFieldProps.value : '';
+                      const currentLength = value.length;
+
                       return (
                         <Stack space="space.050">
-                          <TextArea 
-                            {...restFieldProps} 
-                            maxLength={DECLINE_NOTE_MAX}
+                          <TextArea
+                            {...restFieldProps}
                             resize="vertical"
-                            onChange={(e) => onChange(e.target.value)}
+                            onChange={(event) =>
+                              onChange(event.currentTarget.value.slice(0, DECLINE_NOTE_MAX))
+                            }
                           />
-                          
-                          {/* 
-                             FIXED: Switched to <Flex>
-                             Inline does not support 'justifyContent' or 'alignBlock' in this version.
-                             Flex uses standard CSS flexbox props + token-backed 'gap'.
-                          */}
+
                           <Flex justifyContent="space-between" alignItems="start">
-                            <Box>
-                              {error && (
+                            <MessageWrapper>
+                              {error ? (
                                 <ErrorMessage>
                                   {t(`compliance.decline.error.${error}`)}
                                 </ErrorMessage>
-                              )}
-                              {!error && (
+                              ) : (
                                 <HelperMessage>
                                   {t('compliance.decline.helper_text', { defaultValue: '' })}
                                 </HelperMessage>
                               )}
-                            </Box>
-                            
+                            </MessageWrapper>
+
                             <Box paddingInlineStart="space.100">
-                              <Text 
-                                size="small" 
-                                color="color.text.subtlest"
-                                id={`${restFieldProps.id}-counter`}
-                              >
+                              <Text size="small" color="color.text.subtlest">
                                 {currentLength} / {DECLINE_NOTE_MAX}
                               </Text>
                             </Box>
@@ -107,9 +111,8 @@ export function DeclineGroundsDialog({
                   </Field>
                 </Stack>
               </ModalBody>
-              
+
               <ModalFooter>
-                {/* FIXED: Switched to <Flex> for "end" alignment */}
                 <Flex gap="space.100" justifyContent="end">
                   <Button appearance="subtle" onClick={onCancel} isDisabled={submitting}>
                     {t('compliance.decline.cancel')}
