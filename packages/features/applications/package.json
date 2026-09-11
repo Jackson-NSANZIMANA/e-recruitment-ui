@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
+  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport. The phantom SliceTransport this replaces is why `getApplicationStatusHistory` (the UPSTREAM id) was called instead of `getStatusHistory` (what the edge serves).",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/css": "^1.0.0",
@@ -19,6 +20,7 @@
     "@atlaskit/lozenge": "^15.0.1",
     "@atlaskit/primitives": "^22.2.1",
     "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/i18n": "workspace:*"
   },

@@ -1,4 +1,4 @@
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // @usrp/api-client — public surface
 //
 // Rebuilt on the routes that exist, fronted by the edge specified in
@@ -9,15 +9,25 @@
 // Gone, with reasons in the files that used to hold them: `createApiClient`'s
 // `get/post/patch/del` path helpers, `useTransitionApplication`,
 // `useDashboardMetrics`, `useNidaVerification`, `useSession`, `refreshDashboard`.
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 // ── Transport ──
 export { createApiClient, CSRF_HEADER, CSRF_COOKIE_SECURE, CSRF_COOKIE_DEV, CORRELATION_HEADER } from './transport.js';
 export type { ApiClient, ApiClientOptions, CallOptions, RequestRecord } from './transport.js';
 
 // ── Paths (exact only, validated against the contract) ──
-export { EDGE_OPERATIONS, EDGE_PATHS, operation, assertPathsMatchContract, ContractMismatchError } from './paths.js';
-export type { EdgeOperation } from './paths.js';
+//
+// `EdgeOperationId` is the WHITELIST. Any package that calls the edge should type
+// its operation constants against it:
+//
+//   export const MY_OPERATIONS = ['listApplications'] as const
+//     satisfies readonly EdgeOperationId[];
+//
+// so an operation the edge does not serve fails `pnpm typecheck` rather than a
+// citizen's click. Four of the six feature slices were naming ids that do not
+// exist — 11 of 27 calls — because `operationId: string` accepts anything.
+export { EDGE_OPERATIONS, EDGE_PATHS, operation, isEdgeOperationId, assertPathsMatchContract, ContractMismatchError } from './paths.js';
+export type { EdgeOperation, EdgeOperationId, AnonymousEdgeOperationId } from './paths.js';
 
 // ── Errors ──
 export { ApiError, normaliseErrorBody, describeError, G2G_UNAVAILABLE_CODES } from './errors.js';

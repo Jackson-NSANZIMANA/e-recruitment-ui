@@ -2,45 +2,54 @@
   "nav": {
     "dashboard": "Imbonerahamwe",
     "applications": "Ubusabe",
-    "walk_in": "Kwinjira ku buryo bwacyuye",
+    "walk_in": "Umurongo wo kwinjira ako kanya",
     "scheduling": "Gateganya",
     "settings": "Igenamiterere",
     "logout": "Sohoka"
   },
   "auth": {
     "sign_in": "Injira",
-    "email": "Imeyili",
+    "login_handle": "Izina ryo kwinjira",
     "password": "Ijambo banga",
-    "signing_in": "Injira…",
-    "invalid_credentials": "Imeyili cyangwa ijambo banga sibyo",
-    "session_expired": "Igihe cyo gukorana cyararangiye. Ongera injira."
+    "national_id": "Indangamuntu",
+    "otp_code": "Kode y'imibare itandatu",
+    "signing_in": "Kwinjira…",
+    "invalid_credentials": "Izina ryo kwinjira n'ijambo banga ntibyemewe.",
+    "session_expired": "Igihe cyo gukorana cyararangiye. Ongera winjire."
   },
   "status": {
-    "DRAFT": "Ntabwo byaroherezwa",
+    "DRAFT": "Inyandiko itaroherejwe",
     "SUBMITTED": "Byoherejwe",
-    "UNDER_REVIEW": "Birasuzumwa",
-    "SHORTLISTED": "Batoranyijwe mu rutonde ruto",
-    "PHYSICAL_SCHEDULED": "Isuzuma ry'imibiri ryateganyijwe",
-    "PHYSICAL_PASSED": "Isuzuma ry'imibiri ryakunze",
-    "PHYSICAL_FAILED": "Isuzuma ry'imibiri rishize",
-    "MEDICAL_SCHEDULED": "Isuzuma ry'ubuzima ryateganyijwe",
-    "MEDICAL_PASSED": "Isuzuma ry'ubuzima ryakunze",
-    "MEDICAL_FAILED": "Isuzuma ry'ubuzima rishize",
-    "VETTING_IN_PROGRESS": "Isuzuma ry'imyitwarire riri mu gukora",
-    "VETTING_PASSED": "Isuzuma ry'imyitwarire ryakunze",
-    "VETTING_FAILED": "Isuzuma ry'imyitwarire rishize",
+    "ACADEMIC_VETTING": "Isuzuma ry'amashuri",
+    "CRIMINAL_CLEARANCE": "Isuzuma ry'imyitwarire",
+    "DOCUMENT_REVIEW_GREEN": "Inyandiko zemewe",
+    "DOCUMENT_REVIEW_AMBER": "Inyandiko zigomba gusuzumwa",
+    "SLOT_ASSIGNED": "Umwanya w'ikizamini watanzwe",
+    "PHYSICAL_TEST_SCHEDULED": "Ikizamini cy'imbaraga cyateganyijwe",
+    "PHYSICAL_TEST_COMPLETE": "Ikizamini cy'imbaraga cyarangiye",
+    "MEDICAL_REVIEW": "Isuzuma ry'ubuzima",
+    "FINAL_SHORTLIST": "Urutonde rwa nyuma",
     "ACCEPTED": "Yemewe",
-    "REJECTED": "Yanzwe",
+    "ADJUDICATION_REVIEW": "Bifashwe kugira ngo bicibwe",
+    "REJECTED": "Ntiyatoranyijwe",
     "WITHDRAWN": "Yisubiyeho",
-    "EXPIRED": "Igihe cyarangiye"
+    "WALK_IN_REGISTERED": "Kwiyandikisha ku mwanya",
+    "WALK_IN_ON_SITE_VETTING": "Isuzuma ku mwanya",
+    "WALK_IN_PHYSICAL_TEST": "Ikizamini cy'imbaraga ku mwanya",
+    "WALK_IN_REJECTED": "Ntiyatoranyijwe ku mwanya"
   },
   "document_type": {
     "NATIONAL_ID": "Indangamuntu",
-    "PASSPORT_PHOTO": "Ifoto ya pasiporo",
-    "ACADEMIC_CERTIFICATE": "Impamyabumenyi",
-    "MEDICAL_REPORT": "Raporo y'ubuzima",
-    "POLICE_CLEARANCE": "Icyemezo cy'ubutegetsi bw'amateka",
-    "PROOF_OF_RESIDENCE": "Icyemezo cy'aho utuye"
+    "APPLICATION_FORM_WITH_PHOTO": "Ifishi y'ubusabe ifite ifoto",
+    "BIRTH_CERTIFICATE": "Icyemezo cy'amavuko",
+    "OLEVEL_CERTIFICATE": "Impamyabumenyi y'ayisumbuye ihanitse",
+    "ALEVEL_CERTIFICATE": "Impamyabumenyi y'ayisumbuye",
+    "DEGREE_DIPLOMA_COPY": "Kopi y'impamyabumenyi ya kaminuza",
+    "DEGREE_DIPLOMA_NOTARIZED": "Impamyabumenyi ya kaminuza yemejwe",
+    "GOOD_CONDUCT_CERTIFICATE": "Icyemezo cy'imyitwarire myiza",
+    "NON_CONVICTION_CERTIFICATE": "Icyemezo cy'uko utakatiwe",
+    "CELIBACY_CERTIFICATE": "Icyemezo cy'ubusugi",
+    "MEDICAL_CERTIFICATE_GOVT": "Icyemezo cy'ubuzima cya Leta"
   },
   "dashboard": {
     "title": "Imbonerahamwe yo gushakisha",
@@ -53,8 +62,8 @@
   "application": {
     "id": "Nimero y'ubusabe",
     "applicant": "Usaba",
-    "agency": "Inzego",
-    "post": "Poste yasabiye",
+    "agency": "Urwego",
+    "post": "Umwanya yasabye",
     "submitted": "Byoherejwe",
     "last_updated": "Ivugurura rya nyuma",
     "history": "Amateka y'ibikorwa",
@@ -78,51 +87,51 @@
   },
   "errors": {
     "generic": "Hari ikibazo. Ongera ugerageze.",
-    "network": "Ntashobora guhuza. Reba umuyoboro wawe wa interineti.",
-    "not_found": "Iri rekodi ntiribonetse.",
-    "forbidden": "Nta uburenganzira bwo gukora iki gikorwa.",
-    "validation": "Vugurura amakosa akurikira mbere yo gukomeza."
+    "network": "Ntibishoboka guhuza. Reba umuyoboro wawe wa interineti.",
+    "not_found": "Iyi nyandiko ntiyabonetse.",
+    "forbidden": "Nta burenganzira ufite bwo gukora iki gikorwa.",
+    "validation": "Kosora amakosa akurikira mbere yo gukomeza."
   },
   "offline": {
-    "banner": "Uri offline. Impinduka zizasabwa igihe uzunganye.",
+    "banner": "Nta interineti ufite. Impinduka zizahuzwa igihe uzongera guhuza.",
     "syncing": "Guhuza…",
     "synced": "Impinduka zose zabitswe"
   },
   "a11y": {
-    "loading": "Gutangira…",
+    "loading": "Birapakirwa…",
     "close": "Funga",
     "open_menu": "Fungura menu",
-    "play_audio_help": "Kina amabwiriza y'amajwi"
+    "play_audio_help": "Umva amabwiriza y'amajwi"
   },
   "biometric_consent": {
     "title": "Kwemera Gufatwa kw'Amakuru ya Biometrike",
-    "body": "Mu gukomeza, wemera ko {{agencyName}} ifata kandi igakoresha amakuru yawe ya biometrike (intoki z'igituba, ifoto y'mu maso) mu gahunda ya USRP yo gushakisha. Amakuru yawe azakurirwa nk'uko amategeko yerekeye kurinda amakuru abiteganya.",
+    "body": "Mu gukomeza, wemera ko {{agencyName}} ifata kandi igakoresha amakuru yawe ya biometrike (ibikumwe, ifoto y'mu maso) mu gahunda ya USRP yo gushakisha abakozi. Amakuru yawe azabungabungwa nk'uko amategeko arengera amakuru abiteganya.",
     "agree": "Nemera",
     "decline": "Nanga",
-    "audio_label": "Umva kwemera mu Kinyarwanda"
+    "audio_label": "Umva iri byemezo mu Kinyarwanda"
   },
   "officer_actions": {
     "request_documents": "Saba inyandiko",
     "reject_confirm_title": "Nanga ubusabe",
-    "reject_confirm_body": "Urizeye ko ushaka kunaniza iri busabe? Ibi ntibishobora gusubizwa inyuma."
+    "reject_confirm_body": "Urizeye ko ushaka kwanga ubu busabe? Ibi ntibishobora gusubizwa inyuma."
   },
   "scan": {
-    "start": "Tangira guskanura",
-    "stop": "Hagarika guskanura",
-    "no_camera": "Kamera ntirabonetse kuri iki gikoresho. Injiza kode mu buryo bwacyuye.",
-    "camera_error": "Ntishobora gufungura kamera. Injiza kode mu buryo bwacyuye.",
-    "fallback_label": "Injiza kode mu buryo bwacyuye",
-    "fallback_placeholder": "Bika cyangwa andika agaciro ka kode ya QR",
+    "start": "Tangira gusikana",
+    "stop": "Hagarika gusikana",
+    "no_camera": "Kamera ntiboneka kuri iki gikoresho. Injiza kode n'intoki.",
+    "camera_error": "Ntibishoboka gufungura kamera. Injiza kode n'intoki.",
+    "fallback_label": "Injiza kode n'intoki",
+    "fallback_placeholder": "Omeka cyangwa andika agaciro ka kode ya QR",
     "fallback_submit": "Ohereza",
-    "preview": "Isura ya kamera"
+    "preview": "Igaragaza rya kamera"
   },
   "upload": {
-    "drop_hint": "Shyira dosiye hano, cyangwa kanda kuzitoranya",
-    "drag_active": "Rekura kugirango wongereze dosiye",
+    "drop_hint": "Shyira dosiye hano, cyangwa kanda uzitoranye",
+    "drag_active": "Rekura kugira ngo wongere dosiye",
     "select_files": "Toranya dosiye",
     "error_type": "Ubwoko bw'idosiye ntibwemewe: {{name}}",
     "error_size": "{{name}} irenze urugero rwa {{maxSize}}",
-    "remove_file": "Gukura {{name}}",
-    "no_files": "Nta dosiye zitoranijwe"
+    "remove_file": "Kura {{name}}",
+    "no_files": "Nta dosiye yatoranyijwe"
   }
 }

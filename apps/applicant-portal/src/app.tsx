@@ -8,8 +8,9 @@ import {
 import Spinner from "@atlaskit/spinner";
 import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
-import { RouteGuard } from "@usrp/auth";
+import { RouteGuard, ApplicantGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
+import { CITIZEN_SLICE_ROUTES } from "./routes/slices.js";
 
 const spinnerStyles = cssMap({
   fullPage: {
@@ -48,6 +49,21 @@ const router = createBrowserRouter([
       { path: "apply/:step", element: <ApplyPage /> },
       { path: "status", element: <StatusPage /> },
       { path: "applications", element: <ApplicationsPage /> },
+
+      // ── Feature slices (ADR-FE-006) ──────────────────────────────────────
+      //
+      // ApplicantGuard, not RouteGuard: an OFFICER session must not reach the
+      // citizen self-withdrawal screen. The two credential kinds are not
+      // interchangeable (ADR-016 vs ADR-018) and the edge answers 403, not 401,
+      // for the wrong kind — authenticated and forbidden, never anonymous.
+      {
+        element: (
+          <ApplicantGuard redirectTo="/home" fallback={<FullPageSpinner />}>
+            <Outlet />
+          </ApplicantGuard>
+        ),
+        children: [...CITIZEN_SLICE_ROUTES],
+      },
     ],
   },
 ]);

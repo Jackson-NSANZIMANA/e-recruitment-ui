@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Walk-in, biometric check-in, device enrolment, offline capture, conflict resolution.",
+  "description": "Walk-in registration and vetting (RDF only). Biometric check-in, device enrolment and offline sync have NO edge operation yet.",
   "license": "UNLICENSED",
   "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
   "scripts": {
@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
+  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport. FOUR of this slice's six former operations were invented — verifyBiometric, enrollFieldDevice, syncFieldScores, resolveFieldConflict — because biometric-service and field-sync-service are both scaffolds. Only the three-call walk-in lane is real.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/button": "^25.0.2",
@@ -21,6 +22,7 @@
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
     "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/i18n": "workspace:*"
   },

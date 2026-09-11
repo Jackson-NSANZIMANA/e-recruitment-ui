@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Slot invitation key, signed QR invitations, offline verification.",
+  "description": "Signed QR invitation verification (offline-capable). NO server operation exists yet: scheduling-service is a scaffold.",
   "license": "UNLICENSED",
   "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
   "scripts": {
@@ -12,12 +12,14 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
+  "//dependencies": "@usrp/api-client is declared for its EdgeOperationId type, which this slice uses to assert — at compile time — that its operation list is EMPTY and correct. Its one former operation, getSlotInvitationKey, exists nowhere in the platform. What remains real is verifying a signed QR token the device already holds, which needs no endpoint.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/css": "^1.0.0",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
     "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/i18n": "workspace:*"
   },

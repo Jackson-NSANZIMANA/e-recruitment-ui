@@ -98,6 +98,9 @@ importers:
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@usrp/feature-compliance':
+        specifier: workspace:*
+        version: link:../../packages/features/compliance
       '@usrp/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -249,6 +252,18 @@ importers:
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@usrp/feature-adjudication':
+        specifier: workspace:*
+        version: link:../../packages/features/adjudication
+      '@usrp/feature-compliance':
+        specifier: workspace:*
+        version: link:../../packages/features/compliance
+      '@usrp/feature-field-ops':
+        specifier: workspace:*
+        version: link:../../packages/features/field-ops
+      '@usrp/feature-scheduling':
+        specifier: workspace:*
+        version: link:../../packages/features/scheduling
       '@usrp/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -533,6 +548,9 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
@@ -588,6 +606,9 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
@@ -637,6 +658,9 @@ importers:
       '@atlaskit/dynamic-table':
         specifier: ^19.1.5
         version: 19.1.5(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/form':
+        specifier: ^16.1.5
+        version: 16.1.5(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/modal-dialog':
         specifier: ^16.3.0
         version: 16.3.0(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -652,6 +676,9 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
@@ -716,6 +743,9 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
@@ -777,6 +807,12 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
+      '@usrp/auth':
+        specifier: workspace:*
+        version: link:../../auth
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
@@ -829,6 +865,9 @@ importers:
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
+      '@usrp/api-client':
+        specifier: workspace:*
+        version: link:../../api-client
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts

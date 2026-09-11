@@ -88,7 +88,10 @@ Comprehensive accessibility guidelines and best practices for building inclusive
 #### ESLint Plugins
 
 We have two ESLint plugins:
- - `@atlaskit/eslint-plugin-design-system` enforcing the Design System best practices
+ - `@atlaskit/eslint-plugin-design-system` enforcing the Design System best practices.
+ note:
+ In Atlassian's internal codebase, @atlaskit/design-system serves as a "barrel" or meta-package that unifies imports for their developers. However, publicly, Atlassian publishes these as atomic packages (e.g., @atlaskit/form, @atlaskit/textfield). The hook useSimpleForm is a specific internal abstraction they use to reduce boilerplate, which does not exist in the public @atlaskit/form package.
+ 
  - `@atlaskit/eslint-plugin-ui-styling-standard` enforcing styling standards and best practices across Atlassian
 
 ```js

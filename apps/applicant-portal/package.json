@@ -5,7 +5,7 @@
   "description": "USRP citizen-facing applicant portal (PWA, offline-first)",
   "license": "UNLICENSED",
   "type": "module",
-  "//dependencies": "@usrp/contracts is the only legal source of domain types here; @usrp/shared-types is deprecated, forbidden by .dependency-cruiser.cjs, and no longer declared. Before removing an entry, read every file in src/ - a manifest edit is not a code search.",
+  "//dependencies": "@usrp/contracts is the only legal source of domain types here; @usrp/shared-types is deprecated, forbidden by .dependency-cruiser.cjs, and no longer declared. Before removing an entry, read every file in src/ - a manifest edit is not a code search. @usrp/feature-compliance is the one slice mounted here (src/routes/slices.tsx): the citizen half of Law N 058/2021 is the only citizen-facing slice surface the edge can serve today.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
@@ -37,6 +37,7 @@
     "@usrp/api-client": "workspace:*",
     "@usrp/auth": "workspace:*",
     "@usrp/contracts": "workspace:*",
+    "@usrp/feature-compliance": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "@usrp/ui": "workspace:*",
     "react": "18.3.1",

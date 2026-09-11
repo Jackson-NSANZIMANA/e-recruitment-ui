@@ -202,9 +202,9 @@ export function QrScanner({
             value={manualValue}
             onChange={handleManualChange}
             onKeyDown={handleManualKeyDown}
-            placeholder={t("scan.fallback_placeholder")}
+            aria-describedby={t("scan.fallback_placeholder")}
             aria-label={t("scan.fallback_label")}
-          />
+          />placeholder
           <Box xcss={toggleButtonWrapperStyles['base']}>
             <Button appearance="primary" onClick={handleManualSubmit}>
               {t("scan.fallback_submit")}

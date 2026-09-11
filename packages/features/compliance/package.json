@@ -3,26 +3,31 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Erasure requests, the DPO queue with mandatory decline grounds, self-withdrawal, retention.",
+  "description": "Citizen erasure requests and self-withdrawal (both real). The DPO queue has NO edge operation yet.",
   "license": "UNLICENSED",
-  "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./locales/*": "./locales/*"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
-  "//dependencies": "@atlaskit/textarea is the ONE unpinned range left in this repository, deliberately. No other package here consumes it, so there is no in-repo evidence for the correct major and inventing a plausible one is how a dependency tree acquires a version nobody chose. It needs an explicit decision against the ADS release the rest of these pins came from. Every other former '*' in this file was pinned to the range already used elsewhere in the repo.",
+  "//dependencies": "@atlaskit/textarea is the ONE unpinned range left in this repository, deliberately. No other package here consumes it, so there is no in-repo evidence for the correct major and inventing a plausible one is how a dependency tree acquires a version nobody chose. It needs an explicit decision against the ADS release the rest of these pins came from. Every other former '*' in this file was pinned to the range already used elsewhere in the repo. @usrp/api-client supplies the ONE contract-asserted transport: the citizen half of Law N 058/2021 is reachable today, the DPO half is not.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/button": "^25.0.2",
     "@atlaskit/css": "^1.0.0",
     "@atlaskit/dynamic-table": "^19.1.5",
+    "@atlaskit/form": "^16.1.5",
     "@atlaskit/modal-dialog": "^16.3.0",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
     "@atlaskit/textarea": "*",
     "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/i18n": "workspace:*"
   },
