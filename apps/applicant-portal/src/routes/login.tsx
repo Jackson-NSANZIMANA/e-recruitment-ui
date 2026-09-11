@@ -3,7 +3,7 @@ import { Box, Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import LoadingButton from "@atlaskit/button/loading-button";
-import Form, { FormFooter, CharacterCounterField } from "@atlaskit/form";
+import Form, { Field, FormFooter } from "@atlaskit/form";
 import TextField from "@atlaskit/textfield";
 import SectionMessage from "@atlaskit/section-message";
 import { cssMap } from "@atlaskit/css";
@@ -32,42 +32,8 @@ export default function LoginPage(): React.ReactElement {
         <Stack space="space.400">
           <Stack space="space.200" alignInline="center"><Heading size="large" as="h1">USRP</Heading><Stack space="space.100" alignInline="center"><AgencyLogo agency="RDF" size="sm" compact /><AgencyLogo agency="RNP" size="sm" compact /><AgencyLogo agency="RCS" size="sm" compact /></Stack></Stack>
           {applicant.message !== null && <SectionMessage appearance={otp.status === "challenged" ? "information" : "warning"} title="Authentication status" headingLevel="h3"><Text>{applicant.message}</Text></SectionMessage>}
-          {!awaitingCode && otp.status !== "verified" && (
-            <Form<NationalIdFormValues> onSubmit={(values) => applicant.requestCode(values.nationalId.trim())}>
-              {({ formProps, submitting }) => (
-                <form {...formProps}>
-                  <Stack space="space.300">
-                    <CharacterCounterField name="nationalId" label="National ID number" isRequired maxChars={16}>
-                      {({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" autoComplete="off" autoFocus />}
-                    </CharacterCounterField>
-                    <FormFooter>
-                      <LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "requesting"} shouldFitContainer>{t("auth.sign_in")}</LoadingButton>
-                    </FormFooter>
-                  </Stack>
-                </form>
-              )}
-            </Form>
-          )}
-          {awaitingCode && (
-            <Form<OtpFormValues> onSubmit={(values) => applicant.submitCode(values.otp.trim())}>
-              {({ formProps, submitting }) => (
-                <form {...formProps}>
-                  <Stack space="space.300">
-                    <CharacterCounterField name="otp" label="One-time code" isRequired maxChars={6}>
-                      {({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus />}
-                    </CharacterCounterField>
-                    <Text size="small" color="color.text.subtle">{applicant.attemptsLeft} attempts remaining, {secondsLeft}s left</Text>
-                    <FormFooter>
-                      <Inline space="space.200">
-                        <LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "verifying"} isDisabled={!applicant.canSubmitCode}>{t("actions.confirm")}</LoadingButton>
-                        <Button appearance="subtle" onClick={applicant.reset}>{t("actions.cancel")}</Button>
-                      </Inline>
-                    </FormFooter>
-                  </Stack>
-                </form>
-              )}
-            </Form>
-          )}
+          {!awaitingCode && otp.status !== "verified" && <Form<NationalIdFormValues> onSubmit={(values) => applicant.requestCode(values.nationalId.trim())}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Field name="nationalId" label="National ID number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" maxLength={16} autoComplete="off" autoFocus />}</Field><FormFooter><LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "requesting"} shouldFitContainer>{t("auth.sign_in")}</LoadingButton></FormFooter></Stack></form>}</Form>}
+          {awaitingCode && <Form<OtpFormValues> onSubmit={(values) => applicant.submitCode(values.otp.trim())}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Field name="otp" label="One-time code" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" maxLength={6} autoComplete="one-time-code" autoFocus />}</Field><Text size="small" color="color.text.subtle">{applicant.attemptsLeft} attempts remaining, {secondsLeft}s left</Text><FormFooter><Inline space="space.200"><LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "verifying"} isDisabled={!applicant.canSubmitCode}>{t("actions.confirm")}</LoadingButton><Button appearance="subtle" onClick={applicant.reset}>{t("actions.cancel")}</Button></Inline></FormFooter></Stack></form>}</Form>}
           {applicant.offerWalkIn && <SectionMessage appearance="information" title={WALK_IN_FALLBACK_TITLE} headingLevel="h3"><Stack space="space.200"><Text>{WALK_IN_FALLBACK_BODY}</Text><Button appearance="subtle" onClick={applicant.reset}>{t("actions.back")}</Button></Stack></SectionMessage>}
         </Stack>
       </Box>
