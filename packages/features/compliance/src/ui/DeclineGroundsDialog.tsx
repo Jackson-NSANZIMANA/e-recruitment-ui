@@ -51,7 +51,7 @@ export function DeclineGroundsDialog({
 
         return (
           <ModalDialog onClose={onCancel}>
-            <form {...formProps} xcss={dialogFormStyles.contents}>
+            <form {...formProps} css={dialogFormStyles.contents}>
               <ModalHeader>
                 <ModalTitle appearance="warning">
                   {t('compliance.decline.title')}
