@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Walk-in registration and vetting (RDF only). Biometric check-in, device enrolment and offline sync have NO edge operation yet.",
+  "description": "Walk-in registration and vetting (RDF only). Device enrolment, offline score sync and conflict resolution are implemented upstream in field-sync-service but have NO edge route yet.",
   "license": "UNLICENSED",
   "exports": { ".": "./src/index.ts", "./locales/*": "./locales/*" },
   "scripts": {
@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
-  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport. FOUR of this slice's six former operations were invented — verifyBiometric, enrollFieldDevice, syncFieldScores, resolveFieldConflict — because biometric-service and field-sync-service are both scaffolds. Only the three-call walk-in lane is real.",
+  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport. CORRECTED 2026-09-13: the previous note claimed FOUR of this slice's six operations were invented because biometric-service and field-sync-service are both scaffolds. THREE are implemented upstream and verified by file - enroll-device, sync-scores and resolve-conflict controllers in services/field-sync-service/src/adapters/http/. They are unreachable because services/edge-gateway/ holds an OpenAPI document and no runnable service, not because the upstream is missing. Only verifyBiometric remains unverified, and it is recorded as unverified rather than absent. See src/api/transport.ts.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/button": "^25.0.2",
