@@ -67,7 +67,7 @@ export function ConnectionStatus(): React.ReactElement | null {
 
   return (
     <Box xcss={styles.wrapper} role="status" aria-live="polite">
-      <SectionMessage appearance="warning" title={t("offline.banner")}>
+      <SectionMessage appearance="warning" headingLevel={2} title={t("offline.banner")}>
         <Stack space="space.050">
           <span>{t("offline.sync_unavailable")}</span>
         </Stack>
