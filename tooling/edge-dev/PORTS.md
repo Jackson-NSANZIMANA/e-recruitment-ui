@@ -2,7 +2,8 @@
 
 **Generated from `tooling/edge-dev/src/ports.ts`.** Regenerate with
 `pnpm --filter @usrp/edge-dev ports`. Do not hand-edit this file; edit the
-source, which `assertNoPortCollisions()` checks at every edge-dev boot.
+source, which `assertNoPortCollisions()` and `assertNoRetiredAllocation()` check
+at every edge-dev boot.
 
 ## The collision this file exists to fix
 
@@ -21,16 +22,31 @@ healthy, completely wrong service and 404s. The applicant portal's `4000` fails
 more quietly: nothing in the platform binds it, so the connection is simply
 refused.
 
-Correct targets: **officer-console → 4021** (agency-bff RDF), **applicant-portal
-→ 4020** (citizen-bff). Both are already named in the backend's `.env.example`
-as `PORT_AGENCY_BFF` and `PORT_CITIZEN_BFF`.
+**Correct target for BOTH SPAs: 4021, the single `edge-gateway`.**
+
+## The second contradiction, corrected 2026-09-13
+
+The previous version of this file told applicant-portal to talk to **4020**
+(`citizen-bff`) and officer-console to **4021/4022/4023** (`agency-bff` per
+agency). Both instructions described the topology **ADR-021 rejected**, and
+`edge-contract.md` §0 says plainly: *Do not implement or document the old
+multi-BFF shape.*
+
+Meanwhile the one process the whole frontend targets — the edge gateway serving
+`/edge/v1/**` — **had no entry in this map at all**.
+
+The running code was already correct: both `apps/applicant-portal/vite.config.ts`
+and `apps/officer-console/vite.config.ts` proxy `/edge` to `4021`. One edge
+origin means both SPAs proxy the **same** port. Anyone who had aligned the code
+to the old table would have implemented a rejected architecture on the authority
+of a stale document.
 
 ## The map
 
 | Port | Process | Env var | Provenance | Note |
 |---|---|---|---|---|
-| 3000 | applicant-portal | — | env-canon | In CORS_ORIGINS. Talks to citizen-bff (4020) — NOT 4000, which nothing binds. |
-| 3001 | officer-console | — | env-canon | In CORS_ORIGINS. Talks to agency-bff (4021/4022/4023). |
+| 3000 | applicant-portal | — | env-canon | In CORS_ORIGINS. Proxies /edge to the edge-gateway (4021) - NOT 4000, which nothing binds, and NOT 4020, which is retired. |
+| 3001 | officer-console | — | env-canon | In CORS_ORIGINS. Proxies /edge to the edge-gateway (4021). Also the FIELD TABLET target; serves its built dist on this same port under vite preview so E2E tests the shipped bundle. |
 | 3100 | nida-mock | NIDA_BASE_URL | env-canon | Identity registry. |
 | 3101 | nesa-mock | NESA_BASE_URL | env-canon | Secondary education results. |
 | 3102 | rib-mock | RIB_BASE_URL | env-canon | Criminal record. |
@@ -43,17 +59,29 @@ as `PORT_AGENCY_BFF` and `PORT_CITIZEN_BFF`.
 | 4006 | application-service | PORT_APPLICATION_SERVICE | env-canon | Officer reads, the FOUR officer transitions, and walk-in. |
 | 4007 | scheduling-service | PORT_SCHEDULING_SERVICE | env-canon | Only GET /v1/slots/invitation-key is unauthenticated. |
 | 4008 | notification-service | PORT_NOTIFICATION_SERVICE | env-canon | No business HTTP route; probes only. |
-| 4009 | field-sync-service | PORT_FIELD_SYNC_SERVICE | env-canon | Officer-token; field tablets. |
+| 4009 | field-sync-service | PORT_FIELD_SYNC_SERVICE | env-canon | Officer-token; field tablets. IMPLEMENTED: enroll-device, sync-scores and resolve-conflict controllers all exist. Unreachable from a browser only because no edge route brokers them. |
 | 4010 | audit-service | PORT_AUDIT_SERVICE | env-canon | No business HTTP route; probes only. |
 | 4011 | iam-service | PORT_IAM_SERVICE | env-canon | Officer login + service-token issuance. Sole private-key holder. |
-| 4020 | citizen-bff | PORT_CITIZEN_BFF | env-canon | ONE cross-agency deployment: a citizen inherently spans agencies (ADR-014/018). |
-| 4021 | agency-bff (RDF) | PORT_AGENCY_BFF | env-canon | AGENCY=RDF. The officer console targets THIS, not 4001. |
-| 4022 | agency-bff (RNP) | PORT_AGENCY_BFF | ui-convention | Same codebase, AGENCY=RNP. Dev-only allocation; backend names one variable. |
-| 4023 | agency-bff (RCS) | PORT_AGENCY_BFF | ui-convention | Same codebase, AGENCY=RCS. Dev-only allocation. |
-| 4024 | admin-bff | PORT_ADMIN_BFF | env-canon | Named and reserved; this contract specifies no route for it yet. |
+| 4021 | edge-gateway | PORT_AGENCY_BFF | env-canon | THE single browser boundary (ADR-021). Serves /edge/v1/**. Both SPAs proxy here. Env var name is LEGACY - the backend must rename it to PORT_EDGE_GATEWAY. No runnable service exists in the backend tree yet: services/edge-gateway/ holds openapi/ only. |
 | 4911 | edge-dev mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | Mirrors 4011 in the 49xx band. |
 | 4901 | edge-dev mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | Mirrors 4001. |
 | 4906 | edge-dev mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | Mirrors 4006. |
+
+## Reserved, retired, and not to be reallocated
+
+These numbers served the multi-BFF topology ADR-021 rejected. They are **not** in
+the map above and no process should bind them. They are also not deleted: stale
+`.env.local` files, runbooks and firewall rules still name them, and recycling
+one would make 'the old thing is still running' indistinguishable from 'the new
+thing is running'. `assertNoRetiredAllocation()` fails the boot if an active
+entry claims one.
+
+| Port | Retired process | Env var | Note |
+|---|---|---|---|
+| 4020 | citizen-bff | PORT_CITIZEN_BFF | This file previously sent applicant-portal here, contradicting the app's own vite proxy. |
+| 4022 | agency-bff (RNP) | PORT_AGENCY_BFF | Agency comes from the session, not a deployment. |
+| 4023 | agency-bff (RCS) | PORT_AGENCY_BFF | Agency comes from the session, not a deployment. |
+| 4024 | admin-bff | PORT_ADMIN_BFF | Named in `.env.example`; no contract ever specified a route for it. |
 
 ## Provenance
 
@@ -61,15 +89,14 @@ as `PORT_AGENCY_BFF` and `PORT_CITIZEN_BFF`.
   `.env.example`, which `scripts/verify-dev-boot.sh` boots the whole platform
   from on every gate run. Do not change these here.
 - **ui-convention** — this repo is the source; no backend variable names it.
-  Only four entries: the RNP/RCS agency-bff dev ports (the backend names one
-  `PORT_AGENCY_BFF` because agency-bff is one codebase with three deployments)
-  and the three edge-dev mock ports.
+  Only the three edge-dev mock ports, now that the invented RNP/RCS agency-bff
+  dev allocations are retired.
 
 ## Why the mocks live in the 49xx band
 
 A mock that binds a real service's port is indistinguishable from that service
-being up. That is the worst possible behaviour for a stand-in: it converts "the
-stack is not running" into "the stack is running and returning fixtures", and the
+being up. That is the worst possible behaviour for a stand-in: it converts 'the
+stack is not running' into 'the stack is running and returning fixtures', and the
 first person to notice is whoever trusts the result.
 
 ## The rule the backend already learned
