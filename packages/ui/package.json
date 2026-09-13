@@ -7,7 +7,7 @@
   "type": "module",
   "exports": {".": {"import": "./src/index.ts", "types": "./src/index.ts"}},
   "main": "./src/index.ts",
-  "//dependencies": "@usrp/contracts replaces @usrp/shared-types here. Every domain type this package renders (Agency, ApplicationStatus) now comes from the contract that was generated from the backend at a pinned commit. Do NOT reintroduce @usrp/shared-types: .dependency-cruiser.cjs forbids importing it and tooling/repo-hygiene/lib/predicates.mjs lists the scope as forbidden. Every @atlaskit entry below is imported by a file in src/; removing one breaks typecheck in both apps, so verify consumers before editing this list.",
+  "//dependencies": "@usrp/contracts replaces @usrp/shared-types here. Every domain type this package renders (Agency, ApplicationStatus) now comes from the contract that was generated from the backend at a pinned commit. Do NOT reintroduce @usrp/shared-types: .dependency-cruiser.cjs forbids importing it and tooling/repo-hygiene/lib/predicates.mjs lists the scope as forbidden. Every @atlaskit entry below is imported by a file in src/; removing one breaks typecheck in both apps, so verify consumers before editing this list. @usrp/design-system was added 2026-09-13 so components consume the a11y floor (TOUCH_TARGET_TOKEN_PX) instead of retyping 48px - the dependency direction is legal because design-system is the domain-free layer and may not import this package, only the reverse.",
   "scripts": {"typecheck": "tsc --noEmit", "lint": "eslint src --ext .ts,.tsx", "scan:cssmap": "node scripts/scan-cssmap.cjs src", "clean": "rm -rf dist *.tsbuildinfo"},
   "dependencies": {
     "@atlaskit/app-provider": "^5.3.0",
@@ -34,6 +34,7 @@
     "@atlaskit/tooltip": "^24.0.5",
     "@compiled/react": "^1.0.0",
     "@usrp/contracts": "workspace:*",
+    "@usrp/design-system": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "jsqr": "^1.4.0"
   },

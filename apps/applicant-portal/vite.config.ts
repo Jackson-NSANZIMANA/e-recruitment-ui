@@ -37,6 +37,11 @@ export default defineConfig({
         name: "USRP Applicant Portal",
         short_name: "USRP",
         description: "Rwanda unified security recruitment — applicant portal",
+        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before
+        // any stylesheet exists, so these CANNOT be design tokens. This is the one
+        // exception gates.config.json's hexScan comment describes; the marker is
+        // required now that apps/ is actually scanned. Values mirror the ADS
+        // light-mode brand and surface; change them only with the token.
         theme_color: "#0052CC",
         background_color: "#FFFFFF",
         display: "standalone",
@@ -63,6 +68,16 @@ export default defineConfig({
     },
   },
   server: {
+    port: 3000,
+    strictPort: true,
+    proxy: {
+      "/edge": {
+        target: process.env["VITE_EDGE_URL"] ?? "http://localhost:4021",
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
     port: 3000,
     strictPort: true,
     proxy: {
