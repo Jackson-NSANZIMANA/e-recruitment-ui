@@ -10,7 +10,13 @@ export default defineConfig({
       babel: {
         plugins: [
           "@atlaskit/tokens/babel-plugin",
-          [compiledPlugin, { transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"], importSources: ["@compiled/react", "@atlaskit/css"] }],
+          [
+            compiledPlugin,
+            {
+              transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"],
+              importSources: ["@compiled/react", "@atlaskit/css"],
+            },
+          ],
           stripRuntime,
         ],
       },
@@ -21,15 +27,16 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
-            // Authenticated edge responses are never cacheable application data.
-            // NetworkOnly prevents stale citizen or officer data surviving logout.
             urlPattern: /\/edge\/v1\/.*/i,
             handler: "NetworkOnly",
           },
           {
             urlPattern: /\/audio\/.*/i,
             handler: "CacheFirst",
-            options: { cacheName: "usrp-audio-cache", expiration: { maxEntries: 50, maxAgeSeconds: 2_592_000 } },
+            options: {
+              cacheName: "usrp-audio-cache",
+              expiration: { maxEntries: 50, maxAgeSeconds: 2_592_000 },
+            },
           },
         ],
       },
@@ -37,19 +44,21 @@ export default defineConfig({
         name: "USRP Applicant Portal",
         short_name: "USRP",
         description: "Rwanda unified security recruitment — applicant portal",
-        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before
-        // any stylesheet exists, so these CANNOT be design tokens. This is the one
-        // exception gates.config.json's hexScan comment describes; the marker is
-        // required now that apps/ is actually scanned. Values mirror the ADS
-        // light-mode brand and surface; change them only with the token.
+        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before any stylesheet exists, so these CANNOT be design tokens. Values mirror the ADS light-mode brand and surface.
         theme_color: "#0052CC",
+        // hygiene-allow-hex: web manifest background_color, same rationale as theme_color above.
         background_color: "#FFFFFF",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
       },
     }),

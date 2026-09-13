@@ -21,7 +21,13 @@ export default defineConfig({
       babel: {
         plugins: [
           "@atlaskit/tokens/babel-plugin",
-          [compiledPlugin, { transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"], importSources: ["@compiled/react", "@atlaskit/css"] }],
+          [
+            compiledPlugin,
+            {
+              transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"],
+              importSources: ["@compiled/react", "@atlaskit/css"],
+            },
+          ],
           stripRuntime,
         ],
       },
@@ -30,17 +36,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        // A field officer opens a deep link (/walk-in) with no signal. Without a
-        // navigation fallback the browser asks the network for that document and
-        // gets nothing, so the precached shell never runs.
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/edge\//],
         runtimeCaching: [
           {
-            // Authenticated edge responses are never cacheable application data.
-            // NetworkOnly prevents one officer's queue surviving into the next
-            // officer's session on a SHARED venue tablet, which is the sharper
-            // version of this risk than logout alone.
             urlPattern: /\/edge\/v1\/.*/i,
             handler: "NetworkOnly",
           },
@@ -49,20 +48,23 @@ export default defineConfig({
       manifest: {
         name: "USRP Officer Console",
         short_name: "USRP Officer",
-        description: "Rwanda unified security recruitment — officer and field console",
-        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before
-        // any stylesheet exists, so these CANNOT be design tokens. Values mirror
-        // the ADS light-mode brand and surface; change them only with the token.
+        description:
+          "Rwanda unified security recruitment — officer and field console",
+        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before any stylesheet exists, so these CANNOT be design tokens. Values mirror the ADS light-mode brand and surface.
         theme_color: "#0052CC",
+        // hygiene-allow-hex: web manifest background_color, same rationale as theme_color above.
         background_color: "#FFFFFF",
         display: "standalone",
-        // Landscape, not portrait: this is a tablet on a table at a test venue,
-        // not a phone in a queue.
         orientation: "landscape",
         start_url: "/",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
       },
     }),
@@ -90,8 +92,6 @@ export default defineConfig({
       },
     },
   },
-  // E2E runs against the BUILT bundle on the same port the dev server uses, so
-  // baseURL is identical in both modes and a spec cannot silently test source.
   preview: {
     port: 3001,
     strictPort: true,
