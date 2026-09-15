@@ -5,11 +5,12 @@ import { BROWSER_ROUTES, ROUTE_TABLE, SERVICE_INTERNAL_ROUTES, type RouteFact } 
  *
  * Composition support:
  * - composition: 'single' = operation maps 1:1 to a backend service
- * - composition: 'aggregated' = operation aggregates 2+ services into one call
+ * - composition: 'composed' = operation aggregates 2+ services into one call
+ * - composition: 'local' = edge owns the behavior (no upstream)
  *
- * When composition is 'aggregated', composedOf lists the upstream operation IDs
+ * When composition is 'composed', composedOf lists the upstream operation IDs
  * that the edge handler calls internally. The frontend wire type (response
- * interface) reflects the aggregated structure, making it explicit that multiple
+ * interface) reflects the composed structure, making it explicit that multiple
  * upstreams are involved.
  */
 export interface EdgeOperation {
@@ -20,11 +21,11 @@ export interface EdgeOperation {
   readonly upstreamOperationId: string | null;
   readonly session: 'officer' | 'applicant' | 'anonymous';
   readonly retryOnG2G: boolean;
-  /** Type of composition. 'single' = 1:1 mapping, 'aggregated' = multiple upstreams. */
-  readonly composition?: 'single' | 'aggregated';
-  /** When composition is 'aggregated', the upstream operation IDs being combined. */
+  /** Type of composition. 'single' = 1:1 mapping, 'composed' = multiple upstreams, 'local' = edge-owned. */
+  readonly composition?: 'single' | 'composed' | 'local';
+  /** When composition is 'composed', the upstream operation IDs being combined. */
   readonly composedOf?: readonly string[];
-  /** Explanation of why this operation aggregates multiple upstreams. */
+  /** Explanation of why this operation composes multiple upstreams. */
   readonly compositionReason?: string;
 }
 
@@ -90,7 +91,7 @@ export const EDGE_RUNTIME_PENDING_OPERATIONS = [
 // ══════════════════════════════════════════════════════════════════════════
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
-  { id: 'officerLogout', method: 'POST', edgePath: '/edge/v1/auth/officer/logout', upstreamOperationId: null, session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'officerLogout', method: 'POST', edgePath: '/edge/v1/auth/officer/logout', upstreamOperationId: null, session: 'officer', retryOnG2G: false, composition: 'local' },
   { id: 'requestOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/request', upstreamOperationId: 'requestApplicantOtp', session: 'anonymous', retryOnG2G: true, composition: 'single' },
   { id: 'verifyOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/verify', upstreamOperationId: 'verifyApplicantOtp', session: 'anonymous', retryOnG2G: false, composition: 'single' },
   { id: 'applicantLogout', method: 'POST', edgePath: '/edge/v1/auth/applicant/logout', upstreamOperationId: 'logoutApplicant', session: 'applicant', retryOnG2G: false, composition: 'single' },
@@ -106,7 +107,7 @@ export const EDGE_OPERATIONS = [
     upstreamOperationId: null,
     session: 'officer',
     retryOnG2G: true,
-    composition: 'aggregated',
+    composition: 'composed',
     composedOf: ['findApplicationById', 'getStatusHistory'],
     compositionReason: 'Procedural Justice view combines application record and decision trail in one round trip. Field tablet on slow links needs both to render one cohesive view without latency penalty of separate calls.',
   },
@@ -124,8 +125,8 @@ export const EDGE_OPERATIONS = [
   { id: 'getMyErasureRequest', method: 'GET', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'getMyErasureRequest', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'fileMyErasureRequest', method: 'POST', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'fileMyErasureRequest', session: 'applicant', retryOnG2G: false, composition: 'single' },
 
-  { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'single' },
-  { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'single' },
+  { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
+  { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
 ] as const satisfies readonly EdgeOperation[];
 
 export type EdgeOperationId = (typeof EDGE_OPERATIONS)[number]['id'];
@@ -179,19 +180,19 @@ export function assertPathsMatchContract(): void {
     }
 
     // Composition sanity checks
-    if (edgeOperation.composition === 'aggregated') {
+    if (edgeOperation.composition === 'composed') {
       if (!edgeOperation.composedOf || edgeOperation.composedOf.length < 2) {
-        problems.push(`${edgeOperation.id}: aggregated composition must list 2+ upstream operation IDs in composedOf.`);
+        problems.push(`${edgeOperation.id}: composed operation must list 2+ upstream operation IDs in composedOf.`);
       }
-    } else if (edgeOperation.composition === 'single' || edgeOperation.composition === undefined) {
+    } else if (edgeOperation.composition === 'single') {
       if (edgeOperation.composedOf !== undefined) {
-        problems.push(`${edgeOperation.id}: composedOf should only be set when composition is 'aggregated'.`);
+        problems.push(`${edgeOperation.id}: composedOf should only be set when composition is 'composed'.`);
       }
     }
 
-    // For aggregated compositions, we don't require a single upstreamOperationId because the aggregation
-    // means multiple upstreams. For single compositions, validate the upstream exists.
-    if (edgeOperation.composition === 'single' || edgeOperation.composition === undefined) {
+    // For composed operations, we don't require a single upstreamOperationId because the composition
+    // means multiple upstreams. For single or local operations, validate the upstream exists if present.
+    if (edgeOperation.composition === 'single') {
       if (edgeOperation.upstreamOperationId === null) continue;
       const upstream = byOperationId.get(edgeOperation.upstreamOperationId);
       if (upstream === undefined) {
