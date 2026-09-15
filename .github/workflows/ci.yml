@@ -19,7 +19,7 @@ permissions:
 
 env:
   NODE_VERSION: '22'
-  BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
+  BACKEND_SHA: d40f6d824ec46209ec5411192251fca4561e36b0
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
   # One Trivy for the whole pipeline. The advisory scan (security-scan.sh, which
