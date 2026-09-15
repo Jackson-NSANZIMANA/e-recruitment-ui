@@ -41,8 +41,6 @@ export default function LoginPage(): React.ReactElement {
 
   const handleSubmit = async (values: LoginFormValues): Promise<void> => {
     setServerError(null);
-    // signInOfficer resolves to an error message on failure, or null on success —
-    // the caller (this component) owns turning that into UI, not the auth hook.
     const message = await signInOfficer(values.loginHandle, values.password);
     if (message !== null) setServerError(message);
   };
@@ -59,27 +57,39 @@ export default function LoginPage(): React.ReactElement {
           </Heading>
 
           {serverError !== null && (
-            <SectionMessage appearance="error">{serverError}</SectionMessage>
+            <SectionMessage appearance="error" title={t("auth.invalid_credentials")}>
+              <p role="alert">{serverError}</p>
+            </SectionMessage>
           )}
 
           <Form<LoginFormValues> onSubmit={handleSubmit}>
             {({ formProps, submitting }) => (
-              <form {...formProps}>
+              <form {...formProps} aria-label={t("auth.sign_in")} noValidate>
                 <Stack space="space.300">
                   <Field name="loginHandle" label="Login handle" isRequired>
                     {({ fieldProps }) => (
                       <TextField
                         {...fieldProps}
+                        name="loginHandle"
+                        id="loginHandle"
                         type="text"
                         autoComplete="username"
                         autoFocus
+                        testId="login-handle-input"
                       />
                     )}
                   </Field>
 
                   <Field name="password" label={t("auth.password")} isRequired>
                     {({ fieldProps }) => (
-                      <TextField {...fieldProps} type="password" autoComplete="current-password" />
+                      <TextField
+                        {...fieldProps}
+                        name="password"
+                        id="password"
+                        type="password"
+                        autoComplete="current-password"
+                        testId="password-input"
+                      />
                     )}
                   </Field>
 
