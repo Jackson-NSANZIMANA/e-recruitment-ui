@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Stack } from "@atlaskit/primitives/compiled";
 import LoadingButton from "@atlaskit/button/loading-button";
 import Form, { Field, FormFooter } from "@atlaskit/form";
@@ -34,16 +35,29 @@ interface LoginFormValues {
   readonly password: string;
 }
 
-export default function LoginPage(): React.ReactElement {
-  const { signInOfficer } = useAuth();
+export default function LoginPage(): React.ReactElement | null {
+  const navigate = useNavigate();
+  const { state, signInOfficer } = useAuth();
   const { t } = useTranslation();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Login is not a destination for an authenticated officer. This also covers
+  // an existing session discovered by AuthProvider before the user submits.
+  useEffect(() => {
+    if (state.status === "authenticated" && state.session.kind === "officer") {
+      void navigate("/dashboard", { replace: true });
+    }
+  }, [navigate, state]);
 
   const handleSubmit = async (values: LoginFormValues): Promise<void> => {
     setServerError(null);
     const message = await signInOfficer(values.loginHandle, values.password);
     if (message !== null) setServerError(message);
   };
+
+  if (state.status === "authenticated" && state.session.kind === "officer") {
+    return null;
+  }
 
   return (
     <Box backgroundColor="color.background.neutral" xcss={containerStyles.base}>
