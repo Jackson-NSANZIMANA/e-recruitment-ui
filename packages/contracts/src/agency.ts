@@ -31,7 +31,7 @@
 // ═════════════════════════════════════════════════════════════════
 
 /** The backend main commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = '2b1814fd5ef1ea8d71625d2b58e9b75a16c3155e';
+export const VERIFIED_BACKEND_SHA = "47d9ad3ab019f6d2f826cfae2136cbff898d733f";
 
 // ─── Agency ────────────────────────────────────────────────────────────
 
