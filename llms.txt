@@ -1,162 +1,109 @@
-# Atlassian Design System
+# USRP Frontend — Unified Security Recruitment Portal (RDF / RNP / RCS)
 
-> A comprehensive design system that provides a unified set of components, tokens, primitives, and tools for building consistent, accessible, and responsive user interfaces across Atlassian apps.
+> Government of Rwanda. Two host applications and a shared design/contract layer
+> for security-agency recruitment. This file describes THIS repository. It is
+> read first by agents and by engineers joining the project.
 
-## Core Packages
+It previously contained a verbatim copy of Atlassian's own design-system
+`llms.txt`, whose relative links (`llms-tokens.txt`, `llms-components.txt`,
+`llms-a11y.txt`, `llms-styling.txt`) do not exist here — so the entry point to a
+national system described someone else's product and offered four broken links.
+The ADS material now lives in `docs/vendor/atlassian-design-system.md`, which
+points at the canonical upstream instead of mirroring it.
 
-### Design Tokens
+## Read these first, in this order
 
-The foundational design decisions and values that ensure consistency across the design system.
+1. `docs/architecture/handover-audit-2026-09-13.md` — current findings of record.
+2. `docs/architecture/handover-audit-2026-09-08.md` — the previous audit.
+3. `docs/architecture/frontend-architecture.md` — baseline. Its §9 corrections
+   table is the instrument this project runs on; §7 and §8.1 are stale (see
+   audit §4 of 2026-09-08).
+4. `docs/architecture/edge-contract.md` — the browser boundary. Later and
+   better-evidenced than `frontend-architecture.md` where they disagree.
+5. `docs/architecture/contract-reconciliation-2026-09-11.md` — blocker record
+   against the running backend controllers.
+6. `docs/architecture/adrs-fe/` — ADR-FE-001 through 006.
 
-- [Design Tokens Documentation](llms-tokens.txt)
-- Package: `@atlaskit/tokens`
-- Purpose: Single source of truth for design decisions
-- Key features:
-  - Color tokens (background, text, border, etc.)
-  - Typography tokens (font size, line height, font weight)
-  - Spacing tokens
-  - Border radius tokens
-  - Elevation tokens
+## The one rule this repository is built on
 
-### Primitives
+**Prove it, don't assert it.** Every claim in a document names the file or commit
+that proves it. A surface no proof executes will drift, so rules are data a
+program asserts over, not tables a human maintains. Three separate incidents
+taught this: the Turbo env allowlist, the pnpm workspace glob, and the port map.
 
-Low-level building blocks for creating consistent user interfaces.
+Corollaries that have each been paid for:
 
-- [Primitives Documentation](llms-primitives.txt)
-- Package: `@atlaskit/primitives/compiled` (recommended)
-- Package: `@atlaskit/primitives` (legacy, deprecated)
-- Purpose: Foundational components and utilities
-- Key features:
-  - Box: Generic container with token support
-  - Stack: Vertical layout component
-  - Inline: Horizontal layout component
-  - Text: Typography primitive
-  - Pressable: Interactive element base
-  - Flex: CSS Flexbox implementation
-  - Grid: CSS Grid implementation
-  - Bleed: Negative margin utility
+- A red required check that changes no behaviour is indistinguishable from one
+  that is not required. `main` was un-installable for eleven hours while the gate
+  correctly reported RED.
+- An unverified absence is not evidence. GitHub code search returns
+  `total_count: 0, incomplete_results: true` for this repo; use a real grep.
+- A gate scoped away from the code it describes is a comment. `touchTargets` and
+  `hexScan` scanned only `packages/design-system` until 2026-09-13.
 
-### Components
+## Layout
 
-High-level React components built on top of primitives and tokens.
-
-- [Components Documentation](llms-components.txt)
-- Purpose: Ready-to-use UI components
-- Categories:
-  - Core Components (Avatar, Badge, Button)
-  - Form Components (Checkbox, Radio, Select)
-  - Layout Components (Grid, Stack)
-  - Navigation Components (Breadcrumbs, Tabs)
-  - Feedback Components (Spinner, Skeleton)
-  - Overlay Components (Modal, Drawer)
-  - Data Display Components (Table, Tree)
-  - Feedback Components (Toast, Flag)
-
-### UI Styling Standard
-
-Standards and tools for consistent styling practices.
-
-- [Styling Standards Documentation](llms-styling.txt)
-- Package: `@atlaskit/eslint-plugin-ui-styling-standard`
-- Purpose: Enforce consistent styling practices
-- Key features:
-  - Design token usage
-  - CSS-in-JS standards
-  - Component styling patterns
-  - Performance best practices
-
-### Accessibility
-
-Comprehensive accessibility guidelines and best practices for building inclusive interfaces.
-
-- [Accessibility Documentation](llms-a11y.txt)
-- Purpose: Ensure WCAG 2.1 AA compliance and inclusive design
-- Key features:
-  - WCAG 2.1 AA compliance guidelines
-  - Design token usage for accessibility
-  - Component-specific accessibility patterns
-  - ARIA usage guidelines
-  - Keyboard navigation support
-  - Screen reader optimization
-  - Automated testing tools
-  - Fix patterns for common violations
-
-## Development Tools
-
-### Linters and Scanners
-
-#### ESLint Plugins
-
-We have two ESLint plugins:
- - `@atlaskit/eslint-plugin-design-system` enforcing the Design System best practices.
- note:
- In Atlassian's internal codebase, @atlaskit/design-system serves as a "barrel" or meta-package that unifies imports for their developers. However, publicly, Atlassian publishes these as atomic packages (e.g., @atlaskit/form, @atlaskit/textfield). The hook useSimpleForm is a specific internal abstraction they use to reduce boilerplate, which does not exist in the public @atlaskit/form package.
- 
- - `@atlaskit/eslint-plugin-ui-styling-standard` enforcing styling standards and best practices across Atlassian
-
-```js
-module.exports = {
-  extends: [
-		'plugin:@atlaskit/design-system/recommended',
-    'plugin:@atlaskit/ui-styling-standard/recommended',
-  ],
-};
+```
+apps/applicant-portal      Citizen PWA. Offline-first, low-end Android, metered data.
+apps/officer-console       Officer console AND the field tablet. PWA, landscape.
+packages/contracts         The ONLY frontend domain-contract source. OpenAPI + fixtures.
+packages/api-client        EDGE_OPERATIONS registry + operation-id transport. No raw URLs.
+packages/auth              Cookie/CSRF edge auth client, session machine, route guards.
+packages/design-system     Domain-free presentation layer. a11y floor lives here.
+packages/ui                USRP-specific components on ADS. Being split; see MIGRATION-MAP.
+packages/features/*        Six vertical slices: identity, applications, adjudication,
+                           scheduling, field-ops, compliance. No cross-slice imports.
+packages/i18n              en / rw / fr at enforced three-way key parity.
+packages/testing           Shared test harness.
+tooling/repo-hygiene       gates.config.json + dependency-free gate scripts.
+tooling/edge-dev           Dev edge PROOF HARNESS. Not the production gateway.
+tooling/contract-drift     Drift detection against the pinned backend commit.
+tooling/security           security-scan.sh, with a selftest.
 ```
 
-### Migration Tools
+## Hard invariants
 
-#### Codemod CLI
-Tool for automated code migrations, often referenced in our docs.
+- The browser calls **one** origin, `/edge/v1/**`. Never a service port, never
+  `/api/*`, never a per-agency BFF URL. Agency comes from the server-side
+  session, never from a browser request.
+- No `Authorization` header from the browser. The session cookie is `httpOnly`;
+  the readable CSRF cookie is not a credential and is echoed in `x-csrf-token`.
+- No `nationalIdHash` in browser code, bodies, URLs, logs or telemetry. No raw
+  National ID in a response, in persisted storage, or in telemetry.
+- No generic status PATCH. Transitions are separate, typed POSTs, and a
+  state-changing write is never retried by the transport.
+- No applicant-facing document-forensics score, lane or flags.
+- `409 AGE_PENDING` is an officer action state and survives to the UI.
+- 48px minimum interactive target, 16px minimum body text, positive polarity
+  only. Sunlight, gloves, one hand, cheap screens.
+- Zero raw colour literals. `@atlaskit/tokens` only; the two PWA manifests are
+  the sole marked exception.
+- `pnpm-lock.yaml` is generated. Never hand-edit it.
+
+## Commands
 
 ```bash
-# Run codemod
-npx @hypermod/cli --packages="@atlaskit/tokens#theme-to-design-tokens" --experimental-loader --parser tsx <relative-path>
+pnpm install                 # frozen in CI; regenerate the lockfile deliberately
+pnpm verify                  # rules + hygiene + typecheck + lint + test
+pnpm verify:full             # adds build, extraction, size, a11y, security
+pnpm verify:hygiene          # gates only, no node_modules required
+pnpm prove:gates             # proves each gate goes RED when it should
+pnpm security:scan:selftest  # proves the scanner in both directions
 ```
 
-Example codemods:
- - `--packages=@atlaskit/css#primitives-emotion-to-compiled`
- - `--packages=@atlaskit/tokens#theme-to-design-tokens`
+## Current state, honestly
 
-### ADS MCP server
+- The frontend is **edge-contract ready**, not edge-deployment complete. The
+  backend has `services/edge-gateway/openapi/` and no runnable service.
+- The lockfile must be regenerated on a machine with registry access before any
+  gate can go green. This is the top blocker.
+- Bundle budgets are PROVISIONAL and uncalibrated; no CI build has completed.
+- Four of six slices are mounted in the officer console; `applications` and
+  `identity` collide with app-owned paths (ADR-FE-006 §5).
+- `@usrp/edge-dev` is still not typechecked by anything.
 
-Official Model Context Protocol server for ADS tokens, icons, components and primitives, and accessibility tooling.
+## Design system
 
-- **Remote (hosted):** [https://mcp.atlassian.com/v1/ads/public/mcp](https://mcp.atlassian.com/v1/ads/public/mcp) â€” point your MCP client at this URL (HTTP transport).
-- **Local (stdio):** `npx -y @atlaskit/ads-mcp` â€” run the published [`@atlaskit/ads-mcp`](https://www.npmjs.com/package/@atlaskit/ads-mcp) package.
-
-### Internal skill: `atlassian-design-system` (Atlassian only)
-
-The **`atlassian-design-system`** agent skill bundles progressive-disclosure guidance for ADS tokens and components together with MCP-oriented workflows. It is generated from the same content as this file and is published for internal usage with `@atlassian/skills`.
-
-## Design Tools
-
-### Figma Integration
-
-#### Figma Plugin
-Official Figma plugin for Atlassian Design System.
-
-- [Figma Libraries & Plugins Documentation](https://atlassian.design/get-started/figma-libraries)
-- Features:
-  - Component library
-  - Design token integration
-  - Code snippets
-  - Design system updates
-  - Component documentation
-
-## Documentation
-
-### Official Documentation
-- [Atlassian Design System](https://atlassian.design)
-- [Atlasskit] (https://atlaskit.atlassian.com/)
-- [Component Library](https://atlassian.design/components)
-- [Design Tokens](https://atlassian.design/foundations/design-tokens)
-- [Accessibility Guidelines](https://atlassian.design/foundations/accessibility)
-
-### Links to other sets
-- [Complete documentation](https://atlassian.design/llms-full.txt): The complete ADS documentation including all other sets and this file
-- [Components](https://atlassian.design/llms-components.txt): Documentation for ADS Components
-- [Primitives](https://atlassian.design/llms-primitives.txt): Documentation for ADS Primitives (low-level building blocks)
-- [Tokens](https://atlassian.design/llms-tokens.txt): Documentation for using ADS Tokens
-- [Styling](https://atlassian.design/llms-styling.txt): Documentation for styling with ADS
-- [Accessibility](https://atlassian.design/llms-a11y.txt): Documentation for accessibility guidelines and best practices
-- [Content](https://atlassian.design/llms-content.txt): Documentation for content guidelines and language usage
+Atlassian Design System with `@compiled` build-time extraction. See
+`docs/vendor/atlassian-design-system.md` for canonical upstream references and
+the ADS MCP server.

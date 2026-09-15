@@ -3,6 +3,7 @@ import { Box, Inline, Pressable, Text } from "@atlaskit/primitives/compiled";
 import Tooltip from "@atlaskit/tooltip";
 import { cssMap, cx } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
+import { TOUCH_TARGET_TOKEN_PX } from "@usrp/design-system";
 import { useTranslation } from "@usrp/i18n";
 
 interface AudioTooltipProps {
@@ -13,6 +14,24 @@ interface AudioTooltipProps {
   readonly testId?: string;
 }
 
+/**
+ * The interactive floor, asserted at COMPILE TIME against @usrp/design-system.
+ *
+ * WHY A LITERAL AND AN ASSERTION RATHER THAN JUST THE IMPORT. `cssMap` is
+ * extracted at build time by @compiled, so its values must be statically
+ * analysable in this module - a cross-package imported binding is not a safe bet
+ * for that, and a style that silently fails to extract is exactly what
+ * `verify:extraction` exists to catch.
+ *
+ * So the literal stays inline below, and this line makes drift a TYPE ERROR:
+ * TOUCH_TARGET_TOKEN_PX is declared `'48px' as const`, so if the design system
+ * ever raises the floor, this assignment stops compiling and this component is
+ * dragged along instead of being quietly left behind. The hygiene gate
+ * (touchTargets, which as of 2026-09-13 finally scans packages/) catches the
+ * other direction: any literal below the floor.
+ */
+const TOUCH_TARGET: typeof TOUCH_TARGET_TOKEN_PX = "48px";
+
 // cssMap at module scope — build-time extraction.
 // Two variants: idle and playing.  cx() applies the correct variant at runtime.
 const buttonStyles = cssMap({
@@ -21,6 +40,8 @@ const buttonStyles = cssMap({
     alignItems: "center",
     justifyContent: "center",
     // 48×48 px target satisfies Fitts's Law under physical fatigue (HCI mandate).
+    // Literal, not the imported constant, so @compiled can extract it — see the
+    // TOUCH_TARGET assertion above, which proves this number is still the floor.
     minWidth: "48px",
     minHeight: "48px",
     border: "none",
@@ -52,7 +73,8 @@ const buttonStyles = cssMap({
  * - Haptic feedback (vibrate) offloads confirmation from visual channel
  *   to the somatosensory channel, matching the field-tablet neuro-ergonomics
  *   requirement.
- * - Button target is min 48×48 px to satisfy Fitts's Law under fatigue.
+ * - Button target is min 48×48 px to satisfy Fitts's Law under fatigue, and that
+ *   number is now proven against the design system rather than retyped here.
  */
 export function AudioTooltip({
   audioSrc,

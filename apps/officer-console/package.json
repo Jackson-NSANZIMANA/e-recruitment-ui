@@ -2,10 +2,10 @@
   "name": "@usrp/officer-console",
   "version": "1.0.0",
   "private": true,
-  "description": "USRP officer-facing console (RDF / RNP / RCS)",
+  "description": "USRP officer-facing console and field-tablet application (RDF / RNP / RCS)",
   "license": "UNLICENSED",
   "type": "module",
-  "//dependencies": "@usrp/contracts is the only legal source of domain types here; @usrp/shared-types is deprecated, forbidden by .dependency-cruiser, and no longer declared. Before adding a dependency, check it is actually imported - and before removing one, read every file in src/. The four @usrp/feature-* entries are the slices mounted in src/routes/slices.tsx; feature-applications and feature-identity are NOT declared because their route paths collide with working app-owned screens (ADR-FE-006 section 5).",
+  "//dependencies": "@usrp/contracts is the only legal source of domain types here; @usrp/shared-types is deprecated, forbidden by .dependency-cruiser, and no longer declared. Before adding a dependency, check it is actually imported - and before removing one, read every file in src/. The four @usrp/feature-* entries are the slices mounted in src/routes/slices.tsx; feature-applications and feature-identity are NOT declared because their route paths collide with working app-owned screens (ADR-FE-006 section 5). vite-plugin-pwa and workbox-window were added 2026-09-13: this app runs on the FIELD TABLET that ADR-FE-005 calls the harder offline problem, and it shipped with no service worker at all. Versions deliberately match apps/applicant-portal so one workbox major exists in the graph.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
@@ -54,6 +54,7 @@
     "react-dom": "18.3.1",
     "react-hook-form": "7.53.0",
     "react-router-dom": "6.30.1",
+    "workbox-window": "7.3.0",
     "zod": "3.23.8"
   },
   "devDependencies": {
@@ -70,6 +71,8 @@
     "eslint": "^9.9.0",
     "typescript": "~5.4.0",
     "vite": "^5.4.0",
-    "vitest": "^2.1.0"
+    "vite-plugin-pwa": "^0.20.0",
+    "vitest": "^2.1.0",
+    "workbox-build": "7.3.0"
   }
 }

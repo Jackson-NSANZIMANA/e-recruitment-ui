@@ -18,7 +18,7 @@
     "drift:selftest": "tsx ../../tooling/contract-drift/src/selftest.ts",
     "lint": "node --experimental-strip-types scripts/lint/cli.ts --package contracts",
     "lint:selftest": "node --experimental-strip-types scripts/lint/selftest.ts",
-    "test": "node --experimental-strip-types scripts/lint/selftest.ts && node --experimental-strip-types --import ./test/register.mjs --test test/*.test.ts",
+    "test": "node --experimental-strip-types scripts/lint/selftest.ts && tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.src.json",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
@@ -26,7 +26,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-
     "@types/node": "^20.19.43",
     "@usrp/eslint-config": "workspace:*",
     "tsx": "^4.19.0",

@@ -95,13 +95,16 @@
   "offline": {
     "banner": "Vous êtes hors ligne. Les modifications seront synchronisées à la reconnexion.",
     "syncing": "Synchronisation…",
-    "synced": "Toutes les modifications enregistrées"
+    "synced": "Toutes les modifications enregistrées",
+    "sync_unavailable": "Les scores saisis restent sur cet appareil. Leur transfert vers le dossier de recrutement n'est pas encore disponible : n'effacez pas cette tablette et ne la remettez à personne avant qu'un officier confirme le transfert des scores."
   },
   "a11y": {
     "loading": "Chargement…",
     "close": "Fermer",
     "open_menu": "Ouvrir le menu",
-    "play_audio_help": "Lire le guide audio"
+    "play_audio_help": "Lire le guide audio",
+    "collapse_nav": "Réduire la navigation",
+    "expand_nav": "Développer la navigation"
   },
   "biometric_consent": {
     "title": "Consentement à la collecte de données biométriques",

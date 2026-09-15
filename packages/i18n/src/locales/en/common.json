@@ -95,13 +95,16 @@
   "offline": {
     "banner": "You're offline. Changes will sync when you reconnect.",
     "syncing": "Syncing…",
-    "synced": "All changes saved"
+    "synced": "All changes saved",
+    "sync_unavailable": "Score captures stay on this device. Uploading them to the recruitment record is not available yet, so do not wipe or hand off this tablet before an officer confirms the scores were transferred."
   },
   "a11y": {
     "loading": "Loading…",
     "close": "Close",
     "open_menu": "Open menu",
-    "play_audio_help": "Play audio guidance"
+    "play_audio_help": "Play audio guidance",
+    "collapse_nav": "Collapse navigation",
+    "expand_nav": "Expand navigation"
   },
   "biometric_consent": {
     "title": "Biometric Data Collection Consent",

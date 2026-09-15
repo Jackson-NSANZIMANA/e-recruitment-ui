@@ -49,6 +49,8 @@ const CASES: readonly Case[] = [
   },
   {
     rule: 'no-raw-hex-colour',
+    // hygiene-allow-hex: intentional dirty fixture. This literal is data fed
+    // to the rule to prove it goes RED; it is never shipped or generated.
     dirty: { path: 'src/thing.ts', source: "export const c = '#ff5630';\n" },
     clean: { path: 'src/thing.ts', source: "export const c = token('color.text.danger');\n" },
   },

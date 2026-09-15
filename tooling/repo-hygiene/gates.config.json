@@ -20,22 +20,71 @@
   },
 
   "boundaries": {
-    "$comment": "The domain-free layer. Adding a path here means promising it has no idea what an agency, an applicant or an application status is.",
+    "$comment": [
+      "The domain-free layer. Adding a path here means promising it has no idea",
+      "what an agency, an applicant or an application status is.",
+      "",
+      "DELIBERATELY NOT WIDENED to apps/ or packages/features/ when touchTargets",
+      "and hexScan were, 2026-09-13. This rule forbids domain vocabulary and",
+      "domain imports; an app screen and a feature slice are SUPPOSED to know what",
+      "an agency is. Widening it would not find bugs, it would produce hundreds of",
+      "correct-by-design violations, and a gate that cries wolf is routed around.",
+      "packages/ui is a candidate ONLY when the MIGRATION-MAP split finishes."
+    ],
     "roots": ["packages/design-system/src"],
     "extensions": [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"]
   },
 
   "hexScan": {
-    "$comment": "Invariant 5: zero raw colour literals; use @atlaskit/tokens. NOTE for whoever owns apps/: apps/applicant-portal/vite.config.ts sets a hard-coded brand colour in the PWA manifest's theme_color, and an opaque white in background_color. Those are the one defensible exception - a web manifest is serialised JSON read by the OS before any stylesheet exists, so it CANNOT be a CSS custom property - but each should carry a hygiene-allow-hex marker stating that, and the brand value should be derived from the resolved ADS token rather than typed by hand. The values are deliberately not reproduced here, because this file is itself scanned by the rule.",
-    "roots": ["packages/design-system", "packages/eslint-config", "tooling/repo-hygiene"],
+    "$comment": [
+      "Invariant 5: zero raw colour literals; use @atlaskit/tokens.",
+      "",
+      "WIDENED 2026-09-13 to apps/ and packages/. It previously scanned only",
+      "design-system, eslint-config and this tooling directory, which means the",
+      "invariant was never enforced against one line of shipped product code.",
+      "The proof that this was inert rather than merely narrow: the previous",
+      "version of this comment described raw colour literals living in",
+      "apps/applicant-portal/vite.config.ts, stated that each SHOULD carry a",
+      "hygiene-allow-hex marker, and then left apps/ out of the roots below. A",
+      "gate that documents a violation it has been configured not to see is not a",
+      "gate; it is a comment.",
+      "",
+      "The PWA manifests in both apps are the one defensible exception and now",
+      "carry markers with their justification: a web manifest is serialised JSON",
+      "the operating system reads before any stylesheet exists, so its colour",
+      "fields cannot be CSS custom properties. Every OTHER raw literal is a bug.",
+      "",
+      "EXPECTATION ON FIRST RUN: this widening may surface literals in files that",
+      "have not been read. That is the gate working. Read the named file before",
+      "assuming the rule is wrong - the same instruction the security scan's",
+      "browser-storage check carries, and for the same reason.",
+      "",
+      "pnpm-lock.yaml is not scanned: .json/.ts/.css/.svg only, and a lockfile is",
+      "generated output that must never be hand-edited anyway."
+    ],
+    "roots": ["apps", "packages", "tooling/repo-hygiene"],
     "extensions": [".ts", ".tsx", ".css", ".json", ".svg"],
     "allowPaths": []
   },
 
   "touchTargets": {
     "minPx": 48,
-    "$comment": "WCAG 2.1 AA SC 2.5.5 asks 44. The extra 4px are for outdoor, one-handed, gloved use - see packages/design-system/src/a11y/index.ts.",
-    "roots": ["packages/design-system/src"],
+    "$comment": [
+      "WCAG 2.1 AA SC 2.5.5 asks 44. The extra 4px are for outdoor, one-handed,",
+      "gloved use - see packages/design-system/src/a11y/index.ts.",
+      "",
+      "WIDENED 2026-09-13 to apps/ and packages/. The justification for this floor",
+      "is entirely about officers on field devices and applicants queueing",
+      "outdoors, and until now the rule scanned only the design-system package -",
+      "so it applied to none of the components those people actually touch.",
+      "packages/ui/src/components/AudioTooltip carried its own hardcoded 48px",
+      "literal for exactly as long as nothing was checking.",
+      "",
+      "The predicate is conservative by design: only a literal pixel number below",
+      "the floor is flagged, never a token, a rem value or a runtime variable. So",
+      "widening the roots cannot produce a guess-based failure."
+    ],
+    "roots": ["apps", "packages"],
     "extensions": [".ts", ".tsx"]
   },
 
@@ -96,7 +145,7 @@
       "nobody has calibrated either never fires or always does. See README",
       "'Calibrating bundle budgets'.",
       "",
-      "STILL UNCALIBRATED as of 2026-09-08, because no CI build has completed:",
+      "STILL UNCALIBRATED as of 2026-09-13, because no CI build has completed:",
       "the Install job has failed on every run since 2026-09-08 13:41, so the",
       "build job has never produced a dist to measure. Calibrate on the first",
       "green run after the lockfile is regenerated."
@@ -111,7 +160,7 @@
       "distDir": "dist",
       "maxTotalGzipKb": 1200,
       "maxChunkGzipKb": 500,
-      "$comment": "Institutional desktop clients on agency networks; heavier ADS surface (navigation-system, dynamic-table, form) buys a looser ceiling."
+      "$comment": "CORRECTED 2026-09-13. This previously read 'institutional desktop clients on agency networks' and justified the looser ceiling on that basis. It is WRONG about the device class: this app is also the FIELD TABLET, which ADR-FE-005 describes at a venue with no signal for hours, and it now ships a service worker and a precached shell for that reason. The looser ceiling is still defensible - the heavier ADS surface (navigation-system, dynamic-table, form) is real and the tablet installs the app once rather than re-downloading it per visit - but it must be recalibrated against a real dist WITH the field tablet in mind, not a desk on a LAN."
     }
   },
 

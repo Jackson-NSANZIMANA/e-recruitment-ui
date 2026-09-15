@@ -1,22 +1,6 @@
-// ═══════════════════════════════════════════════════════════════
-// field-ops — the two calls that work, and nothing else
-//
-// DELETED: verifyBiometric, enrollDevice, syncScores, resolveConflict. All four
-// named operations that do not exist; all four would have thrown. See
-// FIELD_OPS_UNSERVED_BY_EDGE for what each waits on.
-// ═══════════════════════════════════════════════════════════════
-
 import type { ApiClient } from './transport.ts';
 
-/**
- * Walk-in step one: National ID → opaque `applicantId`.
- *
- * Returns `{ status, applicantId }` and NOTHING else. No name, no date of birth.
- * The officer confirms identity from the physical document in front of them, not
- * from a pre-filled field — raw NIDA PII is rejected by the contract's negative
- * fixtures, and a green tick beside a National ID field is an enumeration oracle
- * with a friendly face.
- */
+/** Walk-in identity verification. Returns an opaque applicantId, never PII. */
 export const verifyIdentityAtDesk = (
   client: ApiClient,
   nationalId: string,
@@ -27,16 +11,7 @@ export const verifyIdentityAtDesk = (
     ...(correlationId === undefined ? {} : { correlationId }),
   });
 
-/**
- * Walk-in step two: create the application.
- *
- * NOTE WHAT IS ABSENT: `nationalIdHash`. It is an internal cross-service key that
- * must never reach a browser, and the controller does not accept it. It takes the
- * opaque `applicantId` from step one.
- *
- * `qrInvitationCode` in the response is the on-site ticket the candidate carries;
- * field-score capture binds to IT, not to a venue.
- */
+/** Walk-in registration. Agency is derived from the officer session. */
 export const registerWalkIn = (
   client: ApiClient,
   body: { readonly applicantId: string; readonly category: string },
@@ -48,15 +23,7 @@ export const registerWalkIn = (
   readonly qrInvitationCode: string;
 }> => client.call('registerWalkIn', { body, ...(correlationId === undefined ? {} : { correlationId }) });
 
-/**
- * Walk-in step three: on-site vetting.
- *
- * Can answer `409 AGE_PENDING` while the candidate waits — the age verdict rides
- * the Kafka backbone and lands in seconds. That is the OFFICER's retry to make,
- * which is why this is a separate call with its own button rather than being
- * folded into step two, where a normal explainable pause would have become either
- * a hidden failure or a false success.
- */
+/** AGE_PENDING remains an officer action state, never a transport retry. */
 export const vetWalkIn = (
   client: ApiClient,
   applicationId: string,

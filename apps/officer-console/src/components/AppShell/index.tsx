@@ -21,6 +21,9 @@ import { MenuList } from "@atlaskit/side-nav-items/menu-list";
 import DashboardIcon from "@atlaskit/icon/core/dashboard";
 import AppsIcon from "@atlaskit/icon/core/apps";
 import PersonAddIcon from "@atlaskit/icon/core/person-add";
+import { useTranslation } from "@usrp/i18n";
+
+import { ConnectionStatus } from "../ConnectionStatus/index.js";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -36,57 +39,69 @@ export interface AppShellProps {
  *  - TopNav with agency branding and profile slot
  *  - Built-in skip links (WCAG 2.4.1)
  *  - Links route through routerLinkComponent (wired in main.tsx via AppProvider)
+ *
+ * EVERY STRING IS TRANSLATED, as of 2026-09-13. They were hardcoded English
+ * while index.html declared `lang="rw"`, which is WCAG 3.1.1 (Language of Page)
+ * failing in the most literal way available: a screen reader applying
+ * Kinyarwanda pronunciation rules to the word "Dashboard". The keys used here
+ * (`nav.*`) already existed in all three locale bundles at full parity, so this
+ * was a wiring gap, not a translation gap.
  */
 export function AppShell({ children }: AppShellProps): React.ReactElement {
+  const { t } = useTranslation();
+
   return (
     <Root>
       <TopNav>
         <TopNavStart
           sideNavToggleButton={
             <SideNavToggleButton
-              collapseLabel="Collapse navigation"
-              expandLabel="Expand navigation"
+              collapseLabel={t("a11y.collapse_nav")}
+              expandLabel={t("a11y.expand_nav")}
             />
           }
         >
           <AppLogo
             href="/dashboard"
-            name="USRP Officer Console"
-            label="Go to dashboard"
+            name={t("dashboard.title")}
+            label={t("nav.dashboard")}
             icon={AdminIcon}
           />
         </TopNavStart>
         <TopNavEnd>
-          <Profile label="Account" />
+          <Profile label={t("nav.settings")} />
         </TopNavEnd>
       </TopNav>
 
-      <SideNav label="Officer Console navigation">
+      <SideNav label={t("a11y.open_menu")}>
         <SideNavBody>
           <MenuList>
             <LinkMenuItem
               href="/dashboard"
               elemBefore={<DashboardIcon label="" color="currentColor" />}
             >
-              Dashboard
+              {t("nav.dashboard")}
             </LinkMenuItem>
             <LinkMenuItem
               href="/applications"
               elemBefore={<AppsIcon label="" color="currentColor" />}
             >
-              Applications
+              {t("nav.applications")}
             </LinkMenuItem>
             <LinkMenuItem
               href="/walk-in"
               elemBefore={<PersonAddIcon label="" color="currentColor" />}
             >
-              Walk-in
+              {t("nav.walk_in")}
             </LinkMenuItem>
           </MenuList>
         </SideNavBody>
       </SideNav>
 
-      <Main>{children}</Main>
+      <Main>
+        <ConnectionStatus />
+        {children}
+      </Main>
     </Root>
   );
 }

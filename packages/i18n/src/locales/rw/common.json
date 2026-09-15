@@ -95,13 +95,16 @@
   "offline": {
     "banner": "Nta interineti ufite. Impinduka zizahuzwa igihe uzongera guhuza.",
     "syncing": "Guhuza…",
-    "synced": "Impinduka zose zabitswe"
+    "synced": "Impinduka zose zabitswe",
+    "sync_unavailable": "Amanota yafashwe asigara kuri iki gikoresho. Kuyohereza kuri dosiye y'ishakisha ntibishoboka ubu, bityo ntukuremo amakuru cyangwa uhereze iyi tablet mbere y'uko umukozi yemeza ko amanota yoherejwe."
   },
   "a11y": {
     "loading": "Birapakirwa…",
     "close": "Funga",
     "open_menu": "Fungura menu",
-    "play_audio_help": "Umva amabwiriza y'amajwi"
+    "play_audio_help": "Umva amabwiriza y'amajwi",
+    "collapse_nav": "Funga urutonde rw'ibikubiye",
+    "expand_nav": "Fungura urutonde rw'ibikubiye"
   },
   "biometric_consent": {
     "title": "Kwemera Gufatwa kw'Amakuru ya Biometrike",
