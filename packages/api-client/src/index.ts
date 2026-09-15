@@ -69,6 +69,28 @@ export { applicationKeys, applicantKeys, sessionKeys, INVALIDATION_MAP, resolveI
 export type { InvalidationTarget } from './keys.js';
 
 // ── Operations (framework-free; usable outside React) ──
+
+// Session and auth
+export {
+  readSession,
+  refreshSession,
+  officerLogin,
+  officerLogout,
+  requestOtp,
+  verifyOtp,
+  applicantLogout,
+} from './operations/session.js';
+export type {
+  OfficerLoginInput,
+  OfficerLoginResponse,
+  OtpRequestInput,
+  OtpRequestResponse,
+  OtpVerifyInput,
+  OtpVerifyResponse,
+  ApplicantLogoutResponse,
+} from './operations/session.js';
+
+// Applications and identity
 export {
   listApplications,
   listAmberQueue,
