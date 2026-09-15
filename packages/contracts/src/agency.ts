@@ -7,65 +7,14 @@
 //
 // Every value below was read from backend source. Provenance is recorded
 // per-constant. Nothing here was inferred from a name.
-//
-// WHY THIS FILE EXISTS
-//
-// RDF, RNP and RCS are not three deployments of one schema. They have
-// genuinely different Postgres enums:
-//
-//   rdf_ops.application_status  18 values, INCLUDING four WALK_IN_* states
-//   rnp_ops.application_status  14 values, NO WALK_IN_* states
-//   rcs_ops.application_status  14 values, NO WALK_IN_* states
-//   (+ ADJUDICATION_REVIEW added to all three by rls/0011 → 19 / 15 / 15)
-//
-// This is why the backend compares `status::text` instead of casting to an
-// enum: an enum-cast comparison against WALK_IN_REJECTED is a HARD ERROR for
-// RNP and RCS and works fine for RDF, so it passes every test run against RDF
-// fixtures and fails in production for two agencies out of three. ADR-017 and
-// ADR-020 both record the idiom.
-//
-// The frontend equivalent of that bug is a component that renders a
-// WALK_IN_ON_SITE_VETTING lozenge in the RNP console. The types below make it
-// a compile error instead of a support ticket. src/narrow.ts binds them to the
-// generated wire rows.
 // ═════════════════════════════════════════════════════════════════
 
 /** The backend main commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = "47d9ad3ab019f6d2f826cfae2136cbff898d733f";
+export const VERIFIED_BACKEND_SHA = 'd40f6d824ec46209ec5411192251fca4561e36b0';
 
-// ─── Agency ────────────────────────────────────────────────────────────
-
-/**
- * The three agencies. Values match `agency_code` in the DB and the `agency`
- * claim on an officer bearer token.
- *
- * There is NO fourth value and no superadmin agency. The old frontend's
- * `OfficerRole.SUPERADMIN` was annotated "cross-agency visibility (no RLS)";
- * RLS is FORCE'd on every ops schema and there is no principal kind that
- * bypasses it. Cross-agency reads exist only for `kind: 'system'` principals
- * on specific routes (by-applicant, withdraw-own), never for a human.
- */
 export const AGENCIES = ['RDF', 'RNP', 'RCS'] as const;
 export type Agency = (typeof AGENCIES)[number];
 
-// ─── Application status ──────────────────────────────────────────────────
-
-/**
- * Every state an application can occupy, in lifecycle order.
- *
- * SOURCE: backend `packages/shared-types/src/applicant.types.ts`
- *         (APPLICATION_STATUSES), cross-checked against
- *         `packages/shared-database/src/migrations/0000_grey_the_stranger.sql`
- *         and the ADJUDICATION_REVIEW addition in rls/0011.
- *
- * 19 values. For contrast, the deprecated frontend `shared-types` shipped 17,
- * of which FIVE existed (DRAFT, SUBMITTED, ACCEPTED, REJECTED, WITHDRAWN) and
- * twelve were invented (UNDER_REVIEW, SHORTLISTED, PHYSICAL_SCHEDULED,
- * PHYSICAL_PASSED, PHYSICAL_FAILED, MEDICAL_SCHEDULED, MEDICAL_PASSED,
- * MEDICAL_FAILED, VETTING_IN_PROGRESS, VETTING_PASSED, VETTING_FAILED,
- * EXPIRED). The entire green/amber document lane, the walk-in lane and
- * adjudication — the actual system — were absent.
- */
 export const APPLICATION_STATUSES = [
   'DRAFT', 'SUBMITTED', 'ACADEMIC_VETTING', 'CRIMINAL_CLEARANCE',
   'DOCUMENT_REVIEW_GREEN', 'DOCUMENT_REVIEW_AMBER', 'SLOT_ASSIGNED',
@@ -100,8 +49,6 @@ export function isTerminal<A extends Agency>(agency: A, status: StatusFor<A>): b
   return (TERMINAL_STATUSES[agency] as readonly string[]).includes(status);
 }
 
-// ─── Document types ──────────────────────────────────────────────────────
-
 export const DOCUMENT_TYPES = [
   'NATIONAL_ID', 'APPLICATION_FORM_WITH_PHOTO', 'BIRTH_CERTIFICATE',
   'OLEVEL_CERTIFICATE', 'ALEVEL_CERTIFICATE', 'DEGREE_DIPLOMA_COPY',
@@ -128,16 +75,12 @@ export type DocumentUploadStatus = (typeof DOCUMENT_UPLOAD_STATUSES)[number];
 export const DOCUMENT_LANES = ['GREEN', 'AMBER', 'RED'] as const;
 export type DocumentLane = (typeof DOCUMENT_LANES)[number];
 
-// ─── Identity ──────────────────────────────────────────────────────────
-
 export const GENDERS = ['MALE', 'FEMALE'] as const;
 export type Gender = (typeof GENDERS)[number];
 export const IDENTITY_STATUSES = ['PENDING', 'VERIFIED', 'FAILED', 'EXPIRED'] as const;
 export type IdentityStatus = (typeof IDENTITY_STATUSES)[number];
 export const APPLICATION_CHANNELS = ['WEB', 'USSD', 'IREMBO_KIOSK', 'WALK_IN'] as const;
 export type ApplicationChannel = (typeof APPLICATION_CHANNELS)[number];
-
-// ─── Principals ───────────────────────────────────────────────────────
 
 export const AUTH_KINDS = ['officer', 'system', 'applicant-session', 'none'] as const;
 export type AuthKind = (typeof AUTH_KINDS)[number];
