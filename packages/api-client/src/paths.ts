@@ -11,18 +11,65 @@ export interface EdgeOperation {
   readonly retryOnG2G: boolean;
 }
 
+/**
+ * A route present on the backend edge-runtime branch but not yet promoted into
+ * the pinned frontend contract.
+ *
+ * IMPORTANT: this is metadata, not a callable operation. It intentionally does
+ * not satisfy EdgeOperation and cannot be passed to ApiClient.call(). The branch
+ * is not merged, the frontend contract is still pinned to the current backend
+ * baseline, and promoting it early would make contract drift meaningless.
+ */
+export interface PendingEdgeRuntimeOperation {
+  readonly id: string;
+  readonly edgePath: string;
+  readonly method: 'POST';
+  readonly session: 'officer';
+  readonly upstreamOperationId: string;
+  readonly runtimeCommit: string;
+  readonly promotionBlocker: 'backend-merge-and-pin';
+}
+
+// Backend runtime branch evidence reviewed 2026-09-15. Keep these ids OUT of
+// EDGE_OPERATIONS until that commit is merged to the backend release line and
+// BACKEND_SHA is deliberately updated in frontend CI.
+export const EDGE_RUNTIME_PENDING_OPERATIONS = [
+  {
+    id: 'enrollFieldDevice',
+    edgePath: '/edge/v1/field-sync/devices',
+    method: 'POST',
+    session: 'officer',
+    upstreamOperationId: 'enrollFieldDevice',
+    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
+    promotionBlocker: 'backend-merge-and-pin',
+  },
+  {
+    id: 'syncFieldScores',
+    edgePath: '/edge/v1/field-sync/scores',
+    method: 'POST',
+    session: 'officer',
+    upstreamOperationId: 'syncFieldScores',
+    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
+    promotionBlocker: 'backend-merge-and-pin',
+  },
+  {
+    id: 'resolveFieldSyncConflict',
+    edgePath: '/edge/v1/field-sync/conflicts/resolve',
+    method: 'POST',
+    session: 'officer',
+    upstreamOperationId: 'resolveFieldSyncConflict',
+    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
+    promotionBlocker: 'backend-merge-and-pin',
+  },
+] as const satisfies readonly PendingEdgeRuntimeOperation[];
+
 // ══════════════════════════════════════════════════════════════════════════
 // WHY `as const satisfies` AND NOT `: readonly EdgeOperation[]`
 //
 // The annotation this used to carry erased the id literals to `string`. That
 // made `operation('getSlotInvitationKey')` a WELL-TYPED call to an operation
 // that does not exist — it threw at runtime, inside a click handler, in front of
-// a citizen. Four packages were shipping ids like that (see ADR-FE-006).
-//
-// `satisfies` keeps the shape check AND the literals, so `EdgeOperationId`
-// below is derivable and a fictional id is a COMPILE error. This is the
-// frontend counterpart of the backend's exhaustive Kafka topic map, where an
-// unrouted event type fails the build rather than going unconsumed (000.md §9).
+// a citizen. `satisfies` keeps the shape check AND the literals.
 // ══════════════════════════════════════════════════════════════════════════
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false },
@@ -54,28 +101,13 @@ export const EDGE_OPERATIONS = [
   { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false },
 ] as const satisfies readonly EdgeOperation[];
 
-/**
- * Every operation id the edge actually serves.
- *
- * THE WHITELIST. Any package that calls the edge should type its operation
- * constants as this union, so an id the edge does not serve fails `pnpm
- * typecheck` instead of a citizen's click. Four of the six feature slices were
- * naming ids that do not exist — 11 of 27 calls — and nothing caught it.
- */
 export type EdgeOperationId = (typeof EDGE_OPERATIONS)[number]['id'];
 
-/** Operations the browser may reach without any session at all. */
 export type AnonymousEdgeOperationId = Extract<
   (typeof EDGE_OPERATIONS)[number],
   { readonly session: 'anonymous' }
 >['id'];
 
-/**
- * Widened to `string` KEYS on purpose.
- *
- * `operation()` keeps its runtime guard for callers reached from JavaScript, or
- * from an id assembled at runtime. The type is the first gate, not the only one.
- */
 const BY_ID: ReadonlyMap<string, EdgeOperation> = new Map(
   EDGE_OPERATIONS.map((edgeOperation): readonly [string, EdgeOperation] => [edgeOperation.id, edgeOperation]),
 );
@@ -86,7 +118,6 @@ export function operation(id: string): EdgeOperation {
   return found;
 }
 
-/** True when `id` is an operation the edge serves. Use at a runtime boundary. */
 export function isEdgeOperationId(id: string): id is EdgeOperationId {
   return BY_ID.has(id);
 }
@@ -102,7 +133,6 @@ export class ContractMismatchError extends Error {
   }
 }
 
-/** Fail closed when a real upstream operation is renamed or becomes internal. */
 export function assertPathsMatchContract(): void {
   const problems: string[] = [];
   const byOperationId = new Map<string, RouteFact>(ROUTE_TABLE.map((route) => [route.operationId, route]));
