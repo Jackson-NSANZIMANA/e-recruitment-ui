@@ -3,20 +3,10 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Officer console E2E configuration.
  *
- * TESTS THE BUILT BUNDLE, NOT SOURCE. `pnpm preview` serves dist/ on port 3001
- * (vite.config.ts preview.strictPort), which is the same origin the dev server
- * uses, so baseURL is unchanged. turbo.json already declares
- * `test:e2e dependsOn: [build]`, so dist exists before this server starts.
- *
- * This matters beyond tidiness: the handover audit recorded "e2e declared
- * needs: build and NEVER DOWNLOADED THE ARTIFACT - it tested source, not the
- * bundle that ships" as a CI defect, and listed it as fixed. It was not fixed
- * here; the webServer still ran `pnpm dev`. A service worker in particular does
- * not exist in a dev server the way it exists in a build, so offline behaviour
- * is untestable against source.
- *
- * All edge calls are intercepted via page.route() in the specs — no live
- * backend required.
+ * Tests the production bundle served by `vite preview`, with the edge boundary
+ * intercepted by each spec. The server and browser state are deliberately
+ * isolated so a previous preview process or installed PWA worker cannot make
+ * the test exercise a different bundle than the one just built.
  */
 export default defineConfig({
   testDir: "./e2e",
@@ -28,26 +18,27 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3001",
     trace: "on-first-retry",
+    // The service worker is part of the shipped PWA, but it must not control
+    // the harness. Blocking it prevents stale precache entries from masking a
+    // newly built login bundle and keeps page.route() authoritative.
+    serviceWorkers: "block",
   },
   projects: [
     {
-      // Institutional desktop client on an agency network.
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      // THE FIELD TABLET. The device class this app is built for had zero
-      // coverage: one Desktop Chrome project, no touch, no tablet viewport. A
-      // 48px touch floor and a gloved-hand HCI mandate cannot be proven by a
-      // mouse pointer at 1280x720. Landscape matches the PWA manifest.
       name: "field-tablet",
       use: { ...devices["Galaxy Tab S4 landscape"] },
     },
   ],
   webServer: {
-    command: "pnpm preview",
+    command: "pnpm preview --host 127.0.0.1",
     url: "http://localhost:3001",
-    reuseExistingServer: !process.env["CI"],
+    // Never reuse an old server locally. Reuse made it possible to run a fresh
+    // build while Playwright continued testing an older dist directory.
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });
