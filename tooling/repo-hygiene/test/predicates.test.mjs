@@ -156,6 +156,44 @@ describe('findRawHexColors', () => {
       '// hygiene-allow-hex: PWA manifest theme_color is read by the OS before any CSS exists\ntheme_color: "#0052CC",';
     assert.equal(findRawHexColors(src).length, 0);
   });
+
+  // Regression: packages/contracts/scripts/lint/selftest.ts carried a correct,
+  // greppable two-line exemption and the gate went RED anyway, because only one
+  // line above was read. The gate's own message asks for a justification; a
+  // justification that spans two lines must still exempt.
+  test('honours an exemption anywhere in the comment block directly above', () => {
+    const src = [
+      '// hygiene-allow-hex: intentional dirty fixture. This literal is data fed',
+      '// to the rule to prove it goes RED; it is never shipped or generated.',
+      'const c = "#ff5630";',
+    ].join('\n');
+    assert.equal(findRawHexColors(src).length, 0);
+  });
+
+  test('honours an exemption inside a block comment above', () => {
+    const src = '/*\n * hygiene-allow-hex: fixture data, never shipped.\n */\nconst c = "#0052CC";';
+    assert.equal(findRawHexColors(src).length, 0);
+  });
+
+  test('still honours a trailing exemption on the code line directly above', () => {
+    const src = 'const a = 1; // hygiene-allow-hex: fixture\nconst c = "#0052CC";';
+    assert.equal(findRawHexColors(src).length, 0);
+  });
+
+  test('a blank line ends the comment block, so the exemption does not reach', () => {
+    const src = '// hygiene-allow-hex: unrelated\n\nconst c = "#0052CC";';
+    assert.equal(findRawHexColors(src).length, 1);
+  });
+
+  test('a line of code ends the comment block, so the exemption does not reach', () => {
+    const src = '// hygiene-allow-hex: unrelated\n// more prose\nconst x = 1;\nconst c = "#0052CC";';
+    assert.equal(findRawHexColors(src).length, 1);
+  });
+
+  test('a comment block with no marker exempts nothing', () => {
+    const src = '// just explaining something\n// over two lines\nconst c = "#0052CC";';
+    assert.equal(findRawHexColors(src).length, 1);
+  });
 });
 
 describe('findUndersizedTouchTargets', () => {

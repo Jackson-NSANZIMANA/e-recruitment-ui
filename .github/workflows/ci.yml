@@ -22,6 +22,16 @@ env:
   BACKEND_SHA: 47d9ad3ab019f6d2f826cfae2136cbff898d733f
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
+  # One Trivy for the whole pipeline. The advisory scan (security-scan.sh, which
+  # falls back to a pinned aquasec/trivy image) and the blocking scan below used
+  # to resolve DIFFERENT Trivy versions, and on run 94637887182 they disagreed:
+  # the advisory one reported a HIGH in @remix-run/router, the blocking one
+  # reported the same lockfile clean. Two scanners that can contradict each
+  # other give you the answer you like, not the answer that is true.
+  TRIVY_VERSION: '0.70.0'
+  # Turborepo prints a telemetry notice in every job otherwise.
+  TURBO_TELEMETRY_DISABLED: '1'
+  DO_NOT_TRACK: '1'
 
 jobs:
   hygiene:
@@ -58,7 +68,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - name: Resolve workspace dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - uses: actions/cache/save@v4
         with:
           path: |
@@ -94,8 +104,8 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
-      - run: pnpm typecheck:affected
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: bash tooling/ci/run-scoped.sh typecheck
 
   ads-lint:
     name: ADS conformance
@@ -123,8 +133,8 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
-      - run: pnpm lint:affected
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: bash tooling/ci/run-scoped.sh lint
       - run: pnpm scan:cssmap
 
   contract-drift:
@@ -159,7 +169,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/contracts run drift:selftest
       - run: pnpm --filter @usrp/contracts run verify -- --backend "$GITHUB_WORKSPACE/backend"
 
@@ -189,8 +199,8 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
-      - run: pnpm test:affected
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: bash tooling/ci/run-scoped.sh test
 
   a11y:
     name: Accessibility
@@ -216,7 +226,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm --filter @usrp/design-system exec playwright install --with-deps chromium
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
@@ -246,7 +256,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm build
       - run: pnpm verify:extraction
       - run: pnpm size
@@ -281,7 +291,7 @@ jobs:
             packages/*/node_modules
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --no-frozen-lockfile --prefer-offline
+      - run: pnpm install --frozen-lockfile --prefer-offline
       # Scoped to apps/ so build output lands deterministically instead of
       # unpacking over the workspace root.
       - uses: actions/download-artifact@v4
@@ -319,6 +329,9 @@ jobs:
       - name: Trivy filesystem scan (blocking, fixable CRITICAL/HIGH only)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
+          # Pinned so this and security-scan.sh cannot resolve different
+          # databases and reach different verdicts on the same lockfile.
+          version: v${{ env.TRIVY_VERSION }}
           scan-type: fs
           scan-ref: .
           severity: CRITICAL,HIGH
@@ -338,10 +351,27 @@ jobs:
         run: |
           set -euo pipefail
           echo "$RESULTS" | jq .
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | .key + ": " + .value.result')
-          if [ -n "$failed" ]; then
-            echo "::error::Quality gate RED. Required jobs did not succeed:"
-            echo "$failed"
+
+          # Every job in `needs` is unconditional, so "skipped" here always means
+          # an upstream job failed and this one never ran. Both are red, but they
+          # are reported separately: naming the failure and the collateral apart
+          # points a reader at the cause instead of at a list of job names.
+          failed=$(echo "$RESULTS" | jq -r '
+            to_entries[] | select(.value.result == "failure" or .value.result == "cancelled")
+            | "  - " + .key + ": " + .value.result')
+          skipped=$(echo "$RESULTS" | jq -r '
+            to_entries[] | select(.value.result == "skipped") | "  - " + .key')
+
+          if [ -n "$failed" ] || [ -n "$skipped" ]; then
+            echo "::error::Quality gate RED."
+            if [ -n "$failed" ]; then
+              echo "Failed:"
+              echo "$failed"
+            fi
+            if [ -n "$skipped" ]; then
+              echo "Never ran (an upstream job failed):"
+              echo "$skipped"
+            fi
             exit 1
           fi
           echo "Quality gate GREEN."

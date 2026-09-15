@@ -185,7 +185,10 @@ export function assertPathsMatchContract(): void {
         problems.push(`${edgeOperation.id}: composed operation must list 2+ upstream operation IDs in composedOf.`);
       }
     } else if (edgeOperation.composition === 'single') {
-      if (edgeOperation.composedOf !== undefined) {
+      // `in` rather than a property read: EDGE_OPERATIONS is `as const`, so the
+      // 'single' literals have no composedOf for TS to see. The guard defends
+      // against a future edit, which the literal types cannot.
+      if ('composedOf' in edgeOperation) {
         problems.push(`${edgeOperation.id}: composedOf should only be set when composition is 'composed'.`);
       }
     }

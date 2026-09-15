@@ -7,7 +7,10 @@
   "license": "UNLICENSED",
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
   "//engines": "Node 22, in agreement with .node-version and @types/node below. This previously read '>=20 <=25' while .node-version pinned 22 and @types/node was ^26 - three different answers to one question, which lets a developer typecheck against APIs the pinned runtime does not have. Widen this range only together with .node-version and @types/node, in one commit.",
-  "engines": {"node": ">=22 <23", "pnpm": ">=9 <10"},
+  "engines": {
+    "node": ">=22 <23",
+    "pnpm": ">=9 <10"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
@@ -41,11 +44,18 @@
   "devDependencies": {
     "@atlaskit/ads-mcp": "1.7.3",
     "@atlaskit/tokens": "^16.4.0",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "1.62.1",
     "@types/node": "^22.15.0",
     "@types/react": "18",
     "@types/react-dom": "18",
     "prettier": "3.3.3",
     "turbo": "2.5.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@remix-run/router": "1.23.2",
+      "playwright": "1.62.1",
+      "playwright-core": "1.62.1"
+    }
   }
 }

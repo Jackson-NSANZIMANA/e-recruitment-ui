@@ -160,7 +160,12 @@ check_trivy() {
       fail "Trivy reported CRITICAL/HIGH findings"
     fi
   elif command -v docker >/dev/null 2>&1; then
-    if docker run --rm -v "$PWD:/scan" aquasec/trivy:0.58.1 fs --scanners vuln \
+    # Version comes from ci.yml so the advisory scan and the blocking
+    # trivy-action step cannot resolve different databases. On run 94637887182
+    # they did: 0.58.1 here reported a HIGH in @remix-run/router that the
+    # action's 0.70.0 did not. Keep the default in step with ci.yml's
+    # TRIVY_VERSION when you bump either one.
+    if docker run --rm -v "$PWD:/scan" "aquasec/trivy:${TRIVY_VERSION:-0.70.0}" fs --scanners vuln \
          --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --quiet /scan; then
       pass "Trivy (container): no CRITICAL/HIGH findings"
     else

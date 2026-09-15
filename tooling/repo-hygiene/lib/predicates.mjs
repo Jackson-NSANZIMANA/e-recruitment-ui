@@ -214,7 +214,7 @@ export function findRawHexColors(text) {
   const lines = stripComments(text).split(/\r?\n/);
 
   lines.forEach((rawLine, i) => {
-    if (isExempt(original[i] ?? '', original[i - 1], ALLOW_HEX_MARKER)) return;
+    if (isExempt(original, lines, i, ALLOW_HEX_MARKER)) return;
     HEX_RE.lastIndex = 0;
     let m;
     while ((m = HEX_RE.exec(rawLine)) !== null) {
@@ -257,7 +257,7 @@ export function findUndersizedTouchTargets(text, min = MIN_TOUCH_TARGET_PX) {
   const lines = stripComments(text).split(/\r?\n/);
 
   lines.forEach((rawLine, i) => {
-    if (isExempt(original[i] ?? '', original[i - 1], ALLOW_SMALL_TARGET_MARKER)) return;
+    if (isExempt(original, lines, i, ALLOW_SMALL_TARGET_MARKER)) return;
     PX_VALUE_RE.lastIndex = 0;
     let m;
     while ((m = PX_VALUE_RE.exec(rawLine)) !== null) {
@@ -299,7 +299,7 @@ export function findDomainIdentifiers(text) {
   const lines = stripComments(text).split(/\r?\n/);
 
   lines.forEach((rawLine, i) => {
-    if (isExempt(original[i] ?? '', original[i - 1], ALLOW_DOMAIN_MARKER)) return;
+    if (isExempt(original, lines, i, ALLOW_DOMAIN_MARKER)) return;
     for (const [id, re] of IDENTIFIER_RES) {
       re.lastIndex = 0;
       if (re.test(rawLine)) found.push({ line: i + 1, identifier: id });
@@ -343,13 +343,36 @@ function escapeRe(s) {
 }
 
 /**
- * An exemption counts when the marker is on the offending line or the line
- * directly above it, which is where a developer writes the justification.
+ * An exemption counts when the marker is on the offending line, on the line
+ * directly above it, or anywhere in the contiguous comment-only block that ends
+ * directly above it.
  *
- * @param {string} line
- * @param {string | undefined} previousLine
+ * The block walk is not a convenience. This gate's own error text tells a
+ * developer to "say why in the comment", and a why that is worth writing rarely
+ * fits on one line. Reading only one line up meant a two-line justification
+ * silently stopped exempting anything — the marker was present, greppable, and
+ * ignored. That is the worst failure mode a gate has: it looks answered.
+ *
+ * A blank line or a line of code ends the block, so an unrelated comment further
+ * up the file can never reach down and exempt something below it.
+ *
+ * @param {readonly string[]} originalLines source split by line, comments intact
+ * @param {readonly string[]} strippedLines same lines, comments blanked out
+ * @param {number} index zero-based index of the offending line
  * @param {string} marker
  */
-function isExempt(line, previousLine, marker) {
-  return line.includes(marker) || (previousLine ?? '').includes(marker);
+function isExempt(originalLines, strippedLines, index, marker) {
+  if ((originalLines[index] ?? '').includes(marker)) return true;
+
+  for (let i = index - 1; i >= 0; i -= 1) {
+    const original = originalLines[i] ?? '';
+    if (original.includes(marker)) return true;
+
+    // The line directly above counts whatever it is, so a trailing comment on a
+    // line of code still exempts the line below. Past that, keep walking only
+    // while the lines are comment-only.
+    const isCommentOnly = original.trim() !== '' && (strippedLines[i] ?? '').trim() === '';
+    if (!isCommentOnly) return false;
+  }
+  return false;
 }
