@@ -22,19 +22,6 @@ import { App } from "./app.js";
 
 setBooleanFeatureFlagResolver(() => false);
 
-// ══════════════════════════════════════════════════════════════════
-// i18n namespace registration — BEFORE render, deliberately.
-//
-// i18next returns THE KEY for a missing namespace. It does not throw and it does
-// not warn in production, so an unregistered slice renders the literal string
-// `adjudication.queue.title` as visible text to an officer. Registering here and
-// then asserting turns that into a startup failure, which is the trade every
-// other gate in this repository already makes.
-//
-// Registration is explicit rather than a side effect of importing the slice,
-// because a side effect would tie bundle loading to module evaluation order and
-// would pull all four bundles into any chunk that touched one.
-// ══════════════════════════════════════════════════════════════════
 registerAdjudicationLocales();
 registerComplianceLocales();
 registerFieldOpsLocales();
@@ -63,7 +50,16 @@ if (container === null) {
 
 createRoot(container).render(
   <StrictMode>
-    <ErrorBoundary>
+    <ErrorBoundary
+      onError={(error, componentStack) => {
+        // The shared boundary intentionally does not choose a logging policy.
+        // Keep local development diagnosable without exposing this detail to
+        // production users or shipping raw errors to a remote collector.
+        if (import.meta.env.DEV) {
+          console.error("[officer-console] render failure", error, componentStack);
+        }
+      }}
+    >
       <AppProvider
         routerLinkComponent={RouterLink}
         defaultColorMode="light"
