@@ -35,6 +35,9 @@ export {
   GENDERS,
   IDENTITY_STATUSES,
   APPLICATION_CHANNELS,
+  APPLICATION_CATEGORIES,
+  CATEGORY_AGENCY,
+  ACADEMIC_PATH_BY_CATEGORY,
   AUTH_KINDS,
   ROUTE_REACHES,
 } from './agency.js';
@@ -52,6 +55,7 @@ export type {
   Gender,
   IdentityStatus,
   ApplicationChannel,
+  ApplicationCategory,
   AuthKind,
   RouteReach,
 } from './agency.js';

@@ -9,7 +9,7 @@
 // inviting the next reader to think it matters.
 // ══════════════════════════════════════════════════════════════════
 
-import type { ApiClient } from '../transport.js';
+import type { ApiClient, ResponseMeta } from '../transport.js';
 import type {
   MyApplicationsResponse,
   SubmitApplicationInput,
@@ -30,11 +30,13 @@ export function submitMyApplication(
   input: SubmitApplicationInput,
   idempotencyKey: string,
   correlationId?: string,
+  onResponse?: (meta: ResponseMeta) => void,
 ): Promise<SubmitApplicationResponse> {
   return client.call<SubmitApplicationResponse>('submitMyApplication', {
     body: input,
     idempotencyKey,
     ...(correlationId === undefined ? {} : { correlationId }),
+    ...(onResponse === undefined ? {} : { onResponse }),
   });
 }
 

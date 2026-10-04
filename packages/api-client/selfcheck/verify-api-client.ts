@@ -11,6 +11,8 @@
 // ══════════════════════════════════════════════════════════════════
 
 import { ApiError, describeError, normaliseErrorBody, G2G_UNAVAILABLE_CODES } from '../src/errors.js';
+import { createApiClient } from '../src/transport.js';
+import { submitMyApplication } from '../src/operations/applicant.js';
 import { backoffDelayMs, shouldRetry, withRetry, type RetryPolicy } from '../src/retry.js';
 import { INVALIDATION_MAP, applicationKeys, applicantKeys, resolveInvalidation, sessionKeys } from '../src/keys.js';
 
@@ -181,6 +183,8 @@ deepEq('verifyIdentity invalidates NOTHING, and says so explicitly', INVALIDATIO
 ok('erasure invalidates the session too (ADR-015 terminates it)',
   (INVALIDATION_MAP['eraseIdentity'] ?? []).includes('session:current'));
 ok('every transition appears in the map', transitions.every((name) => INVALIDATION_MAP[name] !== undefined));
+ok('submitMyApplication refreshes the citizen projection',
+  JSON.stringify(INVALIDATION_MAP['submitMyApplication']) === JSON.stringify(['applicant:applications']));
 ok('registerWalkIn invalidates the list but has no row yet',
   JSON.stringify(INVALIDATION_MAP['registerWalkIn']) === JSON.stringify(['applications:list']));
 
@@ -192,6 +196,45 @@ deepEq('…and the citizen cache last (ADR-017 auto-withdrawal)', resolved[5], a
 deepEq('the session key resolves on its own target', resolveInvalidation(['session:current'], {})[0], sessionKeys.current());
 const withoutContext = resolveInvalidation(['applications:detail'], {});
 eq('a detail target with no applicationId resolves to nothing (never a broad nuke)', withoutContext.length, 0);
+
+// ══ Applicant submit wire proof ════════════════════════════════
+// This fixture stands in for the edge only. It proves the browser client sends
+// the exact allowlist and can observe the real replay header without turning
+// the mutation response into a fabricated application projection.
+let submitRequest: { url: string; init: RequestInit } | null = null;
+const submitClient = createApiClient({
+  baseUrl: '',
+  readCsrfToken: () => 'csrf-echo',
+  newCorrelationId: () => 'correlation-id',
+  fetchImpl: async (input, init) => {
+    submitRequest = { url: String(input), init: init ?? {} };
+    return new Response(JSON.stringify({
+      status: 'SUBMITTED',
+      applicationId: '123e4567-e89b-12d3-a456-426614174000',
+      processingCode: 'RDF-2026-000001',
+      agency: 'RDF',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json', 'Idempotency-Replayed': 'true' },
+    });
+  },
+});
+let replayMeta: { status: number; replayed: boolean } | null = null;
+await submitMyApplication(
+  submitClient,
+  { category: 'GENERAL_ENLISTMENT', nesaIndexNumber: 'NESA-123' },
+  '123e4567-e89b-12d3-a456-426614174001',
+  undefined,
+  (meta) => { replayMeta = { status: meta.status, replayed: meta.headers.get('Idempotency-Replayed') === 'true' }; },
+);
+const capturedRequest = submitRequest as unknown as { url: string; init: RequestInit };
+const capturedReplayMeta = replayMeta as unknown as { status: number; replayed: boolean };
+const submitHeaders = new Headers(capturedRequest.init.headers);
+ok('submit uses the exact browser-relative edge route', capturedRequest.url === '/edge/v1/me/applications');
+ok('submit sends the CSRF double-submit header', submitHeaders.get('x-csrf-token') === 'csrf-echo');
+ok('submit sends exactly one UUID idempotency key', submitHeaders.get('idempotency-key') === '123e4567-e89b-12d3-a456-426614174001');
+ok('submit sends only backend-supported fields', capturedRequest.init.body === JSON.stringify({ category: 'GENERAL_ENLISTMENT', nesaIndexNumber: 'NESA-123' }));
+ok('the replay header is observable without changing the response body', capturedReplayMeta.status === 200 && capturedReplayMeta.replayed);
 
 const total = passed + failures.length;
 if (failures.length > 0) {

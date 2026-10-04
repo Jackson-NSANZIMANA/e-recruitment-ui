@@ -7,9 +7,9 @@
 // before they cross the browser boundary.
 // ══════════════════════════════════════════════════════════════════
 
-import type { Agency, ApplicationStatus, StatusFor } from '@usrp/contracts';
+import type { Agency, ApplicationCategory, ApplicationStatus, StatusFor } from '@usrp/contracts';
 
-export type { Agency, ApplicationStatus, StatusFor };
+export type { Agency, ApplicationCategory, ApplicationStatus, StatusFor };
 
 /** `GET /edge/v1/applications` — the edge returns a bare projected array. */
 export type ApplicationListResponse = readonly ApplicationListRow[];
@@ -180,7 +180,7 @@ export interface MyApplicationRow {
 
 /** Exact `POST /edge/v1/me/applications` request and success projection. */
 export interface SubmitApplicationInput {
-  readonly category: string;
+  readonly category: ApplicationCategory;
   readonly nesaIndexNumber?: string;
   readonly hecRegistrationNumber?: string;
 }

@@ -95,6 +95,8 @@ export const INVALIDATION_MAP: Readonly<Record<string, readonly InvalidationTarg
    */
   verifyIdentity: [],
 
+  submitMyApplication: ['applicant:applications'],
+
   withdrawMyApplication: ['applicant:applications'],
 
   fileMyErasureRequest: ['applicant:erasure-request'],

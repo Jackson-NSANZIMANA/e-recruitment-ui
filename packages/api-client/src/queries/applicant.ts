@@ -33,9 +33,15 @@ import {
   fileMyErasureRequest,
   getMyErasureRequest,
   listMyApplications,
+  submitMyApplication,
   withdrawMyApplication,
 } from '../operations/applicant.js';
-import type { MyApplicationsResponse, WithdrawResponse } from '../wire.js';
+import type { MyApplicationsResponse, SubmitApplicationInput, SubmitApplicationResponse, WithdrawResponse } from '../wire.js';
+
+export interface SubmitApplicationMutationResult {
+  readonly response: SubmitApplicationResponse;
+  readonly outcome: 'SUBMITTED' | 'REPLAYED';
+}
 
 /**
  * The citizen's own applications, across all three agencies.
@@ -48,6 +54,34 @@ export function useMyApplications(client: ApiClient): UseQueryResult<MyApplicati
     queryKey: applicantKeys.myApplications(),
     queryFn: () => listMyApplications(client),
     staleTime: 30_000,
+  });
+}
+
+/**
+ * Submit through the exact citizen edge operation. The caller owns one UUID key
+ * for the lifetime of a filing attempt; a retry must pass that same key.
+ *
+ * The mutation deliberately returns the backend body only as a nested response.
+ * The page refreshes the bare citizen projection and renders that projection,
+ * never inventing an application row from this mutation response.
+ */
+export function useSubmitMyApplication(
+  client: ApiClient,
+): UseMutationResult<SubmitApplicationMutationResult, Error, { input: SubmitApplicationInput; idempotencyKey: string }> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ input, idempotencyKey }) => {
+      let replayed = false;
+      const response = await submitMyApplication(client, input, idempotencyKey, undefined, (meta) => {
+        replayed = meta.status === 200 && meta.headers.get('Idempotency-Replayed') === 'true';
+      });
+      return { response, outcome: replayed ? 'REPLAYED' : 'SUBMITTED' };
+    },
+    onSuccess: async () => {
+      const key = applicantKeys.myApplications();
+      await qc.invalidateQueries({ queryKey: key });
+      await qc.refetchQueries({ queryKey: key, type: 'all' });
+    },
   });
 }
 

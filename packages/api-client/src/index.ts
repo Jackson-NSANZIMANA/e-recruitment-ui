@@ -13,7 +13,7 @@
 
 // ── Transport ──
 export { createApiClient, CSRF_HEADER, CSRF_COOKIE_SECURE, CSRF_COOKIE_DEV, CORRELATION_HEADER } from './transport.js';
-export type { ApiClient, ApiClientOptions, CallOptions, RequestRecord } from './transport.js';
+export type { ApiClient, ApiClientOptions, CallOptions, RequestRecord, ResponseMeta } from './transport.js';
 
 // ── Paths (exact only, validated against the contract) ──
 //
@@ -61,6 +61,7 @@ export type {
   IdentityVerifyResponse,
   MyApplicationsResponse,
   MyApplicationRow,
+  ApplicationCategory,
   SubmitApplicationInput,
   SubmitApplicationResponse,
   WithdrawResponse,
@@ -132,6 +133,7 @@ export {
 } from './queries/applications.js';
 export {
   useMyApplications,
+  useSubmitMyApplication,
   useWithdrawMyApplication,
   useMyErasureRequest,
   useFileErasureRequest,

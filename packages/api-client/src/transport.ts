@@ -52,7 +52,14 @@ export interface RequestRecord {
   readonly error: string | null;
 }
 
+export interface ResponseMeta {
+  readonly status: number;
+  readonly headers: Headers;
+}
+
 export interface CallOptions {
+  /** Observe the exact successful HTTP response without changing the parsed body. */
+  readonly onResponse?: (meta: ResponseMeta) => void;
   /** Query params. GET single-record reads use `?applicationId=` (ADR-005). */
   readonly query?: Readonly<Record<string, string>>;
   readonly body?: unknown;
@@ -104,8 +111,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   const retryPolicy = options.retryPolicy ?? DEFAULT_RETRY_POLICY;
 
   const callOnce = async <T>(edgeOperation: EdgeOperation, correlationId: string, callOptions: CallOptions): Promise<T> => {
-    const url = new URL(edgeOperation.edgePath, options.baseUrl);
+    const relativeBase = options.baseUrl === "";
+    const url = new URL(edgeOperation.edgePath, relativeBase ? "https://relative.edge.invalid" : options.baseUrl);
     for (const [key, value] of Object.entries(callOptions.query ?? {})) url.searchParams.set(key, value);
+    const requestUrl = relativeBase ? `${url.pathname}${url.search}` : url.toString();
 
     const headers: Record<string, string> = { accept: 'application/json', [CORRELATION_HEADER]: correlationId };
     const isUnsafe = edgeOperation.method === 'POST';
@@ -121,7 +130,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     const started = Date.now();
     let response: Response;
     try {
-      response = await doFetch(url.toString(), {
+      response = await doFetch(requestUrl, {
         method: edgeOperation.method,
         // The cookie IS the credential and the browser attaches it.
         credentials: 'include',
@@ -164,6 +173,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       operationId: edgeOperation.id, method: edgeOperation.method, path: edgeOperation.edgePath,
       status: response.status, correlationId, durationMs: Date.now() - started, error: null,
     });
+    callOptions.onResponse?.({ status: response.status, headers: response.headers });
     return (response.status === 204 ? ({} as T) : (parsed as T));
   };
 
