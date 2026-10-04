@@ -103,7 +103,10 @@
       "STALE - those packages have declared lint and test since 2026-08-31 - and",
       "were removed. Two (@usrp/contract-drift, @usrp/edge-dev) were absent and",
       "were added; they became visible when tooling/* entered the workspace",
-      "globs. Real remaining gap count: 10.",
+      "globs. edge-dev now has executable typecheck and test scripts; its remaining",
+      "lint gap is intentionally visible in the ledger below. Surface-contract also",
+      "declares executable lint and test proofs. Remaining gaps are not silently",
+      "skipped.",
       "",
       "KNOWN LIMIT OF THIS GATE, recorded so it is not mistaken for coverage: it",
       "asserts a script is DECLARED, never that the declaration can RUN. All six",
@@ -127,11 +130,6 @@
       "@usrp/contract-drift": {
         "scripts": ["lint", "test"],
         "reason": "DEBT. Declares typecheck. Its real proof is `selftest` (30 assertions that plant every kind of drift and assert each gate goes red), which ci.yml runs as drift:selftest BEFORE trusting the tool - so the package is genuinely proven, just not under the script names this gate looks for. Renaming selftest to test is the cheap close; it was not done here because ci.yml and packages/contracts both invoke the current name.",
-        "owner": "frontend-architect"
-      },
-      "@usrp/edge-dev": {
-        "scripts": ["typecheck", "lint", "test"],
-        "reason": "DEBT, and the MISSING TYPECHECK IS THE URGENT ONE. This package ships a tsconfig.json and every script runs it through `node --experimental-strip-types`, which ERASES types without checking them - so nothing anywhere verifies the types of the dev edge gateway that terminates the session cookie and brokers system tokens. It has a real 143-assertion `selfcheck` over live sockets, so behaviour is proven; types are not. Closing this needs typescript as a devDependency, which is a lockfile change, so it is deliberately not bundled into a config-only commit.",
         "owner": "frontend-architect"
       }
     }

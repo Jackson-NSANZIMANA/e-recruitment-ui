@@ -11,6 +11,7 @@
     "dev:mocks": "node --experimental-strip-types src/main.ts --deployment=agency --agency=RDF --mocks",
     "selfcheck": "node --experimental-strip-types selfcheck/verify-edge.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint src mocks selfcheck --ext .ts",
     "test": "node --experimental-strip-types selfcheck/verify-edge.ts",
     "check:contracts": "tsx scripts/check-against-contracts.ts",
     "ports": "node --experimental-strip-types -e \"import('./src/ports.ts').then(m=>{m.assertNoPortCollisions();console.log(m.renderPortTable());})\"",
@@ -20,7 +21,13 @@
     "node": ">=22.6"
   },
   "devDependencies": {
+    "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@atlaskit/eslint-plugin-ui-styling-standard": "^1.0.0",
+    "@compiled/eslint-plugin": "^0.14.0",
     "@types/node": "^22.15.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@usrp/eslint-config": "workspace:*",
+    "eslint": "^9.39.5",
     "typescript": "~5.4.0"
   }
 }

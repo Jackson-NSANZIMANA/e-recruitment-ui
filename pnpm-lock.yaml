@@ -1162,9 +1162,27 @@ importers:
 
   tooling/edge-dev:
     devDependencies:
+      '@atlaskit/eslint-plugin-design-system':
+        specifier: ^16.10.0
+        version: 16.10.0(eslint@9.39.5)(react@18.3.1)(typescript@5.4.5)
+      '@atlaskit/eslint-plugin-ui-styling-standard':
+        specifier: ^1.0.0
+        version: 1.6.4(eslint@9.39.5)(react@18.3.1)(typescript@5.4.5)
+      '@compiled/eslint-plugin':
+        specifier: ^0.14.0
+        version: 0.14.1
       '@types/node':
         specifier: ^22.15.0
         version: 22.20.2
+      '@typescript-eslint/parser':
+        specifier: ^7.18.0
+        version: 7.18.0(eslint@9.39.5)(typescript@5.4.5)
+      '@usrp/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5
       typescript:
         specifier: ~5.4.0
         version: 5.4.5
