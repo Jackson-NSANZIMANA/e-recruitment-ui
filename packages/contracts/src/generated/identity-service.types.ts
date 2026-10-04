@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  47d9ad3ab019f6d2f826cfae2136cbff898d733f          ║
+// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -57,6 +57,8 @@ import type {
   RawNationalIdSchema,
   OtpRequestBodySchema,
   OtpVerifyBodySchema,
+  SubmitApplicationRequestSchema,
+  SubmitApplicationResponseSchema,
   Unauthenticated401Schema,
   UpstreamUnavailable502Schema,
   VerifyIdentity400Schema,
@@ -108,6 +110,8 @@ export type OtpChallenged202 = z.infer<typeof OtpChallenged202Schema>;
 export type RawNationalId = z.infer<typeof RawNationalIdSchema>;
 export type OtpRequestBody = z.infer<typeof OtpRequestBodySchema>;
 export type OtpVerifyBody = z.infer<typeof OtpVerifyBodySchema>;
+export type SubmitApplicationRequest = z.infer<typeof SubmitApplicationRequestSchema>;
+export type SubmitApplicationResponse = z.infer<typeof SubmitApplicationResponseSchema>;
 export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
 export type UpstreamUnavailable502 = z.infer<typeof UpstreamUnavailable502Schema>;
 export type VerifyIdentity400 = z.infer<typeof VerifyIdentity400Schema>;

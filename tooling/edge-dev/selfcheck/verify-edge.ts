@@ -96,7 +96,7 @@ interface CallOptions {
   readonly body?: unknown;
   readonly jar?: Jar;
   readonly origin?: string | null;
-  readonly csrf?: string | null;
+  readonly csrf?: string | null | undefined;
   readonly correlationId?: string;
 }
 
@@ -224,10 +224,10 @@ async function run(): Promise<void> {
       } catch { return true; }
     })());
     eq('identity-service owns :4001', SERVICE_PORTS.find((p) => p.port === 4001)?.name, 'identity-service');
-    eq('officer console targets agency-bff (RDF) on :4021', EDGE_PORTS.find((p) => p.port === 4021)?.name, 'agency-bff (RDF)');
+    eq('officer console targets the single edge gateway on :4021', EDGE_PORTS.find((p) => p.port === 4021)?.name, 'edge-gateway');
     ok('no app port collides with a service port',
       !APP_PORTS.some((app) => SERVICE_PORTS.some((service) => service.port === app.port)));
-    eq('the map covers every process', ALL_PORTS.length, 25);
+    eq('the map covers every process', ALL_PORTS.length, 21);
 
     // ══ 2. Exact-path discipline ═════════════════════════════════
     const allEdgePaths = [...rdfRoutes, ...citizenRoutes].map((route) => route.path);

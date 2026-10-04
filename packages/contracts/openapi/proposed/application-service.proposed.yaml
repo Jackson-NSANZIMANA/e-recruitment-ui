@@ -15,7 +15,7 @@ info:
     Written to be handed to the backend team as-is. Each operation states WHAT
     BREAKS WITHOUT IT, because a proposal that only describes a shape invites a
     shape argument instead of a priority decision.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
 
 paths:

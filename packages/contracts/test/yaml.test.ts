@@ -21,8 +21,8 @@ test('scalars keep their types', () => {
 });
 
 test('a sha that is not all digits stays a string', () => {
-  assert.deepEqual(parse('sha: 47d9ad3ab019f6d2f826cfae2136cbff898d733f\n'), {
-    sha: '47d9ad3ab019f6d2f826cfae2136cbff898d733f',
+  assert.deepEqual(parse('sha: 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab\n'), {
+    sha: '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab',
   });
 });
 

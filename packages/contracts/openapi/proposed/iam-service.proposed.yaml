@@ -5,7 +5,7 @@ openapi: "3.1.0"
 info:
   title: "PROPOSED USRP iam-service additions"
   version: "0.0.0-proposal"
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
 paths:
   /v1/auth/officer/me:

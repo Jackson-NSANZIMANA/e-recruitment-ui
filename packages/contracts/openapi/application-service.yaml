@@ -2,7 +2,7 @@
 # application-service — the state owner and the officer front door.
 #
 # HAND-AUTHORED from all five controllers and src/main.ts at backend SHA
-# 47d9ad3. Every operation in this document is x-usrp-verified:
+# 06d9f9b. Every operation in this document is x-usrp-verified:
 # controller-verbatim — the request and response shapes were transcribed from
 # the named controller file, field by field. Nothing here is derived from a
 # commit message or a selfcheck summary.
@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405

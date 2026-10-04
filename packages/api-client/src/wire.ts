@@ -3,7 +3,7 @@
 //
 // ⚠ A DECLARED ASSUMPTION, NOT A CLAIM OF VERIFICATION.
 //
-// These interfaces are transcribed from the backend controllers at 47d9ad3
+// These interfaces are transcribed from the backend controllers at 06d9f9b6
 // (`officer-transitions.controller.ts`, `walk-in.controller.ts`,
 // `list-applications.controller.ts`, `applicant-auth.controller.ts`). They are
 // NOT imported from `@usrp/contracts`, and that is a known gap rather than a
@@ -24,6 +24,7 @@
 // ══════════════════════════════════════════════════════════════════
 
 import type { Agency, ApplicationStatus, StatusFor } from '@usrp/contracts';
+import type { identityServiceTypes } from '@usrp/contracts/generated';
 
 export type { Agency, ApplicationStatus, StatusFor };
 
@@ -178,6 +179,11 @@ export interface MyApplicationRow {
   readonly processingCode: string;
   readonly submittedAt: string;
 }
+
+/** ADR-027: the citizen's own filing request. Identity and channel are server-derived. */
+export type SubmitApplicationInput = identityServiceTypes.SubmitApplicationRequest;
+
+export type SubmitApplicationResponse = identityServiceTypes.SubmitApplicationResponse;
 
 /** ADR-020 self-withdrawal. Four outcomes across three status codes. */
 export type WithdrawResponse =

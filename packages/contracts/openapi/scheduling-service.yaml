@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════
 # scheduling-service — an EVENT-DRIVEN stage gate with one read route.
 #
-# HAND-AUTHORED from src/main.ts at backend SHA 47d9ad3. This service has NO
+# HAND-AUTHORED from src/main.ts at backend SHA 06d9f9b. This service has NO
 # adapters/http directory: its single business route is declared inline in the
 # composition root, which is why every survey that walked
 # services/*/src/adapters/http/** missed it.
@@ -25,7 +25,7 @@ info:
     physicalTestScheduledAt; the citizen's own reads expose status and nothing
     else. That is the most consequential read gap in the platform for an actual
     applicant, and it is specced in openapi/proposed/.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_SCHEDULING_SERVICE"
   x-usrp-transport-faults:
     - status: 405

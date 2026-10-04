@@ -5,7 +5,7 @@ export interface ManifestRoute { readonly method: string; readonly path: string;
 export interface ManifestService { readonly controllerDir: string | null; readonly readinessCallback: boolean; readonly routes: readonly ManifestRoute[]; }
 export interface Manifest { readonly backendSha: string; readonly services: Readonly<Record<string, ManifestService>>; }
 export type Severity = 'error' | 'note';
-export interface Finding { readonly gate: 'A' | 'B' | 'C'; readonly severity: Severity; readonly service: string; readonly message: string; }
+export interface Finding { readonly gate: 'A' | 'B' | 'C' | 'D'; readonly severity: Severity; readonly service: string; readonly message: string; }
 
 const PROBE_PATHS = new Set(['/health', '/ready']);
 const key = (method: string, path: string): string => `${method.toUpperCase()} ${path}`;

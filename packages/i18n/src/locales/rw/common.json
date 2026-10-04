@@ -68,7 +68,21 @@
     "last_updated": "Ivugurura rya nyuma",
     "history": "Amateka y'ibikorwa",
     "documents": "Inyandiko",
-    "actions": "Ibikorwa"
+    "actions": "Ibikorwa",
+    "status": "Imimerere",
+    "workspace_description": "Suzuma dosiye z’abasaba akazi z’ikigo cyawe kandi ufungure dosiye urebe amateka y’ibyemezo.",
+    "search_label": "Shakisha dosiye z’abasaba",
+    "search_description": "Shakisha ukoresheje nimero ya dosiye, kode y’itunganwa, cyangwa imimerere iriho.",
+    "result_count": "Dosiye {{count}} zigaragara",
+    "no_results": "Nta dosiye zihuye n’ishakisha ryawe",
+    "no_results_description": "Gerageza indi nimero ya dosiye, kode y’itunganwa, cyangwa imimerere.",
+    "no_applications": "Nta dosiye ziraboneka",
+    "no_applications_description": "Dosiye zahawe ikigo cyawe zizagaragara hano.",
+    "load_error": "Ntitwabashije kubona dosiye z’iki kigo.",
+    "no_history": "Nta mateka y’imimerere y’iyi dosiye araboneka kugeza ubu.",
+    "partial_title": "Hari amakuru ataboneka",
+    "partial_description": "Iyi dosiye iraboneka, ariko hari ibice by’amakuru bitashoboye gufunguka.",
+    "loading_application": "Dosiye irimo gutangizwa"
   },
   "actions": {
     "approve": "Emera",
@@ -83,7 +97,8 @@
     "submit": "Ohereza",
     "back": "Subira inyuma",
     "next": "Komeza",
-    "finish": "Rangiza"
+    "finish": "Rangiza",
+    "try_again": "Ongera ugerageze"
   },
   "errors": {
     "generic": "Hari ikibazo. Ongera ugerageze.",
@@ -104,7 +119,9 @@
     "open_menu": "Fungura menu",
     "play_audio_help": "Umva amabwiriza y'amajwi",
     "collapse_nav": "Funga urutonde rw'ibikubiye",
-    "expand_nav": "Fungura urutonde rw'ibikubiye"
+    "expand_nav": "Fungura urutonde rw'ibikubiye",
+    "loading_applications": "Dosiye zirimo gutangizwa…",
+    "loading_application": "Dosiye irimo gutangizwa…"
   },
   "biometric_consent": {
     "title": "Kwemera Gufatwa kw'Amakuru ya Biometrike",
@@ -116,7 +133,11 @@
   "officer_actions": {
     "request_documents": "Saba inyandiko",
     "reject_confirm_title": "Nanga ubusabe",
-    "reject_confirm_body": "Urizeye ko ushaka kwanga ubu busabe? Ibi ntibishobora gusubizwa inyuma."
+    "reject_confirm_body": "Urizeye ko ushaka kwanga ubu busabe? Ibi ntibishobora gusubizwa inyuma.",
+    "action_completed": "Igikorwa cyarangiye",
+    "action_completed_description": "Dosiye yavuguruwe. Dosiye n’imirongo yayo birimo kuvugururwa.",
+    "conflict": "Dosiye yahindutse mbere y’uko igikorwa kirangira",
+    "conflict_description": "Ongera ufungure dosiye urebe imimerere iriho mbere yo kongera kugerageza."
   },
   "scan": {
     "start": "Tangira gusikana",

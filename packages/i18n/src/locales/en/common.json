@@ -68,7 +68,21 @@
     "last_updated": "Last updated",
     "history": "Event history",
     "documents": "Documents",
-    "actions": "Actions"
+    "actions": "Actions",
+    "status": "Status",
+    "workspace_description": "Review applications within your agency and open a record to inspect its decision history.",
+    "search_label": "Search applications",
+    "search_description": "Search by application ID, processing code, or current status.",
+    "result_count": "{{count}} applications shown",
+    "no_results": "No applications match your search",
+    "no_results_description": "Try a different application ID, processing code, or status.",
+    "no_applications": "No applications yet",
+    "no_applications_description": "Applications assigned to your agency will appear here.",
+    "load_error": "We could not load the applications for this agency.",
+    "no_history": "No status history is available for this application yet.",
+    "partial_title": "Some information is unavailable",
+    "partial_description": "This record is available, but one or more supporting panels could not be loaded.",
+    "loading_application": "Loading application"
   },
   "actions": {
     "approve": "Approve",
@@ -83,7 +97,8 @@
     "submit": "Submit",
     "back": "Back",
     "next": "Next",
-    "finish": "Finish"
+    "finish": "Finish",
+    "try_again": "Try again"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -104,7 +119,9 @@
     "open_menu": "Open menu",
     "play_audio_help": "Play audio guidance",
     "collapse_nav": "Collapse navigation",
-    "expand_nav": "Expand navigation"
+    "expand_nav": "Expand navigation",
+    "loading_applications": "Loading applications…",
+    "loading_application": "Loading application…"
   },
   "biometric_consent": {
     "title": "Biometric Data Collection Consent",
@@ -116,7 +133,11 @@
   "officer_actions": {
     "request_documents": "Request documents",
     "reject_confirm_title": "Reject application",
-    "reject_confirm_body": "Are you sure you want to reject this application? This action cannot be undone."
+    "reject_confirm_body": "Are you sure you want to reject this application? This action cannot be undone.",
+    "action_completed": "Action completed",
+    "action_completed_description": "The application has been updated. The record and its queues are being refreshed.",
+    "conflict": "The application changed before this action completed",
+    "conflict_description": "Refresh the record and confirm the current status before trying again."
   },
   "scan": {
     "start": "Start scanning",

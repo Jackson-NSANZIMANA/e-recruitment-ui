@@ -55,7 +55,7 @@ export interface PortEntry {
 }
 
 /**
- * Eleven backend services, transcribed from `.env.example` at backend 47d9ad3.
+ * Eleven backend services, transcribed from `.env.example` at backend 06d9f9b6.
  * `loadRuntimeConfig` DERIVES each variable name from the service name
  * (`identity-service` -> `PORT_IDENTITY_SERVICE`), so these names are computed
  * facts rather than a hand-kept list.

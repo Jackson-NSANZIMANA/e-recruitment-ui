@@ -1,0 +1,98 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 1,
+  "id": "officer.application-workspace",
+  "title": "Officer application workspace",
+  "audience": "officer",
+  "owner": "apps/officer-console",
+  "purpose": "Let an agency officer find, inspect, and take an authorized action on applications without losing status, history, or error context.",
+  "routes": [
+    {
+      "path": "/applications",
+      "source": "apps/officer-console/src/routes/applications.tsx",
+      "role": "list"
+    },
+    {
+      "path": "/applications/:id",
+      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "role": "detail"
+    }
+  ],
+  "operations": [
+    "listApplications",
+    "getApplicationDetail",
+    "acceptApplication",
+    "adjudicateApplication"
+  ],
+  "ads": [
+    {
+      "name": "PageHeader",
+      "source": "apps/officer-console/src/routes/applications.tsx",
+      "import": "@atlaskit/page-header"
+    },
+    {
+      "name": "DynamicTable",
+      "source": "apps/officer-console/src/routes/applications.tsx",
+      "import": "@atlaskit/dynamic-table"
+    },
+    {
+      "name": "Textfield",
+      "source": "apps/officer-console/src/routes/applications.tsx",
+      "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "ApplicationActions",
+      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "import": "../components/ApplicationActions/index.js"
+    },
+    {
+      "name": "ApplicationStatusBadge",
+      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "import": "@usrp/ui"
+    }
+  ],
+  "states": [
+    {
+      "surface": "list",
+      "required": ["loading", "populated", "empty", "filtered-empty", "error"],
+      "source": "apps/officer-console/src/routes/applications.tsx",
+      "evidence": ["isLoading", "isError", "emptyView", "application.no_results"]
+    },
+    {
+      "surface": "detail",
+      "required": ["loading", "populated", "not-found", "forbidden", "partial"],
+      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "evidence": ["isLoading", "ApiError", "partial", "aria-live"]
+    },
+    {
+      "surface": "actions",
+      "required": ["idle", "pending", "success", "failure", "conflict"],
+      "source": "apps/officer-console/src/components/ApplicationActions/index.tsx",
+      "evidence": ["isPending", "aria-live", "conflict", "onActionComplete"]
+    }
+  ],
+  "accessibility": [
+    "search has a programmatic label and description",
+    "status is not communicated by color alone",
+    "action feedback is announced without moving focus unexpectedly",
+    "modal destructive action has a clear accessible title",
+    "all user-facing text is translated"
+  ],
+  "tests": [
+    "apps/officer-console/e2e/application-flow.spec.ts",
+    "packages/features/applications/src/model/draft.test.ts",
+    "packages/testing/proofs/03-platform-invariants.mjs"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  }
+}

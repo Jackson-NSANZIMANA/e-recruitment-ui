@@ -68,7 +68,21 @@
     "last_updated": "Dernière mise à jour",
     "history": "Historique des événements",
     "documents": "Documents",
-    "actions": "Actions"
+    "actions": "Actions",
+    "status": "Statut",
+    "workspace_description": "Examinez les candidatures de votre agence et ouvrez un dossier pour consulter l’historique des décisions.",
+    "search_label": "Rechercher des candidatures",
+    "search_description": "Recherchez par identifiant, code de traitement ou statut actuel.",
+    "result_count": "{{count}} candidatures affichées",
+    "no_results": "Aucune candidature ne correspond à votre recherche",
+    "no_results_description": "Essayez un autre identifiant, code de traitement ou statut.",
+    "no_applications": "Aucune candidature pour le moment",
+    "no_applications_description": "Les candidatures attribuées à votre agence apparaîtront ici.",
+    "load_error": "Impossible de charger les candidatures de cette agence.",
+    "no_history": "Aucun historique de statut n’est encore disponible pour cette candidature.",
+    "partial_title": "Certaines informations sont indisponibles",
+    "partial_description": "Le dossier est disponible, mais certains panneaux complémentaires n’ont pas pu être chargés.",
+    "loading_application": "Chargement de la candidature"
   },
   "actions": {
     "approve": "Approuver",
@@ -83,7 +97,8 @@
     "submit": "Soumettre",
     "back": "Retour",
     "next": "Suivant",
-    "finish": "Terminer"
+    "finish": "Terminer",
+    "try_again": "Réessayer"
   },
   "errors": {
     "generic": "Une erreur s'est produite. Veuillez réessayer.",
@@ -104,7 +119,9 @@
     "open_menu": "Ouvrir le menu",
     "play_audio_help": "Lire le guide audio",
     "collapse_nav": "Réduire la navigation",
-    "expand_nav": "Développer la navigation"
+    "expand_nav": "Développer la navigation",
+    "loading_applications": "Chargement des candidatures…",
+    "loading_application": "Chargement de la candidature…"
   },
   "biometric_consent": {
     "title": "Consentement à la collecte de données biométriques",
@@ -116,7 +133,11 @@
   "officer_actions": {
     "request_documents": "Demander des documents",
     "reject_confirm_title": "Rejeter la candidature",
-    "reject_confirm_body": "Êtes-vous sûr de vouloir rejeter cette candidature ? Cette action est irréversible."
+    "reject_confirm_body": "Êtes-vous sûr de vouloir rejeter cette candidature ? Cette action est irréversible.",
+    "action_completed": "Action terminée",
+    "action_completed_description": "La candidature a été mise à jour. Le dossier et ses files sont en cours d’actualisation.",
+    "conflict": "La candidature a changé avant la fin de cette action",
+    "conflict_description": "Actualisez le dossier et confirmez le statut actuel avant de réessayer."
   },
   "scan": {
     "start": "Démarrer le scan",

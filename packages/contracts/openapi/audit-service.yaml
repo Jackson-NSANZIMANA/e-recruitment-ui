@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════
 # audit-service — NO BUSINESS HTTP SURFACE.
 #
-# HAND-AUTHORED from src/main.ts at backend SHA 47d9ad3. This service has no
+# HAND-AUTHORED from src/main.ts at backend SHA 06d9f9b. This service has no
 # src/adapters/http directory and passes no business routes to startHttpServer.
 # It is authored here anyway, with an empty business surface, because an ABSENT
 # document and a document that says "nothing here" are different claims, and
@@ -18,7 +18,7 @@ info:
 
 
     THERE IS NO AUDIT READ ENDPOINT. The log is written and never served over HTTP. An officer console cannot show an audit trail from this service, and a compliance screen backed by it is unimplementable today. The per-application transition trail is a different artifact, served by application-service GET /v1/applications/status-history.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_AUDIT_SERVICE"
   x-usrp-business-routes: 0
 

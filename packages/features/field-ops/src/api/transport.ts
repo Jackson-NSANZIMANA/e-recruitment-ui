@@ -1,9 +1,11 @@
-// field-ops transport boundary
+// Field-operations transport boundary.
 //
-// The backend edge-runtime branch now implements the browser-facing field-sync
-// routes. They remain intentionally OUT of EdgeOperationId until the backend
-// runtime is merged and the frontend CI backend pin is updated. This distinction
-// is load-bearing: an unmerged branch is not a production dependency.
+// The current backend main commit exposes the field-sync edge routes. They are
+// now active EdgeOperationId values and can be called by a feature adapter. The
+// tablet queue is still deliberately disabled: browser reachability is not the
+// same claim as durable offline capture, idempotent replay, and conflict-safe
+// local persistence. That distinction prevents a UI from promising sync before
+// the IndexedDB command queue exists.
 
 import type { ApiClient, CallOptions, EdgeOperationId } from '@usrp/api-client';
 
@@ -13,13 +15,14 @@ export const FIELD_OPS_OPERATIONS = [
   'verifyIdentity',
   'registerWalkIn',
   'vetWalkIn',
+  'enrollFieldDevice',
+  'syncFieldScores',
+  'resolveFieldConflict',
 ] as const satisfies readonly EdgeOperationId[];
 
 export type FieldOpsOperation = (typeof FIELD_OPS_OPERATIONS)[number];
 
-export type UnservedReason =
-  | 'edge-runtime-not-promoted'
-  | 'upstream-unverified';
+export type UnservedReason = 'upstream-unverified';
 
 export interface UnservedOperation {
   readonly name: string;
@@ -32,39 +35,11 @@ export interface UnservedOperation {
 }
 
 /**
- * These routes exist on backend edge-runtime commit
- * cd45fafe6814964a34b7899a22e5ee2493357468, but that branch is not the pinned
- * backend release line. They are metadata only and cannot be passed to the
- * operation transport by construction.
+ * Biometric verification remains unserved because no controller evidence has
+ * been reviewed. It must not be promoted from a package directory or a design
+ * document alone.
  */
-export const FIELD_OPS_PENDING_EDGE_PROMOTION: readonly UnservedOperation[] = [
-  {
-    name: 'enrollFieldDevice',
-    reason: 'edge-runtime-not-promoted',
-    upstreamPath: 'POST /v1/field-sync/devices',
-    edgePath: 'POST /edge/v1/field-sync/devices',
-    evidence: 'services/edge-gateway/src/adapters/http/field-sync.controller.ts',
-    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
-    note: 'Implemented on the runtime branch. Promote only after backend merge, pinned-contract regeneration, and live smoke proof.',
-  },
-  {
-    name: 'syncFieldScores',
-    reason: 'edge-runtime-not-promoted',
-    upstreamPath: 'POST /v1/field-sync/scores',
-    edgePath: 'POST /edge/v1/field-sync/scores',
-    evidence: 'services/edge-gateway/src/adapters/http/field-sync.controller.ts',
-    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
-    note: 'Device-signed batch forwarding exists on the runtime branch. The tablet queue stays disabled until the merged edge contract is pinned and proven.',
-  },
-  {
-    name: 'resolveFieldSyncConflict',
-    reason: 'edge-runtime-not-promoted',
-    upstreamPath: 'POST /v1/field-sync/conflicts/resolve',
-    edgePath: 'POST /edge/v1/field-sync/conflicts/resolve',
-    evidence: 'services/edge-gateway/src/adapters/http/field-sync.controller.ts',
-    runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468',
-    note: 'Conflict resolution exists on the runtime branch. Keep the human-resolution model, including the 50-character cap and explicit NO_CONFLICT state.',
-  },
+export const FIELD_OPS_UNSERVED: readonly UnservedOperation[] = [
   {
     name: 'verifyBiometric',
     reason: 'upstream-unverified',
@@ -72,18 +47,18 @@ export const FIELD_OPS_PENDING_EDGE_PROMOTION: readonly UnservedOperation[] = [
     edgePath: null,
     evidence: null,
     runtimeCommit: null,
-    note: 'No controller evidence reviewed. Do not promote this operation from a directory listing or a design document.',
+    note: 'No controller evidence reviewed. Do not expose a biometric operation until the backend source, edge registry, and privacy contract are verified together.',
   },
 ];
 
-/** The tablet must not enqueue work for an unpromoted browser contract. */
+/**
+ * The edge can receive field-sync commands, but the tablet has no durable local
+ * command queue yet. Keep offline capture disabled until the queue, idempotency,
+ * replay, and conflict UI are implemented and proved.
+ */
 export const OFFLINE_CAPTURE_CAN_SYNC = false;
 
-/**
- * Promotion predicate used by tests and the future activation change. It is
- * intentionally separate from the feature flag: a route can exist on a branch
- * and still be unsafe to activate in the pinned frontend.
- */
+/** True when the active frontend registry contains the promoted sync operation. */
 export function fieldSyncIsReachable(edgeOperationIds: readonly string[]): boolean {
   return edgeOperationIds.includes('syncFieldScores');
 }

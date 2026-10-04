@@ -16,5 +16,5 @@ through the generated Zod schema, and asserts both reach the same verdict. A
 disagreement fails the gate and names the case.
 
 Provenance is per case in `why`. Values are transcribed from the controller
-response mappings at backend SHA `47d9ad3`, cross-read against the selfcheck
+response mappings at backend SHA `06d9f9b6`, cross-read against the selfcheck
 suites named in each service document.

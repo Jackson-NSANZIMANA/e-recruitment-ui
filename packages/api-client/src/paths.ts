@@ -12,21 +12,12 @@ export interface EdgeOperation {
   readonly compositionReason?: string;
 }
 
-export interface PendingEdgeRuntimeOperation {
-  readonly id: string;
-  readonly edgePath: string;
-  readonly method: 'POST';
-  readonly session: 'officer';
-  readonly upstreamOperationId: string;
-  readonly runtimeCommit: string;
-  readonly promotionBlocker: 'backend-merge-and-pin';
-}
-
-export const EDGE_RUNTIME_PENDING_OPERATIONS = [
-  { id: 'enrollFieldDevice', edgePath: '/edge/v1/field-sync/devices', method: 'POST', session: 'officer', upstreamOperationId: 'enrollFieldDevice', runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468', promotionBlocker: 'backend-merge-and-pin' },
-  { id: 'syncFieldScores', edgePath: '/edge/v1/field-sync/scores', method: 'POST', session: 'officer', upstreamOperationId: 'syncFieldScores', runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468', promotionBlocker: 'backend-merge-and-pin' },
-  { id: 'resolveFieldSyncConflict', edgePath: '/edge/v1/field-sync/conflicts/resolve', method: 'POST', session: 'officer', upstreamOperationId: 'resolveFieldSyncConflict', runtimeCommit: 'cd45fafe6814964a34b7899a22e5ee2493357468', promotionBlocker: 'backend-merge-and-pin' },
-] as const satisfies readonly PendingEdgeRuntimeOperation[];
+/**
+ * Browser edge contract baseline. This is the backend commit checked out by CI
+ * and reconciled by contract-drift gate D. Keep this next to the operation
+ * registry so a pending operation cannot quietly outlive its evidence.
+ */
+export const EDGE_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -47,9 +38,13 @@ export const EDGE_OPERATIONS = [
   { id: 'vetWalkIn', method: 'POST', edgePath: '/edge/v1/applications/walk-in/vet', upstreamOperationId: 'vetWalkIn', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'verifyIdentity', method: 'POST', edgePath: '/edge/v1/identities/verify', upstreamOperationId: 'verifyIdentity', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'listMyApplications', method: 'GET', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'listMyApplications', session: 'applicant', retryOnG2G: true, composition: 'single' },
+  { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'withdrawMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications/withdraw', upstreamOperationId: 'withdrawMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getMyErasureRequest', method: 'GET', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'getMyErasureRequest', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'fileMyErasureRequest', method: 'POST', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'fileMyErasureRequest', session: 'applicant', retryOnG2G: false, composition: 'single' },
+  { id: 'enrollFieldDevice', method: 'POST', edgePath: '/edge/v1/field-sync/devices', upstreamOperationId: 'enrollFieldDevice', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'syncFieldScores', method: 'POST', edgePath: '/edge/v1/field-sync/scores', upstreamOperationId: 'syncFieldScores', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'resolveFieldConflict', method: 'POST', edgePath: '/edge/v1/field-sync/conflicts/resolve', upstreamOperationId: 'resolveFieldConflict', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
   { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
 ] as const satisfies readonly EdgeOperation[];

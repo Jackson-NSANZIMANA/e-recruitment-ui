@@ -19,7 +19,7 @@ import {
 } from '../src/agency.js';
 
 /** The commit .github/workflows/ci.yml pins BACKEND_SHA to. */
-const CI_PINNED_BACKEND_SHA = 'd40f6d824ec46209ec5411192251fca4561e36b0';
+const CI_PINNED_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab';
 
 test('the divergence model is pinned to the same backend commit CI checks out', () => {
   assert.equal(VERIFIED_BACKEND_SHA, CI_PINNED_BACKEND_SHA);

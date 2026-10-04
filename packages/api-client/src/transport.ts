@@ -57,6 +57,12 @@ export interface CallOptions {
   readonly query?: Readonly<Record<string, string>>;
   readonly body?: unknown;
   /**
+   * Required by the citizen submission operation. It is deliberately a named
+   * option rather than arbitrary headers so callers cannot smuggle credentials
+   * or override the edge's security headers.
+   */
+  readonly idempotencyKey?: string;
+  /**
    * Reuse a correlation id across several calls belonging to ONE user action, so
    * the whole action is one trace instead of five unrelated ones.
    */
@@ -108,6 +114,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       // Sent when present; absent means the write will 403 at the edge. That is
       // the intended failure: a missing CSRF token must break, visibly.
       if (token !== null) headers[CSRF_HEADER] = token;
+      if (callOptions.idempotencyKey !== undefined) headers['idempotency-key'] = callOptions.idempotencyKey;
       headers['content-type'] = 'application/json';
     }
 

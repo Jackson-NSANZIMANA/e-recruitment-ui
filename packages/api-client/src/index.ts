@@ -60,6 +60,8 @@ export type {
   IdentityVerifyResponse,
   MyApplicationsResponse,
   MyApplicationRow,
+  SubmitApplicationInput,
+  SubmitApplicationResponse,
   WithdrawResponse,
   RowFor,
 } from './wire.js';
@@ -107,6 +109,7 @@ export {
 } from './operations/applications.js';
 export {
   listMyApplications,
+  submitMyApplication,
   withdrawMyApplication,
   getMyErasureRequest,
   fileMyErasureRequest,
