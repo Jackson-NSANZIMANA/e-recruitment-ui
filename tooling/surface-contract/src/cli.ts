@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { formatSurfaceReport, loadSurfaceContract, verifySurfaceContract } from './verify.ts';
 
-const root = process.cwd();
 const args = process.argv.slice(2);
+// Resolve from this source file, not the caller's cwd. Turbo runs package
+// scripts from tooling/surface-contract, while root scripts run from the repo.
+const root = new URL("../../../", import.meta.url).pathname;
 const manifest = args[args.indexOf('--manifest') + 1] ?? 'docs/ui-surfaces/officer.application-workspace.json';
 
 try {
