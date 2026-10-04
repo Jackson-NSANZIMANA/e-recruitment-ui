@@ -185,9 +185,10 @@ ok('registerWalkIn invalidates the list but has no row yet',
   JSON.stringify(INVALIDATION_MAP['registerWalkIn']) === JSON.stringify(['applications:list']));
 
 const resolved = resolveInvalidation(INVALIDATION_MAP['acceptApplication'] ?? [], { agency: 'RDF', applicationId: 'app-1' });
-eq('accept resolves to five concrete key families', resolved.length, 5);
+eq('accept resolves to six concrete key families', resolved.length, 6);
 deepEq('…including the agency-scoped list', resolved[0], applicationKeys.list('RDF'));
-deepEq('…and the citizen cache last (ADR-017 auto-withdrawal)', resolved[4], applicantKeys.myApplications());
+deepEq('…including the exact by-id and composed-detail reads', resolved[2], applicationKeys.byId('app-1'));
+deepEq('…and the citizen cache last (ADR-017 auto-withdrawal)', resolved[5], applicantKeys.myApplications());
 deepEq('the session key resolves on its own target', resolveInvalidation(['session:current'], {})[0], sessionKeys.current());
 const withoutContext = resolveInvalidation(['applications:detail'], {});
 eq('a detail target with no applicationId resolves to nothing (never a broad nuke)', withoutContext.length, 0);

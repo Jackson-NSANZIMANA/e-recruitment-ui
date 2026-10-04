@@ -18,6 +18,7 @@ import {
   createApiClient,
   useAcceptApplication,
   useAdjudicateApplication,
+  type TransitionResult,
 } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
@@ -25,26 +26,38 @@ import { EDGE_BASE_URL } from "../../env.js";
 
 interface ApplicationActionsProps {
   readonly applicationId: string;
-  readonly onActionComplete: () => void;
+  readonly onActionComplete: (outcome: TransitionResult["outcome"]) => void;
   readonly testId?: string;
 }
 
-type ActionFeedback = "success" | "conflict" | "error" | null;
+type ActionFeedback = "success" | "no_change" | "conflict" | "error" | null;
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 const toolbarStyles = cssMap({ base: { paddingBlock: token("space.200") } });
 
 function feedbackKey(
   feedback: Exclude<ActionFeedback, null>,
-): "officer_actions.action_completed" | "officer_actions.conflict" | "errors.generic" {
+): "officer_actions.action_completed" | "officer_actions.no_change" | "officer_actions.conflict" | "errors.generic" {
   switch (feedback) {
     case "success":
       return "officer_actions.action_completed";
+    case "no_change":
+      return "officer_actions.no_change";
     case "conflict":
       return "officer_actions.conflict";
     default:
       return "errors.generic";
   }
+}
+
+type Translate = ReturnType<typeof useTranslation>["t"];
+
+function receiptText(result: TransitionResult, t: Translate): string {
+  return t("officer_actions.transition_receipt", {
+    outcome: result.outcome,
+    fromStatus: result.fromStatus ?? "—",
+    status: result.status ?? "—",
+  });
 }
 
 export function ApplicationActions({
@@ -59,10 +72,12 @@ export function ApplicationActions({
   const adjudicate = useAdjudicateApplication(client, agency);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<ActionFeedback>(null);
+  const [transition, setTransition] = useState<TransitionResult | null>(null);
   const isPending = accept.isPending || adjudicate.isPending;
   const isDisabled = isPending || session === null;
 
   const handleFailure = useCallback((error: unknown): void => {
+    setTransition(null);
     setFeedback(
       error instanceof ApiError && error.normalised.kind === "conflict"
         ? "conflict"
@@ -70,43 +85,53 @@ export function ApplicationActions({
     );
   }, []);
 
+  const handleSuccess = useCallback((result: TransitionResult): void => {
+    setTransition(result);
+    setFeedback(result.outcome === "NO_CHANGE" ? "no_change" : "success");
+    // The parent may show a separate refresh notice, but it receives the exact
+    // backend outcome so NO_CHANGE is never described as an update.
+    onActionComplete(result.outcome);
+  }, [onActionComplete]);
+
   const handleApprove = useCallback(async (): Promise<void> => {
     setFeedback(null);
     try {
-      await accept.mutateAsync({ applicationId });
-      setFeedback("success");
-      onActionComplete();
+      const result = await accept.mutateAsync({ applicationId });
+      handleSuccess(result);
     } catch (error) {
       handleFailure(error);
     }
-  }, [accept, applicationId, handleFailure, onActionComplete]);
+  }, [accept, applicationId, handleFailure, handleSuccess]);
 
   const handleConfirmReject = useCallback(async (): Promise<void> => {
     setFeedback(null);
     try {
-      await adjudicate.mutateAsync({ applicationId, decision: "REJECT" });
+      const result = await adjudicate.mutateAsync({ applicationId, decision: "REJECT" });
       setIsRejectModalOpen(false);
-      setFeedback("success");
-      onActionComplete();
+      handleSuccess(result);
     } catch (error) {
       handleFailure(error);
     }
-  }, [adjudicate, applicationId, handleFailure, onActionComplete]);
+  }, [adjudicate, applicationId, handleFailure, handleSuccess]);
 
   return (
     <Stack space="space.200" {...(testId === undefined ? {} : { testId })}>
       {feedback !== null && (
         <SectionMessage
-          appearance={feedback === "success" ? "success" : "error"}
+          appearance={feedback === "success" || feedback === "no_change" ? "success" : "error"}
           title={t(feedbackKey(feedback))}
           headingLevel="h3"
           aria-live="polite"
         >
-          {feedback === "success"
-            ? t("officer_actions.action_completed_description")
-            : feedback === "conflict"
-              ? t("officer_actions.conflict_description")
-              : t("errors.generic")}
+          <Stack space="space.100">
+            {feedback === "success" && t("officer_actions.action_completed_description")}
+            {feedback === "no_change" && t("officer_actions.no_change_description")}
+            {feedback === "conflict" && t("officer_actions.conflict_description")}
+            {feedback === "error" && t("errors.generic")}
+            {transition !== null && (feedback === "success" || feedback === "no_change") && (
+              <Text size="small">{receiptText(transition, t)}</Text>
+            )}
+          </Stack>
         </SectionMessage>
       )}
 
@@ -123,11 +148,7 @@ export function ApplicationActions({
         >
           {t("actions.approve")}
         </LoadingButton>
-        <Button
-          appearance="danger"
-          isDisabled={isDisabled}
-          onClick={() => setIsRejectModalOpen(true)}
-        >
+        <Button appearance="danger" isDisabled={isDisabled} onClick={() => setIsRejectModalOpen(true)}>
           {t("actions.reject")}
         </Button>
       </Inline>
@@ -136,9 +157,7 @@ export function ApplicationActions({
         {isRejectModalOpen && (
           <ModalDialog onClose={() => setIsRejectModalOpen(false)} width="small">
             <ModalHeader>
-              <ModalTitle appearance="danger">
-                {t("officer_actions.reject_confirm_title")}
-              </ModalTitle>
+              <ModalTitle appearance="danger">{t("officer_actions.reject_confirm_title")}</ModalTitle>
               <CloseButton onClick={() => setIsRejectModalOpen(false)} />
             </ModalHeader>
             <ModalBody>
@@ -151,11 +170,7 @@ export function ApplicationActions({
             </ModalBody>
             <ModalFooter>
               <Inline space="space.200" alignInline="end">
-                <Button
-                  appearance="subtle"
-                  onClick={() => setIsRejectModalOpen(false)}
-                  isDisabled={isPending}
-                >
+                <Button appearance="subtle" onClick={() => setIsRejectModalOpen(false)} isDisabled={isPending}>
                   {t("actions.cancel")}
                 </Button>
                 <LoadingButton

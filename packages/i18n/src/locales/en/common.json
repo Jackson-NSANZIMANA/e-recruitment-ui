@@ -80,9 +80,38 @@
     "no_applications_description": "Applications assigned to your agency will appear here.",
     "load_error": "We could not load the applications for this agency.",
     "no_history": "No status history is available for this application yet.",
-    "partial_title": "Some information is unavailable",
-    "partial_description": "This record is available, but one or more supporting panels could not be loaded.",
-    "loading_application": "Loading application"
+    "loading_application": "Loading application",
+    "processing_code": "Processing code",
+    "not_provided": "Not provided by the edge",
+    "identifier_unavailable": "Open action unavailable: the edge record has no application identifier",
+    "summary": "Application summary",
+    "category": "Category",
+    "academic_status": "Academic status",
+    "age_status": "Age eligibility status",
+    "criminal_clearance": "Criminal clearance status",
+    "evidence": "Evidence and review signals",
+    "nesa_index": "NESA index number",
+    "hec_registration": "HEC registration number",
+    "specialist_field": "Declared specialist field",
+    "academic_eligibility_detail": "Academic eligibility detail",
+    "age_eligibility_detail": "Age eligibility detail",
+    "criminal_clearance_at": "Criminal clearance recorded at",
+    "document_lane": "Document lane",
+    "document_forensics_score": "Document forensics score",
+    "document_forensics_flags": "Document forensics flags",
+    "document_review_decision": "Document review decision",
+    "document_reviewed_at": "Document reviewed at",
+    "assignment_and_decision": "Assignment and final decision",
+    "assigned_district": "Assigned district",
+    "assigned_venue": "Assigned venue",
+    "physical_test_scheduled": "Physical test scheduled",
+    "physical_test_completed": "Physical test completed",
+    "final_decision_at": "Final decision recorded at",
+    "final_decision_notes": "Final decision notes",
+    "actions_unavailable": "Actions unavailable",
+    "untitled": "Application",
+    "partial_title": "Composed detail is incomplete",
+    "partial_description": "The edge returned the application projection, but its history was not an array. Review the application fields and try again before taking action."
   },
   "actions": {
     "approve": "Approve",
@@ -137,7 +166,10 @@
     "action_completed": "Action completed",
     "action_completed_description": "The application has been updated. The record and its queues are being refreshed.",
     "conflict": "The application changed before this action completed",
-    "conflict_description": "Refresh the record and confirm the current status before trying again."
+    "conflict_description": "Refresh the record and confirm the current status before trying again.",
+    "no_change": "No change was made",
+    "no_change_description": "The backend reported NO_CHANGE. The record was refreshed so you can review its current state.",
+    "transition_receipt": "Backend outcome: {{outcome}}. From status: {{fromStatus}}. Projected status: {{status}}."
   },
   "scan": {
     "start": "Start scanning",
@@ -157,5 +189,8 @@
     "error_size": "{{name}} exceeds the {{maxSize}} size limit",
     "remove_file": "Remove {{name}}",
     "no_files": "No files selected"
+  },
+  "applicant": {
+    "no_applications": "You have no applications on file."
   }
 }

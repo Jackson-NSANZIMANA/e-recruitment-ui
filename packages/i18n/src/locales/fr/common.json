@@ -80,9 +80,38 @@
     "no_applications_description": "Les candidatures attribuées à votre agence apparaîtront ici.",
     "load_error": "Impossible de charger les candidatures de cette agence.",
     "no_history": "Aucun historique de statut n’est encore disponible pour cette candidature.",
-    "partial_title": "Certaines informations sont indisponibles",
-    "partial_description": "Le dossier est disponible, mais certains panneaux complémentaires n’ont pas pu être chargés.",
-    "loading_application": "Chargement de la candidature"
+    "loading_application": "Chargement de la candidature",
+    "processing_code": "Code de traitement",
+    "not_provided": "Non fourni par la passerelle edge",
+    "identifier_unavailable": "Action indisponible : l’enregistrement edge ne contient aucun identifiant de candidature",
+    "summary": "Résumé de la candidature",
+    "category": "Catégorie",
+    "academic_status": "Statut académique",
+    "age_status": "Statut d’éligibilité lié à l’âge",
+    "criminal_clearance": "Statut de vérification de probité",
+    "evidence": "Éléments probants et signaux de contrôle",
+    "nesa_index": "Numéro d’index NESA",
+    "hec_registration": "Numéro d’inscription HEC",
+    "specialist_field": "Domaine spécialisé déclaré",
+    "academic_eligibility_detail": "Détails de l’éligibilité académique",
+    "age_eligibility_detail": "Détails de l’éligibilité liée à l’âge",
+    "criminal_clearance_at": "Vérification de probité enregistrée le",
+    "document_lane": "Voie documentaire",
+    "document_forensics_score": "Score d’analyse documentaire",
+    "document_forensics_flags": "Signaux d’analyse documentaire",
+    "document_review_decision": "Décision de contrôle documentaire",
+    "document_reviewed_at": "Contrôle documentaire effectué le",
+    "assignment_and_decision": "Affectation et décision finale",
+    "assigned_district": "District affecté",
+    "assigned_venue": "Lieu affecté",
+    "physical_test_scheduled": "Test physique planifié le",
+    "physical_test_completed": "Test physique terminé le",
+    "final_decision_at": "Décision finale enregistrée le",
+    "final_decision_notes": "Notes de la décision finale",
+    "actions_unavailable": "Actions indisponibles",
+    "untitled": "Candidature",
+    "partial_title": "Le détail composé est incomplet",
+    "partial_description": "La passerelle edge a renvoyé la projection de la candidature, mais son historique n’était pas un tableau. Examinez les champs et réessayez avant d’agir."
   },
   "actions": {
     "approve": "Approuver",
@@ -137,7 +166,10 @@
     "action_completed": "Action terminée",
     "action_completed_description": "La candidature a été mise à jour. Le dossier et ses files sont en cours d’actualisation.",
     "conflict": "La candidature a changé avant la fin de cette action",
-    "conflict_description": "Actualisez le dossier et confirmez le statut actuel avant de réessayer."
+    "conflict_description": "Actualisez le dossier et confirmez le statut actuel avant de réessayer.",
+    "no_change": "Aucun changement",
+    "no_change_description": "Le backend a indiqué NO_CHANGE. Le dossier a été actualisé pour afficher son état actuel.",
+    "transition_receipt": "Résultat du backend : {{outcome}}. Statut précédent : {{fromStatus}}. Statut projeté : {{status}}."
   },
   "scan": {
     "start": "Démarrer le scan",
@@ -157,5 +189,8 @@
     "error_size": "{{name}} dépasse la limite de {{maxSize}}",
     "remove_file": "Supprimer {{name}}",
     "no_files": "Aucun fichier sélectionné"
+  },
+  "applicant": {
+    "no_applications": "Vous n’avez aucune candidature enregistrée."
   }
 }

@@ -1,108 +1,127 @@
 // ══════════════════════════════════════════════════════════════════
-// @usrp/api-client — wire shapes
+// @usrp/api-client — browser wire shapes
 //
-// ⚠ A DECLARED ASSUMPTION, NOT A CLAIM OF VERIFICATION.
-//
-// These interfaces are transcribed from the backend controllers at 06d9f9b6
-// (`officer-transitions.controller.ts`, `walk-in.controller.ts`,
-// `list-applications.controller.ts`, `applicant-auth.controller.ts`). They are
-// NOT imported from `@usrp/contracts`, and that is a known gap rather than a
-// preference: the contract generates per-service namespaced schemas
-// (`applicationService.*`, `identityService.*`) and this pass did not have the
-// exact exported member names. Guessing them would have type-checked against
-// nothing and produced a client that looks generated and is not.
-//
-// Agent 1's own README makes the standard: "A contract that guesses is worse than
-// one that admits a gap, because a guess type-checks." So this file admits the
-// gap in the one place a reader will see it, and the report carries the request
-// to replace every type here with its generated counterpart.
-//
-// The domain vocabulary below (`Agency`, `ApplicationStatus`, `StatusFor`) IS
-// imported from the contract, because those names are confirmed exports. So the
-// per-agency divergence model is already load-bearing here: an RNP walk-in status
-// is a compile error today.
+// These are the response shapes emitted by the edge gateway at backend
+// 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab. They intentionally do not alias the
+// application-service schemas: the edge unwraps and allowlists those responses
+// before they cross the browser boundary.
 // ══════════════════════════════════════════════════════════════════
 
 import type { Agency, ApplicationStatus, StatusFor } from '@usrp/contracts';
-import type { identityServiceTypes } from '@usrp/contracts/generated';
 
 export type { Agency, ApplicationStatus, StatusFor };
 
-/** `GET /v1/applications` — officer, RLS-scoped. */
-export interface ApplicationListResponse {
-  readonly agency: Agency;
-  readonly applications: readonly ApplicationListRow[];
-}
+/** `GET /edge/v1/applications` — the edge returns a bare projected array. */
+export type ApplicationListResponse = readonly ApplicationListRow[];
 
-/**
- * A row. No `PaginatedResult` envelope, because NOTHING in the platform
- * paginates — the contract's negative fixtures reject that envelope outright.
- */
+/** Exact `EdgeApplicationListItem` projection. */
 export interface ApplicationListRow {
-  readonly id: string;
+  readonly applicationId: string | null;
+  readonly processingCode: string | null;
+  readonly category: string | null;
+  /** The edge keeps this as text because agency status vocabularies differ. */
+  readonly status: string | null;
   readonly agency: Agency;
-  readonly status: ApplicationStatus;
-  readonly processingCode: string;
-  readonly category?: string;
+  readonly submittedAt: string | null;
 }
 
-/** `GET /v1/applications/by-id?applicationId=` — one row, own agency only. */
-export interface ApplicationByIdResponse {
+/** Exact `EdgeApplication` projection returned by by-id and detail. */
+export interface ApplicationRecord {
+  readonly applicationId: string | null;
+  readonly processingCode: string | null;
+  readonly category: string | null;
+  readonly status: string | null;
   readonly agency: Agency;
-  readonly application: ApplicationListRow;
+
+  readonly academicStatus: string | null;
+  readonly nesaIndexNumber: string | null;
+  readonly nesaVerifiedAt: string | null;
+  readonly hecRegistrationNumber: string | null;
+  readonly hecVerifiedAt: string | null;
+  readonly declaredSpecialistField: string | null;
+  readonly academicEligibilityDetail: Readonly<Record<string, unknown>> | null;
+
+  readonly ageEligibilityStatus: string | null;
+  readonly ageVerifiedAt: string | null;
+  readonly ageEligibilityDetail: Readonly<Record<string, unknown>> | null;
+
+  readonly criminalClearanceStatus: string | null;
+  readonly criminalClearanceAt: string | null;
+
+  /** Officer-only forensic projection fields. */
+  readonly documentLane: string | null;
+  readonly documentForensicsScore: number | null;
+  readonly documentForensicsFlags: Readonly<Record<string, unknown>> | null;
+  readonly documentReviewedAt: string | null;
+  readonly documentReviewDecision: string | null;
+
+  readonly assignedDistrict: string | null;
+  readonly assignedVenueName: string | null;
+  readonly physicalTestScheduledAt: string | null;
+  readonly physicalTestCompletedAt: string | null;
+  readonly qrInvitationIssuedAt: string | null;
+  readonly smsNotificationSentAt: string | null;
+
+  readonly finalDecisionAt: string | null;
+  readonly finalDecisionNotes: string | null;
+  readonly submittedAt: string | null;
+  readonly createdAt: string | null;
+  readonly updatedAt: string | null;
 }
 
-/** `GET /v1/applications/amber-queue` — ADR-011 review queue. */
-export interface AmberQueueResponse {
+/** `GET /edge/v1/applications/by-id` — the projected application is unwrapped. */
+export type ApplicationByIdResponse = ApplicationRecord;
+
+/** `GET /edge/v1/applications/amber-queue` — the edge returns a bare array. */
+export type AmberQueueResponse = readonly AmberQueueEntry[];
+
+export interface AmberQueueEntry {
+  readonly applicationId: string | null;
+  readonly processingCode: string | null;
+  readonly status: string | null;
+  readonly documentType: string | null;
+  readonly forensicsScore: number | null;
+  readonly forensicsFlags: Readonly<Record<string, unknown>> | null;
+  readonly queuedAt: string | null;
   readonly agency: Agency;
-  readonly queue: readonly Readonly<Record<string, unknown>>[];
 }
 
-/**
- * One append-only transition (rls/0007), oldest first.
- *
- * `actor` is nullable because a system transition has no officer. Conflating
- * "the system did it" with "an unknown officer did it" is precisely the
- * Procedural Justice failure this trail exists to prevent.
- */
-export interface StatusHistoryEntry {
-  readonly fromStatus: ApplicationStatus | null;
-  readonly toStatus: ApplicationStatus;
-  readonly actorKind: string;
-  readonly actor: string | null;
-  readonly at: string;
-  readonly reason: string | null;
-}
-
-export interface StatusHistoryResponse {
-  readonly agency: Agency;
-  readonly applicationId: string;
+/** The detail endpoint returns the application and an already-unwrapped history array. */
+export interface ApplicationDetailResponse {
+  readonly application: ApplicationRecord;
   readonly history: readonly StatusHistoryEntry[];
 }
 
-/**
- * The edge's aggregate detail read.
- *
- * `partial` names the panels that failed. It exists because `Promise.all` over
- * an aggregate turns one 404 on a side panel into a blank error page; naming the
- * gap lets the UI render what it has and say what it does not.
- */
-export interface ApplicationDetailResponse {
-  readonly application: ApplicationByIdResponse;
-  readonly history: StatusHistoryResponse | null;
-  readonly partial: readonly string[];
+/** `GET /edge/v1/applications/status-history` — a bare history array. */
+export type StatusHistoryResponse = readonly StatusHistoryEntry[];
+
+export interface StatusHistoryEntry {
+  readonly entryId: string | null;
+  readonly fromStatus: string | null;
+  readonly toStatus: string | null;
+  /** The edge aliases `toStatus` to this field for timeline consumers. */
+  readonly status: string | null;
+  readonly note: string | null;
+  readonly actorKind: string | null;
+  readonly occurredAt: string | null;
 }
 
-/**
- * The shared success body of the four officer transitions.
- *
- * `APPLIED` and `NO_CHANGE` are BOTH 200. A client that treats any 200 as
- * "changed" will report a no-op as a successful transition, so the discriminant
- * has to be read.
- */
-export type TransitionResult =
-  | { readonly status: 'APPLIED'; readonly fromStatus: ApplicationStatus; readonly toStatus: ApplicationStatus }
-  | { readonly status: 'NO_CHANGE'; readonly currentStatus: ApplicationStatus };
+/** Exact 200 transition projection. Mutations return receipts, not application records. */
+export interface EdgeTransitionResult {
+  readonly applicationId: string;
+  /** `APPLIED` or `NO_CHANGE`; this is the outcome discriminant. */
+  readonly outcome: string;
+  readonly fromStatus: string | null;
+  /** Target status for APPLIED, current status for NO_CHANGE. */
+  readonly status: string | null;
+}
+
+export type TransitionResult = EdgeTransitionResult;
+
+/** Walk-in transition adds the edge's optional age-status field. */
+export type WalkInVetResponse = EdgeTransitionResult & {
+  readonly ageStatus?: string;
+};
 
 /** ADR-013: RDF is a board, RNP/RCS are certificate agencies. Two shapes, one route. */
 export type MedicalReviewInput =
@@ -126,15 +145,7 @@ export interface AdjudicateInput {
   readonly notes?: string;
 }
 
-/**
- * Walk-in step one.
- *
- * NOTE WHAT IS ABSENT: `nationalIdHash`. The old `useWalkIn` sent it as its
- * primary field. It is an internal cross-service key that must never reach a
- * browser (invariant 2), and the real controller does not accept it — it takes
- * the opaque `applicantId` returned by `POST /v1/identities/verify`. So the
- * walk-in flow is genuinely three calls: verify identity, register, vet.
- */
+/** Walk-in step one; the browser receives an opaque applicantId after verification. */
 export interface WalkInRegisterInput {
   readonly applicantId: string;
   readonly category: string;
@@ -146,58 +157,45 @@ export interface WalkInRegisterResponse {
   readonly status: 'REGISTERED';
   readonly applicationId: string;
   readonly processingCode: string;
-  /** The on-site ticket; field-score capture binds to this, not to a venue. */
   readonly qrInvitationCode: string;
 }
 
-/** Walk-in step two. `AGE_PENDING` arrives as a 409, not in this body. */
-export type WalkInVetResponse =
-  | { readonly status: 'APPLIED'; readonly fromStatus: ApplicationStatus; readonly toStatus: ApplicationStatus; readonly ageStatus: string }
-  | { readonly status: 'NO_CHANGE'; readonly currentStatus: ApplicationStatus };
-
-/**
- * `POST /v1/identities/verify`.
- *
- * Returns an opaque applicantId and a status. NO name, NO date of birth, NO
- * gender — the HCI "pre-fill the applicant's name from NIDA" requirement has no
- * endpoint behind it, and this type is the honest shape rather than the hoped-for
- * one.
- */
+/** `POST /edge/v1/identities/verify` returns no applicant identity fields. */
 export type IdentityVerifyResponse =
   | { readonly status: 'CREATED'; readonly applicantId: string }
   | { readonly status: 'ALREADY_EXISTS'; readonly applicantId: string };
 
-/** `GET /v1/applicants/me/applications` — the citizen's own rows, cross-agency. */
-export interface MyApplicationsResponse {
-  readonly applications: readonly MyApplicationRow[];
-}
+/** `GET /edge/v1/me/applications` — the citizen projection is a bare array. */
+export type MyApplicationsResponse = readonly MyApplicationRow[];
 
+/** Exact citizen `EdgeApplicationListItem` projection. */
 export interface MyApplicationRow {
-  readonly applicationId: string;
+  readonly applicationId: string | null;
+  readonly processingCode: string | null;
+  readonly category: string | null;
+  readonly status: string | null;
   readonly agency: Agency;
-  readonly status: ApplicationStatus;
-  readonly processingCode: string;
-  readonly submittedAt: string;
+  readonly submittedAt: string | null;
 }
 
-/** ADR-027: the citizen's own filing request. Identity and channel are server-derived. */
-export type SubmitApplicationInput = identityServiceTypes.SubmitApplicationRequest;
+/** Exact `POST /edge/v1/me/applications` request and success projection. */
+export interface SubmitApplicationInput {
+  readonly category: string;
+  readonly nesaIndexNumber?: string;
+  readonly hecRegistrationNumber?: string;
+}
 
-export type SubmitApplicationResponse = identityServiceTypes.SubmitApplicationResponse;
+export interface SubmitApplicationResponse {
+  readonly status: 'SUBMITTED';
+  readonly applicationId: string;
+  readonly processingCode: string;
+  readonly agency: Agency;
+}
 
-/** ADR-020 self-withdrawal. Four outcomes across three status codes. */
-export type WithdrawResponse =
-  | { readonly status: 'WITHDRAWN'; readonly agency: Agency; readonly fromStatus: ApplicationStatus }
-  | { readonly status: 'NO_CHANGE'; readonly agency: Agency };
-
-/**
- * Narrow a row to its agency's legal statuses.
- *
- * The point of `StatusFor<A>`: `rnp_ops` and `rcs_ops` carry no `WALK_IN_*`
- * values, so a component that renders a walk-in status for RNP is a compile
- * error instead of a production surprise for two agencies out of three.
- */
-export type RowFor<A extends Agency> = Omit<ApplicationListRow, 'agency' | 'status'> & {
-  readonly agency: A;
-  readonly status: StatusFor<A>;
+/** ADR-020 self-withdrawal. */
+export type WithdrawResponse = {
+  readonly applicationId: string;
+  readonly outcome: string;
+  readonly agency: Agency | null;
+  readonly fromStatus: string | null;
 };

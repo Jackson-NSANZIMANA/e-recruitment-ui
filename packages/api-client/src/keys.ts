@@ -28,6 +28,7 @@ export const applicationKeys = {
   /** The officer's agency-scoped list. Keyed by agency: two consoles, two caches. */
   list: (agency: Agency) => ['applications', 'list', agency] as const,
   amberQueue: (agency: Agency) => ['applications', 'amber-queue', agency] as const,
+  byId: (applicationId: string) => ['applications', 'by-id', applicationId] as const,
   detail: (applicationId: string) => ['applications', 'detail', applicationId] as const,
   statusHistory: (applicationId: string) => ['applications', 'status-history', applicationId] as const,
 };
@@ -47,6 +48,7 @@ export const applicantKeys = {
 export type InvalidationTarget =
   | 'applications:list'
   | 'applications:amber-queue'
+  | 'applications:by-id'
   | 'applications:detail'
   | 'applications:status-history'
   | 'applicant:applications'
@@ -59,9 +61,9 @@ export const INVALIDATION_MAP: Readonly<Record<string, readonly InvalidationTarg
    * async verdict, in `ADJUDICATION_REVIEW` — which is an AMBER QUEUE row. So the
    * queue must be invalidated even though this route never mentions it.
    */
-  recordMedicalReview: ['applications:list', 'applications:amber-queue', 'applications:detail', 'applications:status-history'],
+  recordMedicalReview: ['applications:list', 'applications:amber-queue', 'applications:by-id', 'applications:detail', 'applications:status-history'],
 
-  recordFinalDecision: ['applications:list', 'applications:detail', 'applications:status-history'],
+  recordFinalDecision: ['applications:list', 'applications:by-id', 'applications:detail', 'applications:status-history'],
 
   /**
    * ADR-017: accepting one application AUTO-WITHDRAWS the same citizen's others.
@@ -72,18 +74,19 @@ export const INVALIDATION_MAP: Readonly<Record<string, readonly InvalidationTarg
   acceptApplication: [
     'applications:list',
     'applications:amber-queue',
+    'applications:by-id',
     'applications:detail',
     'applications:status-history',
     'applicant:applications',
   ],
 
   /** Adjudication is how a row LEAVES the amber queue. */
-  adjudicateApplication: ['applications:list', 'applications:amber-queue', 'applications:detail', 'applications:status-history'],
+  adjudicateApplication: ['applications:list', 'applications:amber-queue', 'applications:by-id', 'applications:detail', 'applications:status-history'],
 
   /** Registration creates a row, so the list changes; there is no detail yet. */
   registerWalkIn: ['applications:list'],
 
-  vetWalkIn: ['applications:list', 'applications:detail', 'applications:status-history'],
+  vetWalkIn: ['applications:list', 'applications:by-id', 'applications:detail', 'applications:status-history'],
 
   /**
    * Identity verification creates no application and MUST NOT invalidate a list.
@@ -121,6 +124,9 @@ export function resolveInvalidation(
         break;
       case 'applications:amber-queue':
         keys.push(context.agency === undefined ? applicationKeys.all : applicationKeys.amberQueue(context.agency));
+        break;
+      case 'applications:by-id':
+        if (context.applicationId !== undefined) keys.push(applicationKeys.byId(context.applicationId));
         break;
       case 'applications:detail':
         if (context.applicationId !== undefined) keys.push(applicationKeys.detail(context.applicationId));

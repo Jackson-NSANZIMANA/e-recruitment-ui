@@ -80,9 +80,38 @@
     "no_applications_description": "Dosiye zahawe ikigo cyawe zizagaragara hano.",
     "load_error": "Ntitwabashije kubona dosiye z’iki kigo.",
     "no_history": "Nta mateka y’imimerere y’iyi dosiye araboneka kugeza ubu.",
-    "partial_title": "Hari amakuru ataboneka",
-    "partial_description": "Iyi dosiye iraboneka, ariko hari ibice by’amakuru bitashoboye gufunguka.",
-    "loading_application": "Dosiye irimo gutangizwa"
+    "loading_application": "Dosiye irimo gutangizwa",
+    "processing_code": "Kode y’itunganwa",
+    "not_provided": "Ntabwo byatanzwe n’umurongo wa edge",
+    "identifier_unavailable": "Igikorwa ntigishoboka: umurongo wa edge nta nimero y’ubusabe ufite",
+    "summary": "Incamake y’ubusabe",
+    "category": "Icyiciro",
+    "academic_status": "Imimerere y’amashuri",
+    "age_status": "Imimerere y’ibisabwa ku myaka",
+    "criminal_clearance": "Imimerere y’isuzuma ry’imyitwarire",
+    "evidence": "Ibimenyetso n’ibimenyetso by’isuzuma",
+    "nesa_index": "Nimero ya NESA",
+    "hec_registration": "Nimero yo kwiyandikisha muri HEC",
+    "specialist_field": "Umwuga wihariye watangajwe",
+    "academic_eligibility_detail": "Ibisobanuro by’ibisabwa mu mashuri",
+    "age_eligibility_detail": "Ibisobanuro by’ibisabwa ku myaka",
+    "criminal_clearance_at": "Isuzuma ry’imyitwarire ryanditswe kuri",
+    "document_lane": "Umurongo w’inyandiko",
+    "document_forensics_score": "Amanota y’isuzuma ry’inyandiko",
+    "document_forensics_flags": "Ibimenyetso by’isuzuma ry’inyandiko",
+    "document_review_decision": "Icyemezo ku isuzuma ry’inyandiko",
+    "document_reviewed_at": "Inyandiko yasuzumwe kuri",
+    "assignment_and_decision": "Aho dosiye iri n’icyemezo cya nyuma",
+    "assigned_district": "Akarere kahawe dosiye",
+    "assigned_venue": "Aho ikizamini kizabera",
+    "physical_test_scheduled": "Ikizamini ngiro giteganyijwe",
+    "physical_test_completed": "Ikizamini ngiro cyarangiye",
+    "final_decision_at": "Icyemezo cya nyuma cyafashwe kuri",
+    "final_decision_notes": "Ibisobanuro by’icyemezo cya nyuma",
+    "actions_unavailable": "Ibikorwa ntibishoboka",
+    "untitled": "Ubusabe",
+    "partial_title": "Amakuru y’ihuriro ntiyuzuye",
+    "partial_description": "Umurongo wa edge watanze amakuru y’ubusabe, ariko amateka ntiyari urutonde. Suzuma ibice by’ubusabe kandi wongere ugerageze mbere yo gufata icyemezo."
   },
   "actions": {
     "approve": "Emera",
@@ -137,7 +166,10 @@
     "action_completed": "Igikorwa cyarangiye",
     "action_completed_description": "Dosiye yavuguruwe. Dosiye n’imirongo yayo birimo kuvugururwa.",
     "conflict": "Dosiye yahindutse mbere y’uko igikorwa kirangira",
-    "conflict_description": "Ongera ufungure dosiye urebe imimerere iriho mbere yo kongera kugerageza."
+    "conflict_description": "Ongera ufungure dosiye urebe imimerere iriho mbere yo kongera kugerageza.",
+    "no_change": "Nta gihindutse",
+    "no_change_description": "Backend yagaragaje NO_CHANGE. Dosiye yongeye kuvugururwa kugira ngo urebe imimerere iriho.",
+    "transition_receipt": "Igisubizo cya backend: {{outcome}}. Imimerere yabanje: {{fromStatus}}. Imimerere igaragara: {{status}}."
   },
   "scan": {
     "start": "Tangira gusikana",
@@ -157,5 +189,8 @@
     "error_size": "{{name}} irenze urugero rwa {{maxSize}}",
     "remove_file": "Kura {{name}}",
     "no_files": "Nta dosiye yatoranyijwe"
+  },
+  "applicant": {
+    "no_applications": "Nta busabe ufite muri sisitemu."
   }
 }

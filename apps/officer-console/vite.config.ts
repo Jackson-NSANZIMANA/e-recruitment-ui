@@ -83,6 +83,8 @@ export default defineConfig({
     },
   },
   server: {
+    // Arena proxies the live preview through a generated host.
+    allowedHosts: true,
     port: 3001,
     strictPort: true,
     proxy: {

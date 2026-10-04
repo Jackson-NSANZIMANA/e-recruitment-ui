@@ -44,7 +44,7 @@ export const EDGE_OPERATIONS = [
   { id: 'fileMyErasureRequest', method: 'POST', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'fileMyErasureRequest', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'enrollFieldDevice', method: 'POST', edgePath: '/edge/v1/field-sync/devices', upstreamOperationId: 'enrollFieldDevice', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'syncFieldScores', method: 'POST', edgePath: '/edge/v1/field-sync/scores', upstreamOperationId: 'syncFieldScores', session: 'officer', retryOnG2G: false, composition: 'single' },
-  { id: 'resolveFieldConflict', method: 'POST', edgePath: '/edge/v1/field-sync/conflicts/resolve', upstreamOperationId: 'resolveFieldConflict', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'resolveFieldSyncConflict', method: 'POST', edgePath: '/edge/v1/field-sync/conflicts/resolve', upstreamOperationId: 'resolveFieldConflict', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
   { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
 ] as const satisfies readonly EdgeOperation[];

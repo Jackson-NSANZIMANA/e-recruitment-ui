@@ -44,6 +44,7 @@ export type {
   StatusFor,
   ApplicationListResponse,
   ApplicationListRow,
+  ApplicationRecord,
   ApplicationByIdResponse,
   ApplicationDetailResponse,
   AmberQueueResponse,
@@ -63,7 +64,6 @@ export type {
   SubmitApplicationInput,
   SubmitApplicationResponse,
   WithdrawResponse,
-  RowFor,
 } from './wire.js';
 
 // ── Query keys and the invalidation map ──

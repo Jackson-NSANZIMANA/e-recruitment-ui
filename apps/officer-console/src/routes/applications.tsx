@@ -36,23 +36,27 @@ function filterApplications(
 ): ReadonlyArray<ApplicationListRow> {
   const needle = search.trim().toLowerCase();
   if (needle.length === 0) return applications;
-  return applications.filter(
-    (application) =>
-      application.id.toLowerCase().includes(needle) ||
-      application.processingCode.toLowerCase().includes(needle) ||
-      application.status.toLowerCase().includes(needle),
+  return applications.filter((application) =>
+    [application.applicationId, application.processingCode, application.status]
+      .some((value) => value?.toLowerCase().includes(needle) === true),
   );
 }
 
 export default function ApplicationsPage(): React.ReactElement {
   const { t } = useTranslation();
   const session = useOfficerSession();
+  // The fallback is only a disabled-query cache key while AuthProvider checks
+  // the httpOnly session cookie. It is never sent to the edge without a session.
   const agency = session?.agency ?? "RDF";
   const searchId = useId();
   const descriptionId = useId();
   const [search, setSearch] = useState("");
-  const { data, error, isLoading, isError, refetch } = useApplicationList(client, agency);
-  const applications = data?.applications ?? [];
+  const { data, error, isLoading, isError, refetch } = useApplicationList(
+    client,
+    agency,
+    session !== null,
+  );
+  const applications = data ?? [];
   const visibleApplications = useMemo(
     () => filterApplications(applications, search),
     [applications, search],
@@ -62,7 +66,7 @@ export default function ApplicationsPage(): React.ReactElement {
     () => ({
       cells: [
         { key: "id", content: t("application.id") },
-        { key: "processingCode", content: t("application.post") },
+        { key: "processingCode", content: t("application.processing_code") },
         { key: "agency", content: t("application.agency") },
         { key: "status", content: t("application.status") },
         { key: "actions", content: t("application.actions") },
@@ -71,26 +75,38 @@ export default function ApplicationsPage(): React.ReactElement {
     [t],
   );
 
-  const rows = visibleApplications.map((application) => ({
-    key: application.id,
-    cells: [
-      { key: "id", content: <Text size="small">{application.id}</Text> },
-      { key: "processingCode", content: application.processingCode },
-      { key: "agency", content: application.agency },
-      {
-        key: "status",
-        content: <ApplicationStatusBadge status={application.status} />,
-      },
-      {
-        key: "actions",
-        content: (
-          <Button appearance="subtle" href={`/applications/${application.id}`}>
-            {t("actions.view")}
-          </Button>
-        ),
-      },
-    ],
-  }));
+  const rows = visibleApplications.map((application, index) => {
+    const applicationId = application.applicationId;
+    const rowKey = applicationId ?? application.processingCode ?? `row-${index}`;
+    return {
+      key: rowKey,
+      cells: [
+        {
+          key: "id",
+          content: <Text size="small">{applicationId ?? t("application.not_provided")}</Text>,
+        },
+        {
+          key: "processingCode",
+          content: application.processingCode ?? t("application.not_provided"),
+        },
+        { key: "agency", content: application.agency },
+        {
+          key: "status",
+          content: <ApplicationStatusBadge status={application.status} />,
+        },
+        {
+          key: "actions",
+          content: applicationId === null ? (
+            <Text size="small" color="color.text.subtle">{t("application.identifier_unavailable")}</Text>
+          ) : (
+            <Button appearance="subtle" href={`/applications/${applicationId}`}>
+              {t("actions.view")}
+            </Button>
+          ),
+        },
+      ],
+    };
+  });
 
   return (
     <Box xcss={pageStyles.base}>
@@ -111,18 +127,16 @@ export default function ApplicationsPage(): React.ReactElement {
           />
         </Box>
 
+        {session === null && !isLoading && !isError && (
+          <Box aria-live="polite" role="status">
+            <Spinner label={t("a11y.loading_applications")} />
+          </Box>
+        )}
+
         {isError && (
-          <SectionMessage
-            appearance="error"
-            title={t("errors.generic")}
-            headingLevel="h3"
-          >
+          <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">
             <Stack space="space.200">
-              <Text>
-                {error instanceof Error && error.message.length > 0
-                  ? t("application.load_error")
-                  : t("errors.generic")}
-              </Text>
+              <Text>{t("application.load_error")}</Text>
               <Button appearance="default" onClick={() => void refetch()}>
                 {t("actions.try_again")}
               </Button>
@@ -130,7 +144,7 @@ export default function ApplicationsPage(): React.ReactElement {
           </SectionMessage>
         )}
 
-        {isLoading ? (
+        {session !== null && (isLoading ? (
           <Box aria-live="polite" role="status">
             <Spinner label={t("a11y.loading_applications")} />
           </Box>
@@ -161,7 +175,7 @@ export default function ApplicationsPage(): React.ReactElement {
               />
             </>
           )
-        )}
+        ))}
       </Stack>
     </Box>
   );

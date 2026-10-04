@@ -17,7 +17,7 @@ export const FIELD_OPS_OPERATIONS = [
   'vetWalkIn',
   'enrollFieldDevice',
   'syncFieldScores',
-  'resolveFieldConflict',
+  'resolveFieldSyncConflict',
 ] as const satisfies readonly EdgeOperationId[];
 
 export type FieldOpsOperation = (typeof FIELD_OPS_OPERATIONS)[number];
