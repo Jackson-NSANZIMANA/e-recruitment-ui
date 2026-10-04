@@ -1,0 +1,1176 @@
+diff --git a/apps/applicant-portal/src/routes/status.tsx b/apps/applicant-portal/src/routes/status.tsx
+index 31ecca5..3fa57ba 100644
+--- a/apps/applicant-portal/src/routes/status.tsx
++++ b/apps/applicant-portal/src/routes/status.tsx
+@@ -56,7 +56,9 @@ export default function StatusPage(): React.ReactElement {
+     );
+   }
+ 
+-  const applications = data?.applications ?? [];
++  // A bare array. Reading `data.applications` here returned undefined for every
++  // citizen, so the portal told people with live applications they had none.
++  const applications = data ?? [];
+ 
+   return (
+     <Box xcss={pageStyles.base}>
+@@ -83,12 +85,12 @@ export default function StatusPage(): React.ReactElement {
+               </Inline>
+ 
+               <Text size="small" color="color.text.subtle">
+-                {t("application.id")}: {application.processingCode}
++                {t("application.id")}: {application.processingCode ?? application.applicationId}
+               </Text>
+ 
+               <Text size="small" color="color.text.subtle">
+                 {t("application.submitted")}:{" "}
+-                {new Date(application.submittedAt).toLocaleDateString()}
++                {application.submittedAt === null ? "—" : new Date(application.submittedAt).toLocaleDateString()}
+               </Text>
+             </Stack>
+           </Box>
+diff --git a/apps/officer-console/src/routes/application-detail.tsx b/apps/officer-console/src/routes/application-detail.tsx
+index 6576bff..6c8ca1e 100644
+--- a/apps/officer-console/src/routes/application-detail.tsx
++++ b/apps/officer-console/src/routes/application-detail.tsx
+@@ -7,6 +7,7 @@ import Spinner from "@atlaskit/spinner";
+ import { token } from "@atlaskit/tokens";
+ import { cssMap } from "@atlaskit/css";
+ import { createApiClient, useApplicationDetail } from "@usrp/api-client";
++import { useOfficerSession } from "@usrp/auth";
+ import { useTranslation } from "@usrp/i18n";
+ import { ApplicationStatusBadge } from "@usrp/ui";
+ import { useParams } from "react-router-dom";
+@@ -18,10 +19,15 @@ const pageStyles = cssMap({ base: { maxWidth: "900px", marginInline: "auto", pad
+ export default function ApplicationDetailPage(): React.ReactElement {
+   const { id } = useParams<{ id: string }>();
+   const { t } = useTranslation();
+-  const { data, isLoading, isError } = useApplicationDetail(client, id ?? "");
++  const session = useOfficerSession();
++  const agency = session?.agency ?? "RDF";
++  const { data, isLoading, isError } = useApplicationDetail(client, agency, id ?? "");
+   if (isLoading) return <Box xcss={pageStyles.base}><Spinner label={t("a11y.loading")} /></Box>;
+   if (isError || data === undefined) return <Box xcss={pageStyles.base}><SectionMessage appearance="error" title={t("errors.not_found")} headingLevel="h3">{t("errors.not_found")}</SectionMessage></Box>;
+-  const application = data.application.application;
+-  const history = data.history?.history ?? [];
+-  return <Box xcss={pageStyles.base}><Stack space="space.500"><Inline spread="space-between" alignBlock="center"><Stack space="space.100"><Heading size="large" as="h1">{application.processingCode}</Heading><Text color="color.text.subtle" size="small">{t("application.id")}: {application.id}</Text></Stack><ApplicationStatusBadge status={application.status} /></Inline><SectionMessage title={t("application.history")} headingLevel="h3"><Stack space="space.100">{history.map((event, index) => <Inline key={`${event.at}-${index}`} space="space.150" alignBlock="start"><Text size="small" color="color.text.subtle">{new Date(event.at).toLocaleString()}</Text><Text size="small">{event.actorKind} → {event.toStatus}{event.reason !== null ? `: ${event.reason}` : ""}</Text></Inline>)}</Stack></SectionMessage>{data.partial.length > 0 && <SectionMessage appearance="warning" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>}<Button appearance="primary" href="/applications">{t("actions.back")}</Button></Stack></Box>;
++  // The gateway returns the record FLAT and the trail as a bare array; the old
++  // `data.application.application` / `data.history.history` were the dev
++  // harness's upstream envelopes, one level too deep in both cases.
++  const application = data.application;
++  const history = data.history;
++  return <Box xcss={pageStyles.base}><Stack space="space.500"><Inline spread="space-between" alignBlock="center"><Stack space="space.100"><Heading size="large" as="h1">{application.processingCode ?? application.applicationId}</Heading><Text color="color.text.subtle" size="small">{t("application.id")}: {application.applicationId}</Text></Stack><ApplicationStatusBadge status={application.status} /></Inline><SectionMessage title={t("application.history")} headingLevel="h3"><Stack space="space.100">{history.map((event, index) => <Inline key={`${event.occurredAt ?? "unknown"}-${index}`} space="space.150" alignBlock="start"><Text size="small" color="color.text.subtle">{event.occurredAt === null ? "—" : new Date(event.occurredAt).toLocaleString()}</Text><Text size="small">{event.actorKind ?? "SYSTEM"} → {event.toStatus}{event.note !== null ? `: ${event.note}` : ""}</Text></Inline>)}</Stack></SectionMessage>{data.partial.length > 0 && <SectionMessage appearance="warning" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>}<Button appearance="primary" href="/applications">{t("actions.back")}</Button></Stack></Box>;
+ }
+diff --git a/apps/officer-console/src/routes/applications.tsx b/apps/officer-console/src/routes/applications.tsx
+index ff05fc4..9fd9422 100644
+--- a/apps/officer-console/src/routes/applications.tsx
++++ b/apps/officer-console/src/routes/applications.tsx
+@@ -24,8 +24,8 @@ export default function ApplicationsPage(): React.ReactElement {
+   const [search, setSearch] = React.useState("");
+   const { data, isLoading, isError } = useApplicationList(client, agency);
+   const needle = search.trim().toLowerCase();
+-  const applications = (data?.applications ?? []).filter((application) => needle.length === 0 || application.id.toLowerCase().includes(needle) || application.processingCode.toLowerCase().includes(needle) || application.status.toLowerCase().includes(needle));
++  const applications = (data ?? []).filter((application) => needle.length === 0 || application.applicationId.toLowerCase().includes(needle) || (application.processingCode ?? "").toLowerCase().includes(needle) || application.status.toLowerCase().includes(needle));
+   const head = { cells: [{ key: "id", content: t("application.id") }, { key: "processingCode", content: t("application.post") }, { key: "agency", content: t("application.agency") }, { key: "status", content: "Status" }, { key: "actions", content: "" }] };
+-  const rows = applications.map((application) => ({ key: application.id, cells: [{ key: "id", content: <Text size="small">{application.id}</Text> }, { key: "processingCode", content: application.processingCode }, { key: "agency", content: application.agency }, { key: "status", content: <ApplicationStatusBadge status={application.status} /> }, { key: "actions", content: <Button appearance="subtle" href={`/applications/${application.id}`}>{t("actions.view")}</Button> }] }));
++  const rows = applications.map((application) => ({ key: application.applicationId, cells: [{ key: "id", content: <Text size="small">{application.applicationId}</Text> }, { key: "processingCode", content: application.processingCode ?? "—" }, { key: "agency", content: application.agency }, { key: "status", content: <ApplicationStatusBadge status={application.status} /> }, { key: "actions", content: <Button appearance="subtle" href={`/applications/${application.applicationId}`}>{t("actions.view")}</Button> }] }));
+   return <Box xcss={pageStyles.base}><Stack space="space.400"><PageHeader>{t("nav.applications")}</PageHeader><Box xcss={pageStyles.searchInput}><TextField aria-describedby="Search these results" value={search} onChange={(event) => setSearch((event.target as HTMLInputElement).value)} aria-label="Search the loaded applications" /></Box>{isError && <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>}{isLoading ? <Spinner label={t("a11y.loading")} /> : <DynamicTable head={head} rows={rows} emptyView={<Text>{t("dashboard.no_exceptions")}</Text>} />}</Stack></Box>;
+ }
+diff --git a/apps/officer-console/src/routes/dashboard.tsx b/apps/officer-console/src/routes/dashboard.tsx
+index 9d3caa5..f228011 100644
+--- a/apps/officer-console/src/routes/dashboard.tsx
++++ b/apps/officer-console/src/routes/dashboard.tsx
+@@ -22,8 +22,11 @@ export default function DashboardPage(): React.ReactElement {
+   const amber = useAmberQueue(client, agency);
+   const isLoading = applications.isLoading || amber.isLoading;
+   const isError = applications.isError || amber.isError;
+-  const total = applications.data?.applications.length ?? 0;
+-  const requiresAction = amber.data?.queue.length ?? 0;
++  // Both reads are BARE ARRAYS. They used to be read as `.applications.length`
++  // and `.queue.length` — an envelope only the dev harness ever sent, which made
++  // every loaded dashboard a TypeError.
++  const total = applications.data?.length ?? 0;
++  const requiresAction = amber.data?.length ?? 0;
+   if (isLoading) return <Box xcss={pageStyles.base}><Spinner label={t("a11y.loading")} /></Box>;
+   if (isError) return <Box xcss={pageStyles.base}><SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage></Box>;
+   return <Box xcss={pageStyles.base}><Stack space="space.500"><PageHeader {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}>{t("dashboard.title")}</PageHeader><Inline space="space.300" shouldWrap><DashboardMetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" /><DashboardMetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" /></Inline>{requiresAction === 0 && <SectionMessage appearance="success" title={t("dashboard.no_exceptions")} headingLevel="h3">{t("dashboard.no_exceptions")}</SectionMessage>}</Stack></Box>;
+diff --git a/packages/api-client/scripts/test.mjs b/packages/api-client/scripts/test.mjs
+index f1be46b..88792dc 100644
+--- a/packages/api-client/scripts/test.mjs
++++ b/packages/api-client/scripts/test.mjs
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env node
+ import { spawnSync } from 'node:child_process';
+ 
+-for (const file of ['selfcheck/verify-api-client.ts', 'selfcheck/verify-edge-registry.ts']) {
++for (const file of ['selfcheck/verify-api-client.ts', 'selfcheck/verify-edge-registry.ts', 'selfcheck/verify-decode.ts']) {
+   const result = spawnSync('pnpm', ['exec', 'tsx', file], { stdio: 'inherit' });
+   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+ }
+diff --git a/packages/api-client/selfcheck/verify-decode.ts b/packages/api-client/selfcheck/verify-decode.ts
+new file mode 100644
+index 0000000..625702a
+--- /dev/null
++++ b/packages/api-client/selfcheck/verify-decode.ts
+@@ -0,0 +1,186 @@
++// ══════════════════════════════════════════════════════════════════
++// @usrp/api-client decode + transport selfcheck
++//
++//   pnpm --filter @usrp/api-client selfcheck
++//
++// PINS THE TWO DEFECTS THAT TOOK THE OFFICER CONSOLE DOWN, so neither can
++// return silently:
++//
++//   1. `baseUrl: ''` means SAME ORIGIN. `new URL(path, '')` throws
++//      `TypeError: Invalid base URL` BEFORE fetch, so every hook failed while
++//      `@usrp/auth` — which concatenates strings — kept working. The session was
++//      live and the dashboard said "Something went wrong": the most misleading
++//      failure mode available.
++//   2. The officer reads are BARE ARRAYS. `wire.ts` described the upstream
++//      envelope that `tooling/edge-dev` relays, so `data.applications.length`
++//      type-checked against a shape the production gateway never sends.
++//
++// Every fixture below is transcribed from a real responder — the gateway's
++// `projections.ts` on one side, the dev harness's relayed upstream body on the
++// other. A decoder that passes invented shapes cannot pass this file.
++// ══════════════════════════════════════════════════════════════════
++
++import { ApiError } from '../src/errors.js';
++import { createApiClient } from '../src/transport.js';
++import {
++  decodeAmberQueue,
++  decodeApplication,
++  decodeApplicationDetail,
++  decodeApplicationList,
++  decodeMyApplications,
++  decodeStatusHistory,
++  decodeTransition,
++} from '../src/decode.js';
++
++let passed = 0;
++const failures: string[] = [];
++
++function ok(label: string, condition: boolean, detail?: string): void {
++  if (condition) { passed += 1; return; }
++  failures.push(detail === undefined ? label : `${label} — ${detail}`);
++}
++function eq<T>(label: string, actual: T, expected: T): void {
++  ok(label, Object.is(actual, expected), `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
++}
++function deepEq(label: string, actual: unknown, expected: unknown): void {
++  ok(label, JSON.stringify(actual) === JSON.stringify(expected), `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
++}
++function throwsMalformed(label: string, run: () => unknown, operationId: string): void {
++  try {
++    run();
++    ok(label, false, 'it returned instead of throwing');
++  } catch (error) {
++    const isNamed = error instanceof ApiError
++      && error.normalised.kind === 'malformed'
++      && error.normalised.detail.includes(operationId);
++    ok(label, isNamed, `got ${error instanceof Error ? error.message : String(error)}`);
++  }
++}
++
++// ══ 1. The transport's same-origin base ════════════════════════
++
++ok('`new URL(path, "")` really does throw — this is the bug, not a theory', (() => {
++  try { new URL('/edge/v1/applications', ''); return false; } catch { return true; }
++})());
++
++const origin = 'http://localhost:3001';
++(globalThis as Record<string, unknown>)['window'] ??= { location: { origin } };
++
++const requested: string[] = [];
++const fakeFetch = (async (url: string) => {
++  requested.push(String(url));
++  return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
++}) as unknown as typeof fetch;
++
++const sameOrigin = createApiClient({ baseUrl: '', fetchImpl: fakeFetch });
++await sameOrigin.call<unknown>('listApplications');
++deepEq('an empty baseUrl resolves to the page origin and the request is SENT', requested, [`${origin}/edge/v1/applications`]);
++
++requested.length = 0;
++const absolute = createApiClient({ baseUrl: 'https://portal.usrp.gov.rw', fetchImpl: fakeFetch });
++await absolute.call<unknown>('findApplicationById', { query: { applicationId: 'abc' } });
++deepEq('an explicit origin is untouched, and the id stays a QUERY param (ADR-005)',
++  requested, ['https://portal.usrp.gov.rw/edge/v1/applications/by-id?applicationId=abc']);
++
++// ══ 2. Officer list reads ══════════════════════════════════════
++
++// edge-gateway: projectListItems() — a bare array, applicationId, agency injected.
++const gatewayRow = {
++  applicationId: '8a1f0d3e-0000-4000-8000-000000000001',
++  processingCode: 'RDF-2026-000001',
++  category: 'GENERAL_ENTRY',
++  status: 'MEDICAL_REVIEW',
++  agency: 'RDF',
++  submittedAt: '2026-09-01T08:00:00.000Z',
++};
++// tooling/edge-dev: the relayed upstream envelope, keyed `id`.
++const harnessBody = {
++  agency: 'RDF',
++  applications: [{ id: gatewayRow.applicationId, agency: 'RDF', status: 'MEDICAL_REVIEW', processingCode: 'RDF-2026-000001', category: 'GENERAL_ENTRY' }],
++};
++
++deepEq('an empty gateway list is [] — the dashboard\u2019s normal zero state', decodeApplicationList([], 'RDF'), []);
++eq('the gateway\u2019s bare array decodes', decodeApplicationList([gatewayRow], 'RDF').length, 1);
++eq('…with applicationId, not id', decodeApplicationList([gatewayRow], 'RDF')[0]?.applicationId, gatewayRow.applicationId);
++eq('the dev harness\u2019s envelope decodes to the SAME view model',
++  decodeApplicationList(harnessBody, 'RDF')[0]?.applicationId, gatewayRow.applicationId);
++eq('agency is stamped from the SESSION, never trusted from the row',
++  decodeApplicationList([{ ...gatewayRow, agency: 'RNP' }], 'RDF')[0]?.agency, 'RDF');
++deepEq('the amber queue is a bare array too', decodeAmberQueue([], 'RDF'), []);
++
++// The shape that actually shipped and broke: a paginated envelope nothing sends.
++throwsMalformed('a `PaginatedResult` envelope is named drift, not a TypeError in a render',
++  () => decodeApplicationList({ items: [], total: 0 }, 'RDF'), 'listApplications');
++throwsMalformed('a status the contract does not know is refused',
++  () => decodeApplicationList([{ ...gatewayRow, status: 'NOT_A_STATUS' }], 'RDF'), 'listApplications');
++throwsMalformed('a row with no id is refused rather than keyed on undefined',
++  () => decodeApplicationList([{ status: 'MEDICAL_REVIEW' }], 'RDF'), 'listApplications');
++
++// ══ 3. One record, flat or enveloped ═══════════════════════════
++
++const flat = decodeApplication({ applicationId: 'a', processingCode: 'RDF-1', status: 'ACCEPTED', documentLane: 'GREEN' }, 'RDF');
++const enveloped = decodeApplication({ agency: 'RDF', application: { id: 'a', processingCode: 'RDF-1', status: 'ACCEPTED' } }, 'RDF');
++eq('the gateway\u2019s flat record decodes', flat.applicationId, 'a');
++eq('the harness\u2019s { application } envelope decodes to the same id', enveloped.applicationId, 'a');
++eq('an officer-only forensic signal survives when the edge sends it', flat.documentLane, 'GREEN');
++eq('…and is null, not undefined, when it does not', enveloped.documentLane, null);
++
++// ══ 4. The decision trail ══════════════════════════════════════
++
++const gatewayHistory = decodeStatusHistory([
++  { entryId: 'e1', fromStatus: 'SUBMITTED', toStatus: 'MEDICAL_REVIEW', status: 'MEDICAL_REVIEW', note: 'cleared', actorKind: 'OFFICER', occurredAt: '2026-09-02T09:00:00.000Z' },
++]);
++const upstreamHistory = decodeStatusHistory({
++  agency: 'RDF',
++  applicationId: 'a',
++  history: [{ fromStatus: 'SUBMITTED', toStatus: 'MEDICAL_REVIEW', actorKind: 'OFFICER', actor: 'b0a1-officer-uuid', at: '2026-09-02T09:00:00.000Z', reason: 'cleared' }],
++});
++deepEq('occurredAt/note and at/reason decode to one entry shape', gatewayHistory, upstreamHistory);
++ok('the officer UUID does NOT survive decoding', !('actor' in (gatewayHistory[0] ?? {})));
++eq('the first transition keeps fromStatus null — nothing preceded it',
++  decodeStatusHistory([{ fromStatus: null, toStatus: 'SUBMITTED', actorKind: 'SYSTEM', occurredAt: null, note: null }])[0]?.fromStatus, null);
++
++// ══ 5. The composed detail read ════════════════════════════════
++
++const detailFromGateway = decodeApplicationDetail(
++  { application: { applicationId: 'a', processingCode: 'RDF-1', status: 'MEDICAL_REVIEW' }, history: [{ fromStatus: null, toStatus: 'SUBMITTED', actorKind: 'SYSTEM', occurredAt: '2026-09-01T00:00:00.000Z', note: null }] },
++  'RDF',
++);
++eq('the gateway detail decodes one level deep, not two', detailFromGateway.application.applicationId, 'a');
++deepEq('…and `partial` defaults to [] because the gateway fails whole', detailFromGateway.partial, []);
++const detailFromHarness = decodeApplicationDetail(
++  { application: { agency: 'RDF', application: { id: 'a', status: 'MEDICAL_REVIEW' } }, history: null, partial: ['history'] },
++  'RDF',
++);
++deepEq('…while a real partial from the harness is preserved', detailFromHarness.partial, ['history']);
++deepEq('a null history panel degrades to an empty trail, not a crash', detailFromHarness.history, []);
++
++// ══ 6. `status` means two different things. Never conflate them. ═
++
++const gatewayApplied = decodeTransition('a', { applicationId: 'a', outcome: 'APPLIED', fromStatus: 'MEDICAL_REVIEW', status: 'FINAL_SHORTLIST' });
++const upstreamApplied = decodeTransition('a', { status: 'APPLIED', fromStatus: 'MEDICAL_REVIEW', toStatus: 'FINAL_SHORTLIST' });
++deepEq('the gateway\u2019s {outcome,status} and the upstream\u2019s {status,toStatus} agree', gatewayApplied, upstreamApplied);
++eq('…and the RESULTING state is never read as the outcome', upstreamApplied.status, 'FINAL_SHORTLIST');
++eq('NO_CHANGE is not reported as a successful transition',
++  decodeTransition('a', { status: 'NO_CHANGE', currentStatus: 'ACCEPTED' }).outcome, 'NO_CHANGE');
++eq('…and still carries the state the row is actually in',
++  decodeTransition('a', { status: 'NO_CHANGE', currentStatus: 'ACCEPTED' }).status, 'ACCEPTED');
++
++// ══ 7. The citizen's rows ══════════════════════════════════════
++
++const mine = decodeMyApplications([
++  { applicationId: 'a', agency: 'RNP', status: 'SUBMITTED', processingCode: 'RNP-2026-000007', submittedAt: '2026-08-30T00:00:00.000Z' },
++]);
++eq('the citizen list decodes from a bare array', mine.length, 1);
++eq('…and agency comes from the ROW, because a citizen is cross-agency', mine[0]?.agency, 'RNP');
++throwsMalformed('an unknown agency on a citizen row is refused, never defaulted',
++  () => decodeMyApplications([{ applicationId: 'a', agency: 'RDX', status: 'SUBMITTED' }]), 'listMyApplications');
++
++const total = passed + failures.length;
++if (failures.length > 0) {
++  process.stderr.write(`\n  ✗ decode selfcheck FAILED — ${failures.length} of ${total} assertions\n\n`);
++  for (const failure of failures) process.stderr.write(`    ✗ ${failure}\n`);
++  process.stderr.write('\n');
++  process.exit(1);
++}
++process.stdout.write(`\n  ✓ decode selfcheck GREEN — ${passed} assertions\n\n`);
+diff --git a/packages/api-client/src/decode.ts b/packages/api-client/src/decode.ts
+new file mode 100644
+index 0000000..74a0e28
+--- /dev/null
++++ b/packages/api-client/src/decode.ts
+@@ -0,0 +1,298 @@
++// ══════════════════════════════════════════════════════════════════
++// @usrp/api-client — response decoders
++//
++// WHY THIS FILE EXISTS.
++//
++// `transport.ts` ends with `return parsed as T`. That cast is the only thing
++// between an edge response and a React render, and a cast checks NOTHING. The
++// types in `wire.ts` were transcribed by hand — the file says so in its own
++// header — against `tooling/edge-dev`, which RELAYS the upstream body verbatim.
++// The production `edge-gateway` does not relay: `adapters/http/projections.ts`
++// projects every officer read through an allowlist and returns a BARE ARRAY.
++//
++// So `{ agency, applications: [...] }` (dev) and `[...]` (production) were both
++// called `ApplicationListResponse`, nothing compared them, and the dashboard
++// failed at `data.applications.length` — a TypeError inside a component, shown
++// to an officer as "Something went wrong", indistinguishable from an outage.
++//
++// Decoding at the boundary makes that a named `ApiError { kind: 'malformed' }`
++// carrying the operation id. Two consequences worth stating:
++//
++//   • The client now has ONE row shape regardless of which edge answers. The
++//     dev harness's envelope is accepted and unwrapped, and in DEV it warns —
++//     visible drift, not a silent divergence that only shows up in production.
++//   • `agency` is INJECTED from the officer's session on officer reads, never
++//     read from the row. That mirrors the gateway's own rule and keeps it
++//     server-authoritative: a row cannot relabel itself.
++// ══════════════════════════════════════════════════════════════════
++
++import { APPLICATION_STATUSES, type Agency, type ApplicationStatus } from '@usrp/contracts';
++import { ApiError } from './errors.js';
++import type {
++  AmberQueueResponse,
++  AmberQueueRow,
++  ApplicationDetailResponse,
++  ApplicationListResponse,
++  ApplicationRecord,
++  ApplicationRow,
++  MyApplicationRow,
++  MyApplicationsResponse,
++  StatusHistoryEntry,
++  StatusHistoryResponse,
++  TransitionResult,
++  WalkInVetResponse,
++} from './wire.js';
++
++const STATUSES: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
++const AGENCIES: ReadonlySet<string> = new Set(['RDF', 'RNP', 'RCS']);
++
++/** Drift is a defect, not a rendering problem. Name the operation and stop. */
++function malformed(operationId: string, detail: string): never {
++  throw new ApiError(
++    { kind: 'malformed', detail: `${operationId}: ${detail}` },
++    'The server returned an unexpected response.',
++  );
++}
++
++function isRecord(value: unknown): value is Record<string, unknown> {
++  return typeof value === 'object' && value !== null && !Array.isArray(value);
++}
++
++function str(value: unknown): string | null {
++  return typeof value === 'string' && value.length > 0 ? value : null;
++}
++
++function num(value: unknown): number | null {
++  return typeof value === 'number' && Number.isFinite(value) ? value : null;
++}
++
++function get(body: unknown, name: string): unknown {
++  return isRecord(body) ? body[name] : undefined;
++}
++
++/** First non-null of several candidate field names. The two edges disagree on some. */
++function firstString(body: unknown, ...names: readonly string[]): string | null {
++  for (const name of names) {
++    const value = str(get(body, name));
++    if (value !== null) return value;
++  }
++  return null;
++}
++
++const warnedOperations = new Set<string>();
++
++/**
++ * Accept the production shape (a bare array) and the dev harness shape (an
++ * upstream envelope), normalising to rows.
++ *
++ * The envelope branch warns ONCE per operation in development. Silently
++ * accepting both is how the two shapes stayed unreconciled in the first place.
++ */
++function rowsOf(body: unknown, envelopeKey: string, operationId: string): readonly unknown[] {
++  if (Array.isArray(body)) return body;
++  const enveloped = get(body, envelopeKey);
++  if (Array.isArray(enveloped)) {
++    // Read without depending on `vite/client` types: this package is also
++    // consumed by node-based selfchecks where `import.meta.env` is undefined.
++    const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
++    if (isDev) {
++      if (!warnedOperations.has(operationId)) {
++        warnedOperations.add(operationId);
++        console.warn(
++          `[api-client] ${operationId} answered with an upstream envelope { ${envelopeKey}: [...] }. ` +
++            'The production edge projects a bare array. This response came from a dev harness, not the gateway.',
++        );
++      }
++    }
++    return enveloped;
++  }
++  return malformed(operationId, `expected an array or { ${envelopeKey}: [...] }, got ${describe(body)}`);
++}
++
++function describe(value: unknown): string {
++  if (value === null) return 'null';
++  if (Array.isArray(value)) return 'an array';
++  return typeof value;
++}
++
++/**
++ * Nullable where a missing status is survivable.
++ *
++ * The officer LIST is strict on purpose — a row with no status cannot be
++ * rendered or acted on, and hiding it would be worse than refusing the read.
++ * The amber queue is counted, not rendered, so one unreadable forensics row must
++ * not blank an officer's dashboard.
++ */
++function optionalStatus(value: unknown, operationId: string): ApplicationStatus | null {
++  return str(value) === null ? null : requireStatus(value, operationId);
++}
++
++function requireStatus(value: unknown, operationId: string): ApplicationStatus {
++  const status = str(value);
++  if (status === null || !STATUSES.has(status)) {
++    return malformed(operationId, `unknown application status ${JSON.stringify(value)}`);
++  }
++  return status as ApplicationStatus;
++}
++
++function requireAgency(value: unknown, operationId: string): Agency {
++  const agency = str(value);
++  if (agency === null || !AGENCIES.has(agency)) {
++    return malformed(operationId, `unknown agency ${JSON.stringify(value)}`);
++  }
++  return agency as Agency;
++}
++
++/** `applicationId` on the gateway, `id` upstream. Both mean the row's identity. */
++function requireApplicationId(row: unknown, operationId: string): string {
++  const id = firstString(row, 'applicationId', 'id');
++  if (id === null) return malformed(operationId, 'a row carries no applicationId');
++  return id;
++}
++
++// ── Officer reads ────────────────────────────────────────────────
++
++export function decodeApplicationList(body: unknown, agency: Agency): ApplicationListResponse {
++  return rowsOf(body, 'applications', 'listApplications').map((row): ApplicationRow => ({
++    applicationId: requireApplicationId(row, 'listApplications'),
++    processingCode: str(get(row, 'processingCode')),
++    category: str(get(row, 'category')),
++    status: requireStatus(get(row, 'status'), 'listApplications'),
++    agency,
++    submittedAt: str(get(row, 'submittedAt')),
++  }));
++}
++
++export function decodeAmberQueue(body: unknown, agency: Agency): AmberQueueResponse {
++  return rowsOf(body, 'queue', 'listAmberQueue').map((row): AmberQueueRow => ({
++    applicationId: requireApplicationId(row, 'listAmberQueue'),
++    processingCode: str(get(row, 'processingCode')),
++    status: optionalStatus(get(row, 'status'), 'listAmberQueue'),
++    documentType: str(get(row, 'documentType')),
++    forensicsScore: num(get(row, 'forensicsScore')),
++    queuedAt: str(get(row, 'queuedAt')),
++    agency,
++  }));
++}
++
++/**
++ * One application record.
++ *
++ * The gateway returns the projected record FLAT; the dev harness returns the
++ * upstream envelope `{ agency, application }`. Unwrap either.
++ */
++export function decodeApplication(body: unknown, agency: Agency, operationId = 'findApplicationById'): ApplicationRecord {
++  const record = isRecord(get(body, 'application')) ? get(body, 'application') : body;
++  if (!isRecord(record)) return malformed(operationId, `expected an application object, got ${describe(body)}`);
++  return {
++    applicationId: requireApplicationId(record, operationId),
++    processingCode: str(record['processingCode']),
++    category: str(record['category']),
++    status: requireStatus(record['status'], operationId),
++    agency,
++    submittedAt: str(record['submittedAt']),
++    /** Officer-only forensic signals. Absent on the dev harness; null, not undefined. */
++    documentLane: str(record['documentLane']),
++    documentForensicsScore: num(record['documentForensicsScore']),
++    assignedVenueName: str(record['assignedVenueName']),
++    physicalTestScheduledAt: str(record['physicalTestScheduledAt']),
++    finalDecisionAt: str(record['finalDecisionAt']),
++    finalDecisionNotes: str(record['finalDecisionNotes']),
++  };
++}
++
++/**
++ * The decision trail.
++ *
++ * Field names diverge and both are read: the gateway projects `occurredAt` and
++ * `note`, the upstream row carries `at` and `reason`. `actor` is deliberately
++ * NOT decoded — it is an officer UUID the gateway strips, and a field that
++ * exists only against the dev harness is a field a component will render.
++ */
++export function decodeStatusHistory(body: unknown, operationId = 'getStatusHistory'): StatusHistoryResponse {
++  return rowsOf(body, 'history', operationId).map((entry): StatusHistoryEntry => ({
++    fromStatus: str(get(entry, 'fromStatus')) === null ? null : requireStatus(get(entry, 'fromStatus'), operationId),
++    toStatus: requireStatus(get(entry, 'toStatus'), operationId),
++    actorKind: str(get(entry, 'actorKind')),
++    occurredAt: firstString(entry, 'occurredAt', 'at'),
++    note: firstString(entry, 'note', 'reason'),
++  }));
++}
++
++/**
++ * The composed detail read.
++ *
++ * `partial` names the panels that failed. The gateway does not emit it — its
++ * detail handler fails whole rather than degrading — so it decodes to an empty
++ * list rather than being dropped: the applicant-facing meaning of "this panel is
++ * missing" should not disappear because one of two edges omits the field.
++ */
++export function decodeApplicationDetail(body: unknown, agency: Agency): ApplicationDetailResponse {
++  const application = decodeApplication(get(body, 'application'), agency, 'getApplicationDetail');
++  const rawHistory = get(body, 'history');
++  const history = rawHistory === null || rawHistory === undefined
++    ? []
++    : decodeStatusHistory(rawHistory, 'getApplicationDetail');
++  const partial = get(body, 'partial');
++  return {
++    application,
++    history,
++    partial: Array.isArray(partial) ? partial.filter((name): name is string => typeof name === 'string') : [],
++  };
++}
++
++// ── Writes ───────────────────────────────────────────────────────
++
++/**
++ * The 200 body of any transition.
++ *
++ * The gateway answers `{ applicationId, outcome, fromStatus, status }`; the
++ * upstream answers `{ status: 'APPLIED', fromStatus, toStatus }` or
++ * `{ status: 'NO_CHANGE', currentStatus }`. Note the collision: `status` is the
++ * OUTCOME in one and the resulting STATE in the other, which is precisely the
++ * kind of field a cast cannot catch. Both are normalised onto `outcome` plus
++ * `status`, so a caller reads one discriminant.
++ */
++export function decodeTransition(applicationId: string, body: unknown): TransitionResult {
++  const outcome = str(get(body, 'outcome')) ?? str(get(body, 'status')) ?? 'APPLIED';
++  if (outcome === 'NO_CHANGE') {
++    const current = firstString(body, 'currentStatus', 'status');
++    return {
++      outcome: 'NO_CHANGE',
++      applicationId,
++      fromStatus: null,
++      status: current === null ? null : requireStatus(current, 'transition'),
++    };
++  }
++  const resulting = firstString(body, 'toStatus', 'status');
++  return {
++    outcome: 'APPLIED',
++    applicationId,
++    fromStatus: str(get(body, 'fromStatus')) === null ? null : requireStatus(get(body, 'fromStatus'), 'transition'),
++    status: resulting === null ? null : requireStatus(resulting, 'transition'),
++  };
++}
++
++/** Walk-in vetting is a transition plus the autonomous age verdict. */
++export function decodeWalkInVet(applicationId: string, body: unknown): WalkInVetResponse {
++  return { ...decodeTransition(applicationId, body), ageStatus: str(get(body, 'ageStatus')) };
++}
++
++// ── Citizen reads ────────────────────────────────────────────────
++
++/**
++ * The citizen's own rows.
++ *
++ * `agency` comes from the ROW here, not from a session: a citizen is
++ * cross-agency by construction (ADR-014/ADR-018) and their session carries no
++ * agency to inject.
++ */
++export function decodeMyApplications(body: unknown): MyApplicationsResponse {
++  return rowsOf(body, 'applications', 'listMyApplications').map((row): MyApplicationRow => ({
++    applicationId: requireApplicationId(row, 'listMyApplications'),
++    agency: requireAgency(get(row, 'agency'), 'listMyApplications'),
++    status: requireStatus(get(row, 'status'), 'listMyApplications'),
++    processingCode: str(get(row, 'processingCode')),
++    submittedAt: str(get(row, 'submittedAt')),
++  }));
++}
+diff --git a/packages/api-client/src/index.ts b/packages/api-client/src/index.ts
+index cdb93e5..0de3281 100644
+--- a/packages/api-client/src/index.ts
++++ b/packages/api-client/src/index.ts
+@@ -29,6 +29,22 @@ export type { ApiClient, ApiClientOptions, CallOptions, RequestRecord } from './
+ export { EDGE_OPERATIONS, EDGE_PATHS, operation, isEdgeOperationId, assertPathsMatchContract, ContractMismatchError } from './paths.js';
+ export type { EdgeOperation, EdgeOperationId, AnonymousEdgeOperationId } from './paths.js';
+ 
++// ── Decoders ──
++//
++// Exported so a feature slice that must call the edge directly decodes the same
++// way the hooks do, instead of casting and discovering the difference in a
++// render.
++export {
++  decodeApplicationList,
++  decodeAmberQueue,
++  decodeApplication,
++  decodeApplicationDetail,
++  decodeStatusHistory,
++  decodeTransition,
++  decodeWalkInVet,
++  decodeMyApplications,
++} from './decode.js';
++
+ // ── Errors ──
+ export { ApiError, normaliseErrorBody, describeError, G2G_UNAVAILABLE_CODES } from './errors.js';
+ export type { NormalisedError } from './errors.js';
+@@ -43,10 +59,12 @@ export type {
+   ApplicationStatus,
+   StatusFor,
+   ApplicationListResponse,
+-  ApplicationListRow,
++  ApplicationRow,
++  ApplicationRecord,
+   ApplicationByIdResponse,
+   ApplicationDetailResponse,
+   AmberQueueResponse,
++  AmberQueueRow,
+   StatusHistoryEntry,
+   StatusHistoryResponse,
+   TransitionResult,
+diff --git a/packages/api-client/src/keys.ts b/packages/api-client/src/keys.ts
+index cdb9640..89c0334 100644
+--- a/packages/api-client/src/keys.ts
++++ b/packages/api-client/src/keys.ts
+@@ -28,7 +28,19 @@ export const applicationKeys = {
+   /** The officer's agency-scoped list. Keyed by agency: two consoles, two caches. */
+   list: (agency: Agency) => ['applications', 'list', agency] as const,
+   amberQueue: (agency: Agency) => ['applications', 'amber-queue', agency] as const,
++  /**
++   * The PREFIX for everything about one application. Invalidating it reaches
++   * both reads below, because TanStack matches query keys by prefix.
++   */
+   detail: (applicationId: string) => ['applications', 'detail', applicationId] as const,
++  /**
++   * `by-id` and the composed `detail` read return DIFFERENT shapes and used to
++   * share one key, so whichever resolved last overwrote the other and the
++   * consumer of the loser read fields that were not there. Two reads, two keys,
++   * one invalidation prefix.
++   */
++  record: (applicationId: string) => ['applications', 'detail', applicationId, 'record'] as const,
++  detailView: (applicationId: string) => ['applications', 'detail', applicationId, 'view'] as const,
+   statusHistory: (applicationId: string) => ['applications', 'status-history', applicationId] as const,
+ };
+ 
+diff --git a/packages/api-client/src/operations/applicant.ts b/packages/api-client/src/operations/applicant.ts
+index 6c33909..c716fa8 100644
+--- a/packages/api-client/src/operations/applicant.ts
++++ b/packages/api-client/src/operations/applicant.ts
+@@ -10,10 +10,19 @@
+ // ══════════════════════════════════════════════════════════════════
+ 
+ import type { ApiClient } from '../transport.js';
++import { decodeMyApplications } from '../decode.js';
+ import type { MyApplicationsResponse, WithdrawResponse } from '../wire.js';
+ 
+-export function listMyApplications(client: ApiClient, correlationId?: string): Promise<MyApplicationsResponse> {
+-  return client.call<MyApplicationsResponse>('listMyApplications', correlationId === undefined ? {} : { correlationId });
++/**
++ * Decoded, not cast — and the silent failure this fixes is the worst one in the
++ * codebase. `GET /edge/v1/me/applications` is a bare array; the old code read
++ * `data.applications ?? []`, which is `[]` for every citizen with a live
++ * application. No error, no empty-state bug report: the portal simply told
++ * people they had applied to nothing.
++ */
++export async function listMyApplications(client: ApiClient, correlationId?: string): Promise<MyApplicationsResponse> {
++  const body = await client.call<unknown>('listMyApplications', correlationId === undefined ? {} : { correlationId });
++  return decodeMyApplications(body);
+ }
+ 
+ /** ADR-020. Ownership is a server-side property of the session, not an argument. */
+diff --git a/packages/api-client/src/operations/applications.ts b/packages/api-client/src/operations/applications.ts
+index bd471b7..d662f1f 100644
+--- a/packages/api-client/src/operations/applications.ts
++++ b/packages/api-client/src/operations/applications.ts
+@@ -23,7 +23,17 @@
+ // from live code. So we narrow per route and report the divergence upward.
+ // ══════════════════════════════════════════════════════════════════
+ 
++import type { Agency } from '@usrp/contracts';
+ import type { ApiClient } from '../transport.js';
++import {
++  decodeAmberQueue,
++  decodeApplication,
++  decodeApplicationDetail,
++  decodeApplicationList,
++  decodeStatusHistory,
++  decodeTransition,
++  decodeWalkInVet,
++} from '../decode.js';
+ import type {
+   AcceptInput,
+   AdjudicateInput,
+@@ -43,35 +53,48 @@ import type {
+ 
+ // ── Reads ───────────────────────────────────────────────────────
+ 
+-export function listApplications(client: ApiClient, correlationId?: string): Promise<ApplicationListResponse> {
+-  return client.call<ApplicationListResponse>('listApplications', correlationId === undefined ? {} : { correlationId });
++/**
++ * EVERY READ IS DECODED, not cast.
++ *
++ * `agency` is threaded in from the officer's verified session and stamped onto
++ * each row, exactly as the gateway does it — the wire's own agency field is not
++ * trusted on an officer read, because a row that can relabel itself defeats the
++ * RLS scoping that produced it.
++ */
++export async function listApplications(client: ApiClient, agency: Agency, correlationId?: string): Promise<ApplicationListResponse> {
++  const body = await client.call<unknown>('listApplications', correlationId === undefined ? {} : { correlationId });
++  return decodeApplicationList(body, agency);
+ }
+ 
+-export function listAmberQueue(client: ApiClient, correlationId?: string): Promise<AmberQueueResponse> {
+-  return client.call<AmberQueueResponse>('listAmberQueue', correlationId === undefined ? {} : { correlationId });
++export async function listAmberQueue(client: ApiClient, agency: Agency, correlationId?: string): Promise<AmberQueueResponse> {
++  const body = await client.call<unknown>('listAmberQueue', correlationId === undefined ? {} : { correlationId });
++  return decodeAmberQueue(body, agency);
+ }
+ 
+ /** The id travels as a QUERY PARAM, never a path segment (ADR-005). */
+-export function findApplicationById(client: ApiClient, applicationId: string, correlationId?: string): Promise<ApplicationByIdResponse> {
+-  return client.call<ApplicationByIdResponse>('findApplicationById', {
++export async function findApplicationById(client: ApiClient, applicationId: string, agency: Agency, correlationId?: string): Promise<ApplicationByIdResponse> {
++  const body = await client.call<unknown>('findApplicationById', {
+     query: { applicationId },
+     ...(correlationId === undefined ? {} : { correlationId }),
+   });
++  return decodeApplication(body, agency);
+ }
+ 
+-export function getStatusHistory(client: ApiClient, applicationId: string, correlationId?: string): Promise<StatusHistoryResponse> {
+-  return client.call<StatusHistoryResponse>('getStatusHistory', {
++export async function getStatusHistory(client: ApiClient, applicationId: string, correlationId?: string): Promise<StatusHistoryResponse> {
++  const body = await client.call<unknown>('getStatusHistory', {
+     query: { applicationId },
+     ...(correlationId === undefined ? {} : { correlationId }),
+   });
++  return decodeStatusHistory(body);
+ }
+ 
+ /** One round trip for the detail screen. Degrades per panel rather than failing whole. */
+-export function getApplicationDetail(client: ApiClient, applicationId: string, correlationId?: string): Promise<ApplicationDetailResponse> {
+-  return client.call<ApplicationDetailResponse>('getApplicationDetail', {
++export async function getApplicationDetail(client: ApiClient, applicationId: string, agency: Agency, correlationId?: string): Promise<ApplicationDetailResponse> {
++  const body = await client.call<unknown>('getApplicationDetail', {
+     query: { applicationId },
+     ...(correlationId === undefined ? {} : { correlationId }),
+   });
++  return decodeApplicationDetail(body, agency);
+ }
+ 
+ // ── The four transitions ────────────────────────────────────────
+@@ -87,13 +110,15 @@ export function getApplicationDetail(client: ApiClient, applicationId: string, c
+  * Narrowed errors: 404, 409 NOT_APPLICABLE, 422 INVALID_MEDICAL_INPUT, 403.
+  * NOT 409 CROSS_AGENCY_LOCKED — unreachable on this route.
+  */
+-export function recordMedicalReview(client: ApiClient, input: MedicalReviewInput, correlationId?: string): Promise<TransitionResult> {
+-  return client.call<TransitionResult>('recordMedicalReview', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++export async function recordMedicalReview(client: ApiClient, input: MedicalReviewInput, correlationId?: string): Promise<TransitionResult> {
++  const body = await client.call<unknown>('recordMedicalReview', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++  return decodeTransition(input.applicationId, body);
+ }
+ 
+ /** Final decision. Narrowed errors: 404, 409 NOT_APPLICABLE, 403. */
+-export function recordFinalDecision(client: ApiClient, input: FinalDecisionInput, correlationId?: string): Promise<TransitionResult> {
+-  return client.call<TransitionResult>('recordFinalDecision', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++export async function recordFinalDecision(client: ApiClient, input: FinalDecisionInput, correlationId?: string): Promise<TransitionResult> {
++  const body = await client.call<unknown>('recordFinalDecision', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++  return decodeTransition(input.applicationId, body);
+ }
+ 
+ /**
+@@ -106,13 +131,15 @@ export function recordFinalDecision(client: ApiClient, input: FinalDecisionInput
+  * Also triggers ADR-017 auto-withdrawal of the citizen's other applications,
+  * which is why the invalidation map reaches into the citizen caches.
+  */
+-export function acceptApplication(client: ApiClient, input: AcceptInput, correlationId?: string): Promise<TransitionResult> {
+-  return client.call<TransitionResult>('acceptApplication', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++export async function acceptApplication(client: ApiClient, input: AcceptInput, correlationId?: string): Promise<TransitionResult> {
++  const body = await client.call<unknown>('acceptApplication', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++  return decodeTransition(input.applicationId, body);
+ }
+ 
+ /** Adjudicate (ADR-011). How a row leaves the amber queue. Narrowed: 404, 409, 403. */
+-export function adjudicateApplication(client: ApiClient, input: AdjudicateInput, correlationId?: string): Promise<TransitionResult> {
+-  return client.call<TransitionResult>('adjudicateApplication', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++export async function adjudicateApplication(client: ApiClient, input: AdjudicateInput, correlationId?: string): Promise<TransitionResult> {
++  const body = await client.call<unknown>('adjudicateApplication', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
++  return decodeTransition(input.applicationId, body);
+ }
+ 
+ // ── Walk-in: TWO steps, and no nationalIdHash ───────────────────
+@@ -138,8 +165,9 @@ export function registerWalkIn(client: ApiClient, input: WalkInRegisterInput, co
+  * autonomous age verdict lands in seconds while the candidate stands at the desk.
+  * A silent client retry would hide a state the officer needs to see.
+  */
+-export function vetWalkIn(client: ApiClient, applicationId: string, correlationId?: string): Promise<WalkInVetResponse> {
+-  return client.call<WalkInVetResponse>('vetWalkIn', { body: { applicationId }, ...(correlationId === undefined ? {} : { correlationId }) });
++export async function vetWalkIn(client: ApiClient, applicationId: string, correlationId?: string): Promise<WalkInVetResponse> {
++  const body = await client.call<unknown>('vetWalkIn', { body: { applicationId }, ...(correlationId === undefined ? {} : { correlationId }) });
++  return decodeWalkInVet(applicationId, body);
+ }
+ 
+ /**
+diff --git a/packages/api-client/src/queries/applications.ts b/packages/api-client/src/queries/applications.ts
+index 792073f..376eeaf 100644
+--- a/packages/api-client/src/queries/applications.ts
++++ b/packages/api-client/src/queries/applications.ts
+@@ -71,7 +71,7 @@ import type {
+ export function useApplicationList(client: ApiClient, agency: Agency): UseQueryResult<ApplicationListResponse> {
+   return useQuery({
+     queryKey: applicationKeys.list(agency),
+-    queryFn: () => listApplications(client),
++    queryFn: () => listApplications(client, agency),
+     staleTime: 30_000,
+   });
+ }
+@@ -79,17 +79,17 @@ export function useApplicationList(client: ApiClient, agency: Agency): UseQueryR
+ export function useAmberQueue(client: ApiClient, agency: Agency): UseQueryResult<AmberQueueResponse> {
+   return useQuery({
+     queryKey: applicationKeys.amberQueue(agency),
+-    queryFn: () => listAmberQueue(client),
++    queryFn: () => listAmberQueue(client, agency),
+     // Shorter than the list: this queue is the exception-based dashboard's
+     // reason to exist, and a stale one hides work that is waiting.
+     staleTime: 15_000,
+   });
+ }
+ 
+-export function useApplication(client: ApiClient, applicationId: string): UseQueryResult<ApplicationByIdResponse> {
++export function useApplication(client: ApiClient, agency: Agency, applicationId: string): UseQueryResult<ApplicationByIdResponse> {
+   return useQuery({
+-    queryKey: applicationKeys.detail(applicationId),
+-    queryFn: () => findApplicationById(client, applicationId),
++    queryKey: applicationKeys.record(applicationId),
++    queryFn: () => findApplicationById(client, applicationId, agency),
+     enabled: applicationId.length > 0,
+     staleTime: 10_000,
+   });
+@@ -105,10 +105,10 @@ export function useStatusHistory(client: ApiClient, applicationId: string): UseQ
+ }
+ 
+ /** One request for the whole detail screen; panels degrade independently. */
+-export function useApplicationDetail(client: ApiClient, applicationId: string): UseQueryResult<ApplicationDetailResponse> {
++export function useApplicationDetail(client: ApiClient, agency: Agency, applicationId: string): UseQueryResult<ApplicationDetailResponse> {
+   return useQuery({
+-    queryKey: applicationKeys.detail(applicationId),
+-    queryFn: () => getApplicationDetail(client, applicationId),
++    queryKey: applicationKeys.detailView(applicationId),
++    queryFn: () => getApplicationDetail(client, applicationId, agency),
+     enabled: applicationId.length > 0,
+     staleTime: 10_000,
+   });
+diff --git a/packages/api-client/src/transport.ts b/packages/api-client/src/transport.ts
+index 037fdd4..288e9df 100644
+--- a/packages/api-client/src/transport.ts
++++ b/packages/api-client/src/transport.ts
+@@ -75,6 +75,29 @@ function defaultReadCsrfToken(): string | null {
+   return null;
+ }
+ 
++/**
++ * Resolve the configured base into something `new URL(path, base)` accepts.
++ *
++ * `baseUrl: ''` is a DELIBERATE value meaning SAME ORIGIN — in development the
++ * Vite server proxies `/edge` to the gateway, and in production the SPA is
++ * served from the edge origin itself. `@usrp/auth`'s edge client already honours
++ * it, because it concatenates strings. This transport does not: `new URL(path,
++ * '')` throws `TypeError: Invalid base URL` before `fetch` is ever reached, so
++ * every hook in the console failed with a bare TypeError while the auth session
++ * kept working — which is exactly as confusing as it sounds.
++ *
++ * Resolved per call, not at construction: `createApiClient` is invoked at module
++ * scope in every route file, and module scope runs before `window` exists under
++ * SSR or a test runner.
++ */
++function resolveBaseUrl(baseUrl: string): string {
++  if (baseUrl !== '') return baseUrl;
++  if (typeof window === 'undefined') {
++    throw new Error('createApiClient: baseUrl is empty and there is no window to resolve it against. Pass an absolute edge origin.');
++  }
++  return window.location.origin;
++}
++
+ function defaultCorrelationId(): string {
+   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+   return `cid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+@@ -98,7 +121,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
+   const retryPolicy = options.retryPolicy ?? DEFAULT_RETRY_POLICY;
+ 
+   const callOnce = async <T>(edgeOperation: EdgeOperation, correlationId: string, callOptions: CallOptions): Promise<T> => {
+-    const url = new URL(edgeOperation.edgePath, options.baseUrl);
++    const url = new URL(edgeOperation.edgePath, resolveBaseUrl(options.baseUrl));
+     for (const [key, value] of Object.entries(callOptions.query ?? {})) url.searchParams.set(key, value);
+ 
+     const headers: Record<string, string> = { accept: 'application/json', [CORRELATION_HEADER]: correlationId };
+diff --git a/packages/api-client/src/wire.ts b/packages/api-client/src/wire.ts
+index b6da3b5..afba627 100644
+--- a/packages/api-client/src/wire.ts
++++ b/packages/api-client/src/wire.ts
+@@ -1,94 +1,119 @@
+ // ══════════════════════════════════════════════════════════════════
+ // @usrp/api-client — wire shapes
+ //
+-// ⚠ A DECLARED ASSUMPTION, NOT A CLAIM OF VERIFICATION.
++// VERIFIED AGAINST THE GATEWAY, no longer transcribed from hope.
+ //
+-// These interfaces are transcribed from the backend controllers at 47d9ad3
+-// (`officer-transitions.controller.ts`, `walk-in.controller.ts`,
+-// `list-applications.controller.ts`, `applicant-auth.controller.ts`). They are
+-// NOT imported from `@usrp/contracts`, and that is a known gap rather than a
+-// preference: the contract generates per-service namespaced schemas
+-// (`applicationService.*`, `identityService.*`) and this pass did not have the
+-// exact exported member names. Guessing them would have type-checked against
+-// nothing and produced a client that looks generated and is not.
++// The previous revision of this file said, in its own header, that these
++// interfaces were transcribed by hand and NOT imported from the contract. It was
++// honest about the gap and the gap was real: the shapes it described are what
++// `tooling/edge-dev` returns, because that harness RELAYS the upstream body.
++// `services/edge-gateway/src/adapters/http/projections.ts` does not relay — it
++// projects through an allowlist, and every officer list read comes back as a
++// BARE ARRAY with `applicationId` (not `id`), `occurredAt` (not `at`) and
++// `note` (not `reason`).
+ //
+-// Agent 1's own README makes the standard: "A contract that guesses is worse than
+-// one that admits a gap, because a guess type-checks." So this file admits the
+-// gap in the one place a reader will see it, and the report carries the request
+-// to replace every type here with its generated counterpart.
++// The types below describe the CLIENT'S view model: one shape, produced by
++// `decode.ts` from whichever of the two edges answered. Components type against
++// this and nothing else, so a future divergence is a decoder failure with an
++// operation id, not a TypeError inside a render.
+ //
+-// The domain vocabulary below (`Agency`, `ApplicationStatus`, `StatusFor`) IS
+-// imported from the contract, because those names are confirmed exports. So the
+-// per-agency divergence model is already load-bearing here: an RNP walk-in status
+-// is a compile error today.
++// The domain vocabulary (`Agency`, `ApplicationStatus`, `StatusFor`) IS imported
++// from the contract, and `decode.ts` validates every status against it — so a
++// status the contract does not know is a named, loud failure.
+ // ══════════════════════════════════════════════════════════════════
+ 
+ import type { Agency, ApplicationStatus, StatusFor } from '@usrp/contracts';
+ 
+ export type { Agency, ApplicationStatus, StatusFor };
+ 
+-/** `GET /v1/applications` — officer, RLS-scoped. */
+-export interface ApplicationListResponse {
++/**
++ * `GET /edge/v1/applications` — officer, RLS-scoped, NOT paginated.
++ *
++ * A BARE ARRAY. There is no envelope and no `agency` wrapper: the gateway
++ * injects `agency` onto every row from the verified session, which is why
++ * `decode.ts` takes it as an argument rather than trusting the wire.
++ */
++export type ApplicationListResponse = readonly ApplicationRow[];
++
++/** One officer-visible row, after decoding. */
++export interface ApplicationRow {
++  readonly applicationId: string;
++  readonly processingCode: string | null;
++  readonly category: string | null;
++  readonly status: ApplicationStatus;
+   readonly agency: Agency;
+-  readonly applications: readonly ApplicationListRow[];
++  readonly submittedAt: string | null;
+ }
+ 
++/** `GET /edge/v1/applications/by-id?applicationId=` — one row, own agency only. */
++export type ApplicationByIdResponse = ApplicationRecord;
++
+ /**
+- * A row. No `PaginatedResult` envelope, because NOTHING in the platform
+- * paginates — the contract's negative fixtures reject that envelope outright.
++ * The officer record.
++ *
++ * A SUBSET of what the gateway projects, on purpose: only fields a screen
++ * renders today are decoded. Adding one here is a two-line diff; leaving the
++ * whole projection typed-but-unused invites a component to render a forensic
++ * signal onto a surface that should not carry it.
+  */
+-export interface ApplicationListRow {
+-  readonly id: string;
+-  readonly agency: Agency;
++export interface ApplicationRecord {
++  readonly applicationId: string;
++  readonly processingCode: string | null;
++  readonly category: string | null;
+   readonly status: ApplicationStatus;
+-  readonly processingCode: string;
+-  readonly category?: string;
+-}
+-
+-/** `GET /v1/applications/by-id?applicationId=` — one row, own agency only. */
+-export interface ApplicationByIdResponse {
+   readonly agency: Agency;
+-  readonly application: ApplicationListRow;
++  readonly submittedAt: string | null;
++  readonly documentLane: string | null;
++  readonly documentForensicsScore: number | null;
++  readonly assignedVenueName: string | null;
++  readonly physicalTestScheduledAt: string | null;
++  readonly finalDecisionAt: string | null;
++  readonly finalDecisionNotes: string | null;
+ }
+ 
+-/** `GET /v1/applications/amber-queue` — ADR-011 review queue. */
+-export interface AmberQueueResponse {
++/** `GET /edge/v1/applications/amber-queue` — ADR-011 review queue. Bare array. */
++export type AmberQueueResponse = readonly AmberQueueRow[];
++
++export interface AmberQueueRow {
++  readonly applicationId: string;
++  readonly processingCode: string | null;
++  /** Nullable: the queue is COUNTED on the dashboard, not rendered as a lozenge. */
++  readonly status: ApplicationStatus | null;
++  readonly documentType: string | null;
++  readonly forensicsScore: number | null;
++  readonly queuedAt: string | null;
+   readonly agency: Agency;
+-  readonly queue: readonly Readonly<Record<string, unknown>>[];
+ }
+ 
+ /**
+  * One append-only transition (rls/0007), oldest first.
+  *
+- * `actor` is nullable because a system transition has no officer. Conflating
+- * "the system did it" with "an unknown officer did it" is precisely the
+- * Procedural Justice failure this trail exists to prevent.
++ * `actor` is ABSENT, not nullable: the gateway strips the officer UUID before
++ * the browser sees it. `actorKind` — SYSTEM or OFFICER — is the question the UI
++ * actually asks, and conflating "the system did it" with "an unknown officer did
++ * it" is the Procedural Justice failure this trail exists to prevent.
+  */
+ export interface StatusHistoryEntry {
+   readonly fromStatus: ApplicationStatus | null;
+   readonly toStatus: ApplicationStatus;
+-  readonly actorKind: string;
+-  readonly actor: string | null;
+-  readonly at: string;
+-  readonly reason: string | null;
++  readonly actorKind: string | null;
++  readonly occurredAt: string | null;
++  readonly note: string | null;
+ }
+ 
+-export interface StatusHistoryResponse {
+-  readonly agency: Agency;
+-  readonly applicationId: string;
+-  readonly history: readonly StatusHistoryEntry[];
+-}
++/** `GET /edge/v1/applications/status-history?applicationId=` — bare array. */
++export type StatusHistoryResponse = readonly StatusHistoryEntry[];
+ 
+ /**
+  * The edge's aggregate detail read.
+  *
+- * `partial` names the panels that failed. It exists because `Promise.all` over
+- * an aggregate turns one 404 on a side panel into a blank error page; naming the
+- * gap lets the UI render what it has and say what it does not.
++ * `partial` names the panels that failed. The gateway fails whole rather than
++ * degrading, so it decodes to `[]` there; the dev harness populates it. Keeping
++ * the field means the screen's "this panel is missing" path survives either.
+  */
+ export interface ApplicationDetailResponse {
+-  readonly application: ApplicationByIdResponse;
+-  readonly history: StatusHistoryResponse | null;
++  readonly application: ApplicationRecord;
++  readonly history: StatusHistoryResponse;
+   readonly partial: readonly string[];
+ }
+ 
+@@ -96,12 +121,22 @@ export interface ApplicationDetailResponse {
+  * The shared success body of the four officer transitions.
+  *
+  * `APPLIED` and `NO_CHANGE` are BOTH 200. A client that treats any 200 as
+- * "changed" will report a no-op as a successful transition, so the discriminant
+- * has to be read.
++ * "changed" reports a no-op as a successful transition, so the discriminant has
++ * to be read — and it is `outcome`, NOT `status`.
++ *
++ * That rename is not cosmetic. The gateway answers `{ applicationId, outcome,
++ * fromStatus, status }` where `status` is the RESULTING STATE; the upstream
++ * answers `{ status: 'APPLIED', toStatus }` where `status` is the OUTCOME. One
++ * field name, two meanings, and a cast cannot tell them apart. `decode.ts`
++ * separates them here so a caller can never read one as the other.
+  */
+-export type TransitionResult =
+-  | { readonly status: 'APPLIED'; readonly fromStatus: ApplicationStatus; readonly toStatus: ApplicationStatus }
+-  | { readonly status: 'NO_CHANGE'; readonly currentStatus: ApplicationStatus };
++export interface TransitionResult {
++  readonly outcome: 'APPLIED' | 'NO_CHANGE';
++  readonly applicationId: string;
++  readonly fromStatus: ApplicationStatus | null;
++  /** The status the row is in AFTER the write. Null when the edge did not say. */
++  readonly status: ApplicationStatus | null;
++}
+ 
+ /** ADR-013: RDF is a board, RNP/RCS are certificate agencies. Two shapes, one route. */
+ export type MedicalReviewInput =
+@@ -150,9 +185,10 @@ export interface WalkInRegisterResponse {
+ }
+ 
+ /** Walk-in step two. `AGE_PENDING` arrives as a 409, not in this body. */
+-export type WalkInVetResponse =
+-  | { readonly status: 'APPLIED'; readonly fromStatus: ApplicationStatus; readonly toStatus: ApplicationStatus; readonly ageStatus: string }
+-  | { readonly status: 'NO_CHANGE'; readonly currentStatus: ApplicationStatus };
++export interface WalkInVetResponse extends TransitionResult {
++  /** Present only when the autonomous age verdict has landed. */
++  readonly ageStatus: string | null;
++}
+ 
+ /**
+  * `POST /v1/identities/verify`.
+@@ -166,17 +202,22 @@ export type IdentityVerifyResponse =
+   | { readonly status: 'CREATED'; readonly applicantId: string }
+   | { readonly status: 'ALREADY_EXISTS'; readonly applicantId: string };
+ 
+-/** `GET /v1/applicants/me/applications` — the citizen's own rows, cross-agency. */
+-export interface MyApplicationsResponse {
+-  readonly applications: readonly MyApplicationRow[];
+-}
++/**
++ * `GET /edge/v1/me/applications` — the citizen's own rows, cross-agency.
++ *
++ * A BARE ARRAY, like every other list read. `agency` comes from the ROW here
++ * rather than a session, because a citizen is cross-agency by construction
++ * (ADR-014 / ADR-018) and their session carries no agency to inject.
++ */
++export type MyApplicationsResponse = readonly MyApplicationRow[];
+ 
+ export interface MyApplicationRow {
+   readonly applicationId: string;
+   readonly agency: Agency;
+   readonly status: ApplicationStatus;
+-  readonly processingCode: string;
+-  readonly submittedAt: string;
++  readonly processingCode: string | null;
++  /** Nullable: the gateway projects `str()`, which is null on an absent column. */
++  readonly submittedAt: string | null;
+ }
+ 
+ /** ADR-020 self-withdrawal. Four outcomes across three status codes. */
+@@ -191,7 +232,7 @@ export type WithdrawResponse =
+  * values, so a component that renders a walk-in status for RNP is a compile
+  * error instead of a production surprise for two agencies out of three.
+  */
+-export type RowFor<A extends Agency> = Omit<ApplicationListRow, 'agency' | 'status'> & {
++export type RowFor<A extends Agency> = Omit<ApplicationRow, 'agency' | 'status'> & {
+   readonly agency: A;
+   readonly status: StatusFor<A>;
+ };
