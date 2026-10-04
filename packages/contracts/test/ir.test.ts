@@ -11,7 +11,7 @@ import {
   topoSortSchemas,
 } from '../scripts/openapi/ir.ts';
 
-const SHA = '47d9ad3ab019f6d2f826cfae2136cbff898d733f';
+const SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab';
 
 /** A minimal, VALID document. Every negative case below mutates exactly one line. */
 const doc = (overrides: {

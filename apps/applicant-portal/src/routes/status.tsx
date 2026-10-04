@@ -56,7 +56,7 @@ export default function StatusPage(): React.ReactElement {
     );
   }
 
-  const applications = data?.applications ?? [];
+  const applications = data ?? [];
 
   return (
     <Box xcss={pageStyles.base}>
@@ -65,13 +65,13 @@ export default function StatusPage(): React.ReactElement {
 
         {applications.length === 0 && (
           <SectionMessage>
-            <Text>You have no applications on file.</Text>
+            <Text>{t("applicant.no_applications")}</Text>
           </SectionMessage>
         )}
 
-        {applications.map((application) => (
+        {applications.map((application, index) => (
           <Box
-            key={application.applicationId}
+            key={application.applicationId ?? application.processingCode ?? `${application.agency}-${index}`}
             padding="space.300"
             backgroundColor="color.background.neutral"
             xcss={cardStyles.base}
@@ -83,12 +83,14 @@ export default function StatusPage(): React.ReactElement {
               </Inline>
 
               <Text size="small" color="color.text.subtle">
-                {t("application.id")}: {application.processingCode}
+                {t("application.id")}: {application.processingCode ?? t("application.not_provided")}
               </Text>
 
               <Text size="small" color="color.text.subtle">
                 {t("application.submitted")}:{" "}
-                {new Date(application.submittedAt).toLocaleDateString()}
+                {application.submittedAt === null
+                  ? t("application.not_provided")
+                  : new Date(application.submittedAt).toLocaleDateString()}
               </Text>
             </Stack>
           </Box>

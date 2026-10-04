@@ -19,7 +19,7 @@ permissions:
 
 env:
   NODE_VERSION: '22'
-  BACKEND_SHA: d40f6d824ec46209ec5411192251fca4561e36b0
+  BACKEND_SHA: 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
   # One Trivy for the whole pipeline. The advisory scan (security-scan.sh, which
@@ -49,6 +49,7 @@ jobs:
           package-manager-cache: false
       - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
       - run: node tooling/repo-hygiene/verify.mjs
+      - run: node --experimental-strip-types tooling/surface-contract/src/cli.ts
 
   install:
     name: Install

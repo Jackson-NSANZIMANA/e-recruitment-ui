@@ -2,7 +2,7 @@
 # iam-service — the token issuer, and the ONLY unauthenticated business
 # surface in the platform.
 #
-# HAND-AUTHORED from the controllers at backend SHA 47d9ad3. Every operation
+# HAND-AUTHORED from the controllers at backend SHA 06d9f9b. Every operation
 # records provenance in x-usrp-source and verification level in
 # x-usrp-verified. `controller-verbatim` means the request and response shapes
 # were transcribed from the named file field by field.
@@ -27,7 +27,7 @@ info:
     NEITHER TOKEN IS A COOKIE. Both are returned in a JSON body. There is no
     Set-Cookie header anywhere in this document because there is no server in
     the system that sets one.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_IAM_SERVICE"
   x-usrp-transport-faults:
     - status: 405

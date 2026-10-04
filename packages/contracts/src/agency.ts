@@ -10,7 +10,7 @@
 // ═════════════════════════════════════════════════════════════════
 
 /** The backend main commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = 'd40f6d824ec46209ec5411192251fca4561e36b0';
+export const VERIFIED_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab';
 
 export const AGENCIES = ['RDF', 'RNP', 'RCS'] as const;
 export type Agency = (typeof AGENCIES)[number];
@@ -81,6 +81,53 @@ export const IDENTITY_STATUSES = ['PENDING', 'VERIFIED', 'FAILED', 'EXPIRED'] as
 export type IdentityStatus = (typeof IDENTITY_STATUSES)[number];
 export const APPLICATION_CHANNELS = ['WEB', 'USSD', 'IREMBO_KIOSK', 'WALK_IN'] as const;
 export type ApplicationChannel = (typeof APPLICATION_CHANNELS)[number];
+
+/**
+ * Applicant submission categories verified against the backend category-agency
+ * and education-requirements tables at VERIFIED_BACKEND_SHA. Agency is derived
+ * from the selected category by the backend; these values are not an agency
+ * selector and must never be sent as an `agency` request field.
+ */
+export const APPLICATION_CATEGORIES = [
+  'GENERAL_ENLISTMENT',
+  'RESERVE_FORCE_ALEVEL',
+  'RESERVE_FORCE_UNIVERSITY',
+  'RESERVE_FORCE_SPECIALIST',
+  'CADET_OFFICER',
+  'BASIC_POLICE_COURSE',
+  'GENERAL_ENLISTEE',
+  'OFFICER_ONE_YEAR',
+  'OFFICER_ONE_YEAR_SPECIALIST',
+  'OFFICER_FOUR_YEAR_UR',
+] as const;
+export type ApplicationCategory = (typeof APPLICATION_CATEGORIES)[number];
+
+export const CATEGORY_AGENCY: Readonly<Record<ApplicationCategory, Agency>> = {
+  GENERAL_ENLISTMENT: 'RDF',
+  RESERVE_FORCE_ALEVEL: 'RDF',
+  RESERVE_FORCE_UNIVERSITY: 'RDF',
+  RESERVE_FORCE_SPECIALIST: 'RDF',
+  CADET_OFFICER: 'RNP',
+  BASIC_POLICE_COURSE: 'RNP',
+  GENERAL_ENLISTEE: 'RCS',
+  OFFICER_ONE_YEAR: 'RCS',
+  OFFICER_ONE_YEAR_SPECIALIST: 'RCS',
+  OFFICER_FOUR_YEAR_UR: 'RCS',
+} as const;
+
+/** The backend academic-input rule: exactly one registry reference is required per category. */
+export const ACADEMIC_PATH_BY_CATEGORY: Readonly<Record<ApplicationCategory, 'NESA' | 'HEC'>> = {
+  GENERAL_ENLISTMENT: 'NESA',
+  RESERVE_FORCE_ALEVEL: 'NESA',
+  RESERVE_FORCE_UNIVERSITY: 'HEC',
+  RESERVE_FORCE_SPECIALIST: 'HEC',
+  CADET_OFFICER: 'HEC',
+  BASIC_POLICE_COURSE: 'NESA',
+  GENERAL_ENLISTEE: 'NESA',
+  OFFICER_ONE_YEAR: 'HEC',
+  OFFICER_ONE_YEAR_SPECIALIST: 'HEC',
+  OFFICER_FOUR_YEAR_UR: 'NESA',
+} as const;
 
 export const AUTH_KINDS = ['officer', 'system', 'applicant-session', 'none'] as const;
 export type AuthKind = (typeof AUTH_KINDS)[number];

@@ -125,7 +125,7 @@ reopened from re-created branches. With four agents working in parallel on
 `feat/**` branches, this cost scales with how long you wait.
 
 **Everything SHA-pinned elsewhere breaks.** In this codebase specifically:
-`.github/workflows/ci.yml` pins `BACKEND_SHA: 47d9ad3a...`, which points into the
+`.github/workflows/ci.yml` pins `BACKEND_SHA: 06d9f9b6a...`, which points into the
 *backend* repo and is unaffected — but audit for any pin pointing *into*
 `e-recruitment-ui`: deploy manifests, submodules, docs links, release notes, task
 references, `git blame` links in review comments. All of them rot.

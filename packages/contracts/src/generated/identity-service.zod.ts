@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  47d9ad3ab019f6d2f826cfae2136cbff898d733f          ║
+// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -20,6 +20,7 @@
 //   POST /v1/applicants/auth/otp/verify                 none               browser
 //   POST /v1/applicants/auth/logout                     applicant-session  browser
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
+//   POST /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
 //   GET  /v1/applicants/me/erasure-request              applicant-session  browser
 //   POST /v1/applicants/me/erasure-request              applicant-session  browser
@@ -279,6 +280,21 @@ export const OtpVerifyBodySchema = z
     "channel": ApplicationChannelSchema,
   }).strict();
 
+export const SubmitApplicationRequestSchema = z
+  .object({
+    "category": z.string().max(64),
+    "nesaIndexNumber": z.string().max(64).optional(),
+    "hecRegistrationNumber": z.string().max(64).optional(),
+  }).strict();
+
+export const SubmitApplicationResponseSchema = z
+  .object({
+    "status": z.literal('SUBMITTED'),
+    "applicationId": z.string().uuid(),
+    "processingCode": z.string(),
+    "agency": AgencySchema,
+  }).strict();
+
 /**
  * The JWT kinds. Citizen sessions fail INVALID_SESSION instead.
  */
@@ -437,6 +453,25 @@ export const identityServiceOperations = {
       "401": InvalidSession401Schema,
       "500": ApplicantAuthError500Schema,
       "502": UpstreamUnavailable502Schema,
+    },
+  },
+  "submitMyApplication": {
+    method: "POST",
+    path: "/v1/applicants/me/applications",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: SubmitApplicationRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": SubmitApplicationResponseSchema,
+      "201": SubmitApplicationResponseSchema,
+      "400": null,
+      "401": null,
+      "409": null,
+      "422": null,
+      "429": null,
+      "503": null,
     },
   },
   "withdrawMyApplication": {

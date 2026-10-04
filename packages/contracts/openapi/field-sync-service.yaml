@@ -3,7 +3,7 @@
 # physical-test tablet.
 #
 # HAND-AUTHORED from the three controllers and src/main.ts at backend SHA
-# 47d9ad3.
+# 06d9f9b.
 # ════════════════════════════════════════════════════════════════
 openapi: "3.1.0"
 
@@ -25,7 +25,7 @@ info:
 
     On every route the officer's agency and subject id come from the verified
     token, never the body.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_FIELD_SYNC_SERVICE"
   x-usrp-transport-faults:
     - status: 405

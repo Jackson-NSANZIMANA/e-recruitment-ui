@@ -66,7 +66,7 @@ export function getStatusHistory(client: ApiClient, applicationId: string, corre
   });
 }
 
-/** One round trip for the detail screen. Degrades per panel rather than failing whole. */
+/** One round trip for the edge-composed application and history response. */
 export function getApplicationDetail(client: ApiClient, applicationId: string, correlationId?: string): Promise<ApplicationDetailResponse> {
   return client.call<ApplicationDetailResponse>('getApplicationDetail', {
     query: { applicationId },

@@ -6,5 +6,5 @@
     "allowImportingTsExtensions": true,
     "jsx": "preserve"
   },
-  "include": ["src", "mocks", "selfcheck", "scripts"]
+  "include": ["src", "mocks", "selfcheck"]
 }

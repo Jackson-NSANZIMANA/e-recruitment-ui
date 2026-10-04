@@ -28,12 +28,13 @@
     "test:affected": "turbo run test --affected",
     "verify:hygiene": "node tooling/repo-hygiene/verify.mjs",
     "verify:rules": "node tooling/repo-hygiene/test/*.test.mjs",
+    "surface:verify": "node --experimental-strip-types tooling/surface-contract/src/cli.ts",
     "verify:extraction": "node tooling/repo-hygiene/verify-compiled-extraction.mjs",
     "size": "node tooling/repo-hygiene/check-bundle-size.mjs",
     "check:large-files": "node tooling/repo-hygiene/check-large-files.mjs",
     "check:boundaries": "node tooling/repo-hygiene/check-boundaries.mjs",
     "check:script-coverage": "node tooling/repo-hygiene/check-script-coverage.mjs",
-    "verify": "pnpm verify:rules && pnpm verify:hygiene && pnpm typecheck && pnpm lint && pnpm test",
+    "verify": "pnpm verify:rules && pnpm verify:hygiene && pnpm surface:verify && pnpm typecheck && pnpm lint && pnpm test",
     "verify:full": "pnpm verify && pnpm build && pnpm verify:extraction && pnpm size && pnpm a11y && pnpm security:scan",
     "prove:gates": "bash tooling/repo-hygiene/prove-gates.sh",
     "prove:security": "pnpm security:scan:selftest",
@@ -42,7 +43,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore"
   },
   "devDependencies": {
-    "@atlaskit/ads-mcp": "1.7.3",
+    "@atlaskit/ads-mcp": "1.10.10",
     "@atlaskit/tokens": "^16.4.0",
     "@playwright/test": "1.62.1",
     "@types/node": "^22.15.0",

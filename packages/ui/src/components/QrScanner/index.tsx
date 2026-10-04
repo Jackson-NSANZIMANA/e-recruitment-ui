@@ -1,7 +1,7 @@
-/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop, @atlaskit/design-system/no-unsafe-design-token-usage, @atlaskit/ui-styling-standard/no-imported-style-values */
-import React, { useCallback, useEffect, useRef, useState } from "react";
+/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop, @atlaskit/design-system/no-unsafe-design-token-usage */
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Box, Stack } from "@atlaskit/primitives/compiled";
+import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button";
 import TextField from "@atlaskit/textfield";
 import SectionMessage from "@atlaskit/section-message";
@@ -67,6 +67,7 @@ export function QrScanner({
   testId,
 }: QrScannerProps): React.ReactElement {
   const { t } = useTranslation();
+  const manualDescriptionId = useId();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -191,20 +192,33 @@ export function QrScanner({
       <Box {...(testId !== undefined ? { testId } : {})}>
         <Stack space="space.300">
           {!cameraSupported && (
-            <SectionMessage appearance="information">
-              {t("scan.no_camera")}
+            <SectionMessage
+              appearance="information"
+              title={t("scan.no_camera")}
+              headingLevel="h3"
+            >
+              {t("scan.fallback_placeholder")}
             </SectionMessage>
           )}
           {cameraError !== null && (
-            <SectionMessage appearance="warning">{cameraError}</SectionMessage>
+            <SectionMessage
+              appearance="warning"
+              title={t("scan.camera_error")}
+              headingLevel="h3"
+            >
+              {cameraError}
+            </SectionMessage>
           )}
+          <Text id={manualDescriptionId} size="small" color="color.text.subtle">
+            {t("scan.fallback_placeholder")}
+          </Text>
           <TextField
             value={manualValue}
             onChange={handleManualChange}
             onKeyDown={handleManualKeyDown}
-            aria-describedby={t("scan.fallback_placeholder")}
+            aria-describedby={manualDescriptionId}
             aria-label={t("scan.fallback_label")}
-          />placeholder
+          />
           <Box xcss={toggleButtonWrapperStyles['base']}>
             <Button appearance="primary" onClick={handleManualSubmit}>
               {t("scan.fallback_submit")}

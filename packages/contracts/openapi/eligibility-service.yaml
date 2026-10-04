@@ -3,7 +3,7 @@
 # SERVICE-INTERNAL: every route takes withAuth(verify, { kind: 'system' }).
 # An officer token gets 403 and a browser has no business calling any of them.
 #
-# HAND-AUTHORED from the controllers at backend SHA 47d9ad3.
+# HAND-AUTHORED from the controllers at backend SHA 06d9f9b.
 # ════════════════════════════════════════════════════════════════
 openapi: "3.1.0"
 
@@ -27,7 +27,7 @@ info:
     LIKEWISE the school, the raw NESA index and the G2G subject hash are
     request-only. Responses carry the verdict and the levels, never the source
     record.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_ELIGIBILITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405

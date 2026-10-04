@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 import {
   AGENCIES,
   AGENCY_DOCUMENT_TYPES,
+  ACADEMIC_PATH_BY_CATEGORY,
+  APPLICATION_CATEGORIES,
   APPLICATION_CHANNELS,
   APPLICATION_STATUSES,
+  CATEGORY_AGENCY,
   AUTH_KINDS,
   DOCUMENT_LANES,
   DOCUMENT_TYPES,
@@ -19,7 +22,7 @@ import {
 } from '../src/agency.js';
 
 /** The commit .github/workflows/ci.yml pins BACKEND_SHA to. */
-const CI_PINNED_BACKEND_SHA = 'd40f6d824ec46209ec5411192251fca4561e36b0';
+const CI_PINNED_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab';
 
 test('the divergence model is pinned to the same backend commit CI checks out', () => {
   assert.equal(VERIFIED_BACKEND_SHA, CI_PINNED_BACKEND_SHA);
@@ -142,6 +145,22 @@ test('OLEVEL is RDF-only and CELIBACY is RCS-only, as the *_ops enums have it', 
 
 test('gender is the two values NIDA validates — no third', () => {
   assert.deepEqual([...GENDERS], ['MALE', 'FEMALE']);
+});
+
+test('applicant submission categories are the ten backend values and derive one agency each', () => {
+  assert.deepEqual([...APPLICATION_CATEGORIES], [
+    'GENERAL_ENLISTMENT', 'RESERVE_FORCE_ALEVEL', 'RESERVE_FORCE_UNIVERSITY', 'RESERVE_FORCE_SPECIALIST',
+    'CADET_OFFICER', 'BASIC_POLICE_COURSE', 'GENERAL_ENLISTEE', 'OFFICER_ONE_YEAR',
+    'OFFICER_ONE_YEAR_SPECIALIST', 'OFFICER_FOUR_YEAR_UR',
+  ]);
+  assert.equal(Object.keys(CATEGORY_AGENCY).length, APPLICATION_CATEGORIES.length);
+  assert.deepEqual(
+    APPLICATION_CATEGORIES.map((category) => CATEGORY_AGENCY[category]),
+    ['RDF', 'RDF', 'RDF', 'RDF', 'RNP', 'RNP', 'RCS', 'RCS', 'RCS', 'RCS'],
+  );
+  assert.ok(APPLICATION_CATEGORIES.every((category) => category in ACADEMIC_PATH_BY_CATEGORY));
+  assert.equal(ACADEMIC_PATH_BY_CATEGORY.GENERAL_ENLISTMENT, 'NESA');
+  assert.equal(ACADEMIC_PATH_BY_CATEGORY.RESERVE_FORCE_UNIVERSITY, 'HEC');
 });
 
 test('the four channels identity-service validates', () => {

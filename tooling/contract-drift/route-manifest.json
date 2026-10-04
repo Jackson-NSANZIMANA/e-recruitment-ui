@@ -1,8 +1,8 @@
 {
   "$comment": "PINNED BACKEND FACTS. Hand-mined by reading every controller under services/*/src/adapters/http/** and every src/main.ts at the SHA below. This file is what makes the drift check runnable with NO backend checkout: it is the middle term between the OpenAPI documents and the backend source. gate A diffs OpenAPI against this; gate B diffs this against a live checkout when one is available. Neither gate can be green while the other is stale, because a change to the backend that is applied here without the OpenAPI fails A, and a change applied to both without the backend fails B.",
-  "backendSha": "47d9ad3ab019f6d2f826cfae2136cbff898d733f",
+  "backendSha": "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab",
   "backendRepo": "https://github.com/Jackson-NSANZIMANA/e-recruitment",
-  "minedAt": "2026-08-27",
+  "minedAt": "2026-10-04",
   "services": {
     "iam-service": {
       "controllerDir": "services/iam-service/src/adapters/http",
@@ -24,6 +24,7 @@
         { "method": "POST", "path": "/v1/applicants/auth/otp/verify", "auth": ["none"], "constant": "OTP_VERIFY_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/auth/logout", "auth": ["applicant-session"], "constant": "LOGOUT_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications/withdraw", "auth": ["applicant-session"], "constant": "ME_WITHDRAW_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/erasure-request", "auth": ["applicant-session"], "constant": "ME_ERASURE_REQUEST_PATH", "controller": "erasure-request.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/erasure-request", "auth": ["applicant-session"], "constant": "ME_ERASURE_REQUEST_PATH", "controller": "erasure-request.controller.ts", "mounted": true }

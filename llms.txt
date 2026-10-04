@@ -13,15 +13,11 @@ points at the canonical upstream instead of mirroring it.
 
 ## Read these first, in this order
 
-1. `docs/architecture/handover-audit-2026-09-13.md` — current findings of record.
-2. `docs/architecture/handover-audit-2026-09-08.md` — the previous audit.
-3. `docs/architecture/frontend-architecture.md` — baseline. Its §9 corrections
-   table is the instrument this project runs on; §7 and §8.1 are stale (see
-   audit §4 of 2026-09-08).
-4. `docs/architecture/edge-contract.md` — the browser boundary. Later and
-   better-evidenced than `frontend-architecture.md` where they disagree.
-5. `docs/architecture/contract-reconciliation-2026-09-11.md` — blocker record
-   against the running backend controllers.
+1. `docs/architecture/frontend-architecture.md` — current implementation baseline.
+2. `docs/architecture/cross-repo-contract-reconciliation-2026-10-04.md` — pinned backend/frontend evidence and change protocol.
+3. `docs/ui-surfaces/officer.application-workspace.json` — executable contract for the first flagship officer surface.
+4. `docs/architecture/edge-contract.md` — browser boundary and security invariants.
+5. `docs/architecture/handover-audit-2026-09-13.md` — historical findings of record; use current baseline files above for implementation.
 6. `docs/architecture/adrs-fe/` — ADR-FE-001 through 006.
 
 ## The one rule this repository is built on
@@ -93,14 +89,11 @@ pnpm security:scan:selftest  # proves the scanner in both directions
 
 ## Current state, honestly
 
-- The frontend is **edge-contract ready**, not edge-deployment complete. The
-  backend has `services/edge-gateway/openapi/` and no runnable service.
-- The lockfile must be regenerated on a machine with registry access before any
-  gate can go green. This is the top blocker.
-- Bundle budgets are PROVISIONAL and uncalibrated; no CI build has completed.
-- Four of six slices are mounted in the officer console; `applications` and
-  `identity` collide with app-owned paths (ADR-FE-006 §5).
-- `@usrp/edge-dev` is still not typechecked by anything.
+- The browser edge registry and backend edge registry are reconciled at backend SHA `06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab`.
+- The first flagship surface is `/applications` and `/applications/:id`; its state contract is executable and currently passes 42 assertions.
+- Contract drift is green at 588 assertions with 0 findings; edge-dev real-socket proof is green at 143 assertions.
+- `OFFLINE_CAPTURE_CAN_SYNC` remains false: field-sync reachability does not yet establish durable encrypted capture/replay/conflict support.
+- Full Storybook, visual, accessibility, security, and E2E results must be reported from their gates; do not infer them from typecheck or surface verification.
 
 ## Design system
 

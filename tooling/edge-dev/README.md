@@ -1,11 +1,11 @@
 # `@usrp/edge-dev`
 
-**A dev-only stand-in for the BFF specified in `docs/architecture/edge-contract.md`.**
+**A dev-only contract and proof harness for the edge gateway specified in `docs/architecture/edge-contract.md`.**
 
-Not the BFF. Same wire contract, swappable by pointing `VITE_EDGE_URL` somewhere
-else. It exists so the UI is testable **today**, against a real socket, with the
-real session/CSRF/correlation semantics — instead of waiting for a backend
-deployment that does not exist yet.
+Not the production gateway. It is swappable by pointing `VITE_EDGE_URL` somewhere
+else and lets the UI run today against a real socket with session, CSRF, correlation,
+redaction, and retry semantics while the backend gateway remains the deployment
+authority.
 
 ```bash
 # The officer edge, against contract mocks. No Postgres, no Kafka, no G2G stack.
@@ -74,7 +74,7 @@ Named so nobody mistakes this for a production edge:
 
 `mocks/contract-mocks.ts` stands in for iam-service, identity-service and
 application-service. Every status code and body shape is transcribed from the
-real controllers at backend `47d9ad3`, including the awkward parts that are the
+real controllers at backend `06d9f9b6`, including the awkward parts that are the
 whole point:
 
 - officer login collapses unknown handle, wrong password **and disabled account**

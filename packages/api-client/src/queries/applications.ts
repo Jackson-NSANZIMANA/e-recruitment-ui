@@ -68,57 +68,83 @@ import type {
  * officer's own DB role and ignores anything we might send. Keying by it stops
  * two consoles in one browser profile sharing a cache.
  */
-export function useApplicationList(client: ApiClient, agency: Agency): UseQueryResult<ApplicationListResponse> {
+export function useApplicationList(
+  client: ApiClient,
+  agency: Agency,
+  enabled = true,
+): UseQueryResult<ApplicationListResponse> {
   return useQuery({
     queryKey: applicationKeys.list(agency),
     queryFn: () => listApplications(client),
+    enabled,
     staleTime: 30_000,
   });
 }
 
-export function useAmberQueue(client: ApiClient, agency: Agency): UseQueryResult<AmberQueueResponse> {
+export function useAmberQueue(
+  client: ApiClient,
+  agency: Agency,
+  enabled = true,
+): UseQueryResult<AmberQueueResponse> {
   return useQuery({
     queryKey: applicationKeys.amberQueue(agency),
     queryFn: () => listAmberQueue(client),
+    enabled,
     // Shorter than the list: this queue is the exception-based dashboard's
     // reason to exist, and a stale one hides work that is waiting.
     staleTime: 15_000,
   });
 }
 
-export function useApplication(client: ApiClient, applicationId: string): UseQueryResult<ApplicationByIdResponse> {
+export function useApplication(
+  client: ApiClient,
+  applicationId: string,
+  enabled = true,
+): UseQueryResult<ApplicationByIdResponse> {
   return useQuery({
-    queryKey: applicationKeys.detail(applicationId),
+    queryKey: applicationKeys.byId(applicationId),
     queryFn: () => findApplicationById(client, applicationId),
-    enabled: applicationId.length > 0,
+    enabled: enabled && applicationId.length > 0,
     staleTime: 10_000,
   });
 }
 
-export function useStatusHistory(client: ApiClient, applicationId: string): UseQueryResult<StatusHistoryResponse> {
+export function useStatusHistory(
+  client: ApiClient,
+  applicationId: string,
+  enabled = true,
+): UseQueryResult<StatusHistoryResponse> {
   return useQuery({
     queryKey: applicationKeys.statusHistory(applicationId),
     queryFn: () => getStatusHistory(client, applicationId),
-    enabled: applicationId.length > 0,
+    enabled: enabled && applicationId.length > 0,
     staleTime: 10_000,
   });
 }
 
-/** One request for the whole detail screen; panels degrade independently. */
-export function useApplicationDetail(client: ApiClient, applicationId: string): UseQueryResult<ApplicationDetailResponse> {
+/** One request for the exact edge detail projection. History is part of this response. */
+export function useApplicationDetail(
+  client: ApiClient,
+  applicationId: string,
+  enabled = true,
+): UseQueryResult<ApplicationDetailResponse> {
   return useQuery({
     queryKey: applicationKeys.detail(applicationId),
     queryFn: () => getApplicationDetail(client, applicationId),
-    enabled: applicationId.length > 0,
+    enabled: enabled && applicationId.length > 0,
     staleTime: 10_000,
   });
 }
 
-function invalidate(qc: QueryClient, operationId: string, context: { agency?: Agency; applicationId?: string }): void {
+async function invalidate(
+  qc: QueryClient,
+  operationId: string,
+  context: { agency?: Agency; applicationId?: string },
+): Promise<void> {
   const targets = INVALIDATION_MAP[operationId] ?? [];
-  for (const key of resolveInvalidation(targets, context)) {
-    void qc.invalidateQueries({ queryKey: key });
-  }
+  await Promise.all(
+    resolveInvalidation(targets, context).map((key) => qc.invalidateQueries({ queryKey: key })),
+  );
 }
 
 /** Medical review (ADR-013). The input union enforces the agency mode. */
@@ -129,7 +155,7 @@ export function useRecordMedicalReview(
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: MedicalReviewInput) => recordMedicalReview(client, input),
-    onSuccess: (_result, input) => { invalidate(qc, 'recordMedicalReview', { agency, applicationId: input.applicationId }); },
+    onSuccess: async (_result, input) => { await invalidate(qc, 'recordMedicalReview', { agency, applicationId: input.applicationId }); },
   });
 }
 
@@ -140,7 +166,7 @@ export function useRecordFinalDecision(
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: FinalDecisionInput) => recordFinalDecision(client, input),
-    onSuccess: (_result, input) => { invalidate(qc, 'recordFinalDecision', { agency, applicationId: input.applicationId }); },
+    onSuccess: async (_result, input) => { await invalidate(qc, 'recordFinalDecision', { agency, applicationId: input.applicationId }); },
   });
 }
 
@@ -153,7 +179,7 @@ export function useAcceptApplication(client: ApiClient, agency: Agency): UseMuta
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: AcceptInput) => acceptApplication(client, input),
-    onSuccess: (_result, input) => { invalidate(qc, 'acceptApplication', { agency, applicationId: input.applicationId }); },
+    onSuccess: async (_result, input) => { await invalidate(qc, 'acceptApplication', { agency, applicationId: input.applicationId }); },
   });
 }
 
@@ -164,7 +190,7 @@ export function useAdjudicateApplication(
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: AdjudicateInput) => adjudicateApplication(client, input),
-    onSuccess: (_result, input) => { invalidate(qc, 'adjudicateApplication', { agency, applicationId: input.applicationId }); },
+    onSuccess: async (_result, input) => { await invalidate(qc, 'adjudicateApplication', { agency, applicationId: input.applicationId }); },
   });
 }
 
@@ -188,7 +214,7 @@ export function useRegisterWalkIn(client: ApiClient, agency: Agency): UseMutatio
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: WalkInRegisterInput) => registerWalkIn(client, input),
-    onSuccess: () => { invalidate(qc, 'registerWalkIn', { agency }); },
+    onSuccess: async () => { await invalidate(qc, 'registerWalkIn', { agency }); },
   });
 }
 
@@ -196,6 +222,6 @@ export function useVetWalkIn(client: ApiClient, agency: Agency): UseMutationResu
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ applicationId }: { applicationId: string }) => vetWalkIn(client, applicationId),
-    onSuccess: (_result, input) => { invalidate(qc, 'vetWalkIn', { agency, applicationId: input.applicationId }); },
+    onSuccess: async (_result, input) => { await invalidate(qc, 'vetWalkIn', { agency, applicationId: input.applicationId }); },
   });
 }

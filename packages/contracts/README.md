@@ -8,11 +8,11 @@ per-agency divergence model no OpenAPI document can express, and a drift checker
 that fails the build when any of it stops matching the backend.
 
 Verified against backend SHA
-[`47d9ad3`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/47d9ad3ab019f6d2f826cfae2136cbff898d733f)
-(`main`).
+[`06d9f9b6`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab)
+(`main`). Applicant submission and current edge reachability are included in this baseline.
 
 ```bash
-pnpm --filter @usrp/contracts verify     # 6 gates, 1188 assertions
+pnpm --filter @usrp/contracts verify     # determinism, drift, fixtures, Zod parity, isolation
 pnpm --filter @usrp/contracts generate   # openapi -> zod -> types
 pnpm --filter @usrp/contracts typecheck
 pnpm --filter @usrp/contracts drift -- --backend ../e-recruitment
@@ -24,13 +24,13 @@ pnpm --filter @usrp/contracts drift -- --backend ../e-recruitment
 
 | Artifact | State |
 |---|---|
-| `openapi/*.yaml` — 11 documents, 58 operations, 208 schemas | **Authored.** Every operation `controller-verbatim` except one, marked `proxy-derived` and named below. |
+| `openapi/*.yaml` — 11 documents, 59 operations, 210 schemas | **Authored.** Current backend SHA is pinned in every document. |
 | `src/generated/**` — 24 files | **Generated.** Deterministic; `verify` asserts a zero diff. |
 | `src/agency.ts` — divergence model | **Compiles** under the workspace's ultra-strict config. Previously written and never compiled. |
 | `src/narrow.ts` — wire types x agency | **Compiles**, and the compile error was observed firing. |
 | `tooling/contract-drift` | **Built**, with a selftest that proves it goes red. |
-| Fixtures | **148 cases**, 44 of them negative. |
-| **Assertions proven** | **1188** across 6 gates, plus `tsc` clean. |
+| Fixtures | **151 cases**, including submission and national-ID leakage negatives. |
+| **Latest frontend drift baseline** | **588 assertions, 0 findings**, plus workspace typecheck clean. |
 
 **The two exceptions, stated plainly:**
 
@@ -142,7 +142,7 @@ callers the wrong 403.
 
 ## Fixtures: the negatives are the proof
 
-`fixtures/*.fixtures.json` — 148 cases, **44 of them `"expect": "reject"`**. A
+`fixtures/*.fixtures.json` — 151 cases, including submission and browser-leakage negatives. A
 schema of `z.unknown()` accepts every positive fixture ever written, so a suite
 of valid examples proves close to nothing. The negatives encode specific bugs
 that shipped and specific invariants that must hold:

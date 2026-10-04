@@ -21,6 +21,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { extractAll } from './extract.ts';
 import { gateA, gateB, gateC, type Finding, type Manifest } from './drift.ts';
+import { gateD } from './edge.ts';
 import { ROUTE_TABLE } from '../../../packages/contracts/src/generated/routes.ts';
 
 const HERE = new URL('..', import.meta.url).pathname;
@@ -70,6 +71,7 @@ function main(): void {
   if (backend === null) {
     skipped.push('B manifest<->backend source: no checkout. Pass --backend <path> or set USRP_BACKEND_PATH.');
     skipped.push('C built-but-unmounted routes: needs the same checkout.');
+    skipped.push('D frontend edge registry<->backend edge registry: needs the same checkout.');
   } else {
     const servicesDir = resolve(backend, 'services');
     if (!existsSync(servicesDir)) {
@@ -79,6 +81,17 @@ function main(): void {
     const extracted = extractAll(servicesDir);
     const b = gateB(manifest, extracted);
     const c = gateC(extracted);
+    const edgeRegistryPath = join(backend, 'services/edge-gateway/src/domain/edge-operations.ts');
+    const frontendEdgeRegistryPath = resolve(HERE, '../../packages/api-client/src/paths.ts');
+    if (!existsSync(edgeRegistryPath)) {
+      findings.push({ gate: 'D', severity: 'error', service: 'edge-gateway', message: `backend edge registry is missing: ${edgeRegistryPath}` });
+      assertions += 1;
+    } else {
+      const d = gateD(readFileSync(frontendEdgeRegistryPath, 'utf8'), readFileSync(edgeRegistryPath, 'utf8'));
+      findings.push(...d.findings);
+      assertions += d.assertions;
+      ran.push(`D frontend edge registry<->backend edge registry (${d.assertions} assertions)`);
+    }
     findings.push(...b.findings, ...c.findings);
     assertions += b.assertions + c.assertions;
     ran.push(`B manifest<->backend source (${b.assertions} assertions)`);

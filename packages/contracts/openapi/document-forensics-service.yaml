@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════
 # document-forensics-service — TWO system-token front doors.
 #
-# HAND-AUTHORED from both controllers and src/main.ts at backend SHA 47d9ad3.
+# HAND-AUTHORED from both controllers and src/main.ts at backend SHA 06d9f9b.
 # Both routes are registered (verified in main.ts) — worth stating, because this
 # repository has already shipped controllers that were built and never mounted.
 # ════════════════════════════════════════════════════════════════
@@ -32,7 +32,7 @@ info:
 
     THE TWO ROUTES DISAGREE ABOUT HOW TO KEY AN OUTCOME, and this document does
     not paper over it — see the analyze operation.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_DOCUMENT_FORENSICS_SERVICE"
   x-usrp-transport-faults:
     - status: 405

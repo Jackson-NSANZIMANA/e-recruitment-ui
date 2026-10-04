@@ -1,8 +1,8 @@
 # USRP Edge Contract: Current Authority
 
-**Status:** Current frontend contract, 2026-09-08
+**Status:** Current frontend contract, 2026-10-04
 **Supersedes:** the earlier multi-BFF specification in this file
-**Backend authority:** `docs/architecture/adr/ADR-021-edge-tier.md`
+**Backend authority:** `services/edge-gateway/src/domain/edge-operations.ts` and `services/edge-gateway/src/routes.ts` at backend `06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab`
 **Frontend authority:** `packages/api-client/src/paths.ts` and `packages/auth/src/edge-client.ts`
 
 This file used to describe separate `citizen-bff`, `agency-bff`, and `admin-bff` deployments. That topology is retired. Backend ADR-021 explicitly chooses **one edge service** under `/edge/v1/**`, with agency derived from the server-side officer session rather than supplied in a request path. Do not implement or document the old multi-BFF shape.
@@ -16,7 +16,7 @@ The frontend has a complete, machine-checked consumer contract:
 - `createEdgeAuthClient` owns officer login, applicant OTP, session probing, refresh, and logout against the same edge origin.
 - `assertPathsMatchContract()` rejects renamed, missing, templated, or unapproved upstream operations.
 
-The backend repository has the edge OpenAPI contract at `services/edge-gateway/openapi/edge-v1.yaml` and the ADR, but the current `main` tree does not yet contain a runnable edge service package or entrypoint. The frontend is therefore contract-ready while the deployment tier remains incomplete.
+The backend repository has a runnable edge-gateway service and a source registry that composes its routes. The frontend edge registry is reconciled against that backend registry by contract-drift gate D; `tooling/edge-dev` remains a development/proof harness and is not presented as the production edge.
 
 ## 2. Security boundary
 

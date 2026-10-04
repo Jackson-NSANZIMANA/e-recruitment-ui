@@ -9,11 +9,35 @@
 // inviting the next reader to think it matters.
 // ══════════════════════════════════════════════════════════════════
 
-import type { ApiClient } from '../transport.js';
-import type { MyApplicationsResponse, WithdrawResponse } from '../wire.js';
+import type { ApiClient, ResponseMeta } from '../transport.js';
+import type {
+  MyApplicationsResponse,
+  SubmitApplicationInput,
+  SubmitApplicationResponse,
+  WithdrawResponse,
+} from '../wire.js';
 
 export function listMyApplications(client: ApiClient, correlationId?: string): Promise<MyApplicationsResponse> {
   return client.call<MyApplicationsResponse>('listMyApplications', correlationId === undefined ? {} : { correlationId });
+}
+
+/**
+ * ADR-027. The idempotency key is mandatory at the edge. The caller owns the
+ * key lifecycle so a retry after a dropped response replays the same filing.
+ */
+export function submitMyApplication(
+  client: ApiClient,
+  input: SubmitApplicationInput,
+  idempotencyKey: string,
+  correlationId?: string,
+  onResponse?: (meta: ResponseMeta) => void,
+): Promise<SubmitApplicationResponse> {
+  return client.call<SubmitApplicationResponse>('submitMyApplication', {
+    body: input,
+    idempotencyKey,
+    ...(correlationId === undefined ? {} : { correlationId }),
+    ...(onResponse === undefined ? {} : { onResponse }),
+  });
 }
 
 /** ADR-020. Ownership is a server-side property of the session, not an argument. */

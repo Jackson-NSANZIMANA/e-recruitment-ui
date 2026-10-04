@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════
 # background-vetting-service — NO BUSINESS HTTP SURFACE.
 #
-# HAND-AUTHORED from src/main.ts at backend SHA 47d9ad3. This service has no
+# HAND-AUTHORED from src/main.ts at backend SHA 06d9f9b. This service has no
 # src/adapters/http directory and passes no business routes to startHttpServer.
 # It is authored here anyway, with an empty business surface, because an ABSENT
 # document and a document that says "nothing here" are different claims, and
@@ -18,7 +18,7 @@ info:
 
 
     THERE IS NO HTTP WAY TO TRIGGER OR READ A CLEARANCE. The gate runs entirely off the backbone. An officer console cannot re-run a clearance, see why one failed, or read its raw verdict; only the projected criminalClearanceStatus on the application detail read is visible.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_BACKGROUND_VETTING_SERVICE"
   x-usrp-business-routes: 0
 

@@ -4,7 +4,7 @@
 // These stand in for the real services when the Tier-1/Tier-2 stack is not
 // available (no Postgres, no Kafka, no NIDA mock). They are CONTRACT mocks, not
 // convenience stubs: every status code, error code and body shape below is
-// transcribed from the real controllers in the backend repo at 47d9ad3, and the
+// transcribed from the real controllers in the backend repo at 06d9f9b6, and the
 // selfcheck asserts against them, so a mock that drifts from the controller is
 // a mock that makes the proof lie.
 //

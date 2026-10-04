@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Stack } from "@atlaskit/primitives/compiled";
+import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
 import LoadingButton from "@atlaskit/button/loading-button";
 import Form, { Field, FormFooter } from "@atlaskit/form";
 import TextField from "@atlaskit/textfield";
@@ -71,8 +71,14 @@ export default function LoginPage(): React.ReactElement | null {
           </Heading>
 
           {serverError !== null && (
-            <SectionMessage appearance="error" title={t("auth.invalid_credentials")}>
-              <p role="alert">{serverError}</p>
+            <SectionMessage
+              appearance="error"
+              title={t("auth.invalid_credentials")}
+              headingLevel="h3"
+            >
+              <Text as="p" role="alert">
+                {serverError}
+              </Text>
             </SectionMessage>
           )}
 
@@ -80,7 +86,7 @@ export default function LoginPage(): React.ReactElement | null {
             {({ formProps, submitting }) => (
               <form {...formProps} aria-label={t("auth.sign_in")} noValidate>
                 <Stack space="space.300">
-                  <Field name="loginHandle" label="Login handle" isRequired>
+                  <Field name="loginHandle" label={t("auth.login_handle")} isRequired>
                     {({ fieldProps }) => (
                       <TextField
                         {...fieldProps}

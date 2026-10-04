@@ -12,9 +12,10 @@ The previous frontend had `{ path: 'applications/:id' }` in its router and an
 api-client shaped around path params. Both are the forbidden shape, and a lint
 rule against `${` in a template literal is a rule someone silences.
 
-Separately, 32 of 58 operations are `reach: 'service-internal'`: they take a
-system credential the browser does not have. Calling one from a tab is a security
-incident, not a 403.
+Separately, 32 of the current 59 service operations are `reach: 'service-internal'`:
+they take a system credential the browser does not have. Calling one from a tab is
+a security incident, not a 403. The 27 browser operations are separately reconciled
+with the backend edge registry by gate D.
 
 ## Decision
 
@@ -42,14 +43,15 @@ Consequences, all of them wanted:
 
 ## Enforcement
 
-`proofs/02-exact-path-transport.mjs`, 177 assertions: no `/v1` literal anywhere in
-a slice, no absolute URL, no interpolated path, no bare `fetch`/`XMLHttpRequest`/
-`axios`, every declared or called `operationId` present in `ROUTE_TABLE` and
-`reach: 'browser'`, and `verifyIdentity` still recorded as unreachable.
+The current proof is distributed across the api-client selfcheck, contract drift
+(gates A-D), and the surface contract: no service URL from a slice, no interpolated
+service path, no bare `fetch`/`XMLHttpRequest`/`axios`, every declared operation is
+whitelisted, and only browser-reachable operations are exposed. The edge registry
+also carries local session operations and exact retry policy.
 
 ## Requests
 
 **Agent 2 (`packages/api-client`):** expose the resolver — `createTransport()`
-returning the `SliceTransport` shape above, backed by `BROWSER_ROUTES`, attaching
-the officer bearer token or the opaque applicant session per the route's `auth`
-kind. Until it exists, apps must wire their own; the port is stable.
+returning the `SliceTransport` shape above, backed by `BROWSER_ROUTES`, attaching cookies, CSRF, correlation, and operation-owned retry policy. No browser
+bearer token is attached. The typed `createApiClient` and `createEdgeAuthClient`
+are the implemented adapters; new slices must depend on those boundaries.

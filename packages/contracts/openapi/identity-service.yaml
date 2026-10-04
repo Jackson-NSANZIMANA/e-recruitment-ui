@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════
 # identity-service — THE CITIZEN'S ENTIRE WORLD, plus the DPO surface.
 #
-# HAND-AUTHORED from four controllers and src/main.ts at backend SHA 47d9ad3.
+# HAND-AUTHORED from four controllers and src/main.ts at backend SHA 06d9f9b.
 #
 # x-usrp-verified levels used in this document:
 #   controller-verbatim  request and response shapes transcribed from the named
@@ -48,7 +48,7 @@ info:
     THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
     response in this document. The hash is an internal cross-service key; a
     browser that computes or receives one is a leak of a cross-service join key.
-  x-usrp-backend-sha: "47d9ad3ab019f6d2f826cfae2136cbff898d733f"
+  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
   x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -397,6 +397,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApplicantAuthError500"
+
+    post:
+      operationId: "submitMyApplication"
+      summary: "Submit the citizen's own application"
+      description: >-
+        SESSION-AUTHENTICATED. The applicant identity and browser channel are
+        derived from the session and cannot be supplied by the client. The
+        Idempotency-Key header is required so a reconnect cannot create a second
+        application after an uncertain response.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_APPLICATIONS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitApplicationRequest"
+      responses:
+        "201":
+          description: "Application filed for the first time."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitApplicationResponse"
+        "200":
+          description: "Idempotent replay of the original filing response."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitApplicationResponse"
+        "400":
+          description: "Invalid request or forbidden identity/channel field."
+        "401":
+          description: "No applicant session."
+        "409":
+          description: "Already applied or a business conflict."
+        "422":
+          description: "Idempotency key reuse or academic-input validation failure."
+        "429":
+          description: "Submission rate limit exceeded."
+        "503":
+          description: "Dependency failure."
 
   /v1/applicants/me/applications/withdraw:
     post:
@@ -1222,6 +1266,37 @@ components:
         - $ref: "#/components/schemas/RefusedAcceptLocked409"
       discriminator:
         propertyName: "status"
+
+    SubmitApplicationRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["category"]
+      properties:
+        category:
+          type: "string"
+          maxLength: 64
+        nesaIndexNumber:
+          type: "string"
+          maxLength: 64
+        hecRegistrationNumber:
+          type: "string"
+          maxLength: 64
+
+    SubmitApplicationResponse:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "applicationId", "processingCode", "agency"]
+      properties:
+        status:
+          type: "string"
+          const: "SUBMITTED"
+        applicationId:
+          type: "string"
+          format: "uuid"
+        processingCode:
+          type: "string"
+        agency:
+          $ref: "#/components/schemas/Agency"
 
     VerifyIdentity400:
       type: "object"
