@@ -72,6 +72,12 @@ export interface ApplicationRecord {
 /** Alias used by feature slices that prefer the detail-oriented name. */
 export type ApplicationDetail = ApplicationRecord;
 
+/** Internal decode alias — a decoded officer list row. */
+export type ApplicationRow = ApplicationListRow;
+
+/** Internal decode alias — a decoded amber queue entry. */
+export type AmberQueueRow = AmberQueueEntry;
+
 /** `GET /edge/v1/applications/by-id` — the projected application is unwrapped. */
 export type ApplicationByIdResponse = ApplicationRecord;
 
@@ -93,6 +99,8 @@ export interface AmberQueueEntry {
 export interface ApplicationDetailResponse {
   readonly application: ApplicationRecord;
   readonly history: readonly StatusHistoryEntry[];
+  /** Panel names that failed to decode; empty on the production gateway which fails whole. */
+  readonly partial: readonly string[];
 }
 
 /** `GET /edge/v1/applications/status-history` — a bare history array. */

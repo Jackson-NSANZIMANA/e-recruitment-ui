@@ -26,7 +26,7 @@ export type { ApiClient, ApiClientOptions, CallOptions, RequestRecord, ResponseM
 // so an operation the edge does not serve fails `pnpm typecheck` rather than a
 // citizen's click. Four of the six feature slices were naming ids that do not
 // exist — 11 of 27 calls — because `operationId: string` accepts anything.
-export { EDGE_OPERATIONS, EDGE_PATHS, operation, isEdgeOperationId, assertPathsMatchContract, ContractMismatchError } from './paths.js';
+export { EDGE_OPERATIONS, EDGE_PATHS, EDGE_BACKEND_SHA, operation, isEdgeOperationId, assertPathsMatchContract, ContractMismatchError } from './paths.js';
 export type { EdgeOperation, EdgeOperationId, AnonymousEdgeOperationId } from './paths.js';
 
 // ── Errors ──

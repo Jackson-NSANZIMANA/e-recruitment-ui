@@ -170,6 +170,7 @@ export function decodeAmberQueue(body: unknown, agency: Agency): AmberQueueRespo
     status: optionalStatus(get(row, 'status'), 'listAmberQueue'),
     documentType: str(get(row, 'documentType')),
     forensicsScore: num(get(row, 'forensicsScore')),
+    forensicsFlags: isRecord(get(row, 'forensicsFlags')) ? get(row, 'forensicsFlags') as Record<string, unknown> : null,
     queuedAt: str(get(row, 'queuedAt')),
     agency,
   }));
@@ -191,11 +192,31 @@ export function decodeApplication(body: unknown, agency: Agency, operationId = '
     status: requireStatus(record['status'], operationId),
     agency,
     submittedAt: str(record['submittedAt']),
-    /** Officer-only forensic signals. Absent on the dev harness; null, not undefined. */
+    createdAt: str(record['createdAt']),
+    updatedAt: str(record['updatedAt']),
+    academicStatus: str(record['academicStatus']),
+    nesaIndexNumber: str(record['nesaIndexNumber']),
+    nesaVerifiedAt: str(record['nesaVerifiedAt']),
+    hecRegistrationNumber: str(record['hecRegistrationNumber']),
+    hecVerifiedAt: str(record['hecVerifiedAt']),
+    declaredSpecialistField: str(record['declaredSpecialistField']),
+    academicEligibilityDetail: isRecord(record['academicEligibilityDetail']) ? record['academicEligibilityDetail'] as Record<string, unknown> : null,
+    ageEligibilityStatus: str(record['ageEligibilityStatus']),
+    ageVerifiedAt: str(record['ageVerifiedAt']),
+    ageEligibilityDetail: isRecord(record['ageEligibilityDetail']) ? record['ageEligibilityDetail'] as Record<string, unknown> : null,
+    criminalClearanceStatus: str(record['criminalClearanceStatus']),
+    criminalClearanceAt: str(record['criminalClearanceAt']),
     documentLane: str(record['documentLane']),
     documentForensicsScore: num(record['documentForensicsScore']),
+    documentForensicsFlags: isRecord(record['documentForensicsFlags']) ? record['documentForensicsFlags'] as Record<string, unknown> : null,
+    documentReviewedAt: str(record['documentReviewedAt']),
+    documentReviewDecision: str(record['documentReviewDecision']),
+    assignedDistrict: str(record['assignedDistrict']),
     assignedVenueName: str(record['assignedVenueName']),
     physicalTestScheduledAt: str(record['physicalTestScheduledAt']),
+    physicalTestCompletedAt: str(record['physicalTestCompletedAt']),
+    qrInvitationIssuedAt: str(record['qrInvitationIssuedAt']),
+    smsNotificationSentAt: str(record['smsNotificationSentAt']),
     finalDecisionAt: str(record['finalDecisionAt']),
     finalDecisionNotes: str(record['finalDecisionNotes']),
   };
@@ -210,13 +231,18 @@ export function decodeApplication(body: unknown, agency: Agency, operationId = '
  * exists only against the dev harness is a field a component will render.
  */
 export function decodeStatusHistory(body: unknown, operationId = 'getStatusHistory'): StatusHistoryResponse {
-  return rowsOf(body, 'history', operationId).map((entry): StatusHistoryEntry => ({
-    fromStatus: str(get(entry, 'fromStatus')) === null ? null : requireStatus(get(entry, 'fromStatus'), operationId),
-    toStatus: requireStatus(get(entry, 'toStatus'), operationId),
-    actorKind: str(get(entry, 'actorKind')),
-    occurredAt: firstString(entry, 'occurredAt', 'at'),
-    note: firstString(entry, 'note', 'reason'),
-  }));
+  return rowsOf(body, 'history', operationId).map((entry): StatusHistoryEntry => {
+    const toStatus = requireStatus(get(entry, 'toStatus'), operationId);
+    return {
+      entryId: str(get(entry, 'entryId')),
+      fromStatus: str(get(entry, 'fromStatus')) === null ? null : requireStatus(get(entry, 'fromStatus'), operationId),
+      toStatus,
+      status: toStatus,
+      actorKind: str(get(entry, 'actorKind')),
+      occurredAt: firstString(entry, 'occurredAt', 'at'),
+      note: firstString(entry, 'note', 'reason'),
+    };
+  });
 }
 
 /**
@@ -275,7 +301,8 @@ export function decodeTransition(applicationId: string, body: unknown): Transiti
 
 /** Walk-in vetting is a transition plus the autonomous age verdict. */
 export function decodeWalkInVet(applicationId: string, body: unknown): WalkInVetResponse {
-  return { ...decodeTransition(applicationId, body), ageStatus: str(get(body, 'ageStatus')) };
+  const ageStatus = str(get(body, 'ageStatus'));
+  return { ...decodeTransition(applicationId, body), ...(ageStatus !== null && { ageStatus }) };
 }
 
 // ── Citizen reads ────────────────────────────────────────────────
@@ -293,6 +320,7 @@ export function decodeMyApplications(body: unknown): MyApplicationsResponse {
     agency: requireAgency(get(row, 'agency'), 'listMyApplications'),
     status: requireStatus(get(row, 'status'), 'listMyApplications'),
     processingCode: str(get(row, 'processingCode')),
+    category: str(get(row, 'category')),
     submittedAt: str(get(row, 'submittedAt')),
   }));
 }
