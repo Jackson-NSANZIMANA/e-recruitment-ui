@@ -162,7 +162,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
         </Box>
 
         {filtered.length === 0 ? (
-          <SectionMessage appearance="information" title={rows.length === 0 ? t('applications.empty.title') : t('applications.empty.filteredTitle')}>
+          <SectionMessage appearance="information" headingLevel="h2" title={rows.length === 0 ? t('applications.empty.title') : t('applications.empty.filteredTitle')}>
             {rows.length === 0 ? t('applications.empty.body') : t('applications.empty.filteredBody')}
           </SectionMessage>
         ) : (

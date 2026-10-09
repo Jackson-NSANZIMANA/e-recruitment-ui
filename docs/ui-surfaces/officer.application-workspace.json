@@ -26,48 +26,48 @@
   ],
   "ads": [
     {
-      "name": "PageHeader",
-      "source": "apps/officer-console/src/routes/applications.tsx",
-      "import": "@atlaskit/page-header"
+      "name": "Heading",
+      "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
+      "import": "@atlaskit/heading"
     },
     {
       "name": "DynamicTable",
-      "source": "apps/officer-console/src/routes/applications.tsx",
+      "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
       "import": "@atlaskit/dynamic-table"
     },
     {
       "name": "Textfield",
-      "source": "apps/officer-console/src/routes/applications.tsx",
+      "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
       "import": "@atlaskit/textfield"
     },
     {
       "name": "SectionMessage",
-      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
       "import": "@atlaskit/section-message"
     },
     {
       "name": "ApplicationActions",
-      "source": "apps/officer-console/src/routes/application-detail.tsx",
-      "import": "../components/ApplicationActions/index.js"
+      "source": "apps/officer-console/src/components/ApplicationActions/index.tsx",
+      "import": "@atlaskit/modal-dialog"
     },
     {
       "name": "ApplicationStatusBadge",
-      "source": "apps/officer-console/src/routes/application-detail.tsx",
-      "import": "@usrp/ui"
+      "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
+      "import": "./StatusLozenge.js"
     }
   ],
   "states": [
     {
       "surface": "list",
       "required": ["loading", "populated", "empty", "filtered-empty", "error"],
-      "source": "apps/officer-console/src/routes/applications.tsx",
-      "evidence": ["isLoading", "isError", "emptyView", "application.no_results"]
+      "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
+      "evidence": ["isLoading", "isError", "applications.empty"]
     },
     {
       "surface": "detail",
       "required": ["loading", "populated", "not-found", "forbidden", "partial"],
-      "source": "apps/officer-console/src/routes/application-detail.tsx",
-      "evidence": ["isLoading", "ApiError", "partial", "aria-live"]
+      "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
+      "evidence": ["isLoading", "ApiError", "isPending"]
     },
     {
       "surface": "actions",
