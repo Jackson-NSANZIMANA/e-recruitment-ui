@@ -69,6 +69,9 @@ export interface ApplicationRecord {
   readonly updatedAt: string | null;
 }
 
+/** Alias used by feature slices that prefer the detail-oriented name. */
+export type ApplicationDetail = ApplicationRecord;
+
 /** `GET /edge/v1/applications/by-id` — the projected application is unwrapped. */
 export type ApplicationByIdResponse = ApplicationRecord;
 
@@ -198,4 +201,9 @@ export type WithdrawResponse = {
   readonly outcome: string;
   readonly agency: Agency | null;
   readonly fromStatus: string | null;
+};
+
+export type RowFor<A extends Agency> = Omit<ApplicationListRow, 'agency' | 'status'> & {
+  readonly agency: A;
+  readonly status: StatusFor<A>;
 };

@@ -46,3 +46,4 @@ Thumbs.db
 *.log
 .eslintcache
 .vite/
+vite.config.ts.timestamp-*.mjs
