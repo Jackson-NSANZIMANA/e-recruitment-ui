@@ -47,3 +47,10 @@ Thumbs.db
 .eslintcache
 .vite/
 vite.config.ts.timestamp-*.mjs
+# Vite config transpilation artifacts
+apps/*/vite.config.ts.timestamp-*.mjs
+apps/*/vite.config.js.timestamp-*.mjs
+packages/*/vite.config.ts.timestamp-*.mjs
+.venv/
+# Local Python tooling environment
+/.venv/

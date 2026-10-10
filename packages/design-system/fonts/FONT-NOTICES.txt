@@ -1,0 +1,19 @@
+AtlassianSans.v3.ttf
+Copyright: Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2016 The Inter Project Authors
+Trademark: Inter UI and Inter is a trademark of rsms. Atlassian is a trademark of Atlassian Pty Ltd.
+License: This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL
+
+AtlassianSansItalic.v3.ttf
+Copyright: Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2016 The Inter Project Authors
+Trademark: Inter UI and Inter is a trademark of rsms. Atlassian is a trademark of Atlassian Pty Ltd.
+License: This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL
+
+AtlassianMono.v2.ttf
+Copyright: Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+Trademark: JetBrains Mono is a trademark of JetBrains s.r.o. Atlassian is a trademark of Atlassian Pty Ltd.
+License: This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+
+AtlassianMonoItalic.v2.ttf
+Copyright: Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+Trademark: JetBrains Mono is a trademark of JetBrains s.r.o. Atlassian is a trademark of Atlassian Pty Ltd.
+License: This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL

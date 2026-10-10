@@ -18,7 +18,7 @@ permissions:
   actions: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
   BACKEND_SHA: 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD

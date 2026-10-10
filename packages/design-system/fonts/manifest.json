@@ -1,0 +1,147 @@
+{
+  "brotli": "1.2.0",
+  "fonts": [
+    {
+      "axes": {
+        "opsz": {
+          "default": 14.0,
+          "max": 32.0,
+          "min": 14.0
+        },
+        "wght": {
+          "default": 400.0,
+          "max": 900.0,
+          "min": 100.0
+        }
+      },
+      "embeddingFlags": 0,
+      "family": "Atlassian Sans",
+      "glyphCount": 2631,
+      "nameRecords": {
+        "0": [
+          "Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2016 The Inter Project Authors"
+        ],
+        "13": [
+          "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+        ],
+        "14": [],
+        "7": [
+          "Inter UI and Inter is a trademark of rsms. Atlassian is a trademark of Atlassian Pty Ltd."
+        ]
+      },
+      "output": "files/AtlassianSans.v3.woff2",
+      "outputBytes": 335716,
+      "outputSha256": "10170d34db60721da501fdb321b3a89aee86964431124a22e1a3f1dd20e007a3",
+      "source": "AtlassianSans.v3.ttf",
+      "sourceBytes": 774320,
+      "sourceSha256": "2b2fe40bb3bf878023d2e3908eb26f1851dfcf25f88090d6d4c938054a12d5ae",
+      "style": "normal",
+      "unicodeCodepointCount": 2852
+    },
+    {
+      "axes": {
+        "opsz": {
+          "default": 14.0,
+          "max": 32.0,
+          "min": 14.0
+        },
+        "wght": {
+          "default": 400.0,
+          "max": 900.0,
+          "min": 100.0
+        }
+      },
+      "embeddingFlags": 0,
+      "family": "Atlassian Sans",
+      "glyphCount": 2601,
+      "nameRecords": {
+        "0": [
+          "Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2016 The Inter Project Authors"
+        ],
+        "13": [
+          "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+        ],
+        "14": [],
+        "7": [
+          "Inter UI and Inter is a trademark of rsms. Atlassian is a trademark of Atlassian Pty Ltd."
+        ]
+      },
+      "output": "files/AtlassianSansItalic.v3.woff2",
+      "outputBytes": 370784,
+      "outputSha256": "37c84e7d069862511727bee83d25f12a703a2b8c6231f9b8d3f94e477d46559a",
+      "source": "AtlassianSansItalic.v3.ttf",
+      "sourceBytes": 809212,
+      "sourceSha256": "b9b0a2d504e521186d6eb0c0aba37a15ebbb8c259a5c8942060e2e11bdbb7a9e",
+      "style": "italic",
+      "unicodeCodepointCount": 2816
+    },
+    {
+      "axes": {
+        "wght": {
+          "default": 400.0,
+          "max": 800.0,
+          "min": 100.0
+        }
+      },
+      "embeddingFlags": 0,
+      "family": "Atlassian Mono",
+      "glyphCount": 1421,
+      "nameRecords": {
+        "0": [
+          "Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)"
+        ],
+        "13": [
+          "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL"
+        ],
+        "14": [],
+        "7": [
+          "JetBrains Mono is a trademark of JetBrains s.r.o. Atlassian is a trademark of Atlassian Pty Ltd."
+        ]
+      },
+      "output": "files/AtlassianMono.v2.woff2",
+      "outputBytes": 89060,
+      "outputSha256": "9aaa8580bc1526d6a61fe61ebc8287048c40e0eac7bed665a3b096363084a018",
+      "source": "AtlassianMono.v2.ttf",
+      "sourceBytes": 204812,
+      "sourceSha256": "575181750abe667f47abd9dc073b240f7419a905645f7478a6bd8c817e97f93e",
+      "style": "normal",
+      "unicodeCodepointCount": 1363
+    },
+    {
+      "axes": {
+        "wght": {
+          "default": 400.0,
+          "max": 800.0,
+          "min": 100.0
+        }
+      },
+      "embeddingFlags": 0,
+      "family": "Atlassian Mono",
+      "glyphCount": 1420,
+      "nameRecords": {
+        "0": [
+          "Portions Copyright 2025 Atlassian Pty Ltd. Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)"
+        ],
+        "13": [
+          "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL"
+        ],
+        "14": [],
+        "7": [
+          "JetBrains Mono is a trademark of JetBrains s.r.o. Atlassian is a trademark of Atlassian Pty Ltd."
+        ]
+      },
+      "output": "files/AtlassianMonoItalic.v2.woff2",
+      "outputBytes": 97800,
+      "outputSha256": "375a1be271a6da45f2b02abb46c9f3f81f0513f52b8fbff1c209e05160d005de",
+      "source": "AtlassianMonoItalic.v2.ttf",
+      "sourceBytes": 210484,
+      "sourceSha256": "04eef32be9bff9762f8ee29873fe90e15cddf79147c709e8a54a16bfd4db6e9d",
+      "style": "italic",
+      "unicodeCodepointCount": 1363
+    }
+  ],
+  "fonttools": "4.66.1",
+  "licenseSha256": "1d361a8f8e8ce6e68457dcd93fb56e162e6baa3bbb7e7573a290d44399f6b57e",
+  "mode": "full-repertoire",
+  "schemaVersion": 1
+}

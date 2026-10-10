@@ -1,37 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import compiledPlugin from "@compiled/babel-plugin";
-import stripRuntime from "@compiled/babel-plugin-strip-runtime";
+import compiled from "@compiled/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
 
 // ══════════════════════════════════════════════════════════════════
 // officer-console build.
 //
-// THE OFFLINE LAYER IS NOT OPTIONAL HERE. ADR-FE-005 describes two different
-// offline problems and calls the FIELD TABLET the harder one: no signal for
-// hours, exam-day scores for hundreds of applicants. Until 2026-09-13 every
-// offline mechanism in this repository lived in apps/applicant-portal, and this
-// app - the one that runs at the venue - had no service worker at all. A tablet
-// that cannot load its own shell without signal is not a field application.
+// THE OFFLINE LAYER IS NOT OPTIONAL HERE. ADR-FE-005 describes the field
+// tablet as the harder offline problem: no signal for hours, exam-day
+// scores for hundreds of applicants.
 // ══════════════════════════════════════════════════════════════════
-
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [
-          "@atlaskit/tokens/babel-plugin",
-          [
-            compiledPlugin,
-            {
-              transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"],
-              importSources: ["@compiled/react", "@atlaskit/css"],
-            },
-          ],
-          stripRuntime,
-        ],
-      },
+    compiled({
+      importSources: ["@compiled/react", "@atlaskit/css"],
+      transformerBabelPlugins: [["@atlaskit/tokens/babel-plugin"]],
+      extract: true,
+      sortShorthand: true,
     }),
+    react(),
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
@@ -50,9 +37,8 @@ export default defineConfig({
         short_name: "USRP Officer",
         description:
           "Rwanda unified security recruitment — officer and field console",
-        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before any stylesheet exists, so these CANNOT be design tokens. Values mirror the ADS light-mode brand and surface.
+        // hygiene-allow-hex: see applicant-portal config for rationale.
         theme_color: "#0052CC",
-        // hygiene-allow-hex: web manifest background_color, same rationale as theme_color above.
         background_color: "#FFFFFF",
         display: "standalone",
         orientation: "landscape",
@@ -72,19 +58,13 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: "hidden",
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("@atlaskit")) return "atlaskit";
-          if (id.includes("@tanstack")) return "tanstack";
-          if (id.includes("workbox")) return "workbox";
-        },
-      },
-    },
+    // See applicant-portal: manualChunks removed, same rationale.
   },
   server: {
-    // Arena proxies the live preview through a generated host.
-    allowedHosts: true,
+    // NOTE: `allowedHosts: true` was removed. Vite's own docs warn this
+    // permits DNS-rebinding access to dev-server content. If your Arena
+    // preview workflow needs a specific generated host, add it explicitly
+    // here as a string/array rather than `true`.
     port: 3001,
     strictPort: true,
     proxy: {

@@ -1,26 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import compiledPlugin from "@compiled/babel-plugin";
-import stripRuntime from "@compiled/babel-plugin-strip-runtime";
+import compiled from "@compiled/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [
-          "@atlaskit/tokens/babel-plugin",
-          [
-            compiledPlugin,
-            {
-              transformerBabelPlugins: ["@atlaskit/tokens/babel-plugin"],
-              importSources: ["@compiled/react", "@atlaskit/css"],
-            },
-          ],
-          stripRuntime,
-        ],
-      },
+    // Must precede react(). Extracts @compiled/react and @atlaskit/css
+    // calls into static CSS at build time.
+    compiled({
+      importSources: ["@compiled/react", "@atlaskit/css"],
+      transformerBabelPlugins: [["@atlaskit/tokens/babel-plugin"]],
+      extract: true,
+      sortShorthand: true,
     }),
+    react(),
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
@@ -44,9 +37,9 @@ export default defineConfig({
         name: "USRP Applicant Portal",
         short_name: "USRP",
         description: "Rwanda unified security recruitment — applicant portal",
-        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads before any stylesheet exists, so these CANNOT be design tokens. Values mirror the ADS light-mode brand and surface.
+        // hygiene-allow-hex: a web manifest is serialised JSON the OS reads
+        // before any stylesheet exists, so these CANNOT be design tokens.
         theme_color: "#0052CC",
-        // hygiene-allow-hex: web manifest background_color, same rationale as theme_color above.
         background_color: "#FFFFFF",
         display: "standalone",
         orientation: "portrait",
@@ -66,15 +59,11 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: "hidden",
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("@atlaskit")) return "atlaskit";
-          if (id.includes("@tanstack")) return "tanstack";
-          if (id.includes("workbox")) return "workbox";
-        },
-      },
-    },
+    // NOTE: no manualChunks. The forced atlaskit/tanstack vendor split
+    // produced a circular chunk warning and is the leading suspect for
+    // the __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED runtime
+    // crash. Let Rollup's default heuristics handle vendor splitting
+    // until there is a measured, specific reason to intervene again.
   },
   server: {
     port: 3000,
