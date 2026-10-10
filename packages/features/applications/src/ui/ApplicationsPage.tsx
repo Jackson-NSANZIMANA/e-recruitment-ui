@@ -9,10 +9,16 @@ import { Box, Inline, Stack, Text } from '@atlaskit/primitives/compiled';
 import { cssMap } from '@atlaskit/css';
 import { token } from '@atlaskit/tokens';
 import { ApiError, useApplicationList, type ApiClient } from '@usrp/api-client';
-import type { Agency } from '@usrp/contracts';
+import { APPLICATION_STATUSES } from '@usrp/contracts';
+import type { Agency, ApplicationStatus } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
 import { needsOfficer, phaseOf } from '../model/status.js';
 import { StatusLozenge } from './StatusLozenge.js';
+
+const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
+function isApplicationStatus(s: string | null): s is ApplicationStatus {
+  return s !== null && STATUS_SET.has(s);
+}
 
 const styles = cssMap({
   root: {
@@ -78,16 +84,18 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
   const filtered = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
     return rows.filter((row) => {
-      if (filter === 'action' && !needsOfficer(row.status)) return false;
-      if (filter === 'closed' && phaseOf(row.status) !== 'CLOSED') return false;
+      if (filter === 'action' && !isApplicationStatus(row.status)) return false;
+      if (filter === 'action' && !needsOfficer(row.status as ApplicationStatus)) return false;
+      if (filter === 'closed' && !isApplicationStatus(row.status)) return false;
+      if (filter === 'closed' && phaseOf(row.status as ApplicationStatus) !== 'CLOSED') return false;
       if (needle.length === 0) return true;
       return [row.processingCode, row.applicationId, row.category ?? '', row.status]
-        .some((value) => value.toLowerCase().includes(needle));
+        .some((value) => value !== null && value.toLowerCase().includes(needle));
     });
   }, [rows, search, filter]);
 
-  const actionCount = rows.filter((row) => needsOfficer(row.status)).length;
-  const closedCount = rows.filter((row) => phaseOf(row.status) === 'CLOSED').length;
+  const actionCount = rows.filter((row) => isApplicationStatus(row.status) && needsOfficer(row.status)).length;
+  const closedCount = rows.filter((row) => isApplicationStatus(row.status) && phaseOf(row.status) === 'CLOSED').length;
   const activeCount = rows.length - closedCount;
 
   if (query.isLoading) {
@@ -117,12 +125,12 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
     ],
   };
 
-  const tableRows = filtered.map((row) => ({
-    key: row.applicationId,
+  const tableRows = filtered.map((row, index) => ({
+    key: row.applicationId ?? row.processingCode ?? `row-${index}`,
     cells: [
       { key: 'processingCode', content: <Text weight="medium">{row.processingCode}</Text> },
       { key: 'category', content: row.category ?? '—' },
-      { key: 'status', content: <StatusLozenge status={row.status} /> },
+      { key: 'status', content: isApplicationStatus(row.status) ? <StatusLozenge status={row.status} /> : row.status ?? '—' },
       { key: 'submittedAt', content: formatDate(row.submittedAt) },
       { key: 'action', content: <Button appearance="subtle" href={`/applications/${row.applicationId}`}>{t('applications.actions.open')}</Button> },
     ],
@@ -148,7 +156,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
             <Box xcss={styles.search}>
               <TextField
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => setSearch((event.target as HTMLInputElement).value)}
                 placeholder={t('applications.list.searchPlaceholder')}
                 aria-label={t('applications.list.searchLabel')}
               />

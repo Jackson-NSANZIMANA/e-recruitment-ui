@@ -20,8 +20,14 @@ import {
 import type { Agency } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
 import { useNavigate, useParams } from 'react-router-dom';
+import { APPLICATION_STATUSES } from '@usrp/contracts';
 import { canAccept, canAdjudicate, canFinalDecision, canMedicalReview } from '../model/status.js';
 import { StatusLozenge } from './StatusLozenge.js';
+
+const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
+function isApplicationStatus(s: string | null): s is import('@usrp/contracts').ApplicationStatus {
+  return s !== null && STATUS_SET.has(s);
+}
 
 const styles = cssMap({
   root: {
@@ -111,8 +117,8 @@ function ConfirmAction({ title, body, confirmLabel, appearance = 'primary', isOp
       <ModalBody><Text as="p">{body}</Text></ModalBody>
       <ModalFooter>
         <Inline space="space.100" alignInline="end">
-          <Button appearance="subtle" isDisabled={isPending} onClick={onCancel}>{cancelLabel}</Button>
-          <Button appearance={appearance} isLoading={isPending} onClick={onConfirm}>{confirmLabel}</Button>
+          <Button appearance="subtle" isDisabled={isPending} onClick={() => onCancel()}>{cancelLabel}</Button>
+          <Button appearance={appearance} isDisabled={isPending} onClick={() => onConfirm()}>{confirmLabel}</Button>
         </Inline>
       </ModalFooter>
     </ModalDialog>
@@ -142,19 +148,19 @@ function MedicalAction({ client, agency, applicationId, t }: { readonly client: 
         <Text>{t(rdf ? 'applications.actions.medicalBoardHint' : 'applications.actions.medicalCertificateHint')}</Text>
         {!rdf && (
           <Box xcss={styles.compact}>
-            <TextField value={physicianName} onChange={(event) => setPhysicianName(event.target.value)} placeholder={t('applications.actions.physicianPlaceholder')} aria-label={t('applications.actions.physicianLabel')} />
+            <TextField value={physicianName} onChange={(event) => setPhysicianName((event.target as HTMLInputElement).value)} placeholder={t('applications.actions.physicianPlaceholder')} aria-label={t('applications.actions.physicianLabel')} />
           </Box>
         )}
         <Inline space="space.100" shouldWrap>
           {rdf ? (
             <>
-              <Button appearance="primary" isLoading={mutation.isPending} onClick={() => void submit({ applicationId, fitnessStatus: 'FIT' })}>{t('applications.actions.fit')}</Button>
-              <Button appearance="subtle" isLoading={mutation.isPending} onClick={() => void submit({ applicationId, fitnessStatus: 'UNFIT' })}>{t('applications.actions.unfit')}</Button>
+              <Button appearance="primary" isDisabled={mutation.isPending} onClick={() => { void submit({ applicationId, fitnessStatus: 'FIT' }); }}>{t('applications.actions.fit')}</Button>
+              <Button appearance="subtle" isDisabled={mutation.isPending} onClick={() => { void submit({ applicationId, fitnessStatus: 'UNFIT' }); }}>{t('applications.actions.unfit')}</Button>
             </>
           ) : (
             <>
-              <Button appearance="primary" isLoading={mutation.isPending} isDisabled={physicianName.trim().length === 0} onClick={() => void submit({ applicationId, certVerdict: 'CERT_VERIFIED', physicianName: physicianName.trim() })}>{t('applications.actions.certified')}</Button>
-              <Button appearance="subtle" isLoading={mutation.isPending} onClick={() => void submit({ applicationId, certVerdict: 'CERT_REJECTED' })}>{t('applications.actions.certRejected')}</Button>
+              <Button appearance="primary" isDisabled={mutation.isPending || physicianName.trim().length === 0} onClick={() => { void submit({ applicationId, certVerdict: 'CERT_VERIFIED', physicianName: physicianName.trim() }); }}>{t('applications.actions.certified')}</Button>
+              <Button appearance="subtle" isDisabled={mutation.isPending} onClick={() => { void submit({ applicationId, certVerdict: 'CERT_REJECTED' }); }}>{t('applications.actions.certRejected')}</Button>
             </>
           )}
         </Inline>
@@ -180,8 +186,8 @@ function FinalDecisionAction({ client, agency, applicationId, t }: { readonly cl
         <Heading size="medium" as="h2">{t('applications.actions.finalTitle')}</Heading>
         <Text>{t('applications.actions.finalHint')}</Text>
         <Inline space="space.100" shouldWrap>
-          <Button appearance="primary" isLoading={mutation.isPending} onClick={() => setConfirm('shortlist')}>{t('applications.actions.shortlist')}</Button>
-          <Button appearance="danger" isLoading={mutation.isPending} onClick={() => setConfirm('reject')}>{t('applications.actions.reject')}</Button>
+          <Button appearance="primary" isDisabled={mutation.isPending} onClick={() => setConfirm('shortlist')}>{t('applications.actions.shortlist')}</Button>
+          <Button appearance="danger" isDisabled={mutation.isPending} onClick={() => setConfirm('reject')}>{t('applications.actions.reject')}</Button>
         </Inline>
         <ConfirmAction
           isOpen={confirm !== null}
@@ -214,7 +220,7 @@ function AcceptAction({ client, agency, applicationId, t }: { readonly client: A
       <Stack space="space.200">
         <Heading size="medium" as="h2">{t('applications.actions.acceptTitle')}</Heading>
         <Text>{t('applications.actions.acceptHint')}</Text>
-        <Button appearance="primary" isLoading={mutation.isPending} onClick={() => setConfirm(true)}>{t('applications.actions.accept')}</Button>
+        <Button appearance="primary" isDisabled={mutation.isPending} onClick={() => setConfirm(true)}>{t('applications.actions.accept')}</Button>
         <ConfirmAction
           isOpen={confirm}
           isPending={mutation.isPending}
@@ -247,8 +253,8 @@ function AdjudicationAction({ client, agency, applicationId, t }: { readonly cli
         <Heading size="medium" as="h2">{t('applications.actions.adjudicationTitle')}</Heading>
         <Text>{t('applications.actions.adjudicationHint')}</Text>
         <Inline space="space.100" shouldWrap>
-          <Button appearance="primary" isLoading={mutation.isPending} onClick={() => setConfirm('clear')}>{t('applications.actions.clear')}</Button>
-          <Button appearance="danger" isLoading={mutation.isPending} onClick={() => setConfirm('reject')}>{t('applications.actions.reject')}</Button>
+          <Button appearance="primary" isDisabled={mutation.isPending} onClick={() => setConfirm('clear')}>{t('applications.actions.clear')}</Button>
+          <Button appearance="danger" isDisabled={mutation.isPending} onClick={() => setConfirm('reject')}>{t('applications.actions.reject')}</Button>
         </Inline>
         <ConfirmAction
           isOpen={confirm !== null}
@@ -294,7 +300,7 @@ export function ApplicationDetailPage({ client, agency }: DetailProps): React.Re
                 <Text color="color.text.subtle" size="small">{applicationId}</Text>
                 <Heading size="xlarge" as="h1">{valueOrDash(application.processingCode)}</Heading>
               </Stack>
-              {currentStatus !== null && <StatusLozenge status={currentStatus} />}
+              {isApplicationStatus(currentStatus) && <StatusLozenge status={currentStatus} />}
             </Inline>
             <Inline space="space.100" shouldWrap>
               <Text color="color.text.subtle">{t('applications.detail.agency')}: <Text weight="medium">{agency}</Text></Text>
@@ -313,10 +319,10 @@ export function ApplicationDetailPage({ client, agency }: DetailProps): React.Re
           <Fact label={t('applications.detail.venue')} value={valueOrDash(application.assignedVenueName)} />
         </Box>
 
-        {currentStatus !== null && canMedicalReview(currentStatus) && <MedicalAction client={client} agency={agency} applicationId={applicationId} t={t} />}
-        {currentStatus !== null && canFinalDecision(currentStatus) && <FinalDecisionAction client={client} agency={agency} applicationId={applicationId} t={t} />}
-        {currentStatus !== null && canAccept(currentStatus) && <AcceptAction client={client} agency={agency} applicationId={applicationId} t={t} />}
-        {currentStatus !== null && canAdjudicate(currentStatus) && <AdjudicationAction client={client} agency={agency} applicationId={applicationId} t={t} />}
+        {isApplicationStatus(currentStatus) && canMedicalReview(currentStatus) && <MedicalAction client={client} agency={agency} applicationId={applicationId} t={t} />}
+        {isApplicationStatus(currentStatus) && canFinalDecision(currentStatus) && <FinalDecisionAction client={client} agency={agency} applicationId={applicationId} t={t} />}
+        {isApplicationStatus(currentStatus) && canAccept(currentStatus) && <AcceptAction client={client} agency={agency} applicationId={applicationId} t={t} />}
+        {isApplicationStatus(currentStatus) && canAdjudicate(currentStatus) && <AdjudicationAction client={client} agency={agency} applicationId={applicationId} t={t} />}
 
         <Box xcss={styles.panel}>
           <Stack space="space.200">
@@ -341,7 +347,7 @@ export function ApplicationDetailPage({ client, agency }: DetailProps): React.Re
                   <Inline key={entry.entryId ?? `${entry.occurredAt}-${index}`} space="space.150" alignBlock="start">
                     <Text size="small" color="color.text.subtle">{dateOrDash(entry.occurredAt)}</Text>
                     <Stack space="space.050">
-                      {entry.toStatus !== null && <StatusLozenge status={entry.toStatus} />}
+                      {isApplicationStatus(entry.toStatus) && <StatusLozenge status={entry.toStatus} />}
                       <Text size="small">{entry.actorKind ?? t('applications.detail.unknownActor')}{entry.note ? ` · ${entry.note}` : ''}</Text>
                     </Stack>
                   </Inline>
