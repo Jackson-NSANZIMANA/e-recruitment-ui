@@ -257,6 +257,9 @@ importers:
       '@usrp/feature-adjudication':
         specifier: workspace:*
         version: link:../../packages/features/adjudication
+      '@usrp/feature-applications':
+        specifier: workspace:*
+        version: link:../../packages/features/applications
       '@usrp/feature-compliance':
         specifier: workspace:*
         version: link:../../packages/features/compliance
@@ -602,18 +605,36 @@ importers:
 
   packages/features/applications:
     dependencies:
+      '@atlaskit/button':
+        specifier: ^25.0.2
+        version: 25.0.2(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/css':
         specifier: ^1.0.0
         version: 1.1.2(react@18.3.1)
       '@atlaskit/dynamic-table':
         specifier: ^19.1.5
         version: 19.1.5(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/heading':
+        specifier: ^7.0.1
+        version: 7.0.1(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/lozenge':
         specifier: ^15.0.1
         version: 15.0.1(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/modal-dialog':
+        specifier: ^16.3.0
+        version: 16.3.0(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives':
         specifier: ^22.2.1
         version: 22.5.0(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/section-message':
+        specifier: ^10.0.0
+        version: 10.0.0(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/spinner':
+        specifier: ^20.1.2
+        version: 20.1.2(react@18.3.1)
+      '@atlaskit/textfield':
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)

@@ -15,6 +15,7 @@ import { registerAdjudicationLocales } from "@usrp/feature-adjudication";
 import { registerComplianceLocales } from "@usrp/feature-compliance";
 import { registerFieldOpsLocales } from "@usrp/feature-field-ops";
 import { registerSchedulingLocales } from "@usrp/feature-scheduling";
+import { registerApplicationsLocales } from "@usrp/feature-applications";
 
 import { EDGE_BASE_URL } from "./env.js";
 import { OFFICER_SLICE_NAMESPACES } from "./routes/slices.js";
@@ -26,7 +27,8 @@ registerAdjudicationLocales();
 registerComplianceLocales();
 registerFieldOpsLocales();
 registerSchedulingLocales();
-assertNamespaceRegistered(...OFFICER_SLICE_NAMESPACES);
+registerApplicationsLocales();
+assertNamespaceRegistered(...OFFICER_SLICE_NAMESPACES, 'applications');
 
 const queryClient = new QueryClient({
   defaultOptions: {

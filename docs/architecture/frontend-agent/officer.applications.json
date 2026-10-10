@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "surfaceId": "officer.applications",
+  "status": "implementation",
+  "host": "apps/officer-console",
+  "route": "/applications",
+  "detailRoute": "/applications/:id",
+  "persona": "authenticated recruitment officer",
+  "goal": "Review agency-scoped applications, understand why a record is at its current lifecycle stage, and execute only the human decisions allowed by the current state.",
+  "backend": {
+    "repository": "Jackson-NSANZIMANA/e-recruitment",
+    "mainSha": "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab",
+    "edgeBase": "4021"
+  },
+  "operations": [
+    "listApplications",
+    "findApplicationById",
+    "getApplicationDetail",
+    "getStatusHistory",
+    "recordMedicalReview",
+    "recordFinalDecision",
+    "acceptApplication",
+    "adjudicateApplication"
+  ],
+  "stateModel": [
+    "loading",
+    "loaded",
+    "search-filtered",
+    "empty",
+    "not-found",
+    "forbidden",
+    "network-error",
+    "upstream-error",
+    "action-pending",
+    "action-conflict",
+    "action-invalid-for-state"
+  ],
+  "humanActions": {
+    "medicalReview": {
+      "from": [
+        "PHYSICAL_TEST_COMPLETE",
+        "WALK_IN_PHYSICAL_TEST"
+      ],
+      "rdf": [
+        "FIT",
+        "UNFIT"
+      ],
+      "rnpRcs": [
+        "CERT_VERIFIED",
+        "CERT_REJECTED"
+      ]
+    },
+    "finalDecision": {
+      "from": [
+        "MEDICAL_REVIEW"
+      ],
+      "choices": [
+        "SHORTLIST",
+        "REJECT"
+      ]
+    },
+    "accept": {
+      "from": [
+        "FINAL_SHORTLIST"
+      ],
+      "choices": [
+        "ACCEPT"
+      ]
+    },
+    "adjudicate": {
+      "from": [
+        "DOCUMENT_REVIEW_AMBER",
+        "ADJUDICATION_REVIEW"
+      ],
+      "choices": [
+        "CLEAR",
+        "REJECT"
+      ]
+    }
+  },
+  "adsPlan": {
+    "layout": "application-shell + spacious content canvas + state-aware action panel",
+    "components": [
+      "Heading",
+      "DynamicTable",
+      "Lozenge",
+      "Button",
+      "TextField",
+      "SectionMessage",
+      "Spinner",
+      "Box",
+      "Inline",
+      "Stack"
+    ],
+    "styling": "Atlassian semantic tokens only; no product-specific raw colors."
+  },
+  "accessibility": {
+    "keyboardFirst": true,
+    "namedSearchField": true,
+    "statusNotCommunicatedByColorOnly": true,
+    "actionTargetsUseADSButtons": true
+  },
+  "verification": {
+    "contract": "typed operation IDs and backend runtime baseline",
+    "unit": "application state/action model tests",
+    "a11y": "Storybook/axe surface verification",
+    "e2e": "officer application list/detail and transition flows",
+    "visual": "flagship surface screenshots at desktop and tablet breakpoints"
+  },
+  "knownBlockers": [
+    "frontend-generated-contracts-and-CI-provenance-still-reference-a-historical-backend-SHA; full regeneration/reconciliation against 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab is intentionally not faked",
+    "full browser-a11y-and-visual-evidence has not been executed in this dependency-unavailable workspace"
+  ]
+}

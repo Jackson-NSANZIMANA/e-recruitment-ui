@@ -74,7 +74,7 @@ const fakeFetch = (async (url: string) => {
 
 const sameOrigin = createApiClient({ baseUrl: '', fetchImpl: fakeFetch });
 await sameOrigin.call<unknown>('listApplications');
-deepEq('an empty baseUrl resolves to the page origin and the request is SENT', requested, [`${origin}/edge/v1/applications`]);
+deepEq('an empty baseUrl resolves to a relative path and the request is SENT', requested, ['/edge/v1/applications']);
 
 requested.length = 0;
 const absolute = createApiClient({ baseUrl: 'https://portal.usrp.gov.rw', fetchImpl: fakeFetch });
@@ -128,7 +128,7 @@ eq('…and is null, not undefined, when it does not', enveloped.documentLane, nu
 // ══ 4. The decision trail ══════════════════════════════════════
 
 const gatewayHistory = decodeStatusHistory([
-  { entryId: 'e1', fromStatus: 'SUBMITTED', toStatus: 'MEDICAL_REVIEW', status: 'MEDICAL_REVIEW', note: 'cleared', actorKind: 'OFFICER', occurredAt: '2026-09-02T09:00:00.000Z' },
+  { entryId: null, fromStatus: 'SUBMITTED', toStatus: 'MEDICAL_REVIEW', status: 'MEDICAL_REVIEW', note: 'cleared', actorKind: 'OFFICER', occurredAt: '2026-09-02T09:00:00.000Z' },
 ]);
 const upstreamHistory = decodeStatusHistory({
   agency: 'RDF',
@@ -136,6 +136,8 @@ const upstreamHistory = decodeStatusHistory({
   history: [{ fromStatus: 'SUBMITTED', toStatus: 'MEDICAL_REVIEW', actorKind: 'OFFICER', actor: 'b0a1-officer-uuid', at: '2026-09-02T09:00:00.000Z', reason: 'cleared' }],
 });
 deepEq('occurredAt/note and at/reason decode to one entry shape', gatewayHistory, upstreamHistory);
+eq('entryId is decoded when the gateway sends it',
+  decodeStatusHistory([{ entryId: 'e1', fromStatus: null, toStatus: 'SUBMITTED', actorKind: 'SYSTEM', occurredAt: null, note: null }])[0]?.entryId, 'e1');
 ok('the officer UUID does NOT survive decoding', !('actor' in (gatewayHistory[0] ?? {})));
 eq('the first transition keeps fromStatus null — nothing preceded it',
   decodeStatusHistory([{ fromStatus: null, toStatus: 'SUBMITTED', actorKind: 'SYSTEM', occurredAt: null, note: null }])[0]?.fromStatus, null);

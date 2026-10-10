@@ -53,17 +53,19 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "applications", element: <ApplicationsPage /> },
-      { path: "applications/:id", element: <ApplicationDetailPage /> },
-      { path: "walk-in", element: <WalkInPage /> },
       {
         element: (
           <OfficerGuard redirectTo="/login" fallback={<FullPageSpinner />}>
             <Outlet />
           </OfficerGuard>
         ),
-        children: [...OFFICER_SLICE_ROUTES],
+        children: [
+          { path: "dashboard", element: <DashboardPage /> },
+          { path: "applications", element: <ApplicationsPage /> },
+          { path: "applications/:id", element: <ApplicationDetailPage /> },
+          { path: "walk-in", element: <WalkInPage /> },
+          ...OFFICER_SLICE_ROUTES,
+        ],
       },
     ],
   },

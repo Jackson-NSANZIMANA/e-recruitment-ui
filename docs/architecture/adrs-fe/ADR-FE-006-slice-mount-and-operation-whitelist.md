@@ -151,6 +151,6 @@ The repository's standard is "prove it, don't assert it". The honest form of tha
 1. Regenerate the lockfile and get `pnpm verify` green. Nothing else counts until then.
 2. Make `Quality Gate` a required branch-protection check on `main`. It was RED and correct for eleven hours while work continued on top of it; the missing part was never a gate.
 3. Assert `EdgeOperationId` really is a literal union in the api-client selfcheck (see §8 item 2).
-4. Bring `applications/list.tsx` and `detail.tsx` to parity, then delegate and delete the app routes (§5).
+4. Keep the `applications` host routes as thin adapters only; feature code owns the list/detail UI (§5).
 5. Calibrate the provisional 700 KB / 1200 KB bundle ceilings against a real `dist`.
 6. Typecheck `@usrp/edge-dev`. Every script runs through `node --experimental-strip-types`, which erases types without checking them, and it is the process that terminates the session cookie and brokers system tokens.

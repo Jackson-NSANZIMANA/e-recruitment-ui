@@ -40,7 +40,8 @@
     "prove:security": "pnpm security:scan:selftest",
     "purge:vendor-zip:dry-run": "bash tooling/repo-hygiene/purge-vendor-zip.sh",
     "clean": "turbo run clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore"
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "verify:surface-manifest": "node tooling/frontend-agent/verify-surface-manifest.mjs"
   },
   "devDependencies": {
     "@atlaskit/ads-mcp": "1.10.10",
