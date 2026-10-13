@@ -57,11 +57,11 @@ eq('the write-shaped 404 normalises identically', notFoundWrite.kind, 'notFound'
 deepEq('a normalised 404 carries NO detail (no cross-agency existence oracle)', notFoundRead, { kind: 'notFound', status: 404 });
 deepEq('…and the two shapes are indistinguishable afterwards', notFoundRead, notFoundWrite);
 
-// ADR-014: the outcome and its payload must both survive.
-const locked = normaliseErrorBody(409, { status: 'CROSS_AGENCY_LOCKED', lockedByAgency: 'RNP' });
-eq('409 CROSS_AGENCY_LOCKED is a conflict', locked.kind, 'conflict');
-ok('…keeping the outcome name', locked.kind === 'conflict' && locked.outcome === 'CROSS_AGENCY_LOCKED');
-ok('…and the locking agency the UI must show', locked.kind === 'conflict' && locked.data['lockedByAgency'] === 'RNP');
+// ADR-014: the edge deliberately strips the sibling agency before it reaches the browser.
+const locked = normaliseErrorBody(409, { error: 'CROSS_AGENCY_ACCEPT_LOCK' });
+eq('409 CROSS_AGENCY_ACCEPT_LOCK is a conflict', locked.kind, 'conflict');
+ok('…keeping the edge-visible outcome name', locked.kind === 'conflict' && locked.outcome === 'CROSS_AGENCY_ACCEPT_LOCK');
+ok('…without exposing the sibling agency', locked.kind === 'conflict' && Object.keys(locked.data).length === 0);
 
 // ADR-012: AGE_PENDING is the officer's retry, and carries the current status.
 const agePending = normaliseErrorBody(409, { status: 'AGE_PENDING', currentStatus: 'WALK_IN_REGISTERED' });
@@ -112,7 +112,7 @@ ok('…so an unknown outage cannot become a thundering herd', !new ApiError(unkn
 const empty = normaliseErrorBody(503, null);
 eq('a 503 with no body is not retryable either', empty.kind, 'serverError');
 
-eq('describeError never emits a body', describeError(locked), '409 CROSS_AGENCY_LOCKED');
+eq('describeError reports the edge-visible lock outcome', describeError(locked), '409 CROSS_AGENCY_ACCEPT_LOCK');
 eq('describeError on a bare 404 says only 404', describeError(notFoundRead), '404');
 
 // ══ Retry policy ═══════════════════════════════════════════════

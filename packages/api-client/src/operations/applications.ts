@@ -97,11 +97,11 @@ export function recordFinalDecision(client: ApiClient, input: FinalDecisionInput
 }
 
 /**
- * Accept (ADR-014). The one route that can answer 409 `CROSS_AGENCY_LOCKED`.
+ * Accept (ADR-014). The one route that can answer 409 `CROSS_AGENCY_ACCEPT_LOCK`.
  *
- * The 409 carries `lockedByAgency` and the UI must show it: "this candidate has
- * already been accepted by RNP" is actionable, while a bare conflict leaves an
- * officer clicking a button that will never work.
+ * The edge deliberately removes `lockedByAgency` before the browser sees the
+ * conflict. The UI therefore explains that acceptance is blocked without naming
+ * the sibling agency's processing state.
  *
  * Also triggers ADR-017 auto-withdrawal of the citizen's other applications,
  * which is why the invalidation map reaches into the citizen caches.

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // applications — transport
 //
-// The phantom `SliceTransport` is gone. It also carried
+// The feature uses the repository-wide ApiClient; there is no feature-local transport abstraction. It previously carried
 // `getApplicationStatusHistory`, which is the UPSTREAM operation id; the edge
 // serves it as `getStatusHistory`. One character of difference between a working
 // screen and a thrown `Unknown edge operation`, and `operationId: string` made

@@ -11,3 +11,8 @@ export const toneOf=(status:ApplicationStatus):StatusTone=>STATUS_TONE[status];
 export const needsOfficer=(status:ApplicationStatus):boolean=>STATUS_OWNER[status]==='OFFICER';
 export function renderableFor<A extends Agency>(_agency:A,status:StatusFor<A>):boolean{return status in STATUS_PHASE;}
 export const statusLabelKey=(status:ApplicationStatus):string=>`applications.status.${status}`;
+
+export const canMedicalReview=(status:ApplicationStatus):boolean=>status==='PHYSICAL_TEST_COMPLETE'||status==='WALK_IN_PHYSICAL_TEST';
+export const canFinalDecision=(status:ApplicationStatus):boolean=>status==='MEDICAL_REVIEW';
+export const canAccept=(status:ApplicationStatus):boolean=>status==='FINAL_SHORTLIST';
+export const canAdjudicate=(status:ApplicationStatus):boolean=>status==='DOCUMENT_REVIEW_AMBER'||status==='ADJUDICATION_REVIEW';

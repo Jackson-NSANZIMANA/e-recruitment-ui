@@ -2,7 +2,7 @@ import React from 'react';
 import type { Preview } from '@storybook/react';
 import '@atlaskit/css-reset';
 import { COLOR_MODE } from '../src/a11y/index.js';
-
+import "../src/fonts/fonts.css";
 /**
  * Global story context.
  *

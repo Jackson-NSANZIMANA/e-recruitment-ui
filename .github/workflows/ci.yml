@@ -18,7 +18,7 @@ permissions:
   actions: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
   BACKEND_SHA: 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
@@ -34,6 +34,34 @@ env:
   DO_NOT_TRACK: '1'
 
 jobs:
+  agent-foundation:
+    name: Frontend agent foundation
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            tooling/*/node_modules
+          key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm verify:surface-manifest
+      - run: pnpm --filter @usrp/feature-applications run test:model
+
   hygiene:
     name: Hygiene
     runs-on: ubuntu-latest
