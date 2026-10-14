@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 37 business operations + 22 probes = 59 total.
+// 41 business operations + 22 probes = 63 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -328,6 +328,40 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "403",
       "404",
       "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "listPublicCampaigns",
+    "method": "GET",
+    "path": "/v1/campaigns",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-public-read.controller.ts (LIST_PUBLIC_CAMPAIGNS_PATH)",
+    "statuses": [
+      "200",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getPublicCampaign",
+    "method": "GET",
+    "path": "/v1/campaigns/detail",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-public-read.controller.ts (READ_PUBLIC_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "404",
       "500"
     ]
   },
@@ -826,6 +860,26 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "identity-service",
+    "operationId": "beginApplicantOnboarding",
+    "method": "POST",
+    "path": "/v1/applicants/auth/onboarding/begin",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ONBOARDING_BEGIN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "422",
+      "500",
+      "502",
+      "503"
+    ]
+  },
+  {
+    "service": "identity-service",
     "operationId": "requestApplicantOtp",
     "method": "POST",
     "path": "/v1/applicants/auth/otp/request",
@@ -838,6 +892,7 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "statuses": [
       "202",
       "400",
+      "401",
       "500",
       "502",
       "503"
@@ -901,6 +956,28 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "422",
       "429",
       "503"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "uploadMyDocument",
+    "method": "POST",
+    "path": "/v1/applicants/me/applications/documents",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-documents.controller.ts (ME_DOCUMENTS_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "404",
+      "409",
+      "413",
+      "422",
+      "502"
     ]
   },
   {

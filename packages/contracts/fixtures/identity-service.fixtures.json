@@ -179,9 +179,10 @@
       "id": "submit-application-request",
       "schema": "SubmitApplicationRequest",
       "expect": "accept",
-      "why": "ADR-027 citizen submission accepts a real category and optional academic reference.",
+      "why": "ADR-027 / ADR-030 citizen submission: a real category, the PUBLIC campaign code the citizen chose, and an optional academic reference.",
       "value": {
         "category": "GENERAL_ENLISTMENT",
+        "campaignCode": "RDF-2026-A",
         "nesaIndexNumber": "RW2026/1001"
       }
     },
@@ -396,9 +397,10 @@
       "id": "otp-verify-request",
       "schema": "OtpVerifyBody",
       "expect": "accept",
-      "why": "THREE fields, not one. nationalId and channel travel again alongside the code.",
+      "why": "ADR-029: the onboarding token, the SAME phone the code was sent to, the code, and the channel. The National ID is NOT re-sent.",
       "value": {
-        "nationalId": "1199680012345678",
+        "onboardingToken": "eyJ2IjoxfQ.0f1e2d3c",
+        "phoneNumber": "0788123456",
         "otp": "483920",
         "channel": "WEB"
       }
@@ -407,9 +409,127 @@
       "id": "otp-verify-rejects-code-only",
       "schema": "OtpVerifyBody",
       "expect": "reject",
-      "why": "A form that posts only the code fails 400 every time.",
+      "why": "A form that posts only the code fails 400 every time: the token and phone are required.",
       "value": {
         "otp": "483920"
+      }
+    },
+    {
+      "id": "submit-application-rejects-no-campaign",
+      "schema": "SubmitApplicationRequest",
+      "expect": "reject",
+      "why": "BUILD-002: a submission without a campaignCode cannot be bound to a campaign or its policy.",
+      "value": {
+        "category": "GENERAL_ENLISTMENT",
+        "nesaIndexNumber": "RW2026/1001"
+      }
+    },
+    {
+      "id": "submit-application-rejects-internal-campaign-id",
+      "schema": "SubmitApplicationRequest",
+      "expect": "reject",
+      "why": "The browser never supplies an internal campaign id, policy hash or agency — only the public code.",
+      "value": {
+        "category": "GENERAL_ENLISTMENT",
+        "campaignCode": "RDF-2026-A",
+        "campaignId": "99000000-0000-4000-8000-0000000000c1"
+      }
+    },
+    {
+      "id": "onboarding-begin-request",
+      "schema": "OnboardingBeginBody",
+      "expect": "accept",
+      "why": "ADR-029 step 1: National ID + date of birth + channel.",
+      "value": {
+        "nationalId": "1199680012345678",
+        "dateOfBirth": "2002-05-14",
+        "channel": "WEB"
+      }
+    },
+    {
+      "id": "onboarding-begin-rejects-no-dob",
+      "schema": "OnboardingBeginBody",
+      "expect": "reject",
+      "why": "The date of birth is the second factor; a National ID alone must not start onboarding.",
+      "value": {
+        "nationalId": "1199680012345678",
+        "channel": "WEB"
+      }
+    },
+    {
+      "id": "onboarding-begun",
+      "schema": "OnboardingBegun200",
+      "expect": "accept",
+      "why": "A token and its expiry — no National ID, no DOB, no applicant id.",
+      "value": {
+        "onboardingToken": "eyJ2IjoxfQ.0f1e2d3c",
+        "expiresAt": "2026-10-14T10:15:00.000Z"
+      }
+    },
+    {
+      "id": "onboarding-begun-rejects-applicant-id",
+      "schema": "OnboardingBegun200",
+      "expect": "reject",
+      "why": "The browser must never learn the applicant id at this step.",
+      "value": {
+        "onboardingToken": "x.y",
+        "expiresAt": "2026-10-14T10:15:00.000Z",
+        "applicantId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f"
+      }
+    },
+    {
+      "id": "identity-not-confirmed",
+      "schema": "IdentityNotConfirmed422",
+      "expect": "accept",
+      "why": "One shape for unknown NID, non-citizen, wrong DOB and a locked NID.",
+      "value": {
+        "error": "IDENTITY_NOT_CONFIRMED",
+        "detail": "The details could not be confirmed."
+      }
+    },
+    {
+      "id": "otp-request-body",
+      "schema": "OtpRequestBody",
+      "expect": "accept",
+      "why": "ADR-029 step 2: the token and the phone the citizen typed.",
+      "value": {
+        "onboardingToken": "eyJ2IjoxfQ.0f1e2d3c",
+        "phoneNumber": "+250 788 123 456",
+        "channel": "WEB"
+      }
+    },
+    {
+      "id": "otp-request-rejects-national-id",
+      "schema": "OtpRequestBody",
+      "expect": "reject",
+      "why": "The phone is never derived from the National ID, which is not re-sent.",
+      "value": {
+        "nationalId": "1199680012345678",
+        "channel": "WEB"
+      }
+    },
+    {
+      "id": "document-uploaded",
+      "schema": "DocumentUploaded201",
+      "expect": "accept",
+      "why": "uploadMyDocument 201: identifiers only (documentId, documentType) — transcribed from applicant-documents.controller.ts; the verdict is withheld on purpose.",
+      "value": {
+        "status": "UPLOADED",
+        "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "documentType": "NATIONAL_ID"
+      }
+    },
+    {
+      "id": "document-uploaded-rejects-verdict",
+      "schema": "DocumentUploaded201",
+      "expect": "reject",
+      "why": "A lane/score returned to the uploader is a forgery-tuning oracle.",
+      "value": {
+        "status": "UPLOADED",
+        "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "documentType": "NATIONAL_ID",
+        "lane": "GREEN",
+        "score": 0.97
       }
     }
   ]

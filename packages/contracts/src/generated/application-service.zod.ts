@@ -17,6 +17,8 @@
 // Route table (method, path, auth kinds, reach):
 //   GET  /v1/applications                               officer            browser
 //   POST /v1/applications                               system             service-internal
+//   GET  /v1/campaigns                                  none               browser
+//   GET  /v1/campaigns/detail                           none               browser
 //   GET  /v1/applications/amber-queue                   officer            browser
 //   GET  /v1/applications/by-applicant                  system             service-internal
 //   GET  /v1/applications/by-id                         officer            browser
@@ -350,6 +352,36 @@ export const NotFound404Schema = z
   }).strict();
 
 /**
+ * The approved public projection. Nothing internal.
+ */
+export const PublicCampaignSchema = z
+  .object({
+    "publicCode": z.string(),
+    "campaignLabel": z.string(),
+    "agency": AgencySchema,
+    "status": z.string(),
+    "registrationOpensAt": z.string(),
+    "registrationClosesAt": z.string(),
+    "examinationStartDate": z.string(),
+    "examinationEndDate": z.string(),
+    "targetCategories": z.array(ApplicationCategorySchema),
+    "targetDistricts": z.array(z.string()),
+    "allowsWalkIn": z.boolean(),
+    "contactPhoneNumbers": z.array(z.string()).nullable(),
+    "contactWebsite": z.string().nullable(),
+  }).strict();
+
+export const PublicCampaignDetail200Schema = z
+  .object({
+    "campaign": PublicCampaignSchema,
+  }).strict();
+
+export const PublicCampaignList200Schema = z
+  .object({
+    "campaigns": z.array(PublicCampaignSchema),
+  }).strict();
+
+/**
  * One entry of the immutable trail. This is the record a rejected applicant
  * is entitled to see reasons from, so every field answering "who changed
  * what, when, and why" is carried. actorKind is DERIVED so the UI can
@@ -614,6 +646,34 @@ export const applicationServiceOperations = {
       "404": ApplicantNotFound404Schema,
       "409": SubmitConflict409Schema,
       "422": InvalidAcademicInput422Schema,
+      "500": ApplicationError500Schema,
+    },
+  },
+  "listPublicCampaigns": {
+    method: "GET",
+    path: "/v1/campaigns",
+    auth: ["none"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": PublicCampaignList200Schema,
+      "500": ApplicationError500Schema,
+    },
+  },
+  "getPublicCampaign": {
+    method: "GET",
+    path: "/v1/campaigns/detail",
+    auth: ["none"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["publicCode"],
+    responses: {
+      "200": PublicCampaignDetail200Schema,
+      "400": null,
+      "404": null,
       "500": ApplicationError500Schema,
     },
   },

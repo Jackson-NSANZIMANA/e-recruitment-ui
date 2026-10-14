@@ -28,6 +28,7 @@ import type {
   ApplicantSessionIssued200Schema,
   ApplicationChannelSchema,
   DeclineErasureRequestSchema,
+  DocumentUploaded201Schema,
   EraseIdentityRequestSchema,
   ErasedOkSchema,
   EraseOk200Schema,
@@ -45,6 +46,7 @@ import type {
   IdentityAlreadyExists200Schema,
   IdentityCreated201Schema,
   IdentityError500Schema,
+  IdentityNotConfirmed422Schema,
   InvalidApplicantId400Schema,
   InvalidOtp401Schema,
   InvalidSession401Schema,
@@ -53,13 +55,17 @@ import type {
   NidaUnavailable503Schema,
   NotACitizen422Schema,
   NotFoundInNida404Schema,
-  OtpChallenged202Schema,
   RawNationalIdSchema,
+  OnboardingBeginBodySchema,
+  OnboardingBegun200Schema,
+  OnboardingExpired401Schema,
+  OtpChallenged202Schema,
   OtpRequestBodySchema,
   OtpVerifyBodySchema,
   SubmitApplicationRequestSchema,
   SubmitApplicationResponseSchema,
   Unauthenticated401Schema,
+  UploadDocumentFormSchema,
   UpstreamUnavailable502Schema,
   VerifyIdentity400Schema,
   VerifyIdentityRequestSchema,
@@ -81,6 +87,7 @@ export type ApplicantAuthError500 = z.infer<typeof ApplicantAuthError500Schema>;
 export type ApplicantSessionIssued200 = z.infer<typeof ApplicantSessionIssued200Schema>;
 export type ApplicationChannel = z.infer<typeof ApplicationChannelSchema>;
 export type DeclineErasureRequest = z.infer<typeof DeclineErasureRequestSchema>;
+export type DocumentUploaded201 = z.infer<typeof DocumentUploaded201Schema>;
 export type EraseIdentityRequest = z.infer<typeof EraseIdentityRequestSchema>;
 export type ErasedOk = z.infer<typeof ErasedOkSchema>;
 export type EraseOk200 = z.infer<typeof EraseOk200Schema>;
@@ -98,6 +105,7 @@ export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
 export type IdentityAlreadyExists200 = z.infer<typeof IdentityAlreadyExists200Schema>;
 export type IdentityCreated201 = z.infer<typeof IdentityCreated201Schema>;
 export type IdentityError500 = z.infer<typeof IdentityError500Schema>;
+export type IdentityNotConfirmed422 = z.infer<typeof IdentityNotConfirmed422Schema>;
 export type InvalidApplicantId400 = z.infer<typeof InvalidApplicantId400Schema>;
 export type InvalidOtp401 = z.infer<typeof InvalidOtp401Schema>;
 export type InvalidSession401 = z.infer<typeof InvalidSession401Schema>;
@@ -106,13 +114,17 @@ export type MyErasureRequestOk = z.infer<typeof MyErasureRequestOkSchema>;
 export type NidaUnavailable503 = z.infer<typeof NidaUnavailable503Schema>;
 export type NotACitizen422 = z.infer<typeof NotACitizen422Schema>;
 export type NotFoundInNida404 = z.infer<typeof NotFoundInNida404Schema>;
-export type OtpChallenged202 = z.infer<typeof OtpChallenged202Schema>;
 export type RawNationalId = z.infer<typeof RawNationalIdSchema>;
+export type OnboardingBeginBody = z.infer<typeof OnboardingBeginBodySchema>;
+export type OnboardingBegun200 = z.infer<typeof OnboardingBegun200Schema>;
+export type OnboardingExpired401 = z.infer<typeof OnboardingExpired401Schema>;
+export type OtpChallenged202 = z.infer<typeof OtpChallenged202Schema>;
 export type OtpRequestBody = z.infer<typeof OtpRequestBodySchema>;
 export type OtpVerifyBody = z.infer<typeof OtpVerifyBodySchema>;
 export type SubmitApplicationRequest = z.infer<typeof SubmitApplicationRequestSchema>;
 export type SubmitApplicationResponse = z.infer<typeof SubmitApplicationResponseSchema>;
 export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
+export type UploadDocumentForm = z.infer<typeof UploadDocumentFormSchema>;
 export type UpstreamUnavailable502 = z.infer<typeof UpstreamUnavailable502Schema>;
 export type VerifyIdentity400 = z.infer<typeof VerifyIdentity400Schema>;
 export type VerifyIdentityRequest = z.infer<typeof VerifyIdentityRequestSchema>;

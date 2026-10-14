@@ -175,25 +175,98 @@ paths:
   # 2. Citizen authentication (ADR-018) — PUBLIC, then session-bearing
   # ───────────────────────────────────────────────────────────────
 
+  /v1/applicants/auth/onboarding/begin:
+    post:
+      operationId: "beginApplicantOnboarding"
+      summary: "Confirm National ID + date of birth against NIDA (onboarding step 1)"
+      description: >-
+        UNAUTHENTICATED. STEP 1 OF NID → DOB → PHONE → OTP (ADR-029).
+
+
+        The National ID and the date of birth are checked against NIDA's own
+        record: the person must be a Rwandan citizen AND the date of birth must
+        match. On success the identity row is created or reused and a signed,
+        short-lived (15 min) onboarding token is returned. The token is NOT a
+        session; it only authorises the phone and OTP steps.
+
+
+        THE DATE OF BIRTH IS THE SECOND FACTOR. The OTP proves control of a
+        phone the citizen names, not that the phone belongs to the National ID's
+        owner; NIDA holds no phone. Without this factor anyone who merely knows a
+        National ID could enrol their own phone against it.
+
+
+        ONE 422 IDENTITY_NOT_CONFIRMED covers an unknown National ID, a
+        non-citizen, a wrong date of birth AND a temporarily locked National ID.
+        Do not build copy that distinguishes them. Five mismatches lock the ID
+        for an hour, durably.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ONBOARDING_BEGIN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingBeginBody"
+      responses:
+        "200":
+          description: "Confirmed. Keep the token in memory; it is never stored."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingBegun200"
+        "400":
+          description: "Shape errors: nationalId, dateOfBirth (YYYY-MM-DD, a real date), channel."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuth400"
+        "422":
+          description: "IDENTITY_NOT_CONFIRMED. One shape for every cause."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityNotConfirmed422"
+        "502":
+          description: "UPSTREAM_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+        "503":
+          description: "NIDA_UNAVAILABLE."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NidaUnavailable503"
+        "500":
+          description: "PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicantAuthError500"
+
   /v1/applicants/auth/otp/request:
     post:
       operationId: "requestApplicantOtp"
-      summary: "Send a one-time code to the citizen's registered phone"
+      summary: "Send a one-time code to the phone number the citizen stated (step 2)"
       description: >-
-        UNAUTHENTICATED — this is what authenticates a citizen, so it cannot
-        require a token.
+        UNAUTHENTICATED. Requires the onboarding token from step 1 and the
+        phone number the citizen TYPED — NIDA holds no phone, so the number is
+        never derived from the National ID.
 
 
-        ONE 202 COVERS AT LEAST FOUR DIFFERENT INPUT CLASSES: a known verified
-        applicant, an unknown national id, a known applicant with no phone on
-        record, and a rate-limited repeat. All produce a byte-identical
-        { status: "CHALLENGED" }. That is a designed no-enumeration property.
+        Only MTN Rwanda (078/079) and Airtel Rwanda (072/073) mobile numbers are
+        accepted. A number the system cannot deliver to is a 400
+        INVALID_PHONE_NUMBER; that reveals nothing about the citizen. An
+        expired or forged onboarding token is a 401 ONBOARDING_EXPIRED.
 
 
-        THE UI MUST NOT LEAK WHAT THE API REFUSED TO LEAK. "We sent a code to
-        your phone" is the only honest copy. "No account found for that ID" and
-        "we don't have a phone number for you" are both existence oracles built
-        in the client for an API that carefully avoided being one.
+        THE 202 IS UNIFORM: it says the request was accepted, not that an SMS
+        was sent. The stored OTP digest is bound to the phone, so a code sent to
+        one number cannot verify another.
 
 
         The raw phone number is never returned. Neither is the code.
@@ -216,12 +289,19 @@ paths:
                 $ref: "#/components/schemas/OtpChallenged202"
         "400":
           description: >-
-            Shape errors only: INVALID_REQUEST (nationalId absent/blank/over
-            32), INVALID_CHANNEL, INVALID_NATIONAL_ID (domain checksum).
+            Shape errors: INVALID_REQUEST (onboardingToken/phoneNumber absent or
+            oversized), INVALID_CHANNEL, INVALID_PHONE_NUMBER (not a deliverable
+            MTN/Airtel Rwanda number).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApplicantAuth400"
+        "401":
+          description: "ONBOARDING_EXPIRED — start again from step 1."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingExpired401"
         "502":
           description: "UPSTREAM_UNAVAILABLE — a dependent service is down."
           content:
@@ -256,8 +336,8 @@ paths:
         that distinguishes them.
 
 
-        Requires nationalId AND channel alongside otp — the same three fields as
-        the request step, not just the code.
+        Requires the onboarding token, the SAME phone number the code was sent
+        to, and channel alongside otp. The code is bound to that number.
       x-usrp-auth: ["none"]
       x-usrp-reach: "browser"
       x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (OTP_VERIFY_PATH)"
@@ -441,6 +521,60 @@ paths:
           description: "Submission rate limit exceeded."
         "503":
           description: "Dependency failure."
+
+  /v1/applicants/me/applications/documents:
+    post:
+      operationId: "uploadMyDocument"
+      summary: "Upload a document for the citizen's own application"
+      description: >-
+        SESSION-AUTHENTICATED, multipart/form-data. The applicant is derived
+        from the session; an `applicantId` part is REFUSED (400). Parts:
+        applicationId (uuid), documentType, and one `file` part (the browser
+        filename is ignored).
+
+
+        THE RESPONSE NEVER CARRIES A VERDICT: no lane, score or flag. A forensics
+        score handed to the uploader is a forgery-tuning oracle. The only
+        specific refusal is malware, which teaches a forger nothing.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-documents.controller.ts (ME_DOCUMENTS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentForm"
+      responses:
+        "201":
+          description: "Stored."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploaded201"
+        "400":
+          description: "Shape error, missing/empty file, or a forbidden applicantId part."
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "APPLICATION_NOT_FOUND — absent, or not this citizen's (same answer)."
+        "409":
+          description: "NOT_ACCEPTING_DOCUMENTS."
+        "413":
+          description: "FILE_TOO_LARGE."
+        "422":
+          description: "Unsupported type/content, content-type mismatch, or malware."
+        "502":
+          description: "A dependent service is unavailable; nothing was stored."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
 
   /v1/applicants/me/applications/withdraw:
     post:
@@ -890,23 +1024,85 @@ components:
         channel:
           $ref: "#/components/schemas/ApplicationChannel"
 
-    OtpRequestBody:
+    OnboardingBeginBody:
       type: "object"
       additionalProperties: false
-      required: ["nationalId", "channel"]
+      required: ["nationalId", "dateOfBirth", "channel"]
       properties:
         nationalId:
           $ref: "#/components/schemas/RawNationalId"
+        dateOfBirth:
+          description: "A real calendar date, YYYY-MM-DD. Compared to NIDA's record; never stored or echoed."
+          type: "string"
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        channel:
+          $ref: "#/components/schemas/ApplicationChannel"
+
+    OnboardingBegun200:
+      type: "object"
+      additionalProperties: false
+      required: ["onboardingToken", "expiresAt"]
+      properties:
+        onboardingToken:
+          description: "Signed, 15-minute, not a session. Keep in memory only."
+          type: "string"
+          maxLength: 512
+        expiresAt:
+          type: "string"
+          format: "date-time"
+
+    IdentityNotConfirmed422:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "IDENTITY_NOT_CONFIRMED"
+        detail:
+          type: "string"
+
+    OnboardingExpired401:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "ONBOARDING_EXPIRED"
+        detail:
+          type: "string"
+
+    OtpRequestBody:
+      type: "object"
+      additionalProperties: false
+      required: ["onboardingToken", "phoneNumber", "channel"]
+      properties:
+        onboardingToken:
+          type: "string"
+          minLength: 1
+          maxLength: 512
+        phoneNumber:
+          description: "As typed: 07XXXXXXXX, 2507XXXXXXXX or +2507XXXXXXXX (spaces/hyphens allowed)."
+          type: "string"
+          minLength: 1
+          maxLength: 32
         channel:
           $ref: "#/components/schemas/ApplicationChannel"
 
     OtpVerifyBody:
       type: "object"
       additionalProperties: false
-      required: ["nationalId", "otp", "channel"]
+      required: ["onboardingToken", "phoneNumber", "otp", "channel"]
       properties:
-        nationalId:
-          $ref: "#/components/schemas/RawNationalId"
+        onboardingToken:
+          type: "string"
+          minLength: 1
+          maxLength: 512
+        phoneNumber:
+          type: "string"
+          minLength: 1
+          maxLength: 32
         otp:
           description: "Max 12 chars. Never echoed, never logged."
           type: "string"
@@ -1270,17 +1466,52 @@ components:
     SubmitApplicationRequest:
       type: "object"
       additionalProperties: false
-      required: ["category"]
+      required: ["category", "campaignCode"]
       properties:
         category:
           type: "string"
           maxLength: 64
+        campaignCode:
+          description: >-
+            The PUBLIC code of the campaign the citizen chose (from the public
+            campaign list). Never an internal id, policy hash or agency — the
+            server resolves those. Unknown, closed and wrong-agency codes are
+            one NO_OPEN_CAMPAIGN.
+          type: "string"
+          pattern: "^[A-Za-z0-9][A-Za-z0-9-]{2,63}$"
         nesaIndexNumber:
           type: "string"
           maxLength: 64
         hecRegistrationNumber:
           type: "string"
           maxLength: 64
+
+    UploadDocumentForm:
+      type: "object"
+      required: ["applicationId", "documentType", "file"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+        file:
+          type: "string"
+          format: "binary"
+
+    DocumentUploaded201:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "documentId", "documentType"]
+      properties:
+        status:
+          type: "string"
+          const: "UPLOADED"
+        documentId:
+          type: "string"
+          format: "uuid"
+        documentType:
+          type: "string"
 
     SubmitApplicationResponse:
       type: "object"
@@ -1316,7 +1547,7 @@ components:
       properties:
         error:
           type: "string"
-          enum: ["INVALID_REQUEST", "INVALID_CHANNEL", "INVALID_NATIONAL_ID"]
+          enum: ["INVALID_REQUEST", "INVALID_CHANNEL", "INVALID_NATIONAL_ID", "INVALID_PHONE_NUMBER", "INVALID_CAMPAIGN_CODE"]
         detail:
           type: "string"
 

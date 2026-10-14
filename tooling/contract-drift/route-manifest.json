@@ -20,11 +20,13 @@
         { "method": "POST", "path": "/v1/identities/erasure", "auth": ["officer"], "constant": "ERASURE_PATH", "controller": "erasure.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/identities/erasure-requests", "auth": ["officer"], "constant": "ERASURE_REQUESTS_QUEUE_PATH", "controller": "erasure-request.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/identities/erasure-requests/decline", "auth": ["officer"], "constant": "ERASURE_REQUEST_DECLINE_PATH", "controller": "erasure-request.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/applicants/auth/onboarding/begin", "auth": ["none"], "constant": "ONBOARDING_BEGIN_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/auth/otp/request", "auth": ["none"], "constant": "OTP_REQUEST_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/auth/otp/verify", "auth": ["none"], "constant": "OTP_VERIFY_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/auth/logout", "auth": ["applicant-session"], "constant": "LOGOUT_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/applicants/me/applications/documents", "auth": ["applicant-session"], "constant": "ME_DOCUMENTS_PATH", "controller": "applicant-documents.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications/withdraw", "auth": ["applicant-session"], "constant": "ME_WITHDRAW_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/erasure-request", "auth": ["applicant-session"], "constant": "ME_ERASURE_REQUEST_PATH", "controller": "erasure-request.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/erasure-request", "auth": ["applicant-session"], "constant": "ME_ERASURE_REQUEST_PATH", "controller": "erasure-request.controller.ts", "mounted": true }
@@ -36,6 +38,8 @@
       "routes": [
         { "method": "GET", "path": "/v1/applications", "auth": ["officer"], "constant": "LIST_APPLICATIONS_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applications", "auth": ["system"], "constant": "SUBMIT_APPLICATION_PATH", "controller": "submit-application.controller.ts", "mounted": true },
+        { "method": "GET", "path": "/v1/campaigns", "auth": ["none"], "constant": "LIST_PUBLIC_CAMPAIGNS_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
+        { "method": "GET", "path": "/v1/campaigns/detail", "auth": ["none"], "constant": "READ_PUBLIC_CAMPAIGN_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/amber-queue", "auth": ["officer"], "constant": "AMBER_QUEUE_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/by-applicant", "auth": ["system"], "constant": "BY_APPLICANT_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/by-id", "auth": ["officer"], "constant": "BY_ID_PATH", "controller": "list-applications.controller.ts", "mounted": true },

@@ -53,6 +53,9 @@ import type {
   NoOpenCampaign409Schema,
   NoWalkInCampaign409Schema,
   NotFound404Schema,
+  PublicCampaignSchema,
+  PublicCampaignDetail200Schema,
+  PublicCampaignList200Schema,
   StatusHistoryEntrySchema,
   StatusHistoryOkSchema,
   SubmitApplicationRequestSchema,
@@ -118,6 +121,9 @@ export type MedicalReviewRequest400 = z.infer<typeof MedicalReviewRequest400Sche
 export type NoOpenCampaign409 = z.infer<typeof NoOpenCampaign409Schema>;
 export type NoWalkInCampaign409 = z.infer<typeof NoWalkInCampaign409Schema>;
 export type NotFound404 = z.infer<typeof NotFound404Schema>;
+export type PublicCampaign = z.infer<typeof PublicCampaignSchema>;
+export type PublicCampaignDetail200 = z.infer<typeof PublicCampaignDetail200Schema>;
+export type PublicCampaignList200 = z.infer<typeof PublicCampaignList200Schema>;
 export type StatusHistoryEntry = z.infer<typeof StatusHistoryEntrySchema>;
 export type StatusHistoryOk = z.infer<typeof StatusHistoryOkSchema>;
 export type SubmitApplicationRequest = z.infer<typeof SubmitApplicationRequestSchema>;

@@ -178,6 +178,70 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationError500"
 
+  /v1/campaigns:
+    get:
+      operationId: "listPublicCampaigns"
+      summary: "The recruitment campaigns open for registration (public, BUILD-001)"
+      description: >-
+        UNAUTHENTICATED, safe projection. Returns ONLY campaigns in
+        REGISTRATION_OPEN. Each carries the PUBLIC code a citizen quotes when
+        applying. It deliberately omits internal ids, policy documents and
+        thresholds, coverage hashes, capacity and registration counts, officer
+        identities and anything audit-related.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-public-read.controller.ts (LIST_PUBLIC_CAMPAIGNS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "Open campaigns (possibly empty)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCampaignList200"
+        "500":
+          description: "CAMPAIGN_READ_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
+
+  /v1/campaigns/detail:
+    get:
+      operationId: "getPublicCampaign"
+      summary: "One published campaign by its public code (public, BUILD-001)"
+      description: >-
+        UNAUTHENTICATED. Exactly one `publicCode` query parameter. 404
+        CAMPAIGN_NOT_FOUND for a code that was never published.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-public-read.controller.ts (READ_PUBLIC_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "publicCode"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            pattern: "^[A-Za-z0-9][A-Za-z0-9-]{2,63}$"
+      responses:
+        "200":
+          description: "The published campaign."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCampaignDetail200"
+        "400":
+          description: "INVALID_PUBLIC_CODE."
+        "404":
+          description: "CAMPAIGN_NOT_FOUND."
+        "500":
+          description: "CAMPAIGN_READ_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
+
   /v1/applications/amber-queue:
     get:
       operationId: "listAmberQueue"
@@ -1049,6 +1113,76 @@ components:
     Agency:
       type: "string"
       enum: ["RDF", "RNP", "RCS"]
+
+    PublicCampaign:
+      description: "The approved public projection. Nothing internal."
+      type: "object"
+      additionalProperties: false
+      required:
+        - "publicCode"
+        - "campaignLabel"
+        - "agency"
+        - "status"
+        - "registrationOpensAt"
+        - "registrationClosesAt"
+        - "examinationStartDate"
+        - "examinationEndDate"
+        - "targetCategories"
+        - "targetDistricts"
+        - "allowsWalkIn"
+        - "contactPhoneNumbers"
+        - "contactWebsite"
+      properties:
+        publicCode:
+          type: "string"
+        campaignLabel:
+          type: "string"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        status:
+          type: "string"
+        registrationOpensAt:
+          type: "string"
+        registrationClosesAt:
+          type: "string"
+        examinationStartDate:
+          type: "string"
+        examinationEndDate:
+          type: "string"
+        targetCategories:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ApplicationCategory"
+        targetDistricts:
+          type: "array"
+          items:
+            type: "string"
+        allowsWalkIn:
+          type: "boolean"
+        contactPhoneNumbers:
+          type: ["array", "null"]
+          items:
+            type: "string"
+        contactWebsite:
+          type: ["string", "null"]
+
+    PublicCampaignList200:
+      type: "object"
+      additionalProperties: false
+      required: ["campaigns"]
+      properties:
+        campaigns:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PublicCampaign"
+
+    PublicCampaignDetail200:
+      type: "object"
+      additionalProperties: false
+      required: ["campaign"]
+      properties:
+        campaign:
+          $ref: "#/components/schemas/PublicCampaign"
 
     ApplicationChannel:
       type: "string"
