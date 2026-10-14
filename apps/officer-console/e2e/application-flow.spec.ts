@@ -3,7 +3,8 @@ import { expect, test } from '@playwright/test';
 const OFFICER_SESSION = {
   kind: 'officer',
   agency: 'RDF',
-  roles: ['RECRUITMENT_OFFICER'],
+  roles: ['decision_authority'],
+  permissions: ['application.accept', 'adjudication.decide'],
   idleExpiresAt: '2099-01-01T00:00:00.000Z',
   absoluteExpiresAt: '2099-01-02T00:00:00.000Z',
 };

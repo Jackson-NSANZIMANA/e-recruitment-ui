@@ -75,6 +75,11 @@ export function ApplicationActions({
   const [transition, setTransition] = useState<TransitionResult | null>(null);
   const isPending = accept.isPending || adjudicate.isPending;
   const isDisabled = isPending || session === null;
+  // Display gating only (BUILD-004 §D) — the edge and application-service
+  // refuse the call regardless of what this renders.
+  const can = (permission: string): boolean => session?.permissions.includes(permission) === true;
+  const canAccept = can("application.accept");
+  const canReject = can("adjudication.decide");
 
   const handleFailure = useCallback((error: unknown): void => {
     setTransition(null);
@@ -140,17 +145,24 @@ export function ApplicationActions({
         xcss={toolbarStyles.base}
         {...(testId === undefined ? {} : { testId: `${testId}-toolbar` })}
       >
-        <LoadingButton
-          appearance="primary"
-          isLoading={accept.isPending}
-          isDisabled={isDisabled}
-          onClick={() => void handleApprove()}
-        >
-          {t("actions.approve")}
-        </LoadingButton>
-        <Button appearance="danger" isDisabled={isDisabled} onClick={() => setIsRejectModalOpen(true)}>
-          {t("actions.reject")}
-        </Button>
+        {canAccept && (
+          <LoadingButton
+            appearance="primary"
+            isLoading={accept.isPending}
+            isDisabled={isDisabled}
+            onClick={() => void handleApprove()}
+          >
+            {t("actions.approve")}
+          </LoadingButton>
+        )}
+        {canReject && (
+          <Button appearance="danger" isDisabled={isDisabled} onClick={() => setIsRejectModalOpen(true)}>
+            {t("actions.reject")}
+          </Button>
+        )}
+        {!canAccept && !canReject && (
+          <Text size="small" color="color.text.subtle">{t("officer_actions.no_permission")}</Text>
+        )}
       </Inline>
 
       <ModalTransition>

@@ -136,27 +136,33 @@ export function startIamMock(port: number, log: CorrelationLog): Promise<Running
 
 // ── identity-service ────────────────────────────────────────────
 
-/** The four input classes otp/request must answer identically (ADR-018). */
+/**
+ * Citizens the mock knows (ADR-029). Onboarding step 1 confirms National ID +
+ * date of birth; ANY other pair — unknown ID, wrong DOB — is the same 422.
+ */
 export const OTP_INPUT_CLASSES = {
-  /** Real, verified, NIDA record carries a phone. An SMS is actually sent. */
+  /** Real citizen: NID + this date of birth confirms and yields a token. */
   realSend: '1199180000000001',
   /** No such NID in NIDA. */
   unknownNid: '1199180000000002',
-  /** Exists in NIDA but the identity is not verified in our store. */
-  unverified: '1199180000000003',
-  /** Exists and verified, but the NIDA record has NO phone — walk-in lane. */
-  phoneless: '1199180000000004',
 } as const;
+/** The date of birth NIDA holds for `OTP_INPUT_CLASSES.realSend`. */
+export const REAL_CITIZEN_DOB = '2002-05-14';
+/** A deliverable MTN Rwanda number, as a citizen would type it. */
+export const CITIZEN_PHONE = '0788 123 456';
 
-/** Triggers two 503 NIDA_UNAVAILABLE responses, then succeeds. Proves retry. */
+/** Triggers two 503 NIDA_UNAVAILABLE responses, then succeeds. */
 export const NID_FLAKY_G2G = '1199180000000009';
 
 const CORRECT_OTP = '123456';
 const MAX_OTP_ATTEMPTS = 5;
+const DELIVERABLE_PHONE = /^(\+?250|0)?7[2389]\d{7}$/;
 
 export interface IdentityMockState {
-  /** Failed verify attempts per NID. At 5 the correct code fails too. */
+  /** Failed verify attempts per ONBOARDING TOKEN. At 5 the correct code fails too. */
   readonly attempts: Map<string, number>;
+  /** Issued onboarding tokens (step 1 → steps 2/3). */
+  readonly tokens: Set<string>;
   /** Live citizen sessions: token -> applicantId. Revocation deletes. */
   readonly sessions: Map<string, string>;
   /** Remaining forced G2G failures for NID_FLAKY_G2G. */
@@ -172,20 +178,47 @@ export function startIdentityMock(
     HEALTH,
     {
       method: 'POST',
-      path: '/v1/applicants/auth/otp/request',
+      path: '/v1/applicants/auth/onboarding/begin',
       handler: async (ctx) => {
         log.record('identity', ctx.path, ctx.correlationId);
-        const body = await ctx.json<{ nationalId?: unknown }>();
+        const body = await ctx.json<{ nationalId?: unknown; dateOfBirth?: unknown }>();
         if (typeof body.nationalId !== 'string' || body.nationalId.length === 0) {
           throw new HttpError(400, 'INVALID_REQUEST', 'Field "nationalId" is required.');
         }
+        if (typeof body.dateOfBirth !== 'string') {
+          throw new HttpError(400, 'INVALID_REQUEST', 'Field "dateOfBirth" must be YYYY-MM-DD.');
+        }
         if (body.nationalId === NID_FLAKY_G2G && state.g2gFailuresRemaining > 0) {
           state.g2gFailuresRemaining -= 1;
-          // A real, distinct, user-explainable outage — NOT an enumeration
-          // signal, because it is independent of whether the NID exists.
           throw new HttpError(503, 'NIDA_UNAVAILABLE', 'Identity registry unavailable; try again shortly.');
         }
-        // Byte-identical for every input class. This is the invariant.
+        if (body.nationalId !== OTP_INPUT_CLASSES.realSend || body.dateOfBirth !== REAL_CITIZEN_DOB) {
+          // ONE answer for unknown NID, non-citizen, wrong DOB and a locked NID.
+          throw new HttpError(422, 'IDENTITY_NOT_CONFIRMED', 'The details could not be confirmed.');
+        }
+        const onboardingToken = `onb.${randomUUID().replace(/-/g, '')}`;
+        state.tokens.add(onboardingToken);
+        return {
+          status: 200,
+          body: { onboardingToken, expiresAt: new Date(Date.now() + 900_000).toISOString() },
+        };
+      },
+    },
+    {
+      method: 'POST',
+      path: '/v1/applicants/auth/otp/request',
+      handler: async (ctx) => {
+        log.record('identity', ctx.path, ctx.correlationId);
+        const body = await ctx.json<{ onboardingToken?: unknown; phoneNumber?: unknown }>();
+        if (typeof body.onboardingToken !== 'string' || typeof body.phoneNumber !== 'string') {
+          throw new HttpError(400, 'INVALID_REQUEST', 'Fields "onboardingToken" and "phoneNumber" are required.');
+        }
+        if (!state.tokens.has(body.onboardingToken)) {
+          throw new HttpError(401, 'ONBOARDING_EXPIRED', 'Start again from the National ID step.');
+        }
+        if (!DELIVERABLE_PHONE.test(body.phoneNumber.replace(/[\s-]/g, ''))) {
+          throw new HttpError(400, 'INVALID_PHONE_NUMBER', 'A Rwandan MTN or Airtel mobile number is required.');
+        }
         return { status: 202, body: { status: 'CHALLENGED' } };
       },
     },
@@ -194,21 +227,25 @@ export function startIdentityMock(
       path: '/v1/applicants/auth/otp/verify',
       handler: async (ctx) => {
         log.record('identity', ctx.path, ctx.correlationId);
-        const body = await ctx.json<{ nationalId?: unknown; otp?: unknown }>();
-        if (typeof body.nationalId !== 'string' || typeof body.otp !== 'string') {
-          throw new HttpError(400, 'INVALID_REQUEST', 'Fields "nationalId" and "otp" are required.');
+        const body = await ctx.json<{ onboardingToken?: unknown; phoneNumber?: unknown; otp?: unknown }>();
+        if (
+          typeof body.onboardingToken !== 'string' ||
+          typeof body.phoneNumber !== 'string' ||
+          typeof body.otp !== 'string'
+        ) {
+          throw new HttpError(400, 'INVALID_REQUEST', 'Fields "onboardingToken", "phoneNumber" and "otp" are required.');
         }
-        const used = state.attempts.get(body.nationalId) ?? 0;
+        const used = state.attempts.get(body.onboardingToken) ?? 0;
         const lockedOut = used >= MAX_OTP_ATTEMPTS;
-        const correct = body.nationalId === OTP_INPUT_CLASSES.realSend && body.otp === CORRECT_OTP;
+        const correct = state.tokens.has(body.onboardingToken) && body.otp === CORRECT_OTP;
 
         if (lockedOut || !correct) {
-          state.attempts.set(body.nationalId, used + 1);
+          state.attempts.set(body.onboardingToken, used + 1);
           // ONE 401 for wrong / expired / replayed / locked. The client cannot
           // tell lockout from a wrong digit, on purpose.
           throw new HttpError(401, 'INVALID_OTP', 'Invalid or expired code.');
         }
-        state.attempts.delete(body.nationalId);
+        state.attempts.delete(body.onboardingToken);
         const sessionToken = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '');
         state.sessions.set(sessionToken, 'a0000000-0000-4000-8000-000000000001');
         return {
@@ -498,5 +535,5 @@ export function startApplicationMock(port: number, log: CorrelationLog): Promise
 }
 
 export function freshIdentityState(): IdentityMockState {
-  return { attempts: new Map(), sessions: new Map(), g2gFailuresRemaining: 2 };
+  return { attempts: new Map(), tokens: new Set(), sessions: new Map(), g2gFailuresRemaining: 2 };
 }

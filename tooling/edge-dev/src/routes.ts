@@ -201,38 +201,84 @@ export function edgeRoutes(edge: EdgeContext): readonly Route[] {
     },
   };
 
+  /**
+   * Onboarding step 1 (ADR-029): National ID + date of birth.
+   *
+   * NOT retryable: a lockout counter sits behind it, and replaying a guess on
+   * the citizen's behalf would spend their attempts. ONE 422 covers an unknown
+   * ID, a non-citizen, a wrong date of birth and a locked ID.
+   */
+  const beginOnboarding: Route = {
+    method: 'POST',
+    path: '/edge/v1/auth/applicant/identity',
+    handler: async (ctx) => {
+      assertOriginPinned(ctx, config.corsOrigins);
+      const body = await ctx.json<{ nationalId?: unknown; dateOfBirth?: unknown; channel?: unknown }>();
+      if (typeof body.nationalId !== 'string' || !/^\d{16}$/.test(body.nationalId.trim())) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'A National ID must be 16 digits.');
+      }
+      if (typeof body.dateOfBirth !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.dateOfBirth)) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'A date of birth must be YYYY-MM-DD.');
+      }
+
+      const route = upstreamRoute('beginApplicantOnboarding');
+      const response = await callUpstream({
+        baseUrl: config.upstream.identity,
+        method: route.method,
+        path: route.path,
+        body: { nationalId: body.nationalId.trim(), dateOfBirth: body.dateOfBirth, channel: 'WEB' },
+        correlationId: ctx.correlationId,
+        retryable: false,
+      });
+
+      if (response.status === 200) {
+        const upstream = response.body as { onboardingToken?: unknown; expiresAt?: unknown };
+        if (typeof upstream.onboardingToken !== 'string' || upstream.onboardingToken.length === 0) {
+          throw new HttpError(502, 'UPSTREAM_MALFORMED_BODY', 'identity-service returned an unexpected onboarding body.');
+        }
+        return {
+          status: 200,
+          body: {
+            onboardingToken: upstream.onboardingToken,
+            expiresAt: typeof upstream.expiresAt === 'string' ? upstream.expiresAt : null,
+          },
+        };
+      }
+      if (response.status === 422) return { status: 422, body: { error: 'IDENTITY_NOT_CONFIRMED' } };
+      return relay(edge, response);
+    },
+  };
+
   const otpRequest: Route = {
     method: 'POST',
     path: '/edge/v1/auth/applicant/otp/request',
     handler: async (ctx) => {
       assertOriginPinned(ctx, config.corsOrigins);
-      const body = await ctx.json<{ nationalId?: unknown; channel?: unknown }>();
-      if (typeof body.nationalId !== 'string' || body.nationalId.trim().length === 0 || body.nationalId.length > 32) {
-        throw new HttpError(400, 'INVALID_REQUEST', 'Field "nationalId" is required.');
+      const body = await ctx.json<{ onboardingToken?: unknown; phoneNumber?: unknown; channel?: unknown }>();
+      if (typeof body.onboardingToken !== 'string' || body.onboardingToken.length === 0 || body.onboardingToken.length > 512) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'An onboarding token is required.');
       }
-      const channel = typeof body.channel === 'string' ? body.channel : 'WEB';
+      if (typeof body.phoneNumber !== 'string' || !/^\+?[0-9][0-9 -]{7,18}$/.test(body.phoneNumber.trim())) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'A phone number is required.');
+      }
 
       const route = upstreamRoute('requestApplicantOtp');
       const response = await callUpstream({
         baseUrl: config.upstream.identity,
         method: route.method,
         path: route.path,
-        body: { nationalId: body.nationalId, channel },
+        body: { onboardingToken: body.onboardingToken, phoneNumber: body.phoneNumber.trim(), channel: 'WEB' },
         correlationId: ctx.correlationId,
-        // Idempotent by design and G2G-dependent (it reads NIDA live), so this
-        // is one of the few POSTs where a 503 retry is correct.
-        retryable: true,
+        retryable: false,
       });
 
-      if (response.status === 202) {
-        // BYTE-IDENTICAL. Real send, unknown NID, unverified identity and a
-        // phoneless NIDA record all land here and must be indistinguishable —
-        // including body, including status, including headers we control.
-        return { status: 202, body: { status: 'CHALLENGED' } };
+      // The 202 says the request was ACCEPTED — never that an SMS was sent.
+      if (response.status === 202) return { status: 202, body: { accepted: true } };
+      if (response.status === 401) return { status: 401, body: { error: 'ONBOARDING_EXPIRED' } };
+      if (response.status === 400) {
+        const code = (response.body as { error?: unknown } | null)?.error;
+        return { status: 400, body: { error: code === 'INVALID_PHONE_NUMBER' ? 'INVALID_PHONE_NUMBER' : 'INVALID_REQUEST' } };
       }
-      // A G2G outage is NOT an enumeration signal: it is independent of whether
-      // the NID exists, so surfacing it distinctly leaks nothing and is the only
-      // way the UI can say something true.
       return relay(edge, response);
     },
   };
@@ -242,9 +288,12 @@ export function edgeRoutes(edge: EdgeContext): readonly Route[] {
     path: '/edge/v1/auth/applicant/otp/verify',
     handler: async (ctx) => {
       assertOriginPinned(ctx, config.corsOrigins);
-      const body = await ctx.json<{ nationalId?: unknown; otp?: unknown; channel?: unknown }>();
-      if (typeof body.nationalId !== 'string' || body.nationalId.trim().length === 0) {
-        throw new HttpError(400, 'INVALID_REQUEST', 'Field "nationalId" is required.');
+      const body = await ctx.json<{ onboardingToken?: unknown; phoneNumber?: unknown; otp?: unknown; channel?: unknown }>();
+      if (typeof body.onboardingToken !== 'string' || body.onboardingToken.length === 0 || body.onboardingToken.length > 512) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'An onboarding token is required.');
+      }
+      if (typeof body.phoneNumber !== 'string' || !/^\+?[0-9][0-9 -]{7,18}$/.test(body.phoneNumber.trim())) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'A phone number is required.');
       }
       if (typeof body.otp !== 'string' || body.otp.length === 0 || body.otp.length > 12) {
         throw new HttpError(400, 'INVALID_REQUEST', 'Field "otp" is required.');
@@ -256,7 +305,7 @@ export function edgeRoutes(edge: EdgeContext): readonly Route[] {
         baseUrl: config.upstream.identity,
         method: route.method,
         path: route.path,
-        body: { nationalId: body.nationalId, otp: body.otp, channel },
+        body: { onboardingToken: body.onboardingToken, phoneNumber: body.phoneNumber.trim(), otp: body.otp, channel },
         correlationId: ctx.correlationId,
       });
 
@@ -579,6 +628,7 @@ export function edgeRoutes(edge: EdgeContext): readonly Route[] {
   if (config.deployment.kind === 'citizen') {
     return [
       ...shared,
+      beginOnboarding,
       otpRequest,
       otpVerify,
       applicantLogout,

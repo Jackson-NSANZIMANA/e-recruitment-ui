@@ -47,7 +47,8 @@ export const UPSTREAM_ROUTES: readonly UpstreamRouteFact[] = [
   // ── Credential minting (unauthenticated upstream, by necessity) ──
   { operationId: 'officerLogin', service: 'iam', method: 'POST', path: '/v1/auth/officer/login', reach: 'public', caller: 'anonymous', note: 'loginHandle + password. NOT email.' },
   { operationId: 'issueServiceToken', service: 'iam', method: 'POST', path: '/v1/auth/service/token', reach: 'public', caller: 'anonymous', note: "The EDGE's own machine identity. Never proxied; only used internally." },
-  { operationId: 'requestApplicantOtp', service: 'identity', method: 'POST', path: '/v1/applicants/auth/otp/request', reach: 'public', caller: 'anonymous', note: 'One byte-identical 202 across four input classes.' },
+  { operationId: 'beginApplicantOnboarding', service: 'identity', method: 'POST', path: '/v1/applicants/auth/onboarding/begin', reach: 'public', caller: 'anonymous', note: 'NID + date of birth against NIDA; ONE 422 for every non-match (ADR-029).' },
+  { operationId: 'requestApplicantOtp', service: 'identity', method: 'POST', path: '/v1/applicants/auth/otp/request', reach: 'public', caller: 'anonymous', note: 'Onboarding token + the phone the citizen typed; uniform 202.' },
   { operationId: 'verifyApplicantOtp', service: 'identity', method: 'POST', path: '/v1/applicants/auth/otp/verify', reach: 'public', caller: 'anonymous', note: 'Returns the opaque session token the edge KEEPS.' },
   { operationId: 'logoutApplicant', service: 'identity', method: 'POST', path: '/v1/applicants/auth/logout', reach: 'browser', caller: 'applicant', note: 'Revokes upstream immediately — the property ADR-018 bought.' },
 
