@@ -73,21 +73,49 @@ export function officerLogout(client: ApiClient, correlationId?: string): Promis
 
 // ── Applicant Auth (OTP flow) ───────────────────────────────────
 
-export interface OtpRequestInput {
+/** Onboarding step 1 (ADR-029): National ID + date of birth (YYYY-MM-DD). */
+export interface OnboardingBeginInput {
   readonly nationalId: string;
+  readonly dateOfBirth: string;
 }
 
-export interface OtpRequestResponse {
-  readonly status: 'otp_requested';
-  readonly expiresIn: number; // seconds
+export interface OnboardingBeginResponse {
+  /** Signed, 15 minutes, not a session. Hold in memory only. */
+  readonly onboardingToken: string;
+  readonly expiresAt: string | null;
 }
 
 /**
- * Request OTP for applicant authentication.
- *
- * Initiates the OTP flow by sending a one-time password to the applicant.
- * Returns 202 Accepted on successful request, or 429 on rate limit.
- * Retryable on transient failure (x-usrp-retry-on-g2g: true).
+ * Step 1. A 422 IDENTITY_NOT_CONFIRMED is the ONE answer for an unknown ID, a
+ * non-citizen, a wrong date of birth and a locked ID — do not distinguish them.
+ */
+export function beginApplicantOnboarding(
+  client: ApiClient,
+  input: OnboardingBeginInput,
+  correlationId?: string,
+): Promise<OnboardingBeginResponse> {
+  return client.call<OnboardingBeginResponse>('beginApplicantOnboarding', {
+    body: input,
+    ...(correlationId === undefined ? {} : { correlationId }),
+  });
+}
+
+/** Step 2: the phone the citizen typed. NIDA holds no phone; the National ID is not re-sent. */
+export interface OtpRequestInput {
+  readonly onboardingToken: string;
+  readonly phoneNumber: string;
+}
+
+/** The edge answers `{ accepted: true }` — acceptance, never delivery. */
+export interface OtpRequestResponse {
+  readonly accepted: true;
+}
+
+/**
+ * Step 2. 202 means the request was accepted — NOT that an SMS was sent.
+ * 401 ONBOARDING_EXPIRED means start again from step 1; 400
+ * INVALID_PHONE_NUMBER means the number is not a deliverable MTN/Airtel line.
+ * Not retried automatically past the registry's own policy.
  */
 export function requestOtp(client: ApiClient, input: OtpRequestInput, correlationId?: string): Promise<OtpRequestResponse> {
   return client.call<OtpRequestResponse>('requestOtp', {
@@ -96,22 +124,19 @@ export function requestOtp(client: ApiClient, input: OtpRequestInput, correlatio
   });
 }
 
+/** Step 3: the token, the SAME phone, and the code. */
 export interface OtpVerifyInput {
-  readonly nationalId: string;
+  readonly onboardingToken: string;
+  readonly phoneNumber: string;
   readonly otp: string;
 }
 
-export interface OtpVerifyResponse {
-  readonly status: 'verified';
-  readonly applicantId: string;
-}
+/** The edge sets the session cookie and answers 204 — there is no body and no token here. */
+export type OtpVerifyResponse = Readonly<Record<string, never>>;
 
 /**
- * Verify OTP and complete applicant authentication.
- *
- * Validates the OTP code provided by the applicant and establishes an
- * authenticated session. Returns 200 with applicantId on success, or 401
- * if the OTP is invalid or expired.
+ * Step 3. One 401 for wrong / expired / replayed / locked. On success the edge
+ * sets the session cookie; the browser never sees a token.
  */
 export function verifyOtp(client: ApiClient, input: OtpVerifyInput, correlationId?: string): Promise<OtpVerifyResponse> {
   return client.call<OtpVerifyResponse>('verifyOtp', {

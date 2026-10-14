@@ -65,10 +65,15 @@ export type {
   SubmitApplicationInput,
   SubmitApplicationResponse,
   WithdrawResponse,
+  PublicCampaign,
+  PublicCampaignListResponse,
+  PublicCampaignDetailResponse,
+  UploadDocumentInput,
+  UploadDocumentResponse,
 } from './wire.js';
 
 // ── Query keys and the invalidation map ──
-export { applicationKeys, applicantKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
+export { applicationKeys, applicantKeys, campaignKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
 export type { InvalidationTarget } from './keys.js';
 
 // ── Operations (framework-free; usable outside React) ──
@@ -79,6 +84,7 @@ export {
   refreshSession,
   officerLogin,
   officerLogout,
+  beginApplicantOnboarding,
   requestOtp,
   verifyOtp,
   applicantLogout,
@@ -86,6 +92,8 @@ export {
 export type {
   OfficerLoginInput,
   OfficerLoginResponse,
+  OnboardingBeginInput,
+  OnboardingBeginResponse,
   OtpRequestInput,
   OtpRequestResponse,
   OtpVerifyInput,
@@ -111,10 +119,12 @@ export {
 export {
   listMyApplications,
   submitMyApplication,
+  uploadMyDocument,
   withdrawMyApplication,
   getMyErasureRequest,
   fileMyErasureRequest,
 } from './operations/applicant.js';
+export { listPublicCampaigns, getPublicCampaign } from './operations/campaigns.js';
 
 // ── TanStack Query hooks ──
 export {
@@ -134,7 +144,9 @@ export {
 export {
   useMyApplications,
   useSubmitMyApplication,
+  useUploadMyDocument,
   useWithdrawMyApplication,
   useMyErasureRequest,
   useFileErasureRequest,
 } from './queries/applicant.js';
+export { usePublicCampaigns, usePublicCampaign } from './queries/campaigns.js';

@@ -34,9 +34,17 @@ import {
   getMyErasureRequest,
   listMyApplications,
   submitMyApplication,
+  uploadMyDocument,
   withdrawMyApplication,
 } from '../operations/applicant.js';
-import type { MyApplicationsResponse, SubmitApplicationInput, SubmitApplicationResponse, WithdrawResponse } from '../wire.js';
+import type {
+  MyApplicationsResponse,
+  SubmitApplicationInput,
+  SubmitApplicationResponse,
+  UploadDocumentInput,
+  UploadDocumentResponse,
+  WithdrawResponse,
+} from '../wire.js';
 
 export interface SubmitApplicationMutationResult {
   readonly response: SubmitApplicationResponse;
@@ -82,6 +90,18 @@ export function useSubmitMyApplication(
       await qc.invalidateQueries({ queryKey: key });
       await qc.refetchQueries({ queryKey: key, type: 'all' });
     },
+  });
+}
+
+/**
+ * Upload one document. NOT retried automatically (a write): the citizen
+ * re-attempts. Never renders a verdict — the response has none.
+ */
+export function useUploadMyDocument(
+  client: ApiClient,
+): UseMutationResult<UploadDocumentResponse, Error, UploadDocumentInput> {
+  return useMutation({
+    mutationFn: (input: UploadDocumentInput) => uploadMyDocument(client, input),
   });
 }
 

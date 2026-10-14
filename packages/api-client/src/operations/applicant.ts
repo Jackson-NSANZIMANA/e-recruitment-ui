@@ -14,6 +14,8 @@ import type {
   MyApplicationsResponse,
   SubmitApplicationInput,
   SubmitApplicationResponse,
+  UploadDocumentInput,
+  UploadDocumentResponse,
   WithdrawResponse,
 } from '../wire.js';
 
@@ -37,6 +39,26 @@ export function submitMyApplication(
     idempotencyKey,
     ...(correlationId === undefined ? {} : { correlationId }),
     ...(onResponse === undefined ? {} : { onResponse }),
+  });
+}
+
+/**
+ * ADR-030. Upload one document for the citizen's OWN application. The subject
+ * is the session; no applicant id is — or can be — sent. The response is
+ * identifiers only: there is no verdict to render, by design.
+ */
+export function uploadMyDocument(
+  client: ApiClient,
+  input: UploadDocumentInput,
+  correlationId?: string,
+): Promise<UploadDocumentResponse> {
+  const form = new FormData();
+  form.append('applicationId', input.applicationId);
+  form.append('documentType', input.documentType);
+  form.append('file', input.file);
+  return client.call<UploadDocumentResponse>('uploadMyDocument', {
+    form,
+    ...(correlationId === undefined ? {} : { correlationId }),
   });
 }
 

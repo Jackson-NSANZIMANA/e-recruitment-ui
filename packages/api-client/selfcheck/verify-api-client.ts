@@ -222,7 +222,7 @@ const submitClient = createApiClient({
 let replayMeta: { status: number; replayed: boolean } | null = null;
 await submitMyApplication(
   submitClient,
-  { category: 'GENERAL_ENLISTMENT', nesaIndexNumber: 'NESA-123' },
+  { category: 'GENERAL_ENLISTMENT', campaignCode: 'RDF-2026-A', nesaIndexNumber: 'NESA-123' },
   '123e4567-e89b-12d3-a456-426614174001',
   undefined,
   (meta) => { replayMeta = { status: meta.status, replayed: meta.headers.get('Idempotency-Replayed') === 'true' }; },
@@ -233,8 +233,56 @@ const submitHeaders = new Headers(capturedRequest.init.headers);
 ok('submit uses the exact browser-relative edge route', capturedRequest.url === '/edge/v1/me/applications');
 ok('submit sends the CSRF double-submit header', submitHeaders.get('x-csrf-token') === 'csrf-echo');
 ok('submit sends exactly one UUID idempotency key', submitHeaders.get('idempotency-key') === '123e4567-e89b-12d3-a456-426614174001');
-ok('submit sends only backend-supported fields', capturedRequest.init.body === JSON.stringify({ category: 'GENERAL_ENLISTMENT', nesaIndexNumber: 'NESA-123' }));
+ok('submit sends only backend-supported fields', capturedRequest.init.body === JSON.stringify({ category: 'GENERAL_ENLISTMENT', campaignCode: 'RDF-2026-A', nesaIndexNumber: 'NESA-123' }));
 ok('the replay header is observable without changing the response body', capturedReplayMeta.status === 200 && capturedReplayMeta.replayed);
+
+// ── ADR-029 / ADR-030 operations ─────────────────────────────────
+import { beginApplicantOnboarding } from '../src/operations/session.js';
+import { getPublicCampaign, listPublicCampaigns } from '../src/operations/campaigns.js';
+import { uploadMyDocument } from '../src/operations/applicant.js';
+
+interface Captured { url: string; init: RequestInit }
+function capturingClient(status: number, body: unknown): { client: ReturnType<typeof createApiClient>; last: () => Captured } {
+  let captured: Captured | null = null;
+  const client = createApiClient({
+    baseUrl: '',
+    readCsrfToken: () => 'csrf-echo',
+    newCorrelationId: () => 'cid',
+    fetchImpl: ((url: string, init: RequestInit) => {
+      captured = { url, init };
+      return Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }));
+    }) as unknown as typeof fetch,
+  });
+  return { client, last: (): Captured => captured as unknown as Captured };
+}
+
+const onboard = capturingClient(200, { onboardingToken: 'tok', expiresAt: '2026-10-14T10:00:00.000Z' });
+const begun = await beginApplicantOnboarding(onboard.client, { nationalId: '1199680012345678', dateOfBirth: '2002-05-14' });
+ok('onboarding step 1 uses the identity edge route', onboard.last().url === '/edge/v1/auth/applicant/identity');
+ok('…sending exactly nationalId + dateOfBirth', onboard.last().init.body === JSON.stringify({ nationalId: '1199680012345678', dateOfBirth: '2002-05-14' }));
+ok('…returning only the token and expiry', begun.onboardingToken === 'tok');
+
+const campaigns = capturingClient(200, { campaigns: [] });
+await listPublicCampaigns(campaigns.client);
+ok('the public list is an anonymous GET with no body', campaigns.last().url === '/edge/v1/campaigns' && campaigns.last().init.method === 'GET' && campaigns.last().init.body === undefined);
+const detail = capturingClient(200, { campaign: {} });
+await getPublicCampaign(detail.client, 'RDF-2026-A');
+ok('detail addresses the campaign by PUBLIC code in the query', detail.last().url === '/edge/v1/campaigns/detail?publicCode=RDF-2026-A');
+
+const uploader = capturingClient(201, { status: 'UPLOADED', documentId: 'd', documentType: 'NATIONAL_ID_COPY' });
+await uploadMyDocument(uploader.client, {
+  applicationId: '123e4567-e89b-12d3-a456-426614174001',
+  documentType: 'NATIONAL_ID_COPY',
+  file: new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
+});
+const uploadInit = uploader.last().init;
+const uploadHeaders = new Headers(uploadInit.headers);
+ok('upload posts to the document edge route', uploader.last().url === '/edge/v1/me/applications/documents');
+ok('…as multipart (FormData), letting the browser set the boundary', uploadInit.body instanceof FormData && uploadHeaders.get('content-type') === null);
+ok('…with the CSRF header and NO Authorization header', uploadHeaders.get('x-csrf-token') === 'csrf-echo' && uploadHeaders.get('authorization') === null);
+const sentForm = uploadInit.body as FormData;
+ok('…carrying exactly applicationId, documentType, file — never an applicant id',
+  [...sentForm.keys()].sort().join(',') === 'applicationId,documentType,file');
 
 const total = passed + failures.length;
 if (failures.length > 0) {

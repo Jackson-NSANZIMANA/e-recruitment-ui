@@ -22,6 +22,9 @@ export const EDGE_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab' as co
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
   { id: 'officerLogout', method: 'POST', edgePath: '/edge/v1/auth/officer/logout', upstreamOperationId: null, session: 'officer', retryOnG2G: false, composition: 'local' },
+  { id: 'beginApplicantOnboarding', method: 'POST', edgePath: '/edge/v1/auth/applicant/identity', upstreamOperationId: 'beginApplicantOnboarding', session: 'anonymous', retryOnG2G: false, composition: 'single' },
+  { id: 'listCampaigns', method: 'GET', edgePath: '/edge/v1/campaigns', upstreamOperationId: 'listPublicCampaigns', session: 'anonymous', retryOnG2G: true, composition: 'single' },
+  { id: 'getCampaignDetail', method: 'GET', edgePath: '/edge/v1/campaigns/detail', upstreamOperationId: 'getPublicCampaign', session: 'anonymous', retryOnG2G: true, composition: 'single' },
   { id: 'requestOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/request', upstreamOperationId: 'requestApplicantOtp', session: 'anonymous', retryOnG2G: true, composition: 'single' },
   { id: 'verifyOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/verify', upstreamOperationId: 'verifyApplicantOtp', session: 'anonymous', retryOnG2G: false, composition: 'single' },
   { id: 'applicantLogout', method: 'POST', edgePath: '/edge/v1/auth/applicant/logout', upstreamOperationId: 'logoutApplicant', session: 'applicant', retryOnG2G: false, composition: 'single' },
@@ -39,6 +42,7 @@ export const EDGE_OPERATIONS = [
   { id: 'verifyIdentity', method: 'POST', edgePath: '/edge/v1/identities/verify', upstreamOperationId: 'verifyIdentity', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'listMyApplications', method: 'GET', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'listMyApplications', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
+  { id: 'uploadMyDocument', method: 'POST', edgePath: '/edge/v1/me/applications/documents', upstreamOperationId: 'uploadMyDocument', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'withdrawMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications/withdraw', upstreamOperationId: 'withdrawMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getMyErasureRequest', method: 'GET', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'getMyErasureRequest', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'fileMyErasureRequest', method: 'POST', edgePath: '/edge/v1/me/erasure-request', upstreamOperationId: 'fileMyErasureRequest', session: 'applicant', retryOnG2G: false, composition: 'single' },

@@ -33,6 +33,12 @@ export const applicationKeys = {
   statusHistory: (applicationId: string) => ['applications', 'status-history', applicationId] as const,
 };
 
+export const campaignKeys = {
+  all: ['campaigns'] as const,
+  list: () => ['campaigns', 'list'] as const,
+  detail: (publicCode: string) => ['campaigns', 'detail', publicCode] as const,
+};
+
 export const applicantKeys = {
   all: ['applicant'] as const,
   myApplications: () => ['applicant', 'applications'] as const,

@@ -192,6 +192,8 @@ export interface MyApplicationRow {
 /** Exact `POST /edge/v1/me/applications` request and success projection. */
 export interface SubmitApplicationInput {
   readonly category: ApplicationCategory;
+  /** The PUBLIC code of the campaign the citizen chose (ADR-030). */
+  readonly campaignCode: string;
   readonly nesaIndexNumber?: string;
   readonly hecRegistrationNumber?: string;
 }
@@ -215,3 +217,43 @@ export type RowFor<A extends Agency> = Omit<ApplicationListRow, 'agency' | 'stat
   readonly agency: A;
   readonly status: StatusFor<A>;
 };
+
+// ── Public campaigns (BUILD-001 reads, ADR-030) ──────────────────
+
+/** The approved public projection of a published campaign. Nothing internal. */
+export interface PublicCampaign {
+  readonly publicCode: string;
+  readonly campaignLabel: string;
+  readonly agency: Agency;
+  readonly status: string;
+  readonly registrationOpensAt: string;
+  readonly registrationClosesAt: string;
+  readonly examinationStartDate: string;
+  readonly examinationEndDate: string;
+  readonly targetCategories: readonly ApplicationCategory[];
+  readonly targetDistricts: readonly string[];
+  readonly allowsWalkIn: boolean;
+  readonly contactPhoneNumbers: readonly string[] | null;
+  readonly contactWebsite: string | null;
+}
+
+export interface PublicCampaignListResponse {
+  readonly campaigns: readonly PublicCampaign[];
+}
+
+export interface PublicCampaignDetailResponse {
+  readonly campaign: PublicCampaign;
+}
+
+/** `POST /edge/v1/me/applications/documents` — identifiers only, never a verdict. */
+export interface UploadDocumentResponse {
+  readonly status: 'UPLOADED';
+  readonly documentId: string;
+  readonly documentType: string;
+}
+
+export interface UploadDocumentInput {
+  readonly applicationId: string;
+  readonly documentType: string;
+  readonly file: Blob;
+}
