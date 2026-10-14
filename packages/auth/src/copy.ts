@@ -39,8 +39,24 @@ export const OFFICER_LOGIN_FAILED =
  * WE did — accepted the request — and what the citizen should do next.
  */
 export const OTP_REQUEST_ACCEPTED =
-  'If this National ID is registered and has a phone number on file with NIDA, a 6-digit code has been sent to it. ' +
-  'The code is valid for 5 minutes.';
+  'If the number you entered can receive SMS, a 6-digit code has been sent to it. ' +
+  'The code is valid for 5 minutes. Enter it below to continue.';
+
+/**
+ * Onboarding step 1. One sentence for unknown NID, non-citizen, wrong date of
+ * birth AND a temporarily locked NID — they are indistinguishable by design.
+ */
+export const IDENTITY_NOT_CONFIRMED =
+  'We could not confirm those details. Check your National ID number and date of birth and try again. ' +
+  'If you keep seeing this message, please wait an hour before retrying or visit a recruitment venue.';
+
+/** The onboarding token lapsed (15 minutes) or was refused. */
+export const ONBOARDING_EXPIRED =
+  'Your identity check has expired. Please start again from your National ID number.';
+
+/** Not an MTN or Airtel Rwanda mobile number. Safe to say: it says nothing about the citizen. */
+export const PHONE_INVALID =
+  'Enter a valid Rwandan MTN or Airtel mobile number, for example 0788 123 456.';
 
 /**
  * The ONLY message for a failed otp/verify.

@@ -6,9 +6,12 @@
 // directly rather than inferred from a rendered component. Every transition
 // below is asserted in the selfcheck.
 //
+// This machine covers steps 2 and 3 of onboarding (phone → OTP, ADR-029); step 1
+// (National ID + date of birth) is a separate stage in the hook. `subject` is
+// the phone number the citizen stated — never a National ID.
+//
 // The hard constraint this file is built around: the API TELLS US NOTHING.
-// `otp/request` returns a byte-identical 202 whether a code was sent, the NID is
-// unknown, the identity is unverified, or the NIDA record has no phone.
+// `otp/request` returns a byte-identical 202 whether or not a code was sent.
 // `otp/verify` returns ONE 401 for wrong, expired, replayed and LOCKED OUT.
 //
 // So the client cannot LEARN its state from responses; it must TRACK it. The
@@ -35,7 +38,7 @@ export type OtpState =
    */
   | {
       readonly status: 'challenged';
-      readonly nationalId: string;
+      readonly subject: string;
       /** OUR clock, from the 202. The server's real TTL is not exposed. */
       readonly expiresAtMs: number;
       /** OUR count of submissions. The server's count is not exposed. */
@@ -43,21 +46,21 @@ export type OtpState =
     }
   | {
       readonly status: 'verifying';
-      readonly nationalId: string;
+      readonly subject: string;
       readonly expiresAtMs: number;
       readonly attemptsUsed: number;
     }
   /** A wrong (or expired, or locked — we cannot tell) code was submitted. */
   | {
       readonly status: 'rejected';
-      readonly nationalId: string;
+      readonly subject: string;
       readonly expiresAtMs: number;
       readonly attemptsUsed: number;
     }
   /** Our attempt budget is spent. A new challenge is the only way forward. */
-  | { readonly status: 'attemptsExhausted'; readonly nationalId: string }
+  | { readonly status: 'attemptsExhausted'; readonly subject: string }
   /** Our 5-minute clock ran out. */
-  | { readonly status: 'expired'; readonly nationalId: string }
+  | { readonly status: 'expired'; readonly subject: string }
   /**
    * A named G2G outage. DISTINCT from every other failure because it is
    * independent of whether the NID exists, so surfacing it leaks nothing and is
@@ -68,7 +71,7 @@ export type OtpState =
   | { readonly status: 'verified' };
 
 export type OtpEvent =
-  | { readonly type: 'REQUEST'; readonly nationalId: string }
+  | { readonly type: 'REQUEST'; readonly subject: string }
   | { readonly type: 'REQUEST_ACCEPTED'; readonly atMs: number }
   | { readonly type: 'REQUEST_UPSTREAM_UNAVAILABLE'; readonly authority: string }
   | { readonly type: 'SUBMIT' }
@@ -102,7 +105,7 @@ export function otpReducer(state: OtpState, event: OtpEvent): OtpState {
       // per-challenge counter reset too.
       return {
         status: 'challenged',
-        nationalId: nationalIdOf(state) ?? '',
+        subject: subjectOf(state) ?? '',
         expiresAtMs: event.atMs + OTP_TTL_MS,
         attemptsUsed: 0,
       };
@@ -114,7 +117,7 @@ export function otpReducer(state: OtpState, event: OtpEvent): OtpState {
       if (state.status !== 'challenged' && state.status !== 'rejected') return state;
       return {
         status: 'verifying',
-        nationalId: state.nationalId,
+        subject: state.subject,
         expiresAtMs: state.expiresAtMs,
         attemptsUsed: state.attemptsUsed,
       };
@@ -126,11 +129,11 @@ export function otpReducer(state: OtpState, event: OtpEvent): OtpState {
         // We reached OUR cap. The server reached its cap at the same count, so
         // continuing to submit would burn attempts against a locked challenge
         // and get the same opaque 401 forever.
-        return { status: 'attemptsExhausted', nationalId: state.nationalId };
+        return { status: 'attemptsExhausted', subject: state.subject };
       }
       return {
         status: 'rejected',
-        nationalId: state.nationalId,
+        subject: state.subject,
         expiresAtMs: state.expiresAtMs,
         attemptsUsed,
       };
@@ -148,7 +151,7 @@ export function otpReducer(state: OtpState, event: OtpEvent): OtpState {
     case 'TICK': {
       if (state.status !== 'challenged' && state.status !== 'rejected') return state;
       if (event.atMs < state.expiresAtMs) return state;
-      return { status: 'expired', nationalId: state.nationalId };
+      return { status: 'expired', subject: state.subject };
     }
 
     default:
@@ -190,8 +193,8 @@ export function canSubmit(state: OtpState): boolean {
   return state.status === 'challenged' || state.status === 'rejected';
 }
 
-function nationalIdOf(state: OtpState): string | null {
-  if ('nationalId' in state) return state.nationalId;
+function subjectOf(state: OtpState): string | null {
+  if ('subject' in state) return state.subject;
   return null;
 }
 

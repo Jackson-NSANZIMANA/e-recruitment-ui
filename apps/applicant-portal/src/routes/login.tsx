@@ -15,7 +15,8 @@ import { EDGE_BASE_URL } from "../env.js";
 
 const containerStyles = cssMap({ base: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingInline: token("space.300") } });
 const cardStyles = cssMap({ base: { borderRadius: token("radius.medium"), padding: token("space.500"), width: "100%", maxWidth: "400px", boxShadow: token("elevation.shadow.raised") } });
-interface NationalIdFormValues { readonly nationalId: string; }
+interface IdentityFormValues { readonly nationalId: string; readonly dateOfBirth: string; }
+interface PhoneFormValues { readonly phoneNumber: string; }
 interface OtpFormValues { readonly otp: string; }
 
 export default function LoginPage(): React.ReactElement {
@@ -24,6 +25,11 @@ export default function LoginPage(): React.ReactElement {
   const { otp } = applicant;
   useEffect(() => { if (otp.status === "verified") window.location.assign("/"); }, [otp.status]);
   const awaitingCode = otp.status === "challenged" || otp.status === "rejected" || otp.status === "verifying";
+  // ID + date of birth → phone → code. The phone is asked for only AFTER NIDA
+  // has confirmed a Rwandan citizen whose date of birth matches.
+  const identityConfirmed = applicant.identity.status === "confirmed";
+  const showIdentityStep = !identityConfirmed && otp.status !== "verified";
+  const showPhoneStep = identityConfirmed && !awaitingCode && otp.status !== "verified";
   const secondsLeft = Math.ceil(applicant.millisLeft / 1000);
 
   return (
@@ -32,7 +38,8 @@ export default function LoginPage(): React.ReactElement {
         <Stack space="space.400">
           <Stack space="space.200" alignInline="center"><Heading size="large" as="h1">USRP</Heading><Stack space="space.100" alignInline="center"><AgencyLogo agency="RDF" size="sm" compact /><AgencyLogo agency="RNP" size="sm" compact /><AgencyLogo agency="RCS" size="sm" compact /></Stack></Stack>
           {applicant.message !== null && <SectionMessage appearance={otp.status === "challenged" ? "information" : "warning"} title="Authentication status" headingLevel="h3"><Text>{applicant.message}</Text></SectionMessage>}
-          {!awaitingCode && otp.status !== "verified" && <Form<NationalIdFormValues> onSubmit={(values) => applicant.requestCode(values.nationalId.trim())}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Field name="nationalId" label="National ID number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" maxLength={16} autoComplete="off" autoFocus />}</Field><FormFooter><LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "requesting"} shouldFitContainer>{t("auth.sign_in")}</LoadingButton></FormFooter></Stack></form>}</Form>}
+          {showIdentityStep && <Form<IdentityFormValues> onSubmit={(values) => applicant.confirmIdentity(values.nationalId.trim(), values.dateOfBirth)}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Field name="nationalId" label="National ID number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" maxLength={16} autoComplete="off" autoFocus />}</Field><Field name="dateOfBirth" label="Date of birth" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="date" autoComplete="bday" />}</Field><FormFooter><LoadingButton type="submit" appearance="primary" isLoading={submitting || applicant.identity.status === "confirming"} shouldFitContainer>{t("actions.continue")}</LoadingButton></FormFooter></Stack></form>}</Form>}
+          {showPhoneStep && <Form<PhoneFormValues> onSubmit={(values) => applicant.requestCode(values.phoneNumber.trim())}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Text>Your identity is confirmed. Enter the mobile number (MTN or Airtel) where we should send your code.</Text><Field name="phoneNumber" label="Mobile phone number" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="tel" inputMode="tel" maxLength={20} autoComplete="tel" autoFocus />}</Field><FormFooter><Inline space="space.200"><LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "requesting"}>{t("auth.send_code")}</LoadingButton><Button appearance="subtle" onClick={applicant.reset}>{t("actions.back")}</Button></Inline></FormFooter></Stack></form>}</Form>}
           {awaitingCode && <Form<OtpFormValues> onSubmit={(values) => applicant.submitCode(values.otp.trim())}>{({ formProps, submitting }) => <form {...formProps}><Stack space="space.300"><Field name="otp" label="One-time code" isRequired>{({ fieldProps }) => <TextField {...fieldProps} type="text" inputMode="numeric" maxLength={6} autoComplete="one-time-code" autoFocus />}</Field><Text size="small" color="color.text.subtle">{applicant.attemptsLeft} attempts remaining, {secondsLeft}s left</Text><FormFooter><Inline space="space.200"><LoadingButton type="submit" appearance="primary" isLoading={submitting || otp.status === "verifying"} isDisabled={!applicant.canSubmitCode}>{t("actions.confirm")}</LoadingButton><Button appearance="subtle" onClick={applicant.reset}>{t("actions.cancel")}</Button></Inline></FormFooter></Stack></form>}</Form>}
           {applicant.offerWalkIn && <SectionMessage appearance="information" title={WALK_IN_FALLBACK_TITLE} headingLevel="h3"><Stack space="space.200"><Text>{WALK_IN_FALLBACK_BODY}</Text><Button appearance="subtle" onClick={applicant.reset}>{t("actions.back")}</Button></Stack></SectionMessage>}
         </Stack>

@@ -49,6 +49,13 @@ export interface OfficerSession {
   /** The agency this console serves and this officer belongs to. */
   readonly agency: OfficerAgency;
   readonly roles: readonly string[];
+  /**
+   * What the roles confer (BUILD-004 §D), e.g. `decision.final`. A DISPLAY
+   * convenience so a console can hide controls the officer cannot use — never
+   * an authorization input: the edge and the owning service re-check every
+   * call. Absent from an older edge ⇒ empty ⇒ controls hidden (fail closed).
+   */
+  readonly permissions: readonly string[];
   /** When inactivity ends the session. Advances as the officer works. */
   readonly idleExpiresAt: string;
   /** The hard ceiling. Does NOT advance, so the UI can tell the truth. */
@@ -148,7 +155,10 @@ export function parseSessionResponse(value: unknown): Session | null {
     const roles = Array.isArray(record['roles'])
       ? record['roles'].filter((role): role is string => typeof role === 'string')
       : [];
-    return { kind: 'officer', agency: agency as OfficerAgency, roles, idleExpiresAt, absoluteExpiresAt };
+    const permissions = Array.isArray(record['permissions'])
+      ? record['permissions'].filter((p): p is string => typeof p === 'string')
+      : [];
+    return { kind: 'officer', agency: agency as OfficerAgency, roles, permissions, idleExpiresAt, absoluteExpiresAt };
   }
   if (record['kind'] === 'applicant') {
     return { kind: 'applicant', idleExpiresAt, absoluteExpiresAt };

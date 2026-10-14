@@ -32,6 +32,7 @@ export const EDGE_PATHS = {
   refresh: '/edge/v1/session/refresh',
   officerLogin: '/edge/v1/auth/officer/login',
   officerLogout: '/edge/v1/auth/officer/logout',
+  identity: '/edge/v1/auth/applicant/identity',
   otpRequest: '/edge/v1/auth/applicant/otp/request',
   otpVerify: '/edge/v1/auth/applicant/otp/verify',
   applicantLogout: '/edge/v1/auth/applicant/logout',
@@ -80,7 +81,19 @@ export type AuthAttempt =
   | { readonly outcome: 'rejected' }
   /** A named foreign-government outage — distinct, and safe to distinguish. */
   | { readonly outcome: 'upstreamUnavailable'; readonly authority: string }
+  /** The onboarding token lapsed or was refused — start again from step 1. */
+  | { readonly outcome: 'onboardingExpired' }
+  /** The number is not a deliverable Rwandan MTN/Airtel mobile. */
+  | { readonly outcome: 'invalidPhone' }
   /** Our own fault. Never shown as a credential problem. */
+  | { readonly outcome: 'error'; readonly code: string };
+
+/** Onboarding step 1. Never more than the edge said. */
+export type IdentityAttempt =
+  | { readonly outcome: 'confirmed'; readonly onboardingToken: string }
+  /** One outcome for unknown NID, non-citizen, wrong DOB and a locked NID. */
+  | { readonly outcome: 'notConfirmed' }
+  | { readonly outcome: 'upstreamUnavailable'; readonly authority: string }
   | { readonly outcome: 'error'; readonly code: string };
 
 export interface EdgeAuthClient {
@@ -88,8 +101,12 @@ export interface EdgeAuthClient {
   readonly refreshSession: () => Promise<Session | null>;
   readonly officerLogin: (loginHandle: string, password: string) => Promise<AuthAttempt>;
   readonly officerLogout: () => Promise<void>;
-  readonly requestOtp: (nationalId: string, channel?: string) => Promise<AuthAttempt>;
-  readonly verifyOtp: (nationalId: string, otp: string, channel?: string) => Promise<AuthAttempt>;
+  /** Step 1 — National ID + date of birth (YYYY-MM-DD). */
+  readonly confirmIdentity: (nationalId: string, dateOfBirth: string) => Promise<IdentityAttempt>;
+  /** Step 2 — the phone the citizen typed; the code is sent THERE. */
+  readonly requestOtp: (onboardingToken: string, phoneNumber: string, channel?: string) => Promise<AuthAttempt>;
+  /** Step 3 — the code, for that same number. */
+  readonly verifyOtp: (onboardingToken: string, phoneNumber: string, otp: string, channel?: string) => Promise<AuthAttempt>;
   readonly applicantLogout: () => Promise<void>;
 }
 
@@ -171,15 +188,62 @@ export function createEdgeAuthClient(options: EdgeAuthClientOptions): EdgeAuthCl
     },
 
     /**
-     * Request an OTP. A 202 means the request was ACCEPTED — nothing more.
-     * Whether an SMS was sent is not knowable here and must not be implied.
+     * Step 1. 200 yields a short-lived onboarding token (kept in memory only);
+     * 422 is the single "not confirmed" answer.
      */
-    requestOtp: async (nationalId: string, channel: string = 'WEB'): Promise<AuthAttempt> =>
-      classify(await send(EDGE_PATHS.otpRequest, { nationalId, channel })),
+    confirmIdentity: async (nationalId: string, dateOfBirth: string): Promise<IdentityAttempt> => {
+      const response = await send(EDGE_PATHS.identity, { nationalId, dateOfBirth });
+      if (response.ok) {
+        try {
+          const parsed = (await response.json()) as Record<string, unknown>;
+          const token = parsed['onboardingToken'];
+          if (typeof token === 'string' && token.length > 0) {
+            return { outcome: 'confirmed', onboardingToken: token };
+          }
+        } catch {
+          // fall through to the generic error
+        }
+        return { outcome: 'error', code: 'UPSTREAM_CONTRACT_MISMATCH' };
+      }
+      if (response.status === 422) return { outcome: 'notConfirmed' };
+      const attempt = await classify(response);
+      if (attempt.outcome === 'upstreamUnavailable') return attempt;
+      // A 400 here is a malformed NID/date the form should have caught; the
+      // citizen is told the same thing as a mismatch — nothing more specific.
+      if (attempt.outcome === 'rejected') return { outcome: 'notConfirmed' };
+      return { outcome: 'error', code: attempt.outcome === 'error' ? attempt.code : 'UNEXPECTED' };
+    },
 
-    /** Verify an OTP. On success the edge sets the cookie; nothing is returned. */
-    verifyOtp: async (nationalId: string, otp: string, channel: string = 'WEB'): Promise<AuthAttempt> =>
-      classify(await send(EDGE_PATHS.otpVerify, { nationalId, otp, channel })),
+    /**
+     * Step 2. A 202 means the request was ACCEPTED — nothing more. Whether an
+     * SMS was sent is not knowable here and must not be implied.
+     */
+    requestOtp: async (
+      onboardingToken: string,
+      phoneNumber: string,
+      channel: string = 'WEB',
+    ): Promise<AuthAttempt> => {
+      const response = await send(EDGE_PATHS.otpRequest, { onboardingToken, phoneNumber, channel });
+      if (response.status === 401) return { outcome: 'onboardingExpired' };
+      if (response.status === 400) {
+        try {
+          const parsed = (await response.clone().json()) as Record<string, unknown>;
+          if (parsed['error'] === 'INVALID_PHONE_NUMBER') return { outcome: 'invalidPhone' };
+        } catch {
+          // non-JSON 400: fall through
+        }
+      }
+      return classify(response);
+    },
+
+    /** Step 3. On success the edge sets the cookie; nothing is returned. */
+    verifyOtp: async (
+      onboardingToken: string,
+      phoneNumber: string,
+      otp: string,
+      channel: string = 'WEB',
+    ): Promise<AuthAttempt> =>
+      classify(await send(EDGE_PATHS.otpVerify, { onboardingToken, phoneNumber, otp, channel })),
 
     applicantLogout: async (): Promise<void> => {
       await send(EDGE_PATHS.applicantLogout, {});
