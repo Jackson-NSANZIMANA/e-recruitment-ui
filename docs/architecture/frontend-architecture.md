@@ -2,7 +2,7 @@
 
 **Status:** Authoritative engineering baseline, 2026-10-04
 **Repository:** `Jackson-NSANZIMANA/e-recruitment-ui`
-**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `bd939f61b3fd2f44299c11229783561f6bee1a0c`
+**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `df80f6517247a00ffd99518fd31bd7c68dd70d65`
 **Detailed reconciliation:** [`cross-repo-contract-reconciliation-2026-10-04.md`](./cross-repo-contract-reconciliation-2026-10-04.md)
 
 This document is implementation guidance, not a historical audit. Older handover and incident documents remain useful as evidence of past drift, but do not override the current pinned contract or executable gates.

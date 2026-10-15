@@ -10,7 +10,7 @@
 // ═════════════════════════════════════════════════════════════════
 
 /** The backend main commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = 'bd939f61b3fd2f44299c11229783561f6bee1a0c';
+export const VERIFIED_BACKEND_SHA = 'df80f6517247a00ffd99518fd31bd7c68dd70d65';
 
 export const AGENCIES = ['RDF', 'RNP', 'RCS'] as const;
 export type Agency = (typeof AGENCIES)[number];

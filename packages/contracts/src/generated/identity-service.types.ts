@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
+// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -44,9 +44,20 @@ import type {
   ErasureQueueOkSchema,
   ErasureRequestFiled202Schema,
   ErasureRequestNone404Schema,
+  ExamInvitationAdmissionSchema,
   ExamInvitationPayloadSchema,
   ExamInvitationViewSchema,
   Forbidden403Schema,
+  GateAdmissionRequestSchema,
+  GateCandidateSchema,
+  GateAdmitted200Schema,
+  GateAlreadyAdmitted409Schema,
+  GateIdentityMismatch409Schema,
+  GateNotAdmissible409Schema,
+  GateWrongDay409Schema,
+  GateWrongVenue409Schema,
+  GateConflict409Schema,
+  GateInvalidTicket422Schema,
   IdentityAlreadyExists200Schema,
   IdentityCreated201Schema,
   IdentityError500Schema,
@@ -107,9 +118,20 @@ export type ErasureQueueEntry = z.infer<typeof ErasureQueueEntrySchema>;
 export type ErasureQueueOk = z.infer<typeof ErasureQueueOkSchema>;
 export type ErasureRequestFiled202 = z.infer<typeof ErasureRequestFiled202Schema>;
 export type ErasureRequestNone404 = z.infer<typeof ErasureRequestNone404Schema>;
+export type ExamInvitationAdmission = z.infer<typeof ExamInvitationAdmissionSchema>;
 export type ExamInvitationPayload = z.infer<typeof ExamInvitationPayloadSchema>;
 export type ExamInvitationView = z.infer<typeof ExamInvitationViewSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
+export type GateAdmissionRequest = z.infer<typeof GateAdmissionRequestSchema>;
+export type GateCandidate = z.infer<typeof GateCandidateSchema>;
+export type GateAdmitted200 = z.infer<typeof GateAdmitted200Schema>;
+export type GateAlreadyAdmitted409 = z.infer<typeof GateAlreadyAdmitted409Schema>;
+export type GateIdentityMismatch409 = z.infer<typeof GateIdentityMismatch409Schema>;
+export type GateNotAdmissible409 = z.infer<typeof GateNotAdmissible409Schema>;
+export type GateWrongDay409 = z.infer<typeof GateWrongDay409Schema>;
+export type GateWrongVenue409 = z.infer<typeof GateWrongVenue409Schema>;
+export type GateConflict409 = z.infer<typeof GateConflict409Schema>;
+export type GateInvalidTicket422 = z.infer<typeof GateInvalidTicket422Schema>;
 export type IdentityAlreadyExists200 = z.infer<typeof IdentityAlreadyExists200Schema>;
 export type IdentityCreated201 = z.infer<typeof IdentityCreated201Schema>;
 export type IdentityError500 = z.infer<typeof IdentityError500Schema>;

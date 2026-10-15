@@ -8,7 +8,7 @@ per-agency divergence model no OpenAPI document can express, and a drift checker
 that fails the build when any of it stops matching the backend.
 
 Verified against backend SHA
-[`bd939f61`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/bd939f61b3fd2f44299c11229783561f6bee1a0c)
+[`df80f651`](https://github.com/Jackson-NSANZIMANA/e-recruitment/commit/df80f6517247a00ffd99518fd31bd7c68dd70d65)
 (`main`). Applicant submission and current edge reachability are included in this baseline.
 
 ```bash

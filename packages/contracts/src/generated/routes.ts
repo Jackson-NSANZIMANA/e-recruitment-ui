@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
+// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 54 business operations + 22 probes = 76 total.
+// 56 business operations + 22 probes = 78 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -142,6 +142,27 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "403",
       "404",
       "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "decideGateAdmission",
+    "method": "POST",
+    "path": "/v1/applications/admissions/gate",
+    "auth": [
+      "officer"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/gate-admission.controller.ts (GATE_ADMISSION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "409",
+      "422",
       "500"
     ]
   },
@@ -1276,6 +1297,28 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "202",
       "401",
       "500"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "admitAtGate",
+    "method": "POST",
+    "path": "/v1/gate/admissions",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/gate-admission.controller.ts (GATE_ADMISSIONS_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "409",
+      "422",
+      "502",
+      "503"
     ]
   },
   {
