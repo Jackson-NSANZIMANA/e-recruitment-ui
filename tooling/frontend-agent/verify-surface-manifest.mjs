@@ -16,9 +16,13 @@ if (!existsSync(pathsPath)) fail('api-client operation registry is missing');
 
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const paths = readFileSync(pathsPath, 'utf8');
-const backendShaMatch = paths.match(/EDGE_BACKEND_RUNTIME_SHA = '([0-9a-f]{40})'/);
-if (!backendShaMatch) fail('EDGE_BACKEND_RUNTIME_SHA is missing from api-client paths');
-if (manifest.backend.mainSha !== backendShaMatch[1]) fail(`manifest backend SHA ${manifest.backend.mainSha} does not match api-client runtime SHA ${backendShaMatch[1]}`);
+const backendShaMatch = paths.match(/EDGE_BACKEND_SHA = '([0-9a-f]{40})'/);
+if (!backendShaMatch) fail('EDGE_BACKEND_SHA is missing from api-client paths');
+if (manifest.backend.mainSha !== backendShaMatch[1]) fail(`manifest backend SHA ${manifest.backend.mainSha} does not match api-client EDGE_BACKEND_SHA ${backendShaMatch[1]}`);
+const ciPath = resolve(root, '.github/workflows/ci.yml');
+const ciShaMatch = existsSync(ciPath) ? readFileSync(ciPath, 'utf8').match(/^\s*BACKEND_SHA:\s*([0-9a-f]{40})\s*$/m) : null;
+if (!ciShaMatch) fail('BACKEND_SHA is missing from .github/workflows/ci.yml');
+if (ciShaMatch[1] !== backendShaMatch[1]) fail(`api-client EDGE_BACKEND_SHA ${backendShaMatch[1]} does not match the backend CI checks out (${ciShaMatch[1]})`);
 
 for (const key of ['schemaVersion', 'surfaceId', 'status', 'host', 'route', 'persona', 'goal', 'backend', 'operations', 'stateModel', 'adsPlan', 'accessibility', 'verification']) {
   if (!(key in manifest)) fail(`missing required field: ${key}`);
