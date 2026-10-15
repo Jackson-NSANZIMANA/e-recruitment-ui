@@ -19,6 +19,9 @@
 //   POST /v1/applications                               system             service-internal
 //   GET  /v1/campaigns                                  none               browser
 //   GET  /v1/campaigns/detail                           none               browser
+//   GET  /v1/applications/document-checklist            officer            browser
+//   GET  /v1/applications/document-checklist/by-applicant system             service-internal
+//   POST /v1/applications/documents/verify-at-venue     officer            browser
 //   GET  /v1/applications/amber-queue                   officer            browser
 //   GET  /v1/applications/by-applicant                  system             service-internal
 //   GET  /v1/applications/by-id                         officer            browser
@@ -240,6 +243,25 @@ export const ApplicationSummarySchema = z
 export const ByApplicantOkSchema = z
   .object({
     "applications": z.array(ApplicantApplicationSummarySchema),
+  }).strict();
+
+export const DocumentChecklistItemSchema = z
+  .object({
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+    "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
+    "registry": z.string().nullable(),
+  }).strict();
+
+/**
+ * ADVISORY (ADR-032): never a gate. Types, states and the verifying registry
+ * only — no forensic score, flag, object key or officer id.
+ */
+export const DocumentChecklist200Schema = z
+  .object({
+    "agency": AgencySchema,
+    "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
+    "complete": z.boolean(),
+    "items": z.array(DocumentChecklistItemSchema),
   }).strict();
 
 export const FinalDecisionRequestSchema = z
@@ -494,6 +516,18 @@ export const UnsupportedAgency501Schema = z
     "agency": AgencySchema,
   }).strict();
 
+export const VerifyAtVenue200Schema = z
+  .object({
+    "status": z.enum(['RECORDED', 'ALREADY_RECORDED']),
+    "checklist": DocumentChecklist200Schema,
+  }).strict();
+
+export const VerifyAtVenueRequestSchema = z
+  .object({
+    "applicationId": UuidSchema,
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+  }).strict();
+
 export const WalkInRegisterConflict409Schema = z.discriminatedUnion('status', [
   IdentityNotVerified409Schema,
   NoWalkInCampaign409Schema,
@@ -675,6 +709,55 @@ export const applicationServiceOperations = {
       "400": null,
       "404": null,
       "500": ApplicationError500Schema,
+    },
+  },
+  "getDocumentChecklist": {
+    method: "GET",
+    path: "/v1/applications/document-checklist",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "401": Unauthenticated401Schema,
+      "403": null,
+      "404": null,
+      "500": ApplicationError500Schema,
+    },
+  },
+  "getDocumentChecklistByApplicant": {
+    method: "GET",
+    path: "/v1/applications/document-checklist/by-applicant",
+    auth: ["system"],
+    reach: "service-internal",
+    request: null,
+    requestMediaType: null,
+    query: ["applicantId","applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "403": null,
+      "404": null,
+    },
+  },
+  "verifyDocumentAtVenue": {
+    method: "POST",
+    path: "/v1/applications/documents/verify-at-venue",
+    auth: ["officer"],
+    reach: "browser",
+    request: VerifyAtVenueRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": VerifyAtVenue200Schema,
+      "400": null,
+      "403": null,
+      "404": null,
+      "409": null,
+      "422": null,
     },
   },
   "listAmberQueue": {

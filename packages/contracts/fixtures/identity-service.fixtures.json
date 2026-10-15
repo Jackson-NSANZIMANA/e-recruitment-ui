@@ -531,6 +531,66 @@
         "lane": "GREEN",
         "score": 0.97
       }
+    },
+    {
+      "id": "document-checklist",
+      "schema": "DocumentChecklist200",
+      "expect": "accept",
+      "why": "ADR-032 advisory checklist: types, states and the verifying registry only (document-checklist.controller.ts / applicant-auth.controller.ts).",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "API_VERIFIED",
+            "registry": "NIDA"
+          },
+          {
+            "documentType": "GOOD_CONDUCT_CERTIFICATE",
+            "satisfaction": "VENUE_VERIFIED",
+            "registry": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "document-checklist-rejects-score",
+      "schema": "DocumentChecklist200",
+      "expect": "reject",
+      "why": "A forensic score must never ride on a checklist item (forgery-tuning oracle).",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "API_VERIFIED",
+            "registry": "NIDA",
+            "forensicsScore": 0.97
+          }
+        ]
+      }
+    },
+    {
+      "id": "document-checklist-rejects-unknown-state",
+      "schema": "DocumentChecklist200",
+      "expect": "reject",
+      "why": "Satisfaction is a closed set; an invented state is a contract break.",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "PROBABLY_FINE",
+            "registry": "NIDA"
+          }
+        ]
+      }
     }
   ]
 }

@@ -242,6 +242,123 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationError500"
 
+  /v1/applications/document-checklist:
+    get:
+      operationId: "getDocumentChecklist"
+      summary: "Advisory document checklist for an application of the officer's agency (ADR-032)"
+      description: >-
+        OFFICER, own agency only (a sibling agency's id is a bare 404), needs
+        application.read. ADVISORY — never a gate.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentChecklist200"
+        "400":
+          description: "applicationId is absent or not a UUID."
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer, or PERMISSION_DENIED (application.read)."
+        "404":
+          description: "Not in the officer's agency."
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
+
+  /v1/applications/document-checklist/by-applicant:
+    get:
+      operationId: "getDocumentChecklistByApplicant"
+      summary: "One citizen's advisory checklist, subject-scoped (ADR-032)"
+      description: >-
+        SERVICE-INTERNAL. The caller is identity-service, which authenticated
+        the citizen's session; the read is constrained to applicant_id =
+        applicantId. An officer token is refused (403).
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_BY_APPLICANT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicantId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentChecklist200"
+        "400":
+          description: "A parameter is absent or not a UUID."
+        "403":
+          description: "Not a system principal."
+        "404":
+          description: "Not this applicant's application."
+
+  /v1/applications/documents/verify-at-venue:
+    post:
+      operationId: "verifyDocumentAtVenue"
+      summary: "The check-in officer records seeing a required document's paper (ADR-032)"
+      description: >-
+        OFFICER with document.verify.venue (the front-door check-in post, owner
+        decision 2026-10-14). Idempotent: a re-scan is ALREADY_RECORDED.
+        Attributed, audited once, write-once. ADVISORY — never moves the
+        application.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (VERIFY_DOCUMENT_AT_VENUE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyAtVenueRequest"
+      responses:
+        "200":
+          description: "RECORDED or ALREADY_RECORDED, with the updated checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyAtVenue200"
+        "400":
+          description: "Invalid applicationId or unknown documentType."
+        "403":
+          description: "PERMISSION_DENIED."
+        "404":
+          description: "Not in the officer's agency."
+        "409":
+          description: "NOT_APPLICABLE — the application is terminal."
+        "422":
+          description: "NOT_REQUIRED or UNSUPPORTED_DOCUMENT_TYPE."
+
   /v1/applications/amber-queue:
     get:
       operationId: "listAmberQueue"
@@ -1113,6 +1230,63 @@ components:
     Agency:
       type: "string"
       enum: ["RDF", "RNP", "RCS"]
+
+    DocumentChecklistItem:
+      type: "object"
+      additionalProperties: false
+      required: ["documentType", "satisfaction", "registry"]
+      properties:
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+        satisfaction:
+          type: "string"
+          enum: ["API_VERIFIED", "UPLOADED_CLEARED", "VENUE_VERIFIED", "AWAITING_REGISTRY", "UNDER_REVIEW", "REJECTED", "MISSING"]
+        registry:
+          description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
+          type: ["string", "null"]
+
+    DocumentChecklist200:
+      description: >-
+        ADVISORY (ADR-032): never a gate. Types, states and the verifying
+        registry only — no forensic score, flag, object key or officer id.
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "source", "complete", "items"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        source:
+          type: "string"
+          enum: ["POLICY_VERSION", "GROUND_TRUTH_TABLE"]
+        complete:
+          type: "boolean"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DocumentChecklistItem"
+
+    VerifyAtVenueRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "documentType"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+
+    VerifyAtVenue200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "checklist"]
+      properties:
+        status:
+          type: "string"
+          enum: ["RECORDED", "ALREADY_RECORDED"]
+        checklist:
+          $ref: "#/components/schemas/DocumentChecklist200"
 
     PublicCampaign:
       description: "The approved public projection. Nothing internal."

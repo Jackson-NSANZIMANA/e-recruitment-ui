@@ -522,6 +522,49 @@ paths:
         "503":
           description: "Dependency failure."
 
+  /v1/applicants/me/applications/document-checklist:
+    get:
+      operationId: "getMyDocumentChecklist"
+      summary: "The citizen's advisory document checklist for one of their applications (ADR-032)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session; another citizen's
+        application and a nonexistent one are the same 404. ADVISORY — it
+        never blocks the application. An automated registry verification
+        satisfies an item without any upload.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_DOCUMENT_CHECKLIST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentChecklist200"
+        "400":
+          description: "applicationId is absent or not a UUID."
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "Not this citizen's application."
+        "502":
+          description: "application-service unavailable."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+
   /v1/applicants/me/applications/documents:
     post:
       operationId: "uploadMyDocument"
@@ -1485,6 +1528,41 @@ components:
         hecRegistrationNumber:
           type: "string"
           maxLength: 64
+
+    DocumentChecklistItem:
+      type: "object"
+      additionalProperties: false
+      required: ["documentType", "satisfaction", "registry"]
+      properties:
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+        satisfaction:
+          type: "string"
+          enum: ["API_VERIFIED", "UPLOADED_CLEARED", "VENUE_VERIFIED", "AWAITING_REGISTRY", "UNDER_REVIEW", "REJECTED", "MISSING"]
+        registry:
+          description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
+          type: ["string", "null"]
+
+    DocumentChecklist200:
+      description: >-
+        ADVISORY (ADR-032): never a gate. Types, states and the verifying
+        registry only — no forensic score, flag, object key or officer id.
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "source", "complete", "items"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        source:
+          type: "string"
+          enum: ["POLICY_VERSION", "GROUND_TRUTH_TABLE"]
+        complete:
+          type: "boolean"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DocumentChecklistItem"
 
     UploadDocumentForm:
       type: "object"

@@ -22,6 +22,7 @@
 //   POST /v1/applicants/auth/logout                     applicant-session  browser
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications                 applicant-session  browser
+//   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
 //   POST /v1/applicants/me/applications/documents       applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
 //   GET  /v1/applicants/me/erasure-request              applicant-session  browser
@@ -98,6 +99,25 @@ export const DeclineErasureRequestSchema = z
   .object({
     "requestId": UuidSchema,
     "note": z.string().min(1).max(200),
+  }).strict();
+
+export const DocumentChecklistItemSchema = z
+  .object({
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+    "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
+    "registry": z.string().nullable(),
+  }).strict();
+
+/**
+ * ADVISORY (ADR-032): never a gate. Types, states and the verifying registry
+ * only — no forensic score, flag, object key or officer id.
+ */
+export const DocumentChecklist200Schema = z
+  .object({
+    "agency": AgencySchema,
+    "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
+    "complete": z.boolean(),
+    "items": z.array(DocumentChecklistItemSchema),
   }).strict();
 
 export const DocumentUploaded201Schema = z
@@ -534,6 +554,22 @@ export const identityServiceOperations = {
       "422": null,
       "429": null,
       "503": null,
+    },
+  },
+  "getMyDocumentChecklist": {
+    method: "GET",
+    path: "/v1/applicants/me/applications/document-checklist",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "502": UpstreamUnavailable502Schema,
     },
   },
   "uploadMyDocument": {

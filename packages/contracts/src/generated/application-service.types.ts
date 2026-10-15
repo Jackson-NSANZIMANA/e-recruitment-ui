@@ -38,6 +38,8 @@ import type {
   ApplicationSubmitted201Schema,
   ApplicationSummarySchema,
   ByApplicantOkSchema,
+  DocumentChecklistItemSchema,
+  DocumentChecklist200Schema,
   FinalDecisionRequestSchema,
   FindApplicationOkSchema,
   Forbidden403Schema,
@@ -68,6 +70,8 @@ import type {
   TransitionRequest400Schema,
   Unauthenticated401Schema,
   UnsupportedAgency501Schema,
+  VerifyAtVenue200Schema,
+  VerifyAtVenueRequestSchema,
   WalkInRegisterConflict409Schema,
   WalkInRegisterRequestSchema,
   WalkInRegisterRequest400Schema,
@@ -106,6 +110,8 @@ export type ApplicationError500 = z.infer<typeof ApplicationError500Schema>;
 export type ApplicationSubmitted201 = z.infer<typeof ApplicationSubmitted201Schema>;
 export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
 export type ByApplicantOk = z.infer<typeof ByApplicantOkSchema>;
+export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
+export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
 export type FinalDecisionRequest = z.infer<typeof FinalDecisionRequestSchema>;
 export type FindApplicationOk = z.infer<typeof FindApplicationOkSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
@@ -136,6 +142,8 @@ export type TransitionOk200 = z.infer<typeof TransitionOk200Schema>;
 export type TransitionRequest400 = z.infer<typeof TransitionRequest400Schema>;
 export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
 export type UnsupportedAgency501 = z.infer<typeof UnsupportedAgency501Schema>;
+export type VerifyAtVenue200 = z.infer<typeof VerifyAtVenue200Schema>;
+export type VerifyAtVenueRequest = z.infer<typeof VerifyAtVenueRequestSchema>;
 export type WalkInRegisterConflict409 = z.infer<typeof WalkInRegisterConflict409Schema>;
 export type WalkInRegisterRequest = z.infer<typeof WalkInRegisterRequestSchema>;
 export type WalkInRegisterRequest400 = z.infer<typeof WalkInRegisterRequest400Schema>;

@@ -28,6 +28,8 @@ import type {
   ApplicantSessionIssued200Schema,
   ApplicationChannelSchema,
   DeclineErasureRequestSchema,
+  DocumentChecklistItemSchema,
+  DocumentChecklist200Schema,
   DocumentUploaded201Schema,
   EraseIdentityRequestSchema,
   ErasedOkSchema,
@@ -87,6 +89,8 @@ export type ApplicantAuthError500 = z.infer<typeof ApplicantAuthError500Schema>;
 export type ApplicantSessionIssued200 = z.infer<typeof ApplicantSessionIssued200Schema>;
 export type ApplicationChannel = z.infer<typeof ApplicationChannelSchema>;
 export type DeclineErasureRequest = z.infer<typeof DeclineErasureRequestSchema>;
+export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
+export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
 export type DocumentUploaded201 = z.infer<typeof DocumentUploaded201Schema>;
 export type EraseIdentityRequest = z.infer<typeof EraseIdentityRequestSchema>;
 export type ErasedOk = z.infer<typeof ErasedOkSchema>;

@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 41 business operations + 22 probes = 63 total.
+// 45 business operations + 22 probes = 67 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -200,6 +200,64 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "403",
       "404",
       "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getDocumentChecklist",
+    "method": "GET",
+    "path": "/v1/applications/document-checklist",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getDocumentChecklistByApplicant",
+    "method": "GET",
+    "path": "/v1/applications/document-checklist/by-applicant",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_BY_APPLICANT_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "verifyDocumentAtVenue",
+    "method": "POST",
+    "path": "/v1/applications/documents/verify-at-venue",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (VERIFY_DOCUMENT_AT_VENUE_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404",
+      "409",
+      "422"
     ]
   },
   {
@@ -956,6 +1014,25 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "422",
       "429",
       "503"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyDocumentChecklist",
+    "method": "GET",
+    "path": "/v1/applicants/me/applications/document-checklist",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_DOCUMENT_CHECKLIST_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "404",
+      "502"
     ]
   },
   {
