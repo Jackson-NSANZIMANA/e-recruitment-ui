@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@atlaskit/ads-cli": "0.11.1",
-    "@atlaskit/ads-mcp": "1.10.10",
+    "@atlaskit/ads-mcp": "1.11.1",
     "@atlaskit/tokens": "^16.4.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^24.0.0",
@@ -63,7 +63,16 @@
     "overrides": {
       "@remix-run/router": "1.23.2",
       "playwright": "1.62.1",
-      "playwright-core": "1.62.1"
+      "playwright-core": "1.62.1",
+      "puppeteer>tar-fs": "^2.1.4",
+      "puppeteer>ws": "^8.21.0"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-jmr9-qjv8-65gv",
+        "GHSA-7pqw-9j4j-h8q3",
+        "GHSA-vfj7-8cjw-p6xm"
+      ]
     }
   }
 }

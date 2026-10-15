@@ -185,11 +185,39 @@ check_pnpm_audit() {
     return 0
   fi
   if pnpm audit --audit-level high >/dev/null 2>&1; then
-    pass "pnpm audit: nothing at high or above"
+    pass "pnpm audit: nothing at high or above (outside docs/security/audit-exceptions.md)"
   else
     fail "pnpm audit found advisories at high or above"
   fi
   return 0
+}
+
+# Every GHSA ignored in package.json (pnpm.auditConfig.ignoreGhsas) must have a
+# row in docs/security/audit-exceptions.md with a review date that has not
+# passed. An ignore list with no register, or a lapsed date, is how a temporary
+# exception becomes permanent without anyone deciding it.
+check_audit_exceptions() {
+  local out
+  if ! out="$(node -e '
+    const fs = require("fs");
+    const ignored = fs.existsSync("package.json") ? (JSON.parse(fs.readFileSync("package.json", "utf8")).pnpm?.auditConfig?.ignoreGhsas ?? []) : [];
+    const doc = fs.existsSync("docs/security/audit-exceptions.md") ? fs.readFileSync("docs/security/audit-exceptions.md", "utf8") : "";
+    const today = new Date().toISOString().slice(0, 10);
+    const problems = [];
+    for (const id of ignored) {
+      const row = doc.split("\n").find((line) => line.startsWith("| " + id + " "));
+      if (row === undefined) { problems.push(id + " is ignored but has no register row"); continue; }
+      const date = (row.match(/\| (\d{4}-\d{2}-\d{2}) \|\s*$/) ?? [])[1];
+      if (date === undefined) problems.push(id + " has no review date");
+      else if (date < today) problems.push(id + " review date " + date + " has passed");
+    }
+    if (problems.length > 0) { console.log(problems.join("; ")); process.exit(1); }
+    console.log(ignored.length);
+  ' 2>&1)"; then
+    fail "audit exception register: $out"
+  else
+    pass "audit exception register: $out ignored advisories, each registered and in date"
+  fi
 }
 
 run_all() {
@@ -199,6 +227,7 @@ run_all() {
   check_inline_keys
   check_placeholders
   check_browser_storage_credentials
+  check_audit_exceptions
   check_trivy
   check_pnpm_audit
   echo ""
@@ -291,6 +320,14 @@ selftest() {
   # and the rule gets deleted rather than narrowed.
   ( cd "$tmp/repo" && echo 'localStorage.setItem("locale", "rw")' > pref.ts && git add -A && git commit -qm n )
   _expect green "non-credential storage write is allowed"
+
+  # An ignored advisory needs a register row with a review date in the future.
+  ( cd "$tmp/repo" && echo '{"pnpm":{"auditConfig":{"ignoreGhsas":["GHSA-test-0000-0000"]}}}' > package.json && git add -A && git commit -qm g )
+  _expect red "ignored GHSA with no register"
+  ( cd "$tmp/repo" && mkdir -p docs/security && echo '| GHSA-test-0000-0000 | x | x | No | x | 2000-01-01 |' > docs/security/audit-exceptions.md && git add -A && git commit -qm d )
+  _expect red "ignored GHSA whose review date has passed"
+  ( cd "$tmp/repo" && echo '| GHSA-test-0000-0000 | x | x | No | x | 2999-01-01 |' > docs/security/audit-exceptions.md && git add -A && git commit -qm d2 )
+  _expect green "ignored GHSA registered and in date"
 
   echo ""
   hr
