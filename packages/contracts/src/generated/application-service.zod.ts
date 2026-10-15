@@ -19,6 +19,7 @@
 //   POST /v1/applications                               system             service-internal
 //   GET  /v1/campaigns                                  none               browser
 //   GET  /v1/campaigns/detail                           none               browser
+//   GET  /v1/applications/exam-invitation/by-applicant  system             service-internal
 //   GET  /v1/applications/document-checklist            officer            browser
 //   GET  /v1/applications/document-checklist/by-applicant system             service-internal
 //   POST /v1/applications/documents/verify-at-venue     officer            browser
@@ -262,6 +263,31 @@ export const DocumentChecklist200Schema = z
     "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
     "complete": z.boolean(),
     "items": z.array(DocumentChecklistItemSchema),
+  }).strict();
+
+export const ExamInvitationPayloadSchema = z
+  .object({
+    "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
+    "ticketId": z.string(),
+    "venueName": z.string(),
+    "examDate": z.string(),
+    "reportingTimeHour": z.number(),
+    "validUntil": z.string(),
+  }).strict();
+
+/**
+ * ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+ * signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+ * (ADR-009), verified offline at the venue.
+ */
+export const ExamInvitationViewSchema = z
+  .object({
+    "state": z.enum(['READY', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
+    "agency": AgencySchema,
+    "processingCode": z.string(),
+    "campaignLabel": z.string().nullable(),
+    "currentStatus": z.string(),
+    "invitation": ExamInvitationPayloadSchema.optional(),
   }).strict();
 
 export const FinalDecisionRequestSchema = z
@@ -709,6 +735,21 @@ export const applicationServiceOperations = {
       "400": null,
       "404": null,
       "500": ApplicationError500Schema,
+    },
+  },
+  "getExamInvitationByApplicant": {
+    method: "GET",
+    path: "/v1/applications/exam-invitation/by-applicant",
+    auth: ["system"],
+    reach: "service-internal",
+    request: null,
+    requestMediaType: null,
+    query: ["applicantId","applicationId"],
+    responses: {
+      "200": ExamInvitationViewSchema,
+      "400": null,
+      "403": null,
+      "404": null,
     },
   },
   "getDocumentChecklist": {

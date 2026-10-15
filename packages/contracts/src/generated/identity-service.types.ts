@@ -44,6 +44,8 @@ import type {
   ErasureQueueOkSchema,
   ErasureRequestFiled202Schema,
   ErasureRequestNone404Schema,
+  ExamInvitationPayloadSchema,
+  ExamInvitationViewSchema,
   Forbidden403Schema,
   IdentityAlreadyExists200Schema,
   IdentityCreated201Schema,
@@ -105,6 +107,8 @@ export type ErasureQueueEntry = z.infer<typeof ErasureQueueEntrySchema>;
 export type ErasureQueueOk = z.infer<typeof ErasureQueueOkSchema>;
 export type ErasureRequestFiled202 = z.infer<typeof ErasureRequestFiled202Schema>;
 export type ErasureRequestNone404 = z.infer<typeof ErasureRequestNone404Schema>;
+export type ExamInvitationPayload = z.infer<typeof ExamInvitationPayloadSchema>;
+export type ExamInvitationView = z.infer<typeof ExamInvitationViewSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
 export type IdentityAlreadyExists200 = z.infer<typeof IdentityAlreadyExists200Schema>;
 export type IdentityCreated201 = z.infer<typeof IdentityCreated201Schema>;

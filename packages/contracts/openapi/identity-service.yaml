@@ -522,6 +522,49 @@ paths:
         "503":
           description: "Dependency failure."
 
+  /v1/applicants/me/applications/exam-invitation:
+    get:
+      operationId: "getMyExamInvitation"
+      summary: "The citizen's downloadable exam QR for one of their applications (ADR-033)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session; another citizen's
+        application is 404. The QR (the signed slot invitation) is present only
+        once a slot is assigned and while it is valid; every other state is
+        reported without a payload.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_EXAM_INVITATION_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The state, and the invitation when READY."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamInvitationView"
+        "400":
+          description: "applicationId is absent or not a UUID."
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "Not this citizen's application."
+        "502":
+          description: "application-service unavailable or malformed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+
   /v1/applicants/me/applications/document-checklist:
     get:
       operationId: "getMyDocumentChecklist"
@@ -1528,6 +1571,51 @@ components:
         hecRegistrationNumber:
           type: "string"
           maxLength: 64
+
+    ExamInvitationView:
+      description: >-
+        ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+        signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+        (ADR-009), verified offline at the venue.
+      type: "object"
+      additionalProperties: false
+      required: ["state", "agency", "processingCode", "campaignLabel", "currentStatus"]
+      properties:
+        state:
+          type: "string"
+          enum: ["READY", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+        processingCode:
+          type: "string"
+        campaignLabel:
+          type: ["string", "null"]
+        currentStatus:
+          type: "string"
+        invitation:
+          $ref: "#/components/schemas/ExamInvitationPayload"
+
+    ExamInvitationPayload:
+      type: "object"
+      additionalProperties: false
+      required: ["qrPayload", "ticketId", "venueName", "examDate", "reportingTimeHour", "validUntil"]
+      properties:
+        qrPayload:
+          type: "string"
+          pattern: "^USRP-SLOT\\.v1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+          maxLength: 4096
+        ticketId:
+          type: "string"
+        venueName:
+          type: "string"
+        examDate:
+          type: "string"
+        reportingTimeHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        validUntil:
+          type: "string"
 
     DocumentChecklistItem:
       type: "object"

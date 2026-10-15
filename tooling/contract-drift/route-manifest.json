@@ -26,6 +26,7 @@
         { "method": "POST", "path": "/v1/applicants/auth/logout", "auth": ["applicant-session"], "constant": "LOGOUT_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications", "auth": ["applicant-session"], "constant": "ME_APPLICATIONS_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
+        { "method": "GET", "path": "/v1/applicants/me/applications/exam-invitation", "auth": ["applicant-session"], "constant": "ME_EXAM_INVITATION_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applicants/me/applications/document-checklist", "auth": ["applicant-session"], "constant": "ME_DOCUMENT_CHECKLIST_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications/documents", "auth": ["applicant-session"], "constant": "ME_DOCUMENTS_PATH", "controller": "applicant-documents.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applicants/me/applications/withdraw", "auth": ["applicant-session"], "constant": "ME_WITHDRAW_PATH", "controller": "applicant-auth.controller.ts", "mounted": true },
@@ -39,6 +40,7 @@
       "routes": [
         { "method": "GET", "path": "/v1/applications", "auth": ["officer"], "constant": "LIST_APPLICATIONS_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applications", "auth": ["system"], "constant": "SUBMIT_APPLICATION_PATH", "controller": "submit-application.controller.ts", "mounted": true },
+        { "method": "GET", "path": "/v1/applications/exam-invitation/by-applicant", "auth": ["system"], "constant": "EXAM_INVITATION_BY_APPLICANT_PATH", "controller": "exam-invitation.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/document-checklist", "auth": ["officer"], "constant": "DOCUMENT_CHECKLIST_PATH", "controller": "document-checklist.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/document-checklist/by-applicant", "auth": ["system"], "constant": "DOCUMENT_CHECKLIST_BY_APPLICANT_PATH", "controller": "document-checklist.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/applications/documents/verify-at-venue", "auth": ["officer"], "constant": "VERIFY_DOCUMENT_AT_VENUE_PATH", "controller": "document-checklist.controller.ts", "mounted": true },

@@ -22,6 +22,7 @@
 //   POST /v1/applicants/auth/logout                     applicant-session  browser
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications                 applicant-session  browser
+//   GET  /v1/applicants/me/applications/exam-invitation applicant-session  browser
 //   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
 //   POST /v1/applicants/me/applications/documents       applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
@@ -200,6 +201,31 @@ export const ErasureRequestFiled202Schema = z
 export const ErasureRequestNone404Schema = z
   .object({
     "status": z.literal('NONE'),
+  }).strict();
+
+export const ExamInvitationPayloadSchema = z
+  .object({
+    "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
+    "ticketId": z.string(),
+    "venueName": z.string(),
+    "examDate": z.string(),
+    "reportingTimeHour": z.number(),
+    "validUntil": z.string(),
+  }).strict();
+
+/**
+ * ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+ * signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+ * (ADR-009), verified offline at the venue.
+ */
+export const ExamInvitationViewSchema = z
+  .object({
+    "state": z.enum(['READY', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
+    "agency": AgencySchema,
+    "processingCode": z.string(),
+    "campaignLabel": z.string().nullable(),
+    "currentStatus": z.string(),
+    "invitation": ExamInvitationPayloadSchema.optional(),
   }).strict();
 
 export const Forbidden403Schema = z
@@ -554,6 +580,22 @@ export const identityServiceOperations = {
       "422": null,
       "429": null,
       "503": null,
+    },
+  },
+  "getMyExamInvitation": {
+    method: "GET",
+    path: "/v1/applicants/me/applications/exam-invitation",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": ExamInvitationViewSchema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "502": UpstreamUnavailable502Schema,
     },
   },
   "getMyDocumentChecklist": {

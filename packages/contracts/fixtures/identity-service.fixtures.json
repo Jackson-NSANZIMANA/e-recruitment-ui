@@ -591,6 +591,104 @@
           }
         ]
       }
+    },
+    {
+      "id": "exam-invitation-ready",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "ADR-033 READY: the signed slot invitation plus PII-free display claims (exam-invitation.controller.ts).",
+      "value": {
+        "state": "READY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "USRP-SLOT.v1.eyJ0aWNrZXRJZCI6IlRLVC0xIn0.c2lnbmF0dXJl",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        }
+      }
+    },
+    {
+      "id": "exam-invitation-pending",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "Before a slot is assigned there is a state and no payload.",
+      "value": {
+        "state": "PENDING",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": null,
+        "currentStatus": "ACADEMIC_VETTING"
+      }
+    },
+    {
+      "id": "exam-invitation-rejects-applicant-id",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "No applicant id or other identifier beyond the public processing code may cross.",
+      "value": {
+        "state": "READY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "USRP-SLOT.v1.eyJ0aWNrZXRJZCI6IlRLVC0xIn0.c2lnbmF0dXJl",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        },
+        "applicantId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f"
+      }
+    },
+    {
+      "id": "exam-invitation-rejects-foreign-payload",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "A QR payload that is not a USRP-SLOT.v1 token (e.g. a URL) must never be rendered.",
+      "value": {
+        "state": "READY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "https://evil.example/x",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        }
+      }
+    },
+    {
+      "id": "exam-invitation-rejects-unknown-state",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "The state is a closed set.",
+      "value": {
+        "state": "ADMIT_ANYWAY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "USRP-SLOT.v1.eyJ0aWNrZXRJZCI6IlRLVC0xIn0.c2lnbmF0dXJl",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        }
+      }
     }
   ]
 }

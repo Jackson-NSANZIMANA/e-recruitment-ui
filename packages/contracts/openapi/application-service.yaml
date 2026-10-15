@@ -242,6 +242,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationError500"
 
+  /v1/applications/exam-invitation/by-applicant:
+    get:
+      operationId: "getExamInvitationByApplicant"
+      summary: "One citizen's exam QR, subject-scoped (ADR-033)"
+      description: >-
+        SERVICE-INTERNAL. identity-service bridges the citizen's session; the
+        read is constrained to applicant_id = applicantId. An officer token is
+        refused (403).
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/exam-invitation.controller.ts (EXAM_INVITATION_BY_APPLICANT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicantId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The state, and the invitation when READY."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamInvitationView"
+        "400":
+          description: "A parameter is absent or not a UUID."
+        "403":
+          description: "Not a system principal."
+        "404":
+          description: "Not this applicant's application."
+
   /v1/applications/document-checklist:
     get:
       operationId: "getDocumentChecklist"
@@ -1230,6 +1267,51 @@ components:
     Agency:
       type: "string"
       enum: ["RDF", "RNP", "RCS"]
+
+    ExamInvitationView:
+      description: >-
+        ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+        signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+        (ADR-009), verified offline at the venue.
+      type: "object"
+      additionalProperties: false
+      required: ["state", "agency", "processingCode", "campaignLabel", "currentStatus"]
+      properties:
+        state:
+          type: "string"
+          enum: ["READY", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+        processingCode:
+          type: "string"
+        campaignLabel:
+          type: ["string", "null"]
+        currentStatus:
+          type: "string"
+        invitation:
+          $ref: "#/components/schemas/ExamInvitationPayload"
+
+    ExamInvitationPayload:
+      type: "object"
+      additionalProperties: false
+      required: ["qrPayload", "ticketId", "venueName", "examDate", "reportingTimeHour", "validUntil"]
+      properties:
+        qrPayload:
+          type: "string"
+          pattern: "^USRP-SLOT\\.v1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+          maxLength: 4096
+        ticketId:
+          type: "string"
+        venueName:
+          type: "string"
+        examDate:
+          type: "string"
+        reportingTimeHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        validUntil:
+          type: "string"
 
     DocumentChecklistItem:
       type: "object"

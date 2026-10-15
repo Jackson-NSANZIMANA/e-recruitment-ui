@@ -40,6 +40,8 @@ import type {
   ByApplicantOkSchema,
   DocumentChecklistItemSchema,
   DocumentChecklist200Schema,
+  ExamInvitationPayloadSchema,
+  ExamInvitationViewSchema,
   FinalDecisionRequestSchema,
   FindApplicationOkSchema,
   Forbidden403Schema,
@@ -112,6 +114,8 @@ export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
 export type ByApplicantOk = z.infer<typeof ByApplicantOkSchema>;
 export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
 export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
+export type ExamInvitationPayload = z.infer<typeof ExamInvitationPayloadSchema>;
+export type ExamInvitationView = z.infer<typeof ExamInvitationViewSchema>;
 export type FinalDecisionRequest = z.infer<typeof FinalDecisionRequestSchema>;
 export type FindApplicationOk = z.infer<typeof FindApplicationOkSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;

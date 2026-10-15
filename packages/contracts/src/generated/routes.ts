@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 45 business operations + 22 probes = 67 total.
+// 47 business operations + 22 probes = 69 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -258,6 +258,24 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "404",
       "409",
       "422"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getExamInvitationByApplicant",
+    "method": "GET",
+    "path": "/v1/applications/exam-invitation/by-applicant",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/exam-invitation.controller.ts (EXAM_INVITATION_BY_APPLICANT_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404"
     ]
   },
   {
@@ -1054,6 +1072,25 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "409",
       "413",
       "422",
+      "502"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyExamInvitation",
+    "method": "GET",
+    "path": "/v1/applicants/me/applications/exam-invitation",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_EXAM_INVITATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "404",
       "502"
     ]
   },
