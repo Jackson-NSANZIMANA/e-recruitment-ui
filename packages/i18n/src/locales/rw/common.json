@@ -318,5 +318,57 @@
       "CELIBACY_CERTIFICATE": "Icyemezo cy’ingaragu",
       "MEDICAL_CERTIFICATE_GOVT": "Icyemezo cya muganga (cya Leta)"
     }
+  },
+  "exam_qr": {
+    "title": "Kode QR y’ikizamini cyanjye",
+    "open_link": "Fungura kode QR y’ikizamini",
+    "ready_title": "Kode QR y’ikizamini cyawe yabonetse",
+    "ready_body": "Kurura cyangwa ucapure iyi kode QR, uyizane hamwe n’indangamuntu yawe ku isuzuma ry’umubiri. Abakozi bayisoma ku muryango.",
+    "qr_alt": "Kode QR y’ikizamini y’isaba {{code}}",
+    "processing_code": "Kode y’isaba",
+    "venue": "Aho bizabera",
+    "date": "Itariki",
+    "reporting": "Kugera saa",
+    "valid_until": "Ifite agaciro kugeza",
+    "download": "Kurura kode QR (PNG)",
+    "downloading": "Biri gutegurwa…",
+    "print": "Capura",
+    "download_failed": "Ifoto ntiyabashije gukorwa muri iyi mushakisha. Koresha Capura cyangwa ufate ifoto ya ekrani.",
+    "present_at_gate": "Erekana iyi kode hamwe n’indangamuntu yawe ku muryango w’isuzuma.",
+    "keep_private": "Iyi kode ni ubutumire bwawe bwite. Ntuyisangize abandi.",
+    "not_found": "Iyi dosiye y’isaba ntiyabonetse mu zawe.",
+    "load_failed": "Kode QR yawe ntiyabashije kuboneka. Reba interineti hanyuma wongere ugerageze.",
+    "unavailable_title": "Kode QR yawe ntiboneka",
+    "unavailable_body": "Wahawe umwanya w’ikizamini ariko kode ntirategurwa. Ongera urebe nyuma cyangwa uvugane n’urwego.",
+    "states": {
+      "PENDING": {
+        "title": "Dosiye yawe iri gusuzumwa",
+        "body": "Kode QR yawe izahita igaragara hano igenzura ry’ubushobozi bwawe rirangiye kandi wahawe umwanya w’ikizamini. Ushobora kureka uru rupapuro rufunguye."
+      },
+      "ON_HOLD": {
+        "title": "Dosiye yawe iri gusuzumwa n’umukozi",
+        "body": "Umukozi ari gusuzuma dosiye yawe. Kode QR izatangwa isuzuma rirangiye."
+      },
+      "COMPLETED": {
+        "title": "Isuzuma ryawe ryarangiye",
+        "body": "Icyiciro cy’ikizamini cyarangiye; kode QR ntikenewe."
+      },
+      "CLOSED": {
+        "title": "Nta kode QR kuri iyi dosiye",
+        "body": "Iyi dosiye ntigikora, ntabwo rero hari ubutumire bw’ikizamini."
+      },
+      "EXPIRED": {
+        "title": "Iyi kode QR yarangije igihe",
+        "body": "Umunsi w’ikizamini w’ubu butumire warenze."
+      },
+      "UNAVAILABLE": {
+        "title": "Kode QR yawe ntiraboneka",
+        "body": "Wahawe umwanya w’ikizamini ariko kode ntirategurwa. Ongera urebe nyuma cyangwa uvugane n’urwego."
+      },
+      "WALK_IN": {
+        "title": "Kwiyandikisha ku kibuga",
+        "body": "Wiyandikishije ku kibuga ku munsi w’ikizamini, ntabwo rero hari ubutumire bwa QR."
+      }
+    }
   }
 }

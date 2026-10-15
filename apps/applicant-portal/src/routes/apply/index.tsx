@@ -434,6 +434,9 @@ function SubmissionResult({ result, applicationId, agency, error, onNewAttempt }
       <SectionMessage appearance="success" title={result === "REPLAYED" ? t("apply.replay_title") : t("apply.success_title")} headingLevel="h4" aria-live="polite">
         <Stack space="space.200">
           <Text>{result === "REPLAYED" ? t("apply.replay_body") : t("apply.success_body")}</Text>
+          {applicationId !== null && (
+            <Text><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link></Text>
+          )}
           {applicationId !== null && agency !== null && (
             <DocumentsPanel applicationId={applicationId} agency={agency} />
           )}

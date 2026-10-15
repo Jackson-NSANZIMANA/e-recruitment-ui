@@ -318,5 +318,57 @@
       "CELIBACY_CERTIFICATE": "Celibacy certificate",
       "MEDICAL_CERTIFICATE_GOVT": "Medical certificate (government)"
     }
+  },
+  "exam_qr": {
+    "title": "My exam QR code",
+    "open_link": "Open my exam QR code",
+    "ready_title": "Your exam QR code is ready",
+    "ready_body": "Download or print this QR code and bring it, with your National ID, to the physical screening. Officers scan it at the gate.",
+    "qr_alt": "Exam QR code for application {{code}}",
+    "processing_code": "Application code",
+    "venue": "Venue",
+    "date": "Date",
+    "reporting": "Report at",
+    "valid_until": "Valid until",
+    "download": "Download QR code (PNG)",
+    "downloading": "Preparing…",
+    "print": "Print",
+    "download_failed": "The image could not be created in this browser. Use Print instead, or take a screenshot.",
+    "present_at_gate": "Present this code with your National ID at the screening gate.",
+    "keep_private": "This code is your personal invitation. Do not share it.",
+    "not_found": "We could not find this application among yours.",
+    "load_failed": "Your QR code could not be loaded. Check your connection and try again.",
+    "unavailable_title": "Your QR code is not available",
+    "unavailable_body": "Your exam slot is assigned but the code is not ready yet. Please check again later or contact the agency.",
+    "states": {
+      "PENDING": {
+        "title": "Your application is being checked",
+        "body": "Your QR code will appear here automatically as soon as your eligibility checks pass and your exam slot is assigned. You can keep this page open."
+      },
+      "ON_HOLD": {
+        "title": "Your application is under review",
+        "body": "An officer is reviewing your application. Your QR code is withheld until the review is completed."
+      },
+      "COMPLETED": {
+        "title": "Your screening is complete",
+        "body": "The examination stage of your application is finished; no QR code is needed any more."
+      },
+      "CLOSED": {
+        "title": "No QR code for this application",
+        "body": "This application is no longer active, so there is no exam invitation."
+      },
+      "EXPIRED": {
+        "title": "This QR code has expired",
+        "body": "The exam day for this invitation has passed."
+      },
+      "UNAVAILABLE": {
+        "title": "Your QR code is not available yet",
+        "body": "Your exam slot is assigned but the code is not ready yet. Please check again later or contact the agency."
+      },
+      "WALK_IN": {
+        "title": "Walk-in registration",
+        "body": "You were registered on site on exam day, so there is no QR invitation."
+      }
+    }
   }
 }
