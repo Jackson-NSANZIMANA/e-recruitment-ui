@@ -33,6 +33,7 @@ const ApplicationDetailPage = lazy(
   () => import("./routes/application-detail.js"),
 );
 const WalkInPage = lazy(() => import("./routes/walk-in.js"));
+const GatePage = lazy(() => import("./routes/gate.js"));
 
 const FullPageSpinner = (): React.ReactElement => (
   <Box xcss={spinnerStyles.fullPage}>
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
           { path: "applications", element: <ApplicationsPage /> },
           { path: "applications/:id", element: <ApplicationDetailPage /> },
           { path: "walk-in", element: <WalkInPage /> },
+          { path: "gate", element: <GatePage /> },
           ...OFFICER_SLICE_ROUTES,
         ],
       },
