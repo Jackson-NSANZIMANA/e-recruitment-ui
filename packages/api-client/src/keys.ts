@@ -39,6 +39,11 @@ export const campaignKeys = {
   detail: (publicCode: string) => ['campaigns', 'detail', publicCode] as const,
 };
 
+export const examInvitationKeys = {
+  all: ['exam-invitation'] as const,
+  mine: (applicationId: string) => ['exam-invitation', 'mine', applicationId] as const,
+};
+
 export const documentKeys = {
   all: ['documents'] as const,
   mine: (applicationId: string) => ['documents', 'checklist', 'mine', applicationId] as const,

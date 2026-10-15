@@ -42,6 +42,7 @@ export const EDGE_OPERATIONS = [
   { id: 'verifyIdentity', method: 'POST', edgePath: '/edge/v1/identities/verify', upstreamOperationId: 'verifyIdentity', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'listMyApplications', method: 'GET', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'listMyApplications', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
+  { id: 'getMyExamInvitation', method: 'GET', edgePath: '/edge/v1/me/applications/exam-invitation', upstreamOperationId: 'getMyExamInvitation', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getMyDocumentChecklist', method: 'GET', edgePath: '/edge/v1/me/applications/document-checklist', upstreamOperationId: 'getMyDocumentChecklist', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getDocumentChecklist', method: 'GET', edgePath: '/edge/v1/applications/document-checklist', upstreamOperationId: 'getDocumentChecklist', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'verifyDocumentAtVenue', method: 'POST', edgePath: '/edge/v1/applications/documents/verify-at-venue', upstreamOperationId: 'verifyDocumentAtVenue', session: 'officer', retryOnG2G: false, composition: 'single' },

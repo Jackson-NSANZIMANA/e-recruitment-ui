@@ -299,6 +299,15 @@ ok('venue verification POSTs exactly applicationId + documentType with CSRF',
   venueClient.last().init.body === JSON.stringify({ applicationId: '123e4567-e89b-12d3-a456-426614174001', documentType: 'GOOD_CONDUCT_CERTIFICATE' }) &&
   new Headers(venueClient.last().init.headers).get('x-csrf-token') === 'csrf-echo');
 
+// ── ADR-033 exam QR ──
+import { getMyExamInvitation } from '../src/operations/exam-invitation.js';
+const qrClient = capturingClient(200, { state: 'PENDING', agency: 'RDF', processingCode: 'RDF-1', campaignLabel: null, currentStatus: 'SUBMITTED' });
+const qrView = await getMyExamInvitation(qrClient.client, '123e4567-e89b-12d3-a456-426614174001');
+ok('the exam QR is a GET on the /me route, id in the query, no body',
+  qrClient.last().url === '/edge/v1/me/applications/exam-invitation?applicationId=123e4567-e89b-12d3-a456-426614174001' &&
+  qrClient.last().init.method === 'GET' && qrClient.last().init.body === undefined);
+ok('…and the state is surfaced as-is', qrView.state === 'PENDING');
+
 const total = passed + failures.length;
 if (failures.length > 0) {
   process.stderr.write(`\n  ✗ api-client selfcheck FAILED — ${failures.length} of ${total} assertions\n\n`);

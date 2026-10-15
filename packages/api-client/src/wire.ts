@@ -286,3 +286,33 @@ export interface VerifyAtVenueResponse {
   readonly status: 'RECORDED' | 'ALREADY_RECORDED';
   readonly checklist: DocumentChecklist;
 }
+
+// ── The citizen's exam QR (ADR-033) ─────────────────────────────
+
+export type ExamInvitationState =
+  | 'READY'
+  | 'PENDING'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'CLOSED'
+  | 'EXPIRED'
+  | 'UNAVAILABLE'
+  | 'WALK_IN';
+
+/** `invitation` is present ONLY when state is READY. */
+export interface ExamInvitationView {
+  readonly state: ExamInvitationState;
+  readonly agency: Agency;
+  readonly processingCode: string;
+  readonly campaignLabel: string | null;
+  readonly currentStatus: string;
+  readonly invitation?: {
+    /** The signed slot invitation (USRP-SLOT.v1…) to encode in the QR. */
+    readonly qrPayload: string;
+    readonly ticketId: string;
+    readonly venueName: string;
+    readonly examDate: string;
+    readonly reportingTimeHour: number;
+    readonly validUntil: string;
+  };
+}
