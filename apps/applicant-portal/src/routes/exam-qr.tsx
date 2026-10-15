@@ -5,7 +5,9 @@
 // tells the truth about the state: while vetting is in progress it says so (and
 // re-checks on its own); once the exam slot is assigned it shows the QR — the
 // signed invitation the venue verifies offline — with the venue, date and
-// reporting time, and lets the citizen DOWNLOAD it as a PNG or print it.
+// reporting time, and lets the citizen DOWNLOAD it as a PNG or print it. Once
+// the QR has been used at the gate (ADR-034) it is never shown again: the page
+// says where and when the citizen was admitted.
 //
 // The QR is rendered in the browser from the signed payload, byte for byte.
 // Nothing about the citizen beyond the public processing code is shown.
@@ -134,12 +136,24 @@ export default function ExamQrPage(): React.ReactElement {
         <ReadyTicket view={view} />
       ) : (
         <SectionMessage
-          appearance={view.state === "PENDING" ? "information" : view.state === "ON_HOLD" ? "warning" : "discovery"}
+          appearance={
+            view.state === "ADMITTED" ? "success"
+              : view.state === "PENDING" ? "information"
+                : view.state === "ON_HOLD" ? "warning"
+                  : "discovery"
+          }
           title={t(`exam_qr.states.${view.state}.title`)}
           headingLevel="h2"
         >
           <Stack space="space.100">
-            <Text>{t(`exam_qr.states.${view.state}.body`)}</Text>
+            <Text>
+              {view.state === "ADMITTED" && view.admission !== undefined
+                ? t("exam_qr.states.ADMITTED.body", {
+                    venue: view.admission.venueName,
+                    time: new Date(view.admission.admittedAt).toLocaleString(),
+                  })
+                : t(`exam_qr.states.${view.state}.body`)}
+            </Text>
             <Text size="small" color="color.text.subtle">{t("exam_qr.processing_code")}: {view.processingCode}</Text>
           </Stack>
         </SectionMessage>
