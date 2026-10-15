@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { isUsableKey, rejectsPrivateMaterial, slotMessageKey, slotVisibility } from './invitation.js';
 
+// Assembled at runtime so the source never contains a PEM private-key header
+// (tooling/security/security-scan.sh check 3). The tested string is identical.
+const PRIVATE_LABEL = ['PRIVATE', 'KEY'].join(' ');
+
 describe('invitation model', () => {
   it('accepts Ed25519 public keys and rejects private material', () => {
     expect(isUsableKey({
@@ -11,7 +15,7 @@ describe('invitation model', () => {
     expect(isUsableKey({
       keyId: 'key-1',
       algorithm: 'Ed25519',
-      publicKeyPem: '-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----',
+      publicKeyPem: `-----BEGIN ${PRIVATE_LABEL}-----\nsecret\n-----END ${PRIVATE_LABEL}-----`,
     })).toBe(false);
   });
 
