@@ -9,6 +9,12 @@
       "value": { "keyId": "qr-2026-08", "algorithm": "Ed25519", "publicKeyPem": "pub", "privateKeyPem": "priv" } },
     { "id": "invitation-key-rejects-other-alg", "schema": "InvitationKeyOk", "expect": "reject",
       "why": "The controller hardcodes the literal 'Ed25519'. And note this is a DIFFERENT key from the token issuer's — verifying a bearer token with it will fail.",
-      "value": { "keyId": "k", "algorithm": "RS256", "publicKeyPem": "pub" } }
+      "value": { "keyId": "k", "algorithm": "RS256", "publicKeyPem": "pub" } },
+    {"id": "session-configured", "schema": "CampaignSessionConfigured200", "expect": "accept", "why": "campaign-session.pg-repository.ts responseBody: finite capacity carries a null capacityDecisionCode.", "value": {"status": "SESSION_CONFIGURED", "publicCode": "RNP-2026-INTAKE", "district": "GASABO", "coverageVersion": 3, "coverageHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "capacityDecisionCode": null}},
+    {"id": "session-unbounded", "schema": "CampaignSessionConfigured200", "expect": "accept", "why": "An unbounded session echoes the explicit audited UNBOUNDED_CAPACITY decision.", "value": {"status": "SESSION_UNCHANGED", "publicCode": "RNP-2026-INTAKE", "district": "HUYE", "coverageVersion": 3, "coverageHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "capacityDecisionCode": "UNBOUNDED_CAPACITY"}},
+    {"id": "session-rejects-other-decision", "schema": "CampaignSessionConfigured200", "expect": "reject", "why": "UNBOUNDED_CAPACITY is the only decision code the validator recognises.", "value": {"status": "SESSION_CONFIGURED", "publicCode": "RNP-2026-INTAKE", "district": "GASABO", "coverageVersion": 3, "coverageHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "capacityDecisionCode": "OVERRIDE"}},
+    {"id": "session-rejects-missing-coverage", "schema": "CampaignSessionConfigured200", "expect": "reject", "why": "Every response returns the coverage evidence publish later freezes; without it the officer cannot see the head they are publishing against.", "value": {"status": "SESSION_CONFIGURED", "publicCode": "RNP-2026-INTAKE", "district": "GASABO", "capacityDecisionCode": null}},
+    {"id": "session-command-rejection", "schema": "SessionCommandRejection", "expect": "accept", "why": "HttpError below 500 exposes { error, detail }.", "value": {"error": "DISTRICT_NOT_TARGETED", "detail": "Session district is not in the campaign target set."}},
+    {"id": "session-error-500-rejects-detail", "schema": "SessionError500", "expect": "reject", "why": "5xx detail is withheld.", "value": {"error": "CAMPAIGN_SESSION_PERSISTENCE_ERROR", "detail": "boom"}}
   ]
 }

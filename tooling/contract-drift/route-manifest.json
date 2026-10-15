@@ -1,8 +1,8 @@
 {
   "$comment": "PINNED BACKEND FACTS. Hand-mined by reading every controller under services/*/src/adapters/http/** and every src/main.ts at the SHA below. This file is what makes the drift check runnable with NO backend checkout: it is the middle term between the OpenAPI documents and the backend source. gate A diffs OpenAPI against this; gate B diffs this against a live checkout when one is available. Neither gate can be green while the other is stale, because a change to the backend that is applied here without the OpenAPI fails A, and a change applied to both without the backend fails B.",
-  "backendSha": "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab",
+  "backendSha": "bd939f61b3fd2f44299c11229783561f6bee1a0c",
   "backendRepo": "https://github.com/Jackson-NSANZIMANA/e-recruitment",
-  "minedAt": "2026-10-04",
+  "minedAt": "2026-10-15",
   "services": {
     "iam-service": {
       "controllerDir": "services/iam-service/src/adapters/http",
@@ -46,6 +46,12 @@
         { "method": "POST", "path": "/v1/applications/documents/verify-at-venue", "auth": ["officer"], "constant": "VERIFY_DOCUMENT_AT_VENUE_PATH", "controller": "document-checklist.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/campaigns", "auth": ["none"], "constant": "LIST_PUBLIC_CAMPAIGNS_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/campaigns/detail", "auth": ["none"], "constant": "READ_PUBLIC_CAMPAIGN_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns", "auth": ["officer"], "constant": "CREATE_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns/policy", "auth": ["officer"], "constant": "CREATE_CAMPAIGN_POLICY_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns/publish", "auth": ["officer"], "constant": "PUBLISH_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns/registration-close", "auth": ["officer"], "constant": "CLOSE_CAMPAIGN_REGISTRATION_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns/complete", "auth": ["officer"], "constant": "COMPLETE_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/campaigns/cancel", "auth": ["officer"], "constant": "CANCEL_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/amber-queue", "auth": ["officer"], "constant": "AMBER_QUEUE_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/by-applicant", "auth": ["system"], "constant": "BY_APPLICANT_PATH", "controller": "list-applications.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/applications/by-id", "auth": ["officer"], "constant": "BY_ID_PATH", "controller": "list-applications.controller.ts", "mounted": true },
@@ -94,10 +100,11 @@
       ]
     },
     "scheduling-service": {
-      "controllerDir": null,
-      "controllerDirNote": "THIS SERVICE HAS NO adapters/http DIRECTORY. Its one business route is declared inline in src/main.ts, which is why every survey that walked services/*/src/adapters/http/** reported zero routes here.",
+      "controllerDir": "services/scheduling-service/src/adapters",
+      "controllerDirNote": "THIS SERVICE HAS NO adapters/http DIRECTORY. The key read is declared inline in src/main.ts and the session command's controller sits directly under src/adapters/, which is why every survey that walked services/*/src/adapters/http/** reported zero routes here.",
       "readinessCallback": true,
       "routes": [
+        { "method": "POST", "path": "/v1/campaigns/session", "auth": ["officer"], "constant": "CONFIGURE_CAMPAIGN_SESSION_PATH", "controller": "campaign-session.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/slots/invitation-key", "auth": ["none"], "constant": null, "controller": "src/main.ts (inline)", "mounted": true }
       ]
     },

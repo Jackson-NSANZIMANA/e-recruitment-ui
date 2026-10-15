@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 47 business operations + 22 probes = 69 total.
+// 54 business operations + 22 probes = 76 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -425,6 +425,69 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "application-service",
+    "operationId": "createCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "cancelCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/cancel",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CANCEL_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "completeCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/complete",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (COMPLETE_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
     "operationId": "getPublicCampaign",
     "method": "GET",
     "path": "/v1/campaigns/detail",
@@ -438,6 +501,71 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "200",
       "400",
       "404",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "createCampaignPolicy",
+    "method": "POST",
+    "path": "/v1/campaigns/policy",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_POLICY_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "publishCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/publish",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (PUBLISH_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "closeCampaignRegistration",
+    "method": "POST",
+    "path": "/v1/campaigns/registration-close",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CLOSE_CAMPAIGN_REGISTRATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
       "500"
     ]
   },
@@ -1294,6 +1422,28 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "statuses": [
       "200",
       "503"
+    ]
+  },
+  {
+    "service": "scheduling-service",
+    "operationId": "configureCampaignSession",
+    "method": "POST",
+    "path": "/v1/campaigns/session",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/campaign-session.controller.ts (CONFIGURE_CAMPAIGN_SESSION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
     ]
   },
   {

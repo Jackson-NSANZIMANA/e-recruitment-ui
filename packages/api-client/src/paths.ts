@@ -17,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = '06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab' as const;
+export const EDGE_BACKEND_SHA = 'bd939f61b3fd2f44299c11229783561f6bee1a0c' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -25,6 +25,13 @@ export const EDGE_OPERATIONS = [
   { id: 'beginApplicantOnboarding', method: 'POST', edgePath: '/edge/v1/auth/applicant/identity', upstreamOperationId: 'beginApplicantOnboarding', session: 'anonymous', retryOnG2G: false, composition: 'single' },
   { id: 'listCampaigns', method: 'GET', edgePath: '/edge/v1/campaigns', upstreamOperationId: 'listPublicCampaigns', session: 'anonymous', retryOnG2G: true, composition: 'single' },
   { id: 'getCampaignDetail', method: 'GET', edgePath: '/edge/v1/campaigns/detail', upstreamOperationId: 'getPublicCampaign', session: 'anonymous', retryOnG2G: true, composition: 'single' },
+  { id: 'createCampaign', method: 'POST', edgePath: '/edge/v1/campaigns', upstreamOperationId: 'createCampaign', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'createCampaignPolicy', method: 'POST', edgePath: '/edge/v1/campaigns/policy', upstreamOperationId: 'createCampaignPolicy', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'configureCampaignSession', method: 'POST', edgePath: '/edge/v1/campaigns/session', upstreamOperationId: 'configureCampaignSession', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'publishCampaign', method: 'POST', edgePath: '/edge/v1/campaigns/publish', upstreamOperationId: 'publishCampaign', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'closeCampaignRegistration', method: 'POST', edgePath: '/edge/v1/campaigns/registration-close', upstreamOperationId: 'closeCampaignRegistration', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'completeCampaign', method: 'POST', edgePath: '/edge/v1/campaigns/complete', upstreamOperationId: 'completeCampaign', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'cancelCampaign', method: 'POST', edgePath: '/edge/v1/campaigns/cancel', upstreamOperationId: 'cancelCampaign', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'requestOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/request', upstreamOperationId: 'requestApplicantOtp', session: 'anonymous', retryOnG2G: true, composition: 'single' },
   { id: 'verifyOtp', method: 'POST', edgePath: '/edge/v1/auth/applicant/otp/verify', upstreamOperationId: 'verifyApplicantOtp', session: 'anonymous', retryOnG2G: false, composition: 'single' },
   { id: 'applicantLogout', method: 'POST', edgePath: '/edge/v1/auth/applicant/logout', upstreamOperationId: 'logoutApplicant', session: 'applicant', retryOnG2G: false, composition: 'single' },

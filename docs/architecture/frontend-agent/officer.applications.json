@@ -9,7 +9,7 @@
   "goal": "Review agency-scoped applications, understand why a record is at its current lifecycle stage, and execute only the human decisions allowed by the current state.",
   "backend": {
     "repository": "Jackson-NSANZIMANA/e-recruitment",
-    "mainSha": "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab",
+    "mainSha": "bd939f61b3fd2f44299c11229783561f6bee1a0c",
     "edgeBase": "4021"
   },
   "operations": [
@@ -108,7 +108,6 @@
     "visual": "flagship surface screenshots at desktop and tablet breakpoints"
   },
   "knownBlockers": [
-    "frontend-generated-contracts-and-CI-provenance-still-reference-a-historical-backend-SHA; full regeneration/reconciliation against 06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab is intentionally not faked",
     "full browser-a11y-and-visual-evidence has not been executed in this dependency-unavailable workspace"
   ]
 }

@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -38,6 +38,18 @@ import type {
   ApplicationSubmitted201Schema,
   ApplicationSummarySchema,
   ByApplicantOkSchema,
+  CampaignCommandRejectionSchema,
+  CampaignPublicCodeSchema,
+  CampaignDraftCreated201Schema,
+  CampaignPublicCodeInputSchema,
+  CampaignDraftRequestSchema,
+  CampaignError500Schema,
+  CampaignLifecycle200Schema,
+  CampaignPolicyRequestSchema,
+  Sha256HexSchema,
+  CampaignPolicyVersionCreated201Schema,
+  CampaignPublicCodeCommandSchema,
+  CampaignPublished200Schema,
   DocumentChecklistItemSchema,
   DocumentChecklist200Schema,
   ExamInvitationPayloadSchema,
@@ -112,6 +124,18 @@ export type ApplicationError500 = z.infer<typeof ApplicationError500Schema>;
 export type ApplicationSubmitted201 = z.infer<typeof ApplicationSubmitted201Schema>;
 export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
 export type ByApplicantOk = z.infer<typeof ByApplicantOkSchema>;
+export type CampaignCommandRejection = z.infer<typeof CampaignCommandRejectionSchema>;
+export type CampaignPublicCode = z.infer<typeof CampaignPublicCodeSchema>;
+export type CampaignDraftCreated201 = z.infer<typeof CampaignDraftCreated201Schema>;
+export type CampaignPublicCodeInput = z.infer<typeof CampaignPublicCodeInputSchema>;
+export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
+export type CampaignError500 = z.infer<typeof CampaignError500Schema>;
+export type CampaignLifecycle200 = z.infer<typeof CampaignLifecycle200Schema>;
+export type CampaignPolicyRequest = z.infer<typeof CampaignPolicyRequestSchema>;
+export type Sha256Hex = z.infer<typeof Sha256HexSchema>;
+export type CampaignPolicyVersionCreated201 = z.infer<typeof CampaignPolicyVersionCreated201Schema>;
+export type CampaignPublicCodeCommand = z.infer<typeof CampaignPublicCodeCommandSchema>;
+export type CampaignPublished200 = z.infer<typeof CampaignPublished200Schema>;
 export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
 export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
 export type ExamInvitationPayload = z.infer<typeof ExamInvitationPayloadSchema>;
