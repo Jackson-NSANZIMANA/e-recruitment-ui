@@ -291,6 +291,7 @@ export interface VerifyAtVenueResponse {
 
 export type ExamInvitationState =
   | 'READY'
+  | 'ADMITTED'
   | 'PENDING'
   | 'ON_HOLD'
   | 'COMPLETED'
@@ -299,7 +300,10 @@ export type ExamInvitationState =
   | 'UNAVAILABLE'
   | 'WALK_IN';
 
-/** `invitation` is present ONLY when state is READY. */
+/**
+ * `invitation` is present ONLY when state is READY; `admission` ONLY when state
+ * is ADMITTED (ADR-034: the QR was spent at the gate and is never re-sent).
+ */
 export interface ExamInvitationView {
   readonly state: ExamInvitationState;
   readonly agency: Agency;
@@ -315,4 +319,56 @@ export interface ExamInvitationView {
     readonly reportingTimeHour: number;
     readonly validUntil: string;
   };
+  readonly admission?: {
+    readonly venueName: string;
+    readonly admittedAt: string;
+  };
 }
+
+// ── Single-use admission at the venue gate (BUILD-003, ADR-034) ──
+
+/** The candidate as the gate officer needs them: public identifiers only. */
+export interface GateCandidate {
+  readonly applicationId: string;
+  readonly processingCode: string;
+  readonly category: string;
+}
+
+export interface AdmitAtGateInput {
+  /** The QR text exactly as scanned. */
+  readonly qrToken: string;
+  /** Typed from the candidate's card; hashed server-side, never stored. */
+  readonly nationalId: string;
+  /** The venue this gate is at. */
+  readonly gateVenueName: string;
+}
+
+/** Why a QR is not a ticket here at all. */
+export type InvalidTicketReason = 'MALFORMED_TICKET' | 'WRONG_AGENCY' | 'UNKNOWN_TICKET' | 'TICKET_NOT_ISSUED';
+
+/**
+ * Every answer the gate can get. Refusals are outcomes, not errors: the gate
+ * screen shows each one; only infrastructure faults throw.
+ */
+export type GateAdmissionResult =
+  | {
+      readonly outcome: 'ADMITTED';
+      readonly candidate: GateCandidate;
+      readonly venueName: string;
+      readonly examDate: string;
+      readonly reportingTimeHour: number;
+      readonly admittedAt: string;
+      readonly statusAdvanced: boolean;
+    }
+  | {
+      readonly outcome: 'ALREADY_ADMITTED';
+      readonly candidate: GateCandidate;
+      readonly admittedAt: string;
+      readonly venueName: string;
+      readonly admittedBySelf: boolean;
+    }
+  | { readonly outcome: 'NOT_ADMISSIBLE'; readonly candidate: GateCandidate; readonly currentStatus: string }
+  | { readonly outcome: 'IDENTITY_MISMATCH'; readonly candidate: GateCandidate }
+  | { readonly outcome: 'WRONG_VENUE'; readonly ticketVenueName: string }
+  | { readonly outcome: 'TOO_EARLY' | 'EXPIRED'; readonly examDate: string }
+  | { readonly outcome: 'INVALID_TICKET'; readonly reason: InvalidTicketReason };

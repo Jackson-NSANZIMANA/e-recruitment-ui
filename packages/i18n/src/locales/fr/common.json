@@ -5,7 +5,8 @@
     "walk_in": "File d'attente directe",
     "scheduling": "Planification",
     "settings": "Paramètres",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "gate": "Porte du site"
   },
   "auth": {
     "send_code": "Envoyer le code",
@@ -368,7 +369,73 @@
       "WALK_IN": {
         "title": "Inscription sur place",
         "body": "Vous avez été inscrit sur place le jour de l’examen ; il n’y a donc pas de convocation QR."
+      },
+      "ADMITTED": {
+        "title": "Vous avez été admis",
+        "body": "Votre QR a été utilisé à {{venue}} le {{time}}. Il ne peut plus être utilisé."
       }
+    }
+  },
+  "gate": {
+    "title": "Porte du site d'examen",
+    "intro": "Scannez le QR d'examen du candidat, vérifiez sa carte d'identité en personne, puis admettez-le. Chaque QR n'admet qu'une personne, une seule fois.",
+    "venue_label": "Site de cette porte",
+    "venue_help": "Exactement comme imprimé sur les convocations des candidats. Mémorisé sur cet appareil.",
+    "venue_set": "Utiliser ce site",
+    "venue_change": "Changer de site",
+    "venue_current": "Site : {{venue}}",
+    "qr_label": "QR d'examen",
+    "qr_help": "Scannez avec la caméra, ou avec un lecteur portatif dans ce champ.",
+    "qr_captured": "QR capturé",
+    "qr_rescan": "Scanner à nouveau",
+    "nid_label": "Numéro d'identité nationale (sur la carte)",
+    "nid_help": "16 chiffres saisis depuis la carte physique. Vérifié contre la candidature, jamais conservé.",
+    "nid_invalid": "Un numéro d'identité nationale comporte 16 chiffres.",
+    "admit": "Admettre le candidat",
+    "next": "Candidat suivant",
+    "no_permission_title": "Votre rôle ne permet pas d'admettre à la porte",
+    "no_permission_body": "L'admission à la porte est réservée au poste de contrôle.",
+    "failed_title": "Non admis — le serveur est injoignable",
+    "failed_body": "Rien n'a été enregistré. Vérifiez la connexion et réessayez.",
+    "self": " (par vous)",
+    "outcomes": {
+      "ADMITTED": {
+        "title": "Admis",
+        "body": "{{code}} · {{category}} — se présenter avant {{hour}}. Ce QR est maintenant utilisé."
+      },
+      "ALREADY_ADMITTED": {
+        "title": "QR déjà utilisé — ne pas admettre",
+        "body": "Ce QR a été utilisé à {{venue}} à {{time}}{{by}}. Orientez le candidat vers le superviseur."
+      },
+      "IDENTITY_MISMATCH": {
+        "title": "La carte ne correspond pas — ne pas admettre",
+        "body": "Le numéro d'identité de la carte n'est pas celui du candidat {{code}}. La tentative est enregistrée."
+      },
+      "NOT_ADMISSIBLE": {
+        "title": "Non autorisé pour cet examen",
+        "body": "{{code}} ne peut pas être admis (statut : {{status}})."
+      },
+      "WRONG_VENUE": {
+        "title": "Mauvais site",
+        "body": "Ce QR est pour {{venue}}. Orientez le candidat vers ce site."
+      },
+      "TOO_EARLY": {
+        "title": "Pas aujourd'hui",
+        "body": "Ce QR est pour l'examen du {{date}}."
+      },
+      "EXPIRED": {
+        "title": "QR expiré",
+        "body": "Le jour d'examen de ce QR ({{date}}) est passé."
+      },
+      "INVALID_TICKET": {
+        "title": "QR invalide — ne pas admettre"
+      }
+    },
+    "invalid_reasons": {
+      "MALFORMED_TICKET": "Ce n'est pas un QR d'examen.",
+      "WRONG_AGENCY": "Ce QR concerne l'examen d'une autre institution.",
+      "UNKNOWN_TICKET": "Aucune candidature de cette institution ne correspond à ce QR.",
+      "TICKET_NOT_ISSUED": "Ce QR n'a pas été émis par le système : il est peut-être modifié ou falsifié."
     }
   }
 }

@@ -32,6 +32,7 @@ const APP_OWNED_PATHS: readonly string[] = [
   "applications",
   "applications/:id",
   "walk-in",
+  "gate",
 ];
 
 const MOUNTS: readonly SliceMount[] = [

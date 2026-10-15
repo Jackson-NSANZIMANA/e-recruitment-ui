@@ -18,7 +18,7 @@ info:
 
 
     THERE IS NO HTTP WAY TO TRIGGER OR READ A CLEARANCE. The gate runs entirely off the backbone. An officer console cannot re-run a clearance, see why one failed, or read its raw verdict; only the projected criminalClearanceStatus on the application detail read is visible.
-  x-usrp-backend-sha: "bd939f61b3fd2f44299c11229783561f6bee1a0c"
+  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
   x-usrp-service-port-var: "PORT_BACKGROUND_VETTING_SERVICE"
   x-usrp-business-routes: 0
 

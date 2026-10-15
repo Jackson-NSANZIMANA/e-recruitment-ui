@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
+// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -16,6 +16,7 @@
 //
 // Route table (method, path, auth kinds, reach):
 //   POST /v1/identities/verify                          system|officer     service-internal
+//   POST /v1/gate/admissions                            officer            browser
 //   POST /v1/applicants/auth/onboarding/begin           none               browser
 //   POST /v1/applicants/auth/otp/request                none               browser
 //   POST /v1/applicants/auth/otp/verify                 none               browser
@@ -203,6 +204,16 @@ export const ErasureRequestNone404Schema = z
     "status": z.literal('NONE'),
   }).strict();
 
+/**
+ * ADR-034. Present only in state ADMITTED: where and when the single-use QR
+ * was spent. The QR itself is never sent again.
+ */
+export const ExamInvitationAdmissionSchema = z
+  .object({
+    "venueName": z.string(),
+    "admittedAt": z.string(),
+  }).strict();
+
 export const ExamInvitationPayloadSchema = z
   .object({
     "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
@@ -220,18 +231,109 @@ export const ExamInvitationPayloadSchema = z
  */
 export const ExamInvitationViewSchema = z
   .object({
-    "state": z.enum(['READY', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
+    "state": z.enum(['READY', 'ADMITTED', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
     "agency": AgencySchema,
     "processingCode": z.string(),
     "campaignLabel": z.string().nullable(),
     "currentStatus": z.string(),
     "invitation": ExamInvitationPayloadSchema.optional(),
+    "admission": ExamInvitationAdmissionSchema.optional(),
   }).strict();
 
 export const Forbidden403Schema = z
   .object({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
+  }).strict();
+
+export const GateAdmissionRequestSchema = z
+  .object({
+    "qrToken": z.string().min(1).max(4096),
+    "nationalId": z.string().regex(/^[0-9]{16}$/),
+    "gateVenueName": z.string().min(1).max(200),
+  }).strict();
+
+/**
+ * The candidate as the gate officer needs them: public identifiers only.
+ */
+export const GateCandidateSchema = z
+  .object({
+    "applicationId": z.string().uuid(),
+    "processingCode": z.string().min(1).max(32),
+    "category": z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
+  }).strict();
+
+export const GateAdmitted200Schema = z
+  .object({
+    "outcome": z.literal('ADMITTED'),
+    "candidate": GateCandidateSchema,
+    "venueName": z.string().min(1).max(200),
+    "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
+    "reportingTimeHour": z.number(),
+    "admittedAt": z.string(),
+    "statusAdvanced": z.boolean(),
+  }).strict();
+
+/**
+ * The QR was already spent. Checked before venue and day, so a copied
+ * screenshot is a duplicate at any gate.
+ */
+export const GateAlreadyAdmitted409Schema = z
+  .object({
+    "error": z.literal('ALREADY_ADMITTED'),
+    "candidate": GateCandidateSchema,
+    "admittedAt": z.string(),
+    "venueName": z.string(),
+    "admittedBySelf": z.boolean(),
+  }).strict();
+
+/**
+ * The national ID on the card is not this applicant's. Audited.
+ */
+export const GateIdentityMismatch409Schema = z
+  .object({
+    "error": z.literal('IDENTITY_MISMATCH'),
+    "candidate": GateCandidateSchema,
+  }).strict();
+
+export const GateNotAdmissible409Schema = z
+  .object({
+    "error": z.literal('NOT_ADMISSIBLE'),
+    "candidate": GateCandidateSchema,
+    "currentStatus": z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
+  }).strict();
+
+/**
+ * TOO_EARLY or EXPIRED: today in Africa/Kigali is not the exam day.
+ */
+export const GateWrongDay409Schema = z
+  .object({
+    "error": z.enum(['TOO_EARLY', 'EXPIRED']),
+    "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
+  }).strict();
+
+export const GateWrongVenue409Schema = z
+  .object({
+    "error": z.literal('WRONG_VENUE'),
+    "ticketVenueName": z.string(),
+  }).strict();
+
+export const GateConflict409Schema = z.union([
+  GateAlreadyAdmitted409Schema,
+  GateNotAdmissible409Schema,
+  GateIdentityMismatch409Schema,
+  GateWrongVenue409Schema,
+  GateWrongDay409Schema,
+]);
+
+/**
+ * The QR is not a ticket of this agency: malformed, another agency's,
+ * unknown, or not the stored (signed) token.
+ */
+export const GateInvalidTicket422Schema = z
+  .object({
+    "error": z.literal('INVALID_TICKET'),
+    "reason": z.enum(['MALFORMED_TICKET', 'WRONG_AGENCY', 'UNKNOWN_TICKET', 'TICKET_NOT_ISSUED']),
   }).strict();
 
 export const IdentityAlreadyExists200Schema = z
@@ -481,6 +583,25 @@ export const identityServiceOperations = {
       "422": NotACitizen422Schema,
       "500": IdentityError500Schema,
       "503": NidaUnavailable503Schema,
+    },
+  },
+  "admitAtGate": {
+    method: "POST",
+    path: "/v1/gate/admissions",
+    auth: ["officer"],
+    reach: "browser",
+    request: GateAdmissionRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": GateAdmitted200Schema,
+      "400": null,
+      "401": null,
+      "403": null,
+      "409": GateConflict409Schema,
+      "422": GateInvalidTicket422Schema,
+      "502": null,
+      "503": null,
     },
   },
   "beginApplicantOnboarding": {

@@ -1,6 +1,6 @@
 {
   "$comment": "PINNED BACKEND FACTS. Hand-mined by reading every controller under services/*/src/adapters/http/** and every src/main.ts at the SHA below. This file is what makes the drift check runnable with NO backend checkout: it is the middle term between the OpenAPI documents and the backend source. gate A diffs OpenAPI against this; gate B diffs this against a live checkout when one is available. Neither gate can be green while the other is stale, because a change to the backend that is applied here without the OpenAPI fails A, and a change applied to both without the backend fails B.",
-  "backendSha": "bd939f61b3fd2f44299c11229783561f6bee1a0c",
+  "backendSha": "df80f6517247a00ffd99518fd31bd7c68dd70d65",
   "backendRepo": "https://github.com/Jackson-NSANZIMANA/e-recruitment",
   "minedAt": "2026-10-15",
   "services": {
@@ -16,6 +16,7 @@
       "controllerDir": "services/identity-service/src/adapters/http",
       "readinessCallback": true,
       "routes": [
+        { "method": "POST", "path": "/v1/gate/admissions", "auth": ["officer"], "constant": "GATE_ADMISSIONS_PATH", "controller": "gate-admission.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/identities/verify", "auth": ["system", "officer"], "constant": "VERIFY_IDENTITY_PATH", "controller": "verify-identity.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/identities/erasure", "auth": ["officer"], "constant": "ERASURE_PATH", "controller": "erasure.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/identities/erasure-requests", "auth": ["officer"], "constant": "ERASURE_REQUESTS_QUEUE_PATH", "controller": "erasure-request.controller.ts", "mounted": true },
@@ -47,6 +48,7 @@
         { "method": "GET", "path": "/v1/campaigns", "auth": ["none"], "constant": "LIST_PUBLIC_CAMPAIGNS_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
         { "method": "GET", "path": "/v1/campaigns/detail", "auth": ["none"], "constant": "READ_PUBLIC_CAMPAIGN_PATH", "controller": "campaign-public-read.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/campaigns", "auth": ["officer"], "constant": "CREATE_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
+        { "method": "POST", "path": "/v1/applications/admissions/gate", "auth": ["officer"], "constant": "GATE_ADMISSION_PATH", "controller": "gate-admission.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/campaigns/policy", "auth": ["officer"], "constant": "CREATE_CAMPAIGN_POLICY_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/campaigns/publish", "auth": ["officer"], "constant": "PUBLISH_CAMPAIGN_PATH", "controller": "campaign-control.controller.ts", "mounted": true },
         { "method": "POST", "path": "/v1/campaigns/registration-close", "auth": ["officer"], "constant": "CLOSE_CAMPAIGN_REGISTRATION_PATH", "controller": "campaign-control.controller.ts", "mounted": true },

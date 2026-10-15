@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
+// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -52,11 +52,21 @@ import type {
   CampaignPublished200Schema,
   DocumentChecklistItemSchema,
   DocumentChecklist200Schema,
+  ExamInvitationAdmissionSchema,
   ExamInvitationPayloadSchema,
   ExamInvitationViewSchema,
   FinalDecisionRequestSchema,
   FindApplicationOkSchema,
   Forbidden403Schema,
+  GateDecisionCandidateSchema,
+  GateDecisionAdmitted200Schema,
+  GateDecisionAlreadyAdmitted409Schema,
+  GateDecisionIdentityMismatch409Schema,
+  GateDecisionNotAdmissible409Schema,
+  GateDecisionWrongDay409Schema,
+  GateDecisionWrongVenue409Schema,
+  GateDecisionConflict409Schema,
+  GateDecisionInvalidTicket422Schema,
   IdentityNotVerified409Schema,
   InvalidAcademicInput422Schema,
   InvalidApplicantId400Schema,
@@ -138,11 +148,21 @@ export type CampaignPublicCodeCommand = z.infer<typeof CampaignPublicCodeCommand
 export type CampaignPublished200 = z.infer<typeof CampaignPublished200Schema>;
 export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
 export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
+export type ExamInvitationAdmission = z.infer<typeof ExamInvitationAdmissionSchema>;
 export type ExamInvitationPayload = z.infer<typeof ExamInvitationPayloadSchema>;
 export type ExamInvitationView = z.infer<typeof ExamInvitationViewSchema>;
 export type FinalDecisionRequest = z.infer<typeof FinalDecisionRequestSchema>;
 export type FindApplicationOk = z.infer<typeof FindApplicationOkSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
+export type GateDecisionCandidate = z.infer<typeof GateDecisionCandidateSchema>;
+export type GateDecisionAdmitted200 = z.infer<typeof GateDecisionAdmitted200Schema>;
+export type GateDecisionAlreadyAdmitted409 = z.infer<typeof GateDecisionAlreadyAdmitted409Schema>;
+export type GateDecisionIdentityMismatch409 = z.infer<typeof GateDecisionIdentityMismatch409Schema>;
+export type GateDecisionNotAdmissible409 = z.infer<typeof GateDecisionNotAdmissible409Schema>;
+export type GateDecisionWrongDay409 = z.infer<typeof GateDecisionWrongDay409Schema>;
+export type GateDecisionWrongVenue409 = z.infer<typeof GateDecisionWrongVenue409Schema>;
+export type GateDecisionConflict409 = z.infer<typeof GateDecisionConflict409Schema>;
+export type GateDecisionInvalidTicket422 = z.infer<typeof GateDecisionInvalidTicket422Schema>;
 export type IdentityNotVerified409 = z.infer<typeof IdentityNotVerified409Schema>;
 export type InvalidAcademicInput422 = z.infer<typeof InvalidAcademicInput422Schema>;
 export type InvalidApplicantId400 = z.infer<typeof InvalidApplicantId400Schema>;

@@ -48,7 +48,7 @@ info:
     THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
     response in this document. The hash is an internal cross-service key; a
     browser that computes or receives one is a leak of a cross-service join key.
-  x-usrp-backend-sha: "bd939f61b3fd2f44299c11229783561f6bee1a0c"
+  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
   x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -174,6 +174,58 @@ paths:
   # ───────────────────────────────────────────────────────────────
   # 2. Citizen authentication (ADR-018) — PUBLIC, then session-bearing
   # ───────────────────────────────────────────────────────────────
+
+  /v1/gate/admissions:
+    post:
+      operationId: "admitAtGate"
+      summary: "Admit a candidate at the venue gate — the gate's front door (BUILD-003, ADR-034)"
+      description: >-
+        OFFICER, admission.gate. identity-service is the front door only because
+        it alone holds NATIONAL_ID_HMAC_KEY: it hashes the national ID typed from
+        the card, forgets the number, and forwards { qrToken, gateVenueName,
+        nationalIdHash } to application-service under the officer's OWN bearer
+        token. It decides nothing; the answer is rebuilt from a closed allowlist
+        and anything off-contract is a 502. The raw national ID is never
+        stored, logged or returned.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/gate-admission.controller.ts (GATE_ADMISSIONS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GateAdmissionRequest"
+      responses:
+        "200":
+          description: "Admitted; the QR is now spent."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateAdmitted200"
+        "400":
+          description: "INVALID_REQUEST (shape)."
+        "401":
+          description: "No or invalid officer token."
+        "403":
+          description: "PERMISSION_DENIED — only admission.gate (the screening post) admits."
+        "409":
+          description: "A real ticket refused here and now."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateConflict409"
+        "422":
+          description: "INVALID_TICKET."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateInvalidTicket422"
+        "502":
+          description: "UPSTREAM_CONTRACT_MISMATCH — an off-contract answer is never relayed."
+        "503":
+          description: "UPSTREAM_UNAVAILABLE."
 
   /v1/applicants/auth/onboarding/begin:
     post:
@@ -1048,6 +1100,161 @@ paths:
 
 components:
   schemas:
+    GateAdmissionRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["qrToken", "nationalId", "gateVenueName"]
+      properties:
+        qrToken:
+          description: "The QR text as scanned (USRP-SLOT.v1…)."
+          type: "string"
+          minLength: 1
+          maxLength: 4096
+        nationalId:
+          description: "Typed from the physical card. Hashed by identity-service; never stored or returned."
+          type: "string"
+          pattern: "^[0-9]{16}$"
+        gateVenueName:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+
+    GateCandidate:
+      description: "The candidate as the gate officer needs them: public identifiers only."
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "processingCode", "category"]
+      properties:
+        applicationId:
+          type: "string"
+          format: "uuid"
+        processingCode:
+          type: "string"
+          minLength: 1
+          maxLength: 32
+        category:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{0,63}$"
+
+    GateAdmitted200:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome", "candidate", "venueName", "examDate", "reportingTimeHour", "admittedAt", "statusAdvanced"]
+      properties:
+        outcome:
+          type: "string"
+          const: "ADMITTED"
+        candidate:
+          $ref: "#/components/schemas/GateCandidate"
+        venueName:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        examDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        reportingTimeHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        admittedAt:
+          type: "string"
+          format: "date-time"
+        statusAdvanced:
+          description: "true when this admission moved SLOT_ASSIGNED to PHYSICAL_TEST_SCHEDULED."
+          type: "boolean"
+
+    GateAlreadyAdmitted409:
+      description: "The QR was already spent. Checked before venue and day, so a copied screenshot is a duplicate at any gate."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate", "admittedAt", "venueName", "admittedBySelf"]
+      properties:
+        error:
+          type: "string"
+          const: "ALREADY_ADMITTED"
+        candidate:
+          $ref: "#/components/schemas/GateCandidate"
+        admittedAt:
+          type: "string"
+          format: "date-time"
+        venueName:
+          description: "Where the first admission happened."
+          type: "string"
+        admittedBySelf:
+          type: "boolean"
+
+    GateNotAdmissible409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate", "currentStatus"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_ADMISSIBLE"
+        candidate:
+          $ref: "#/components/schemas/GateCandidate"
+        currentStatus:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{0,63}$"
+
+    GateIdentityMismatch409:
+      description: "The national ID on the card is not this applicant's. Audited."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate"]
+      properties:
+        error:
+          type: "string"
+          const: "IDENTITY_MISMATCH"
+        candidate:
+          $ref: "#/components/schemas/GateCandidate"
+
+    GateWrongVenue409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "ticketVenueName"]
+      properties:
+        error:
+          type: "string"
+          const: "WRONG_VENUE"
+        ticketVenueName:
+          type: "string"
+
+    GateWrongDay409:
+      description: "TOO_EARLY or EXPIRED: today in Africa/Kigali is not the exam day."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "examDate"]
+      properties:
+        error:
+          type: "string"
+          enum: ["TOO_EARLY", "EXPIRED"]
+        examDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+
+    GateConflict409:
+      oneOf:
+        - $ref: "#/components/schemas/GateAlreadyAdmitted409"
+        - $ref: "#/components/schemas/GateNotAdmissible409"
+        - $ref: "#/components/schemas/GateIdentityMismatch409"
+        - $ref: "#/components/schemas/GateWrongVenue409"
+        - $ref: "#/components/schemas/GateWrongDay409"
+
+    GateInvalidTicket422:
+      description: "The QR is not a ticket of this agency: malformed, another agency's, unknown, or not the stored (signed) token."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "reason"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_TICKET"
+        reason:
+          type: "string"
+          enum: ["MALFORMED_TICKET", "WRONG_AGENCY", "UNKNOWN_TICKET", "TICKET_NOT_ISSUED"]
+
     Uuid:
       type: "string"
       format: "uuid"
@@ -1583,7 +1790,7 @@ components:
       properties:
         state:
           type: "string"
-          enum: ["READY", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
+          enum: ["READY", "ADMITTED", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
         agency:
           $ref: "#/components/schemas/Agency"
         processingCode:
@@ -1594,6 +1801,20 @@ components:
           type: "string"
         invitation:
           $ref: "#/components/schemas/ExamInvitationPayload"
+        admission:
+          $ref: "#/components/schemas/ExamInvitationAdmission"
+
+    ExamInvitationAdmission:
+      description: "ADR-034. Present only in state ADMITTED: where and when the single-use QR was spent. The QR itself is never sent again."
+      type: "object"
+      additionalProperties: false
+      required: ["venueName", "admittedAt"]
+      properties:
+        venueName:
+          type: "string"
+        admittedAt:
+          type: "string"
+          format: "date-time"
 
     ExamInvitationPayload:
       type: "object"

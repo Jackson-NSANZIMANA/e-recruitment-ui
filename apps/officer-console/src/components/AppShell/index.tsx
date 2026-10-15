@@ -21,6 +21,8 @@ import { MenuList } from "@atlaskit/side-nav-items/menu-list";
 import DashboardIcon from "@atlaskit/icon/core/dashboard";
 import AppsIcon from "@atlaskit/icon/core/apps";
 import PersonAddIcon from "@atlaskit/icon/core/person-add";
+import PersonAddedIcon from "@atlaskit/icon/core/person-added";
+import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 
 import { ConnectionStatus } from "../ConnectionStatus/index.js";
@@ -49,6 +51,8 @@ export interface AppShellProps {
  */
 export function AppShell({ children }: AppShellProps): React.ReactElement {
   const { t } = useTranslation();
+  // Navigation only — the edge and the owning service enforce admission.gate.
+  const canAdmit = useOfficerSession()?.permissions.includes("admission.gate") ?? false;
 
   return (
     <Root>
@@ -94,6 +98,14 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
             >
               {t("nav.walk_in")}
             </LinkMenuItem>
+            {canAdmit && (
+              <LinkMenuItem
+                href="/gate"
+                elemBefore={<PersonAddedIcon label="" color="currentColor" />}
+              >
+                {t("nav.gate")}
+              </LinkMenuItem>
+            )}
           </MenuList>
         </SideNavBody>
       </SideNav>

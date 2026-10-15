@@ -1,13 +1,13 @@
 # ════════════════════════════════════════════════════════════════
 # application-service — the state owner and the officer front door.
 #
-# HAND-AUTHORED from all nine controllers and src/main.ts; the pinned backend
+# HAND-AUTHORED from all ten controllers and src/main.ts; the pinned backend
 # commit is info.x-usrp-backend-sha. Every operation in this document is
 # x-usrp-verified: controller-verbatim — the request and response shapes were
 # transcribed from the named controller file, field by field. Nothing here is
 # derived from a commit message or a selfcheck summary.
 #
-# Twenty-five business operations across twenty-three paths (GET and POST share
+# Twenty-six business operations across twenty-four paths (GET and POST share
 # /v1/applications and /v1/campaigns), plus two probes.
 # ════════════════════════════════════════════════════════════════
 openapi: "3.1.0"
@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "bd939f61b3fd2f44299c11229783561f6bee1a0c"
+  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -655,6 +655,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CampaignError500"
+
+  /v1/applications/admissions/gate:
+    post:
+      operationId: "decideGateAdmission"
+      summary: "Spend a candidate's exam QR at the venue gate — the decision (BUILD-003, ADR-034)"
+      description: >-
+        OFFICER, admission.gate, reached ONLY through identity-service's gate
+        front door, which forwards the officer's own bearer token and the HASH of
+        the national ID on the card. One transaction as the officer's agency DB
+        role: lock the application, decide in contract order (malformed, wrong
+        agency, unknown, not the stored token, already admitted, not admissible,
+        wrong venue, not the exam day in Africa/Kigali, identity), admit at most
+        once (UNIQUE application and ticket), advance SLOT_ASSIGNED to
+        PHYSICAL_TEST_SCHEDULED, log every attempt and stage the audit.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/gate-admission.controller.ts (GATE_ADMISSION_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        description: >-
+          { qrToken (1..4096), gateVenueName (1..200), and the 64-hex HMAC of the
+          card's national ID }. Built ONLY by identity-service, the sole holder
+          of the HMAC key. Deliberately not modelled as a schema here: the
+          national-id hash is service-internal and must have no representation
+          in shipped browser code (lint rule no-national-id-hash).
+      responses:
+        "200":
+          description: "Admitted; the QR is now spent."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateDecisionAdmitted200"
+        "400":
+          description: "INVALID_REQUEST (shape)."
+        "401":
+          description: "No or invalid officer token."
+        "403":
+          description: "PERMISSION_DENIED — only admission.gate (the screening post) admits."
+        "409":
+          description: "A real ticket refused here and now."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateDecisionConflict409"
+        "422":
+          description: "INVALID_TICKET."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateDecisionInvalidTicket422"
+        "500":
+          description: "APPLICATION_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
 
   /v1/applications/exam-invitation/by-applicant:
     get:
@@ -1693,7 +1750,7 @@ components:
       properties:
         state:
           type: "string"
-          enum: ["READY", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
+          enum: ["READY", "ADMITTED", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
         agency:
           $ref: "#/components/schemas/Agency"
         processingCode:
@@ -1704,6 +1761,20 @@ components:
           type: "string"
         invitation:
           $ref: "#/components/schemas/ExamInvitationPayload"
+        admission:
+          $ref: "#/components/schemas/ExamInvitationAdmission"
+
+    ExamInvitationAdmission:
+      description: "ADR-034. Present only in state ADMITTED: where and when the single-use QR was spent."
+      type: "object"
+      additionalProperties: false
+      required: ["venueName", "admittedAt"]
+      properties:
+        venueName:
+          type: "string"
+        admittedAt:
+          type: "string"
+          format: "date-time"
 
     ExamInvitationPayload:
       type: "object"
@@ -2067,6 +2138,142 @@ components:
             - "CAMPAIGN_READ_ERROR"
             - "CAMPAIGN_PERSISTENCE_ERROR"
             - "INTERNAL_ERROR"
+
+    GateDecisionCandidate:
+      description: "The candidate as the gate officer needs them: public identifiers only."
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "processingCode", "category"]
+      properties:
+        applicationId:
+          type: "string"
+          format: "uuid"
+        processingCode:
+          type: "string"
+          minLength: 1
+          maxLength: 32
+        category:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{0,63}$"
+
+    GateDecisionAdmitted200:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome", "candidate", "venueName", "examDate", "reportingTimeHour", "admittedAt", "statusAdvanced"]
+      properties:
+        outcome:
+          type: "string"
+          const: "ADMITTED"
+        candidate:
+          $ref: "#/components/schemas/GateDecisionCandidate"
+        venueName:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        examDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        reportingTimeHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        admittedAt:
+          type: "string"
+          format: "date-time"
+        statusAdvanced:
+          description: "true when this admission moved SLOT_ASSIGNED to PHYSICAL_TEST_SCHEDULED."
+          type: "boolean"
+
+    GateDecisionAlreadyAdmitted409:
+      description: "The QR was already spent. Checked before venue and day, so a copied screenshot is a duplicate at any gate."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate", "admittedAt", "venueName", "admittedBySelf"]
+      properties:
+        error:
+          type: "string"
+          const: "ALREADY_ADMITTED"
+        candidate:
+          $ref: "#/components/schemas/GateDecisionCandidate"
+        admittedAt:
+          type: "string"
+          format: "date-time"
+        venueName:
+          description: "Where the first admission happened."
+          type: "string"
+        admittedBySelf:
+          type: "boolean"
+
+    GateDecisionNotAdmissible409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate", "currentStatus"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_ADMISSIBLE"
+        candidate:
+          $ref: "#/components/schemas/GateDecisionCandidate"
+        currentStatus:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{0,63}$"
+
+    GateDecisionIdentityMismatch409:
+      description: "The national ID on the card is not this applicant's. Audited."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "candidate"]
+      properties:
+        error:
+          type: "string"
+          const: "IDENTITY_MISMATCH"
+        candidate:
+          $ref: "#/components/schemas/GateDecisionCandidate"
+
+    GateDecisionWrongVenue409:
+      type: "object"
+      additionalProperties: false
+      required: ["error", "ticketVenueName"]
+      properties:
+        error:
+          type: "string"
+          const: "WRONG_VENUE"
+        ticketVenueName:
+          type: "string"
+
+    GateDecisionWrongDay409:
+      description: "TOO_EARLY or EXPIRED: today in Africa/Kigali is not the exam day."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "examDate"]
+      properties:
+        error:
+          type: "string"
+          enum: ["TOO_EARLY", "EXPIRED"]
+        examDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+
+    GateDecisionConflict409:
+      oneOf:
+        - $ref: "#/components/schemas/GateDecisionAlreadyAdmitted409"
+        - $ref: "#/components/schemas/GateDecisionNotAdmissible409"
+        - $ref: "#/components/schemas/GateDecisionIdentityMismatch409"
+        - $ref: "#/components/schemas/GateDecisionWrongVenue409"
+        - $ref: "#/components/schemas/GateDecisionWrongDay409"
+
+    GateDecisionInvalidTicket422:
+      description: "The QR is not a ticket of this agency: malformed, another agency's, unknown, or not the stored (signed) token."
+      type: "object"
+      additionalProperties: false
+      required: ["error", "reason"]
+      properties:
+        error:
+          type: "string"
+          const: "INVALID_TICKET"
+        reason:
+          type: "string"
+          enum: ["MALFORMED_TICKET", "WRONG_AGENCY", "UNKNOWN_TICKET", "TICKET_NOT_ISSUED"]
 
     ApplicationChannel:
       type: "string"

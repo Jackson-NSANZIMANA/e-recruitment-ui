@@ -75,6 +75,10 @@ export type {
   VerifyAtVenueResponse,
   ExamInvitationState,
   ExamInvitationView,
+  GateCandidate,
+  AdmitAtGateInput,
+  InvalidTicketReason,
+  GateAdmissionResult,
 } from './wire.js';
 
 // ── Query keys and the invalidation map ──
@@ -132,6 +136,7 @@ export {
 export { listPublicCampaigns, getPublicCampaign } from './operations/campaigns.js';
 export { getMyDocumentChecklist, getDocumentChecklist, verifyDocumentAtVenue } from './operations/documents.js';
 export { getMyExamInvitation } from './operations/exam-invitation.js';
+export { admitAtGate, gateResultFromRefusal } from './operations/gate.js';
 
 // ── TanStack Query hooks ──
 export {
@@ -158,4 +163,5 @@ export {
 } from './queries/applicant.js';
 export { usePublicCampaigns, usePublicCampaign } from './queries/campaigns.js';
 export { useMyDocumentChecklist, useDocumentChecklist, useVerifyDocumentAtVenue } from './queries/documents.js';
-export { useMyExamInvitation, EXAM_INVITATION_POLL_MS } from './queries/exam-invitation.js';
+export { useMyExamInvitation, EXAM_INVITATION_POLL_MS, EXAM_INVITATION_READY_POLL_MS } from './queries/exam-invitation.js';
+export { useAdmitAtGate } from './queries/gate.js';

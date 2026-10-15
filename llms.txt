@@ -89,9 +89,9 @@ pnpm security:scan:selftest  # proves the scanner in both directions
 
 ## Current state, honestly
 
-- The browser edge registry and backend edge registry are reconciled at backend SHA `bd939f61b3fd2f44299c11229783561f6bee1a0c`.
+- The browser edge registry and backend edge registry are reconciled at backend SHA `df80f6517247a00ffd99518fd31bd7c68dd70d65`.
 - The first flagship surface is `/applications` and `/applications/:id`; its state contract is executable and currently passes 42 assertions.
-- Contract drift is green at 850 assertions with 0 findings against backend `bd939f6`; edge-dev real-socket proof is green at 143 assertions.
+- Contract drift is green at 877 assertions with 0 findings against backend `df80f65`; edge-dev real-socket proof is green at 143 assertions.
 - `OFFLINE_CAPTURE_CAN_SYNC` remains false: field-sync reachability does not yet establish durable encrypted capture/replay/conflict support.
 - Full Storybook, visual, accessibility, security, and E2E results must be reported from their gates; do not infer them from typecheck or surface verification.
 

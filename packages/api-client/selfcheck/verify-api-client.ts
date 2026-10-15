@@ -308,6 +308,41 @@ ok('the exam QR is a GET on the /me route, id in the query, no body',
   qrClient.last().init.method === 'GET' && qrClient.last().init.body === undefined);
 ok('…and the state is surfaced as-is', qrView.state === 'PENDING');
 
+// ── Gate admission (BUILD-003, ADR-034) ──
+import { admitAtGate, gateResultFromRefusal } from '../src/operations/gate.js';
+const GATE_CANDIDATE = { applicationId: '22222222-2222-4222-8222-222222222222', processingCode: 'RDF-90001', category: 'GENERAL_ENLISTMENT' };
+const gateOk = capturingClient(200, { outcome: 'ADMITTED', candidate: GATE_CANDIDATE, venueName: 'ULK Stadium', examDate: '2026-12-01', reportingTimeHour: 8, admittedAt: '2026-12-01T06:01:00.000Z', statusAdvanced: true });
+const admitted = await admitAtGate(gateOk.client, { qrToken: 'USRP-SLOT.v1.a.b', nationalId: '1199880012345678', gateVenueName: 'ULK Stadium' });
+ok('the gate POSTs to the officer edge route with CSRF', gateOk.last().url === '/edge/v1/gate/admissions' && gateOk.last().init.method === 'POST' &&
+  (gateOk.last().init.headers as Record<string, string>)['x-csrf-token'] === 'csrf-echo');
+ok('…sending exactly the scanned QR, the card number and the gate venue', gateOk.last().init.body === JSON.stringify({ qrToken: 'USRP-SLOT.v1.a.b', nationalId: '1199880012345678', gateVenueName: 'ULK Stadium' }));
+ok('…and ADMITTED is a result', admitted.outcome === 'ADMITTED' && admitted.candidate.processingCode === 'RDF-90001');
+const dup = await admitAtGate(capturingClient(409, { error: 'ALREADY_ADMITTED', candidate: GATE_CANDIDATE, admittedAt: '2026-12-01T06:01:00.000Z', venueName: 'ULK Stadium', admittedBySelf: false }).client,
+  { qrToken: 'x', nationalId: '1199880012345678', gateVenueName: 'ULK Stadium' });
+ok('a spent QR is a RESULT (ALREADY_ADMITTED), not a thrown error', dup.outcome === 'ALREADY_ADMITTED' && !dup.admittedBySelf);
+const forgedQr = await admitAtGate(capturingClient(422, { error: 'INVALID_TICKET', reason: 'TICKET_NOT_ISSUED' }).client,
+  { qrToken: 'x', nationalId: '1199880012345678', gateVenueName: 'ULK Stadium' });
+ok('an invalid ticket is a RESULT with its reason', forgedQr.outcome === 'INVALID_TICKET' && forgedQr.reason === 'TICKET_NOT_ISSUED');
+let threw: unknown = null;
+try {
+  await admitAtGate(capturingClient(409, { error: 'SOMETHING_NEW' }).client, { qrToken: 'x', nationalId: '1199880012345678', gateVenueName: 'v' });
+} catch (e) { threw = e; }
+ok('an undocumented refusal still THROWS (never guessed into a result)', threw instanceof ApiError);
+threw = null;
+try {
+  await admitAtGate(capturingClient(503, { error: 'UPSTREAM_UNAVAILABLE' }).client, { qrToken: 'x', nationalId: '1199880012345678', gateVenueName: 'v' });
+} catch (e) { threw = e; }
+ok('an infrastructure fault throws', threw instanceof ApiError);
+ok('refusal mapping: every documented shape', [
+  gateResultFromRefusal(409, 'NOT_ADMISSIBLE', { candidate: GATE_CANDIDATE, currentStatus: 'WITHDRAWN' })?.outcome,
+  gateResultFromRefusal(409, 'IDENTITY_MISMATCH', { candidate: GATE_CANDIDATE })?.outcome,
+  gateResultFromRefusal(409, 'WRONG_VENUE', { ticketVenueName: 'Amahoro' })?.outcome,
+  gateResultFromRefusal(409, 'TOO_EARLY', { examDate: '2026-12-01' })?.outcome,
+  gateResultFromRefusal(409, 'EXPIRED', { examDate: '2026-12-01' })?.outcome,
+].join() === 'NOT_ADMISSIBLE,IDENTITY_MISMATCH,WRONG_VENUE,TOO_EARLY,EXPIRED');
+ok('refusal mapping: a shape missing its detail is not a result', gateResultFromRefusal(409, 'IDENTITY_MISMATCH', {}) === null &&
+  gateResultFromRefusal(422, 'INVALID_TICKET', { reason: 'EXPIRED' }) === null);
+
 const total = passed + failures.length;
 if (failures.length > 0) {
   process.stderr.write(`\n  ✗ api-client selfcheck FAILED — ${failures.length} of ${total} assertions\n\n`);
