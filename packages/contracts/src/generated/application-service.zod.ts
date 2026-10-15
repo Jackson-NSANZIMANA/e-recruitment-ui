@@ -533,13 +533,6 @@ export const GateDecisionInvalidTicket422Schema = z
     "reason": z.enum(['MALFORMED_TICKET', 'WRONG_AGENCY', 'UNKNOWN_TICKET', 'TICKET_NOT_ISSUED']),
   }).strict();
 
-export const GateDecisionRequestSchema = z
-  .object({
-    "qrToken": z.string().min(1).max(4096),
-    "gateVenueName": z.string().min(1).max(200),
-    "nationalIdHash": z.string().regex(/^[0-9a-f]{64}$/),
-  }).strict();
-
 export const IdentityNotVerified409Schema = z
   .object({
     "status": z.literal('IDENTITY_NOT_VERIFIED'),
@@ -1076,8 +1069,8 @@ export const applicationServiceOperations = {
     path: "/v1/applications/admissions/gate",
     auth: ["officer"],
     reach: "service-internal",
-    request: GateDecisionRequestSchema,
-    requestMediaType: "application/json",
+    request: null,
+    requestMediaType: null,
     query: [],
     responses: {
       "200": GateDecisionAdmitted200Schema,

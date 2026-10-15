@@ -67,7 +67,6 @@ import type {
   GateDecisionWrongVenue409Schema,
   GateDecisionConflict409Schema,
   GateDecisionInvalidTicket422Schema,
-  GateDecisionRequestSchema,
   IdentityNotVerified409Schema,
   InvalidAcademicInput422Schema,
   InvalidApplicantId400Schema,
@@ -164,7 +163,6 @@ export type GateDecisionWrongDay409 = z.infer<typeof GateDecisionWrongDay409Sche
 export type GateDecisionWrongVenue409 = z.infer<typeof GateDecisionWrongVenue409Schema>;
 export type GateDecisionConflict409 = z.infer<typeof GateDecisionConflict409Schema>;
 export type GateDecisionInvalidTicket422 = z.infer<typeof GateDecisionInvalidTicket422Schema>;
-export type GateDecisionRequest = z.infer<typeof GateDecisionRequestSchema>;
 export type IdentityNotVerified409 = z.infer<typeof IdentityNotVerified409Schema>;
 export type InvalidAcademicInput422 = z.infer<typeof InvalidAcademicInput422Schema>;
 export type InvalidApplicantId400 = z.infer<typeof InvalidApplicantId400Schema>;

@@ -675,10 +675,12 @@ paths:
       x-usrp-verified: "controller-verbatim"
       requestBody:
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GateDecisionRequest"
+        description: >-
+          { qrToken (1..4096), gateVenueName (1..200), and the 64-hex HMAC of the
+          card's national ID }. Built ONLY by identity-service, the sole holder
+          of the HMAC key. Deliberately not modelled as a schema here: the
+          national-id hash is service-internal and must have no representation
+          in shipped browser code (lint rule no-national-id-hash).
       responses:
         "200":
           description: "Admitted; the QR is now spent."
@@ -2136,24 +2138,6 @@ components:
             - "CAMPAIGN_READ_ERROR"
             - "CAMPAIGN_PERSISTENCE_ERROR"
             - "INTERNAL_ERROR"
-
-    GateDecisionRequest:
-      type: "object"
-      additionalProperties: false
-      required: ["qrToken", "gateVenueName", "nationalIdHash"]
-      properties:
-        qrToken:
-          type: "string"
-          minLength: 1
-          maxLength: 4096
-        gateVenueName:
-          type: "string"
-          minLength: 1
-          maxLength: 200
-        nationalIdHash:
-          description: "HMAC of the card's national ID, computed by identity-service. Never the number."
-          type: "string"
-          pattern: "^[0-9a-f]{64}$"
 
     GateDecisionCandidate:
       description: "The candidate as the gate officer needs them: public identifiers only."
