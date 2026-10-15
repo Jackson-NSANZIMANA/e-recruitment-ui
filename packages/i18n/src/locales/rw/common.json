@@ -5,7 +5,8 @@
     "walk_in": "Umurongo wo kwinjira ako kanya",
     "scheduling": "Gateganya",
     "settings": "Igenamiterere",
-    "logout": "Sohoka"
+    "logout": "Sohoka",
+    "gate": "Irembo ry'ikizamini"
   },
   "auth": {
     "send_code": "Ohereza kode",
@@ -368,7 +369,73 @@
       "WALK_IN": {
         "title": "Kwiyandikisha ku kibuga",
         "body": "Wiyandikishije ku kibuga ku munsi w’ikizamini, ntabwo rero hari ubutumire bwa QR."
+      },
+      "ADMITTED": {
+        "title": "Winjiye",
+        "body": "Kode QR yawe yakoreshejwe i {{venue}} ku wa {{time}}. Ntishobora kongera gukoreshwa."
       }
+    }
+  },
+  "gate": {
+    "title": "Irembo ry'aho ikizamini kibera",
+    "intro": "Sikana kode QR y'ikizamini y'umukandida, genzura indangamuntu ye imbonankubone, hanyuma umwinjize. Buri kode QR yinjiza umuntu umwe, rimwe gusa.",
+    "venue_label": "Aho iri rembo riri",
+    "venue_help": "Nk'uko byanditse ku butumire bw'abakandida. Bibikwa kuri iki gikoresho.",
+    "venue_set": "Koresha aha hantu",
+    "venue_change": "Hindura aho uri",
+    "venue_current": "Aho uri: {{venue}}",
+    "qr_label": "Kode QR y'ikizamini",
+    "qr_help": "Sikana ukoresheje kamera, cyangwa icyuma gisikana gifatwa mu ntoki muri iki kibanza.",
+    "qr_captured": "Kode QR yafashwe",
+    "qr_rescan": "Ongera usikane",
+    "nid_label": "Nimero y'indangamuntu (iri ku ikarita)",
+    "nid_help": "Imibare 16 yandukuwe ku ikarita nyirizina. Igenzurwa kuri dosiye, ntibikwa.",
+    "nid_invalid": "Nimero y'indangamuntu igira imibare 16.",
+    "admit": "Injiza umukandida",
+    "next": "Umukandida ukurikira",
+    "no_permission_title": "Inshingano zawe ntizikwemerera kwinjiza ku irembo",
+    "no_permission_body": "Kwinjiza ku irembo bigenewe umukozi ushinzwe igenzura.",
+    "failed_title": "Ntiyinjiye — seriveri ntiboneka",
+    "failed_body": "Nta cyanditswe. Genzura umuyoboro hanyuma wongere ugerageze.",
+    "self": " (nawe)",
+    "outcomes": {
+      "ADMITTED": {
+        "title": "Yinjiye",
+        "body": "{{code}} · {{category}} — kwitaba mbere ya {{hour}}. Iyi kode QR yamaze gukoreshwa."
+      },
+      "ALREADY_ADMITTED": {
+        "title": "Kode QR yamaze gukoreshwa — ntumwinjize",
+        "body": "Iyi kode QR yakoreshejwe i {{venue}} saa {{time}}{{by}}. Ohereza umukandida ku mugenzuzi."
+      },
+      "IDENTITY_MISMATCH": {
+        "title": "Indangamuntu ntihuye — ntumwinjize",
+        "body": "Nimero y'indangamuntu iri ku ikarita si iy'umukandida {{code}}. Iki gikorwa cyanditswe."
+      },
+      "NOT_ADMISSIBLE": {
+        "title": "Ntiyemerewe iki kizamini",
+        "body": "{{code}} ntashobora kwinjira (uko dosiye ihagaze: {{status}})."
+      },
+      "WRONG_VENUE": {
+        "title": "Si aha hantu",
+        "body": "Iyi kode QR ni iy'i {{venue}}. Muyobore ahongaho."
+      },
+      "TOO_EARLY": {
+        "title": "Si uyu munsi",
+        "body": "Iyi kode QR ni iy'ikizamini cyo ku wa {{date}}."
+      },
+      "EXPIRED": {
+        "title": "Kode QR yarangije igihe",
+        "body": "Umunsi w'ikizamini w'iyi kode QR ({{date}}) warenze."
+      },
+      "INVALID_TICKET": {
+        "title": "Kode QR itemewe — ntumwinjize"
+      }
+    },
+    "invalid_reasons": {
+      "MALFORMED_TICKET": "Iyi si kode QR y'ikizamini.",
+      "WRONG_AGENCY": "Iyi kode QR ni iy'ikizamini cy'urundi rwego.",
+      "UNKNOWN_TICKET": "Nta dosiye y'uru rwego ihuye n'iyi kode QR.",
+      "TICKET_NOT_ISSUED": "Iyi kode QR ntiyatanzwe na sisitemu: ishobora kuba yarahinduwe cyangwa yarahimbwe."
     }
   }
 }

@@ -5,7 +5,8 @@
     "walk_in": "Walk-in Lane",
     "scheduling": "Scheduling",
     "settings": "Settings",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "gate": "Venue gate"
   },
   "auth": {
     "send_code": "Send code",
@@ -368,7 +369,73 @@
       "WALK_IN": {
         "title": "Walk-in registration",
         "body": "You were registered on site on exam day, so there is no QR invitation."
+      },
+      "ADMITTED": {
+        "title": "You have been admitted",
+        "body": "Your QR code was used at {{venue}} on {{time}}. It cannot be used again."
       }
+    }
+  },
+  "gate": {
+    "title": "Venue gate",
+    "intro": "Scan the candidate's exam QR, check their national ID card in person, then admit. Each QR admits one person, once.",
+    "venue_label": "This gate's venue",
+    "venue_help": "Exactly as printed on the candidates' invitations. Remembered on this device.",
+    "venue_set": "Use this venue",
+    "venue_change": "Change venue",
+    "venue_current": "Gate venue: {{venue}}",
+    "qr_label": "Exam QR code",
+    "qr_help": "Scan with the camera, or with a hand-held scanner into this field.",
+    "qr_captured": "QR captured",
+    "qr_rescan": "Scan again",
+    "nid_label": "National ID number (from the card)",
+    "nid_help": "16 digits typed from the physical card. Checked against the application, never stored.",
+    "nid_invalid": "A national ID number has 16 digits.",
+    "admit": "Admit candidate",
+    "next": "Next candidate",
+    "no_permission_title": "Your role cannot admit at the gate",
+    "no_permission_body": "Gate admission is reserved for the screening post.",
+    "failed_title": "Not admitted — the server could not be reached",
+    "failed_body": "Nothing was recorded. Check the connection and try again.",
+    "self": " (by you)",
+    "outcomes": {
+      "ADMITTED": {
+        "title": "Admitted",
+        "body": "{{code}} · {{category}} — report by {{hour}}. This QR is now used."
+      },
+      "ALREADY_ADMITTED": {
+        "title": "QR already used — do not admit",
+        "body": "This QR was used at {{venue}} at {{time}}{{by}}. Refer the candidate to the supervisor."
+      },
+      "IDENTITY_MISMATCH": {
+        "title": "ID card does not match — do not admit",
+        "body": "The national ID on the card is not the applicant of {{code}}. The attempt is recorded."
+      },
+      "NOT_ADMISSIBLE": {
+        "title": "Not cleared for this exam",
+        "body": "{{code}} cannot be admitted (status: {{status}})."
+      },
+      "WRONG_VENUE": {
+        "title": "Wrong venue",
+        "body": "This QR is for {{venue}}. Direct the candidate there."
+      },
+      "TOO_EARLY": {
+        "title": "Not today",
+        "body": "This QR is for the exam on {{date}}."
+      },
+      "EXPIRED": {
+        "title": "QR expired",
+        "body": "The exam day for this QR ({{date}}) has passed."
+      },
+      "INVALID_TICKET": {
+        "title": "Invalid QR — do not admit"
+      }
+    },
+    "invalid_reasons": {
+      "MALFORMED_TICKET": "This is not an exam QR code.",
+      "WRONG_AGENCY": "This QR is for another agency's exam.",
+      "UNKNOWN_TICKET": "No application of this agency matches this QR.",
+      "TICKET_NOT_ISSUED": "This QR was not issued by the system: it may be altered or forged."
     }
   }
 }
