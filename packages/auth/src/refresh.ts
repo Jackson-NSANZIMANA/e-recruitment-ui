@@ -26,6 +26,13 @@ export const REFRESH_AT_FRACTION_REMAINING = 0.25;
 export const MIN_REFRESH_DELAY_MS = 15_000;
 /** Warn the user this far before the absolute ceiling. */
 export const ABSOLUTE_WARNING_WINDOW_MS = 5 * 60 * 1000;
+/**
+ * The largest delay setTimeout honours (2^31 - 1 ms, about 24.8 days). Anything
+ * larger overflows and fires IMMEDIATELY, which would refresh at once and, on
+ * a refused refresh, sign the user out. Reached by a long-lived session or a
+ * device clock far behind the server's.
+ */
+export const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export type RefreshPlan =
   /** Refresh in `delayMs`. The normal case for an active session. */
@@ -102,6 +109,11 @@ export function startRefreshLoop(options: RefreshLoopOptions): () => void {
       options.onWarn(plan.endsAt, plan.millisLeft);
       // Re-check at the ceiling itself so the sign-out is explained, not silent.
       handle = setTimer(() => { options.onExpired('absolute'); }, plan.millisLeft);
+      return;
+    }
+    if (plan.delayMs > MAX_TIMER_DELAY_MS) {
+      // Too far out for one timer: wake at the limit and plan again.
+      handle = setTimer(() => { schedule(session); }, MAX_TIMER_DELAY_MS);
       return;
     }
     handle = setTimer(() => {

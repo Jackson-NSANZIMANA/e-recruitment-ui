@@ -24,7 +24,7 @@ import {
   OTP_TTL_MS,
   type OtpState,
 } from '../src/otp-machine.js';
-import { planRefresh, ABSOLUTE_WARNING_WINDOW_MS, MIN_REFRESH_DELAY_MS, startRefreshLoop } from '../src/refresh.js';
+import { planRefresh, ABSOLUTE_WARNING_WINDOW_MS, MAX_TIMER_DELAY_MS, MIN_REFRESH_DELAY_MS, startRefreshLoop } from '../src/refresh.js';
 import {
   isApplicantSession,
   isOfficerSession,
@@ -278,6 +278,29 @@ ok('a session inside the warning window warns rather than refreshing forever',
     });
     stop();
     return sawWarning;
+  })());
+ok('a refresh further out than setTimeout can hold never fires early',
+  (() => {
+    // Expiries decades away (a device clock far behind the server) give a delay
+    // past 2^31-1 ms, which a real setTimeout would fire at once.
+    let refreshed = 0;
+    const delays: number[] = [];
+    let pending: (() => void) | null = null;
+    const far = { ...officer, idleExpiresAt: '2099-01-01T00:00:00.000Z', absoluteExpiresAt: '2099-01-02T00:00:00.000Z' };
+    const stop = startRefreshLoop({
+      session: far,
+      refresh: async () => { refreshed += 1; return null; },
+      onRefreshed: () => {},
+      onWarn: () => {},
+      onExpired: () => {},
+      now: () => T0,
+      setTimer: (callback, delayMs) => { delays.push(delayMs); pending = callback; return delays.length; },
+      clearTimer: () => {},
+    });
+    const first = pending as (() => void) | null;
+    first?.();
+    stop();
+    return refreshed === 0 && delays.length === 2 && delays.every((d) => d <= MAX_TIMER_DELAY_MS);
   })());
 ok('the warning window is five minutes', ABSOLUTE_WARNING_WINDOW_MS === 300_000);
 ok('warned flag exercised', warned || !warned);
