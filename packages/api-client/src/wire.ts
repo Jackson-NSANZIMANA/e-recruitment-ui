@@ -257,3 +257,32 @@ export interface UploadDocumentInput {
   readonly documentType: string;
   readonly file: Blob;
 }
+
+// ── Advisory document checklist (ADR-032) ───────────────────────
+
+export type DocumentSatisfaction =
+  | 'API_VERIFIED'
+  | 'UPLOADED_CLEARED'
+  | 'VENUE_VERIFIED'
+  | 'AWAITING_REGISTRY'
+  | 'UNDER_REVIEW'
+  | 'REJECTED'
+  | 'MISSING';
+
+/** ADVISORY: never a gate. No score, flag, object key or officer id. */
+export interface DocumentChecklist {
+  readonly agency: Agency;
+  readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';
+  readonly complete: boolean;
+  readonly items: readonly {
+    readonly documentType: string;
+    readonly satisfaction: DocumentSatisfaction;
+    /** NIDA | NESA | HEC | RIB, or null when it can only be uploaded/presented. */
+    readonly registry: string | null;
+  }[];
+}
+
+export interface VerifyAtVenueResponse {
+  readonly status: 'RECORDED' | 'ALREADY_RECORDED';
+  readonly checklist: DocumentChecklist;
+}

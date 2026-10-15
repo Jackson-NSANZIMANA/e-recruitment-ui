@@ -284,6 +284,21 @@ const sentForm = uploadInit.body as FormData;
 ok('…carrying exactly applicationId, documentType, file — never an applicant id',
   [...sentForm.keys()].sort().join(',') === 'applicationId,documentType,file');
 
+// ── ADR-032 checklist operations ──
+import { getDocumentChecklist, getMyDocumentChecklist, verifyDocumentAtVenue } from '../src/operations/documents.js';
+const ck = capturingClient(200, { agency: 'RDF', source: 'POLICY_VERSION', complete: false, items: [] });
+await getMyDocumentChecklist(ck.client, '123e4567-e89b-12d3-a456-426614174001');
+ok('the citizen checklist is a GET on the /me route with the id in the query',
+  ck.last().url === '/edge/v1/me/applications/document-checklist?applicationId=123e4567-e89b-12d3-a456-426614174001' && ck.last().init.method === 'GET');
+await getDocumentChecklist(ck.client, '123e4567-e89b-12d3-a456-426614174001');
+ok('the officer checklist uses the officer route', ck.last().url.startsWith('/edge/v1/applications/document-checklist?'));
+const venueClient = capturingClient(200, { status: 'RECORDED', checklist: { agency: 'RDF', source: 'POLICY_VERSION', complete: false, items: [] } });
+await verifyDocumentAtVenue(venueClient.client, { applicationId: '123e4567-e89b-12d3-a456-426614174001', documentType: 'GOOD_CONDUCT_CERTIFICATE' });
+ok('venue verification POSTs exactly applicationId + documentType with CSRF',
+  venueClient.last().url === '/edge/v1/applications/documents/verify-at-venue' &&
+  venueClient.last().init.body === JSON.stringify({ applicationId: '123e4567-e89b-12d3-a456-426614174001', documentType: 'GOOD_CONDUCT_CERTIFICATE' }) &&
+  new Headers(venueClient.last().init.headers).get('x-csrf-token') === 'csrf-echo');
+
 const total = passed + failures.length;
 if (failures.length > 0) {
   process.stderr.write(`\n  ✗ api-client selfcheck FAILED — ${failures.length} of ${total} assertions\n\n`);
