@@ -43,12 +43,20 @@ const PROBES: readonly string[] = ['/health', '/ready'];
  *   officerLogin           issues the officer bearer token; anonymous by nature
  *   requestApplicantOtp    starts citizen auth (ADR-018)
  *   verifyApplicantOtp     completes it and issues the opaque session
+ *   beginApplicantOnboarding  step 1 of citizen auth (ADR-029): National ID +
+ *                          date of birth against NIDA. Anonymous by nature; one
+ *                          uniform 422, durable per-ID lockout, strict limits.
+ *   listPublicCampaigns    BUILD-001 public read: open campaigns, safe
+ *   getPublicCampaign      projection only (no internal ids/policy/capacity).
  *   getSlotInvitationKey   scheduling-service, inline route in src/main.ts,
  *                          returns the key material used to validate a slot
  *                          invitation. Anonymous in the backend as read.
  */
 export const ANONYMOUS_BROWSER_OPERATIONS: readonly string[] = [
   'officerLogin',
+  'beginApplicantOnboarding',
+  'listPublicCampaigns',
+  'getPublicCampaign',
   'requestApplicantOtp',
   'verifyApplicantOtp',
   'getSlotInvitationKey',

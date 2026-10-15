@@ -1,14 +1,14 @@
 # ════════════════════════════════════════════════════════════════
 # application-service — the state owner and the officer front door.
 #
-# HAND-AUTHORED from all five controllers and src/main.ts at backend SHA
-# 06d9f9b. Every operation in this document is x-usrp-verified:
-# controller-verbatim — the request and response shapes were transcribed from
-# the named controller file, field by field. Nothing here is derived from a
-# commit message or a selfcheck summary.
+# HAND-AUTHORED from all nine controllers and src/main.ts; the pinned backend
+# commit is info.x-usrp-backend-sha. Every operation in this document is
+# x-usrp-verified: controller-verbatim — the request and response shapes were
+# transcribed from the named controller file, field by field. Nothing here is
+# derived from a commit message or a selfcheck summary.
 #
-# Thirteen business operations across twelve paths (GET and POST share
-# /v1/applications), plus two probes.
+# Twenty-five business operations across twenty-three paths (GET and POST share
+# /v1/applications and /v1/campaigns), plus two probes.
 # ════════════════════════════════════════════════════════════════
 openapi: "3.1.0"
 
@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab"
+  x-usrp-backend-sha: "bd939f61b3fd2f44299c11229783561f6bee1a0c"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -177,6 +177,638 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApplicationError500"
+
+  /v1/campaigns:
+    get:
+      operationId: "listPublicCampaigns"
+      summary: "The recruitment campaigns open for registration (public, BUILD-001)"
+      description: >-
+        UNAUTHENTICATED, safe projection. Returns ONLY campaigns in
+        REGISTRATION_OPEN. Each carries the PUBLIC code a citizen quotes when
+        applying. It deliberately omits internal ids, policy documents and
+        thresholds, coverage hashes, capacity and registration counts, officer
+        identities and anything audit-related.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-public-read.controller.ts (LIST_PUBLIC_CAMPAIGNS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "Open campaigns (possibly empty)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCampaignList200"
+        "500":
+          description: "CAMPAIGN_READ_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+    post:
+      operationId: "createCampaign"
+      summary: "Create a campaign draft (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+
+
+        Every target category must belong to the officer's agency
+        (CATEGORY_AGENCY_MISMATCH otherwise). The API chooses no policy values;
+        those arrive later through createCampaignPolicy.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignDraftRequest"
+      responses:
+        "201":
+          description: "Draft created, or the replay of its original response."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDraftCreated201"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "PUBLIC_CODE_ALREADY_EXISTS, CAMPAIGN_LABEL_ALREADY_EXISTS or CAMPAIGN_WRITE_CONFLICT."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "422":
+          description: "CATEGORY_AGENCY_MISMATCH, INVALID_REGISTRATION_WINDOW or INVALID_EXAMINATION_WINDOW."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/detail:
+    get:
+      operationId: "getPublicCampaign"
+      summary: "One published campaign by its public code (public, BUILD-001)"
+      description: >-
+        UNAUTHENTICATED. Exactly one `publicCode` query parameter. 404
+        CAMPAIGN_NOT_FOUND for a code that was never published.
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-public-read.controller.ts (READ_PUBLIC_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "publicCode"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            pattern: "^[A-Za-z0-9][A-Za-z0-9-]{2,63}$"
+      responses:
+        "200":
+          description: "The published campaign."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCampaignDetail200"
+        "400":
+          description: "INVALID_PUBLIC_CODE."
+        "404":
+          description: "CAMPAIGN_NOT_FOUND."
+        "500":
+          description: "CAMPAIGN_READ_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/policy:
+    post:
+      operationId: "createCampaignPolicy"
+      summary: "Create an immutable policy version for a draft (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+
+
+        policyDocument must define EXACTLY the campaign's target categories,
+        one entry each. Official thresholds (age, education, criminal, medical,
+        required documents, legal basis) are supplied by the authorised
+        officer; none is defaulted. Allowed only while the campaign is DRAFT.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_POLICY_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignPolicyRequest"
+      responses:
+        "201":
+          description: "Policy version created with its canonical SHA-256 digest."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignPolicyVersionCreated201"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "404":
+          description: "CAMPAIGN_NOT_FOUND: no such campaign in the officer's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "INVALID_STATE (not a draft) or POLICY_VERSION_CONFLICT."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "422":
+          description: "INVALID_POLICY or POLICY_CATEGORY_COVERAGE_MISMATCH."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/publish:
+    post:
+      operationId: "publishCampaign"
+      summary: "Publish a draft and open registration (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+
+
+        Requires a policy version and exactly one active scheduling session per
+        target district (configured on scheduling-service). The stored policy
+        version and coverage digest are frozen into the publication.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (PUBLISH_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignPublicCodeCommand"
+      responses:
+        "200":
+          description: "Published; registration is open."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignPublished200"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "404":
+          description: "CAMPAIGN_NOT_FOUND: no such campaign in the officer's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "INVALID_STATE, POLICY_NOT_SET, INCOMPLETE_COVERAGE, STALE_COVERAGE, SESSION_ALREADY_RESERVED, INVALID_CAPACITY, CAPACITY_DECISION_REQUIRED or POLICY_HASH_MISMATCH."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "422":
+          description: "DISTRICT_PROVINCE_MISMATCH, INVALID_REPORTING_HOUR or INVALID_SESSION_DATE in the stored session set."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/registration-close:
+    post:
+      operationId: "closeCampaignRegistration"
+      summary: "Close registration for an open campaign (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (CLOSE_CAMPAIGN_REGISTRATION_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignPublicCodeCommand"
+      responses:
+        "200":
+          description: "Registration closed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignLifecycle200"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "404":
+          description: "CAMPAIGN_NOT_FOUND: no such campaign in the officer's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "INVALID_STATE: the campaign is not REGISTRATION_OPEN."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/complete:
+    post:
+      operationId: "completeCampaign"
+      summary: "Complete a campaign after registration closes (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+
+
+        The only command that also accepts a pre-BUILD-001 LEGACY-<32 hex>
+        public code.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (COMPLETE_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignPublicCodeCommand"
+      responses:
+        "200":
+          description: "Campaign completed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignLifecycle200"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "404":
+          description: "CAMPAIGN_NOT_FOUND: no such campaign in the officer's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "INVALID_STATE: invalid lifecycle transition."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/campaigns/cancel:
+    post:
+      operationId: "cancelCampaign"
+      summary: "Cancel a draft or open campaign (officer, BUILD-001)"
+      description: >-
+        OFFICER-ONLY, BUILD-001. The agency and actor come from the verified
+        bearer token, never from the body. A UUID Idempotency-Key header is
+        REQUIRED; a replay of the same key and body returns the stored original
+        response with the header Idempotency-Replayed: true, and the edge never
+        retries this write on its own.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/campaign-control.controller.ts (CANCEL_CAMPAIGN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignPublicCodeCommand"
+      responses:
+        "200":
+          description: "Campaign cancelled."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignLifecycle200"
+        "400":
+          description: "INVALID_IDEMPOTENCY_KEY, INVALID_REQUEST, INVALID_PUBLIC_CODE or another field-level validation code."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "FORBIDDEN: not an officer, the officer lacks the campaign permission, or the database refused the agency-admin role."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "404":
+          description: "CAMPAIGN_NOT_FOUND: no such campaign in the officer's own agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "409":
+          description: "INVALID_STATE: only draft or open campaigns can be cancelled."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignCommandRejection"
+        "500":
+          description: "CAMPAIGN_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignError500"
+
+  /v1/applications/exam-invitation/by-applicant:
+    get:
+      operationId: "getExamInvitationByApplicant"
+      summary: "One citizen's exam QR, subject-scoped (ADR-033)"
+      description: >-
+        SERVICE-INTERNAL. identity-service bridges the citizen's session; the
+        read is constrained to applicant_id = applicantId. An officer token is
+        refused (403).
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/exam-invitation.controller.ts (EXAM_INVITATION_BY_APPLICANT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicantId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The state, and the invitation when READY."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamInvitationView"
+        "400":
+          description: "A parameter is absent or not a UUID."
+        "403":
+          description: "Not a system principal."
+        "404":
+          description: "Not this applicant's application."
+
+  /v1/applications/document-checklist:
+    get:
+      operationId: "getDocumentChecklist"
+      summary: "Advisory document checklist for an application of the officer's agency (ADR-032)"
+      description: >-
+        OFFICER, own agency only (a sibling agency's id is a bare 404), needs
+        application.read. ADVISORY — never a gate.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentChecklist200"
+        "400":
+          description: "applicationId is absent or not a UUID."
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer, or PERMISSION_DENIED (application.read)."
+        "404":
+          description: "Not in the officer's agency."
+        "500":
+          description: "Read fault."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
+
+  /v1/applications/document-checklist/by-applicant:
+    get:
+      operationId: "getDocumentChecklistByApplicant"
+      summary: "One citizen's advisory checklist, subject-scoped (ADR-032)"
+      description: >-
+        SERVICE-INTERNAL. The caller is identity-service, which authenticated
+        the citizen's session; the read is constrained to applicant_id =
+        applicantId. An officer token is refused (403).
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_BY_APPLICANT_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicantId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: "The checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentChecklist200"
+        "400":
+          description: "A parameter is absent or not a UUID."
+        "403":
+          description: "Not a system principal."
+        "404":
+          description: "Not this applicant's application."
+
+  /v1/applications/documents/verify-at-venue:
+    post:
+      operationId: "verifyDocumentAtVenue"
+      summary: "The check-in officer records seeing a required document's paper (ADR-032)"
+      description: >-
+        OFFICER with document.verify.venue (the front-door check-in post, owner
+        decision 2026-10-14). Idempotent: a re-scan is ALREADY_RECORDED.
+        Attributed, audited once, write-once. ADVISORY — never moves the
+        application.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/document-checklist.controller.ts (VERIFY_DOCUMENT_AT_VENUE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyAtVenueRequest"
+      responses:
+        "200":
+          description: "RECORDED or ALREADY_RECORDED, with the updated checklist."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyAtVenue200"
+        "400":
+          description: "Invalid applicationId or unknown documentType."
+        "403":
+          description: "PERMISSION_DENIED."
+        "404":
+          description: "Not in the officer's agency."
+        "409":
+          description: "NOT_APPLICABLE — the application is terminal."
+        "422":
+          description: "NOT_REQUIRED or UNSUPPORTED_DOCUMENT_TYPE."
 
   /v1/applications/amber-queue:
     get:
@@ -1049,6 +1681,392 @@ components:
     Agency:
       type: "string"
       enum: ["RDF", "RNP", "RCS"]
+
+    ExamInvitationView:
+      description: >-
+        ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+        signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+        (ADR-009), verified offline at the venue.
+      type: "object"
+      additionalProperties: false
+      required: ["state", "agency", "processingCode", "campaignLabel", "currentStatus"]
+      properties:
+        state:
+          type: "string"
+          enum: ["READY", "PENDING", "ON_HOLD", "COMPLETED", "CLOSED", "EXPIRED", "UNAVAILABLE", "WALK_IN"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+        processingCode:
+          type: "string"
+        campaignLabel:
+          type: ["string", "null"]
+        currentStatus:
+          type: "string"
+        invitation:
+          $ref: "#/components/schemas/ExamInvitationPayload"
+
+    ExamInvitationPayload:
+      type: "object"
+      additionalProperties: false
+      required: ["qrPayload", "ticketId", "venueName", "examDate", "reportingTimeHour", "validUntil"]
+      properties:
+        qrPayload:
+          type: "string"
+          pattern: "^USRP-SLOT\\.v1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+          maxLength: 4096
+        ticketId:
+          type: "string"
+        venueName:
+          type: "string"
+        examDate:
+          type: "string"
+        reportingTimeHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        validUntil:
+          type: "string"
+
+    DocumentChecklistItem:
+      type: "object"
+      additionalProperties: false
+      required: ["documentType", "satisfaction", "registry"]
+      properties:
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+        satisfaction:
+          type: "string"
+          enum: ["API_VERIFIED", "UPLOADED_CLEARED", "VENUE_VERIFIED", "AWAITING_REGISTRY", "UNDER_REVIEW", "REJECTED", "MISSING"]
+        registry:
+          description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
+          type: ["string", "null"]
+
+    DocumentChecklist200:
+      description: >-
+        ADVISORY (ADR-032): never a gate. Types, states and the verifying
+        registry only — no forensic score, flag, object key or officer id.
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "source", "complete", "items"]
+      properties:
+        agency:
+          $ref: "#/components/schemas/Agency"
+        source:
+          type: "string"
+          enum: ["POLICY_VERSION", "GROUND_TRUTH_TABLE"]
+        complete:
+          type: "boolean"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DocumentChecklistItem"
+
+    VerifyAtVenueRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "documentType"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        documentType:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]{2,63}$"
+
+    VerifyAtVenue200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "checklist"]
+      properties:
+        status:
+          type: "string"
+          enum: ["RECORDED", "ALREADY_RECORDED"]
+        checklist:
+          $ref: "#/components/schemas/DocumentChecklist200"
+
+    PublicCampaign:
+      description: "The approved public projection. Nothing internal."
+      type: "object"
+      additionalProperties: false
+      required:
+        - "publicCode"
+        - "campaignLabel"
+        - "agency"
+        - "status"
+        - "registrationOpensAt"
+        - "registrationClosesAt"
+        - "examinationStartDate"
+        - "examinationEndDate"
+        - "targetCategories"
+        - "targetDistricts"
+        - "allowsWalkIn"
+        - "contactPhoneNumbers"
+        - "contactWebsite"
+      properties:
+        publicCode:
+          type: "string"
+        campaignLabel:
+          type: "string"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        status:
+          type: "string"
+        registrationOpensAt:
+          type: "string"
+        registrationClosesAt:
+          type: "string"
+        examinationStartDate:
+          type: "string"
+        examinationEndDate:
+          type: "string"
+        targetCategories:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ApplicationCategory"
+        targetDistricts:
+          type: "array"
+          items:
+            type: "string"
+        allowsWalkIn:
+          type: "boolean"
+        contactPhoneNumbers:
+          type: ["array", "null"]
+          items:
+            type: "string"
+        contactWebsite:
+          type: ["string", "null"]
+
+    PublicCampaignList200:
+      type: "object"
+      additionalProperties: false
+      required: ["campaigns"]
+      properties:
+        campaigns:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PublicCampaign"
+
+    PublicCampaignDetail200:
+      type: "object"
+      additionalProperties: false
+      required: ["campaign"]
+      properties:
+        campaign:
+          $ref: "#/components/schemas/PublicCampaign"
+
+    CampaignPublicCodeInput:
+      description: >-
+        Trimmed and upper-cased by the backend before validation, so lower case
+        is accepted on input. The LEGACY- prefix is reserved and accepted only by
+        completeCampaign.
+      type: "string"
+      pattern: "^[A-Za-z0-9][A-Za-z0-9-]{2,63}$"
+
+    CampaignPublicCode:
+      description: "Canonical upper-case public code as stored."
+      type: "string"
+      pattern: "^[A-Z0-9][A-Z0-9-]{2,63}$"
+
+    Sha256Hex:
+      type: "string"
+      pattern: "^[0-9a-f]{64}$"
+
+    CampaignDraftRequest:
+      description: >-
+        normalizeCampaignDraft: exact keys, unknown keys are 400 INVALID_REQUEST.
+        Timestamps need an explicit timezone; dates are YYYY-MM-DD. Arrays are
+        de-duplicated by rejection, not silently.
+      type: "object"
+      additionalProperties: false
+      required:
+        - "publicCode"
+        - "campaignLabel"
+        - "targetCategories"
+        - "targetDistricts"
+        - "registrationOpensAt"
+        - "registrationClosesAt"
+        - "examinationStartDate"
+        - "examinationEndDate"
+        - "examinationReportingHour"
+        - "allowsWalkIn"
+      properties:
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCodeInput"
+        campaignLabel:
+          type: "string"
+          minLength: 1
+          maxLength: 50
+        targetCategories:
+          type: "array"
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ApplicationCategory"
+        targetDistricts:
+          type: "array"
+          minItems: 1
+          items:
+            type: "string"
+            minLength: 1
+        registrationOpensAt:
+          type: "string"
+          format: "date-time"
+        registrationClosesAt:
+          type: "string"
+          format: "date-time"
+        examinationStartDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        examinationEndDate:
+          type: "string"
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        examinationReportingHour:
+          type: "integer"
+          minimum: 0
+          maximum: 23
+        allowsWalkIn:
+          type: "boolean"
+        targetIntakeCount:
+          type: ["integer", "null"]
+          minimum: 1
+        contactPhoneNumbers:
+          type: "array"
+          items:
+            type: "string"
+            minLength: 1
+            maxLength: 40
+        contactWebsite:
+          type: ["string", "null"]
+          maxLength: 100
+
+    CampaignPolicyRequest:
+      description: >-
+        normalizeCampaignPolicy. policyDocument is keyed by ApplicationCategory
+        and must cover exactly the campaign's target categories. Each entry has
+        the exact keys age {minimumAge, maximumAge, referenceDate}, education
+        {mode, threshold}, criminalThreshold, requiredDocumentTypes, medicalMode
+        and legalBasis {code, reference}; the entries are modelled as an open
+        record here because the key set is per campaign, and the backend
+        validates every entry field by field.
+      type: "object"
+      additionalProperties: false
+      required: ["publicCode", "policyDocument", "legalBasisCode", "legalBasisReference"]
+      properties:
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCodeInput"
+        policyDocument:
+          type: "object"
+        legalBasisCode:
+          type: "string"
+          minLength: 1
+          maxLength: 64
+        legalBasisReference:
+          type: "string"
+          minLength: 1
+          maxLength: 256
+
+    CampaignPublicCodeCommand:
+      description: "Exactly one key. Used by publish, close, complete and cancel."
+      type: "object"
+      additionalProperties: false
+      required: ["publicCode"]
+      properties:
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCodeInput"
+
+    CampaignDraftCreated201:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "publicCode", "campaignStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "DRAFT_CREATED"
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCode"
+        campaignStatus:
+          type: "string"
+          const: "DRAFT"
+
+    CampaignPolicyVersionCreated201:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "publicCode", "policyVersion", "policyHash"]
+      properties:
+        status:
+          type: "string"
+          const: "POLICY_VERSION_CREATED"
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCode"
+        policyVersion:
+          type: "integer"
+          minimum: 1
+        policyHash:
+          $ref: "#/components/schemas/Sha256Hex"
+
+    CampaignPublished200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "publicCode", "campaignStatus", "policyVersion", "coverageVersion", "coverageHash"]
+      properties:
+        status:
+          type: "string"
+          const: "CAMPAIGN_PUBLISHED"
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCode"
+        campaignStatus:
+          type: "string"
+          const: "REGISTRATION_OPEN"
+        policyVersion:
+          type: "integer"
+          minimum: 1
+        coverageVersion:
+          type: "integer"
+        coverageHash:
+          $ref: "#/components/schemas/Sha256Hex"
+
+    CampaignLifecycle200:
+      description: "status and campaignStatus always carry the same value."
+      type: "object"
+      additionalProperties: false
+      required: ["status", "publicCode", "campaignStatus"]
+      properties:
+        status:
+          type: "string"
+          enum: ["REGISTRATION_CLOSED", "COMPLETED", "CANCELLED"]
+        publicCode:
+          $ref: "#/components/schemas/CampaignPublicCode"
+        campaignStatus:
+          type: "string"
+          enum: ["REGISTRATION_CLOSED", "COMPLETED", "CANCELLED"]
+
+    CampaignCommandRejection:
+      description: >-
+        HttpError body for a 4xx campaign command. The code set is OPEN: the
+        campaign write functions raise P0001 with a leading code token, and the
+        repository forwards that token as `error`. Branch on the codes the UI
+        knows and show `detail` (always present below 500) for the rest.
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          pattern: "^[A-Z][A-Z0-9_]+$"
+        detail:
+          type: "string"
+
+    CampaignError500:
+      description: "Detail withheld above 499, as for ApplicationError500."
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum:
+            - "CAMPAIGN_READ_ERROR"
+            - "CAMPAIGN_PERSISTENCE_ERROR"
+            - "INTERNAL_ERROR"
 
     ApplicationChannel:
       type: "string"

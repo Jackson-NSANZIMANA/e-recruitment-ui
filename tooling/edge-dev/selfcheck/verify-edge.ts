@@ -25,6 +25,8 @@ import {
   DEV_OFFICERS,
   NID_FLAKY_G2G,
   OTP_INPUT_CLASSES,
+  REAL_CITIZEN_DOB,
+  CITIZEN_PHONE,
   APPLICATION_LOCKED_ELSEWHERE,
   APPLICATION_RDF,
   freshIdentityState,
@@ -407,31 +409,56 @@ async function run(): Promise<void> {
     });
     eq('walk-in for RNP -> 501 UNSUPPORTED_AGENCY (RDF-only lane)', rnpWalkIn.status, 501);
 
-    // ══ 14. OTP request: four input classes, ONE response ═══════
-    const otpResponses = await Promise.all(
-      Object.values(OTP_INPUT_CLASSES).map((nationalId) =>
-        call(citizen.url, '/edge/v1/auth/applicant/otp/request', { body: { nationalId, channel: 'WEB' }, origin: CITIZEN_ORIGIN }),
-      ),
-    );
-    eq('all four OTP input classes answer 202', new Set(otpResponses.map((r) => r.status)).size, 1);
-    eq('…specifically 202', otpResponses[0]?.status, 202);
-    eq('all four bodies are byte-identical', new Set(otpResponses.map((r) => r.raw)).size, 1);
-    deepEq('…and the body says only CHALLENGED', otpResponses[0]?.body, { status: 'CHALLENGED' });
-    eq('no response hints at a phone', otpResponses.filter((r) => containsDeep(r.body, 'phone')).length, 0);
-    eq('all four content-types match', new Set(otpResponses.map((r) => r.headers.get('content-type'))).size, 1);
+    // ══ 14. Onboarding step 1: ONE answer for every non-match ═══
+    const beginCall = (nationalId: string, dateOfBirth: string) =>
+      call(citizen.url, '/edge/v1/auth/applicant/identity', {
+        body: { nationalId, dateOfBirth, channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+      });
+    const nonMatches = await Promise.all([
+      beginCall(OTP_INPUT_CLASSES.unknownNid, REAL_CITIZEN_DOB),
+      beginCall(OTP_INPUT_CLASSES.realSend, '1990-01-01'),
+    ]);
+    eq('unknown NID and wrong DOB both answer 422', new Set(nonMatches.map((r) => r.status)).size, 1);
+    eq('…specifically 422', nonMatches[0]?.status, 422);
+    eq('…with byte-identical bodies', new Set(nonMatches.map((r) => r.raw)).size, 1);
+    deepEq('…that say only IDENTITY_NOT_CONFIRMED', nonMatches[0]?.body, { error: 'IDENTITY_NOT_CONFIRMED' });
+    const confirmed = await beginCall(OTP_INPUT_CLASSES.realSend, REAL_CITIZEN_DOB);
+    eq('a matching NID + DOB -> 200', confirmed.status, 200);
+    const onboardingToken = String((confirmed.body as Record<string, unknown>)['onboardingToken'] ?? '');
+    ok('…returning an onboarding token', onboardingToken.length > 0);
+    ok('…and nothing identifying (no NID, DOB, applicant id)',
+      !confirmed.raw.includes(OTP_INPUT_CLASSES.realSend) && !confirmed.raw.includes(REAL_CITIZEN_DOB) && !confirmed.raw.includes('applicantId'));
+
+    // ══ 14b. Step 2: the phone the citizen typed ════════════════
+    const otpOk = await call(citizen.url, '/edge/v1/auth/applicant/otp/request', {
+      body: { onboardingToken, phoneNumber: CITIZEN_PHONE, channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+    });
+    eq('a deliverable phone is accepted with 202', otpOk.status, 202);
+    deepEq('…and the body says only that the request was accepted', otpOk.body, { accepted: true });
+    ok('no response hints at the phone', !containsDeep(otpOk.body, 'phone'));
+    const otpBadPhone = await call(citizen.url, '/edge/v1/auth/applicant/otp/request', {
+      body: { onboardingToken, phoneNumber: '0711 111 111', channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+    });
+    eq('an undeliverable number is 400 INVALID_PHONE_NUMBER', otpBadPhone.status, 400);
+    eq('…named, because it reveals nothing about the citizen', (otpBadPhone.body as Record<string, unknown>)['error'], 'INVALID_PHONE_NUMBER');
+    const otpExpired = await call(citizen.url, '/edge/v1/auth/applicant/otp/request', {
+      body: { onboardingToken: 'onb.forged', phoneNumber: CITIZEN_PHONE, channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+    });
+    eq('a forged/expired token is 401 ONBOARDING_EXPIRED', otpExpired.status, 401);
+    eq('…named so the UI restarts from step 1', (otpExpired.body as Record<string, unknown>)['error'], 'ONBOARDING_EXPIRED');
 
     // ══ 15. Lockout at 5, still indistinguishable ═══════════════
     const wrongAttempts: string[] = [];
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const response = await call(citizen.url, '/edge/v1/auth/applicant/otp/verify', {
-        body: { nationalId: OTP_INPUT_CLASSES.realSend, otp: '000000', channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+        body: { onboardingToken, phoneNumber: CITIZEN_PHONE, otp: '000000', channel: 'WEB' }, origin: CITIZEN_ORIGIN,
       });
       wrongAttempts.push(`${response.status}:${response.raw}`);
     }
     eq('five wrong codes give five identical 401s', new Set(wrongAttempts).size, 1);
     ok('…and they are 401s', wrongAttempts[0]?.startsWith('401') === true, wrongAttempts[0]);
     const lockedOutCorrect = await call(citizen.url, '/edge/v1/auth/applicant/otp/verify', {
-      body: { nationalId: OTP_INPUT_CLASSES.realSend, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN,
+      body: { onboardingToken, phoneNumber: CITIZEN_PHONE, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN,
     });
     eq('after the 5th failure the CORRECT code fails too', lockedOutCorrect.status, 401);
     eq('…byte-identically to a wrong code', `401:${lockedOutCorrect.raw}`, wrongAttempts[0]);
@@ -440,7 +467,7 @@ async function run(): Promise<void> {
     identityState.attempts.clear();
     const citizenJar = new Jar();
     const verify = await call(citizen.url, '/edge/v1/auth/applicant/otp/verify', {
-      body: { nationalId: OTP_INPUT_CLASSES.realSend, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN, jar: citizenJar,
+      body: { onboardingToken, phoneNumber: CITIZEN_PHONE, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN, jar: citizenJar,
     });
     eq('a correct code on a fresh challenge -> 204', verify.status, 204);
     eq('…with an empty body', verify.raw, '');
@@ -469,7 +496,7 @@ async function run(): Promise<void> {
     const citizenJar2 = new Jar();
     identityState.attempts.clear();
     await call(citizen.url, '/edge/v1/auth/applicant/otp/verify', {
-      body: { nationalId: OTP_INPUT_CLASSES.realSend, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN, jar: citizenJar2,
+      body: { onboardingToken, phoneNumber: CITIZEN_PHONE, otp: '123456', channel: 'WEB' }, origin: CITIZEN_ORIGIN, jar: citizenJar2,
     });
     const citizenOnOfficerEdge = await call(rdf.url, '/edge/v1/applications', { jar: citizenJar2 });
     eq('an applicant handle on an officer route -> 401, never 200', citizenOnOfficerEdge.status, 401);
@@ -505,17 +532,17 @@ async function run(): Promise<void> {
       log.idsFor('application', '/v1/applications/status-history').length > 0);
 
     // ══ 21. Retry: G2G 503 only, writes never ══════════════════
-    const beforeOtpCalls = log.idsFor('identity', '/v1/applicants/auth/otp/request').length;
+    // Step 1 reads NIDA, but it also spends a guess against a lockout counter,
+    // so the edge never retries it on the citizen's behalf: ONE upstream call,
+    // and a G2G outage surfaces immediately as a named 503 for the citizen to
+    // retry themselves.
+    const beforeBeginCalls = log.idsFor('identity', '/v1/applicants/auth/onboarding/begin').length;
     identityState.g2gFailuresRemaining = 2;
-    const flaky = await call(citizen.url, '/edge/v1/auth/applicant/otp/request', {
-      body: { nationalId: NID_FLAKY_G2G, channel: 'WEB' }, origin: CITIZEN_ORIGIN,
-    });
-    eq('a G2G outage is retried and eventually succeeds -> 202', flaky.status, 202);
-    eq('…after exactly three upstream attempts', log.idsFor('identity', '/v1/applicants/auth/otp/request').length - beforeOtpCalls, 3);
+    const flaky = await beginCall(NID_FLAKY_G2G, REAL_CITIZEN_DOB);
+    eq('a G2G outage on the identity step is NOT silently retried -> 503', flaky.status, 503);
+    eq('…after exactly ONE upstream attempt', log.idsFor('identity', '/v1/applicants/auth/onboarding/begin').length - beforeBeginCalls, 1);
     identityState.g2gFailuresRemaining = 99;
-    const exhausted = await call(citizen.url, '/edge/v1/auth/applicant/otp/request', {
-      body: { nationalId: NID_FLAKY_G2G, channel: 'WEB' }, origin: CITIZEN_ORIGIN,
-    });
+    const exhausted = await beginCall(NID_FLAKY_G2G, REAL_CITIZEN_DOB);
     eq('a persistent G2G outage surfaces as 503, not a generic failure', exhausted.status, 503);
     eq('…naming the authority that is down', (exhausted.body as Record<string, unknown>)['error'], 'NIDA_UNAVAILABLE');
     const beforeAccept = log.idsFor('application', '/v1/applications/accept').length;

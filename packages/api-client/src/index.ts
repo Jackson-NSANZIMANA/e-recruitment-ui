@@ -65,10 +65,20 @@ export type {
   SubmitApplicationInput,
   SubmitApplicationResponse,
   WithdrawResponse,
+  PublicCampaign,
+  PublicCampaignListResponse,
+  PublicCampaignDetailResponse,
+  UploadDocumentInput,
+  UploadDocumentResponse,
+  DocumentChecklist,
+  DocumentSatisfaction,
+  VerifyAtVenueResponse,
+  ExamInvitationState,
+  ExamInvitationView,
 } from './wire.js';
 
 // ── Query keys and the invalidation map ──
-export { applicationKeys, applicantKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
+export { applicationKeys, applicantKeys, campaignKeys, documentKeys, examInvitationKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
 export type { InvalidationTarget } from './keys.js';
 
 // ── Operations (framework-free; usable outside React) ──
@@ -79,6 +89,7 @@ export {
   refreshSession,
   officerLogin,
   officerLogout,
+  beginApplicantOnboarding,
   requestOtp,
   verifyOtp,
   applicantLogout,
@@ -86,6 +97,8 @@ export {
 export type {
   OfficerLoginInput,
   OfficerLoginResponse,
+  OnboardingBeginInput,
+  OnboardingBeginResponse,
   OtpRequestInput,
   OtpRequestResponse,
   OtpVerifyInput,
@@ -111,10 +124,14 @@ export {
 export {
   listMyApplications,
   submitMyApplication,
+  uploadMyDocument,
   withdrawMyApplication,
   getMyErasureRequest,
   fileMyErasureRequest,
 } from './operations/applicant.js';
+export { listPublicCampaigns, getPublicCampaign } from './operations/campaigns.js';
+export { getMyDocumentChecklist, getDocumentChecklist, verifyDocumentAtVenue } from './operations/documents.js';
+export { getMyExamInvitation } from './operations/exam-invitation.js';
 
 // ── TanStack Query hooks ──
 export {
@@ -134,7 +151,11 @@ export {
 export {
   useMyApplications,
   useSubmitMyApplication,
+  useUploadMyDocument,
   useWithdrawMyApplication,
   useMyErasureRequest,
   useFileErasureRequest,
 } from './queries/applicant.js';
+export { usePublicCampaigns, usePublicCampaign } from './queries/campaigns.js';
+export { useMyDocumentChecklist, useDocumentChecklist, useVerifyDocumentAtVenue } from './queries/documents.js';
+export { useMyExamInvitation, EXAM_INVITATION_POLL_MS } from './queries/exam-invitation.js';

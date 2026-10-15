@@ -24,7 +24,7 @@ import {
   OTP_TTL_MS,
   type OtpState,
 } from '../src/otp-machine.js';
-import { planRefresh, ABSOLUTE_WARNING_WINDOW_MS, MIN_REFRESH_DELAY_MS, startRefreshLoop } from '../src/refresh.js';
+import { planRefresh, ABSOLUTE_WARNING_WINDOW_MS, MAX_TIMER_DELAY_MS, MIN_REFRESH_DELAY_MS, startRefreshLoop } from '../src/refresh.js';
 import {
   isApplicantSession,
   isOfficerSession,
@@ -64,7 +64,7 @@ let state: OtpState = initialOtpState();
 eq('starts idle', state.status, 'idle');
 ok('cannot submit before a challenge', !canSubmit(state));
 
-state = otpReducer(state, { type: 'REQUEST', nationalId: '1199180000000001' });
+state = otpReducer(state, { type: 'REQUEST', subject: '1199180000000001' });
 eq('requesting while in flight', state.status, 'requesting');
 state = otpReducer(state, { type: 'REQUEST_ACCEPTED', atMs: T0 });
 eq('a 202 yields a challenge', state.status, 'challenged');
@@ -93,7 +93,7 @@ ok('walk-in is offered', shouldOfferWalkIn(state));
 eq('the lockout cap matches ADR-018', OTP_MAX_ATTEMPTS, 5);
 
 // A G2G outage must NOT cost an attempt.
-let outageState: OtpState = otpReducer(otpReducer(initialOtpState(), { type: 'REQUEST', nationalId: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 });
+let outageState: OtpState = otpReducer(otpReducer(initialOtpState(), { type: 'REQUEST', subject: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 });
 outageState = otpReducer(outageState, { type: 'SUBMIT' });
 outageState = otpReducer(outageState, { type: 'SUBMIT_UPSTREAM_UNAVAILABLE', authority: 'NIDA_UNAVAILABLE' });
 eq('a 503 during verify is an outage state', outageState.status, 'upstreamUnavailable');
@@ -101,7 +101,7 @@ eq('…naming the authority', outageState.status === 'upstreamUnavailable' ? out
 eq('…and is NOT charged as an attempt', attemptsRemaining(outageState), OTP_MAX_ATTEMPTS);
 
 // The 5-minute TTL, driven by the clock rather than by a submission.
-let ttlState: OtpState = otpReducer(otpReducer(initialOtpState(), { type: 'REQUEST', nationalId: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 });
+let ttlState: OtpState = otpReducer(otpReducer(initialOtpState(), { type: 'REQUEST', subject: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 });
 ttlState = otpReducer(ttlState, { type: 'TICK', atMs: T0 + OTP_TTL_MS - 1 });
 eq('one millisecond before expiry it is still challenged', ttlState.status, 'challenged');
 ttlState = otpReducer(ttlState, { type: 'TICK', atMs: T0 + OTP_TTL_MS });
@@ -111,7 +111,7 @@ ok('walk-in is offered on expiry too', shouldOfferWalkIn(ttlState));
 eq('the TTL matches ADR-018', OTP_TTL_MS, 300_000);
 
 // A fresh challenge resets the budget, mirroring the server's per-challenge counter.
-const reset = otpReducer(otpReducer(state, { type: 'REQUEST', nationalId: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 + 600_000 });
+const reset = otpReducer(otpReducer(state, { type: 'REQUEST', subject: 'x' }), { type: 'REQUEST_ACCEPTED', atMs: T0 + 600_000 });
 eq('a new challenge is challenged again', reset.status, 'challenged');
 eq('…with a fresh budget', attemptsRemaining(reset), OTP_MAX_ATTEMPTS);
 const verified = otpReducer(otpReducer(reset, { type: 'SUBMIT' }), { type: 'SUBMIT_VERIFIED' });
@@ -129,7 +129,7 @@ for (const hint of forbiddenHints) {
 }
 ok('officer login copy names BOTH fields, so neither is implicated',
   OFFICER_LOGIN_FAILED.includes('handle') && OFFICER_LOGIN_FAILED.includes('password'));
-ok('OTP copy is CONDITIONAL, never claiming a code was sent', OTP_REQUEST_ACCEPTED.startsWith('If this National ID'));
+ok('OTP copy is CONDITIONAL, never claiming a code was sent', OTP_REQUEST_ACCEPTED.startsWith('If the number'));
 ok('…and states the 5-minute window', OTP_REQUEST_ACCEPTED.includes('5 minutes'));
 ok('OTP failure copy does not distinguish wrong from expired from locked',
   !OTP_INVALID.toLowerCase().includes('locked') && !OTP_INVALID.toLowerCase().includes('attempts'));
@@ -154,6 +154,7 @@ const officer: Session = {
   kind: 'officer',
   agency: 'RDF' as OfficerAgency,
   roles: ['RECRUITMENT_OFFICER'],
+  permissions: ['application.accept'],
   idleExpiresAt: new Date(T0 + 1_800_000).toISOString(),
   absoluteExpiresAt: new Date(T0 + 43_200_000).toISOString(),
 };
@@ -278,6 +279,29 @@ ok('a session inside the warning window warns rather than refreshing forever',
     stop();
     return sawWarning;
   })());
+ok('a refresh further out than setTimeout can hold never fires early',
+  (() => {
+    // Expiries decades away (a device clock far behind the server) give a delay
+    // past 2^31-1 ms, which a real setTimeout would fire at once.
+    let refreshed = 0;
+    const delays: number[] = [];
+    let pending: (() => void) | null = null;
+    const far = { ...officer, idleExpiresAt: '2099-01-01T00:00:00.000Z', absoluteExpiresAt: '2099-01-02T00:00:00.000Z' };
+    const stop = startRefreshLoop({
+      session: far,
+      refresh: async () => { refreshed += 1; return null; },
+      onRefreshed: () => {},
+      onWarn: () => {},
+      onExpired: () => {},
+      now: () => T0,
+      setTimer: (callback, delayMs) => { delays.push(delayMs); pending = callback; return delays.length; },
+      clearTimer: () => {},
+    });
+    const first = pending as (() => void) | null;
+    first?.();
+    stop();
+    return refreshed === 0 && delays.length === 2 && delays.every((d) => d <= MAX_TIMER_DELAY_MS);
+  })());
 ok('the warning window is five minutes', ABSOLUTE_WARNING_WINDOW_MS === 300_000);
 ok('warned flag exercised', warned || !warned);
 
@@ -317,15 +341,33 @@ eq('a 401 is a bare rejection', rejected.outcome, 'rejected');
 ok('…carrying NO code the UI could branch on', !('code' in rejected));
 
 const outageClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(503, { error: 'NIDA_UNAVAILABLE' }), readCsrf: () => null });
-const outage = await outageClient.requestOtp('1199180000000001');
+const outage = await outageClient.requestOtp('tok', '0788123456');
 eq('a G2G 503 is its own outcome', outage.outcome, 'upstreamUnavailable');
 eq('…naming the authority', outage.outcome === 'upstreamUnavailable' ? outage.authority : '', 'NIDA_UNAVAILABLE');
 const unknown503Client = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(503, { error: 'MYSTERY' }), readCsrf: () => null });
-eq('an unrecognised 503 is an error, not a named outage', (await unknown503Client.requestOtp('x')).outcome, 'error');
+eq('an unrecognised 503 is an error, not a named outage', (await unknown503Client.requestOtp('tok', '0788123456')).outcome, 'error');
 const acceptedClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(202, { status: 'CHALLENGED' }), readCsrf: () => null });
-eq('a 202 OTP request is ok', (await acceptedClient.requestOtp('x')).outcome, 'ok');
+eq('a 202 OTP request is ok', (await acceptedClient.requestOtp('tok', '0788123456')).outcome, 'ok');
 const badOtpClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(401, { error: 'INVALID_OTP' }), readCsrf: () => null });
-eq('a 401 OTP verify is a bare rejection', (await badOtpClient.verifyOtp('x', '000000')).outcome, 'rejected');
+eq('a 401 OTP verify is a bare rejection', (await badOtpClient.verifyOtp('tok', '0788123456', '000000')).outcome, 'rejected');
+// ── Onboarding (ADR-029): NID + DOB → phone → OTP ──
+const confirmedClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(200, { onboardingToken: 'tok-1', expiresAt: 'x' }), readCsrf: () => null });
+const confirmed = await confirmedClient.confirmIdentity('1199180000000001', '2002-05-14');
+eq('a matching NID + DOB yields a token', confirmed.outcome === 'confirmed' ? confirmed.onboardingToken : '', 'tok-1');
+const idSent = captured[captured.length - 1];
+ok('step 1 posts to the identity path', idSent?.url === `http://edge.test${EDGE_PATHS.identity}`, idSent?.url);
+ok('…sending nationalId and dateOfBirth only', String(idSent?.init.body) === JSON.stringify({ nationalId: '1199180000000001', dateOfBirth: '2002-05-14' }));
+const notConfirmedClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(422, { error: 'IDENTITY_NOT_CONFIRMED' }), readCsrf: () => null });
+const notConfirmed = await notConfirmedClient.confirmIdentity('1199180000000001', '1990-01-01');
+eq('a 422 is the single not-confirmed outcome', notConfirmed.outcome, 'notConfirmed');
+ok('…carrying no code', !('code' in notConfirmed));
+const expiredClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(401, { error: 'ONBOARDING_EXPIRED' }), readCsrf: () => null });
+eq('a 401 on the phone step means the identity check expired', (await expiredClient.requestOtp('tok', '0788123456')).outcome, 'onboardingExpired');
+const badPhoneClient = createEdgeAuthClient({ baseUrl: 'http://edge.test', fetchImpl: stubFetch(400, { error: 'INVALID_PHONE_NUMBER' }), readCsrf: () => null });
+eq('an undeliverable number is named (it reveals nothing about the citizen)', (await badPhoneClient.requestOtp('tok', '0711111111')).outcome, 'invalidPhone');
+const otpSent = captured[captured.length - 1];
+ok('step 2 sends the token and phone, never a National ID', String(otpSent?.init.body).includes('onboardingToken') && !String(otpSent?.init.body).includes('nationalId'));
+
 const sessionClient = createEdgeAuthClient({
   baseUrl: 'http://edge.test',
   fetchImpl: stubFetch(200, { kind: 'officer', agency: 'RDF', roles: ['R'], idleExpiresAt: 'a', absoluteExpiresAt: 'b' }),

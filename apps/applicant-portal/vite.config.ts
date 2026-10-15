@@ -40,7 +40,7 @@ export default defineConfig({
         // hygiene-allow-hex: a web manifest is serialised JSON the OS reads
         // before any stylesheet exists, so these CANNOT be design tokens.
         theme_color: "#0052CC",
-        background_color: "#FFFFFF",
+        background_color: "#FFFFFF", // hygiene-allow-hex: web manifest, read before any CSS
         display: "standalone",
         orientation: "portrait",
         start_url: "/",

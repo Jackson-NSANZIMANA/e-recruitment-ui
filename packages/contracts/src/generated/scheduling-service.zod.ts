@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/scheduling-service.yaml                   ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -15,6 +15,7 @@
 // USRP scheduling-service
 //
 // Route table (method, path, auth kinds, reach):
+//   POST /v1/campaigns/session                          officer            browser
 //   GET  /v1/slots/invitation-key                       none               browser
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
@@ -26,11 +27,66 @@
 
 import { z } from 'zod';
 
+export const CampaignSessionConfigured200Schema = z
+  .object({
+    "status": z.enum(['SESSION_CONFIGURED', 'SESSION_UNCHANGED']),
+    "publicCode": z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/),
+    "district": z.string(),
+    "coverageVersion": z.number(),
+    "coverageHash": z.string().regex(/^[0-9a-f]{64}$/),
+    "capacityDecisionCode": z.union([
+    z.literal('UNBOUNDED_CAPACITY'),
+    z.null(),
+  ]),
+  }).strict();
+
+/**
+ * normalizeCampaignSession: exact keys. The province must own the district.
+ * publicCode is trimmed and upper-cased before validation.
+ */
+export const CampaignSessionRequestSchema = z
+  .object({
+    "publicCode": z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/),
+    "district": z.string().min(1),
+    "province": z.string().min(1),
+    "venueName": z.string().min(1).max(200),
+    "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
+    "reportingTimeHour": z.number(),
+    "capacityLimit": z.number().nullable(),
+    "capacityDecisionCode": z.union([
+    z.literal('UNBOUNDED_CAPACITY'),
+    z.null(),
+  ]).optional(),
+    "isActive": z.boolean(),
+  }).strict();
+
 export const InvitationKeyOkSchema = z
   .object({
     "keyId": z.string(),
     "algorithm": z.literal('Ed25519'),
     "publicKeyPem": z.string(),
+  }).strict();
+
+/**
+ * HttpError body for a 4xx session command. The code set is OPEN (the write
+ * function raises P0001 with a leading code token); show `detail`, always
+ * present below 500, for codes the UI does not branch on.
+ */
+export const SessionCommandRejectionSchema = z
+  .object({
+    "error": z.string().regex(/^[A-Z][A-Z0-9_]+$/),
+    "detail": z.string().optional(),
+  }).strict();
+
+export const SessionError500Schema = z
+  .object({
+    "error": z.enum(['CAMPAIGN_SESSION_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
+  }).strict();
+
+export const Unauthenticated401Schema = z
+  .object({
+    "error": z.literal('UNAUTHENTICATED'),
+    "detail": z.string().optional(),
   }).strict();
 
 /**
@@ -40,6 +96,25 @@ export const InvitationKeyOkSchema = z
  * reporting, not as an unknown to swallow.
  */
 export const schedulingServiceOperations = {
+  "configureCampaignSession": {
+    method: "POST",
+    path: "/v1/campaigns/session",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignSessionRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": CampaignSessionConfigured200Schema,
+      "400": SessionCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": SessionCommandRejectionSchema,
+      "404": SessionCommandRejectionSchema,
+      "409": SessionCommandRejectionSchema,
+      "422": SessionCommandRejectionSchema,
+      "500": SessionError500Schema,
+    },
+  },
   "getSlotInvitationKey": {
     method: "GET",
     path: "/v1/slots/invitation-key",

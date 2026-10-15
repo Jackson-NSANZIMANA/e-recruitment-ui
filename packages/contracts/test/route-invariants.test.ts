@@ -10,6 +10,9 @@ const base: readonly RouteLike[] = [
   { service: 's', operationId: 'sHealth', method: 'GET', path: '/health', auth: ['none'], reach: 'service-internal' },
   { service: 's', operationId: 'sReady', method: 'GET', path: '/ready', auth: ['none'], reach: 'service-internal' },
   { service: 's', operationId: 'officerLogin', method: 'POST', path: '/v1/auth/officer/login', auth: ['none'], reach: 'browser' },
+  { service: 's', operationId: 'beginApplicantOnboarding', method: 'POST', path: '/v1/applicants/auth/onboarding/begin', auth: ['none'], reach: 'browser' },
+  { service: 's', operationId: 'listPublicCampaigns', method: 'GET', path: '/v1/campaigns', auth: ['none'], reach: 'browser' },
+  { service: 's', operationId: 'getPublicCampaign', method: 'GET', path: '/v1/campaigns/detail', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'requestApplicantOtp', method: 'POST', path: '/v1/applicants/auth/otp/request', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'verifyApplicantOtp', method: 'POST', path: '/v1/applicants/auth/otp/verify', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'getSlotInvitationKey', method: 'GET', path: '/v1/slots/invitation-key', auth: ['none'], reach: 'browser' },
@@ -25,9 +28,12 @@ test('a compliant table produces no problems at all', () => {
   assert.deepEqual([...auditRoutes(base)], []);
 });
 
-test('the anonymous browser allowlist is a reviewed list of exactly four', () => {
+test('the anonymous browser allowlist is a reviewed list of exactly seven', () => {
   assert.deepEqual([...ANONYMOUS_BROWSER_OPERATIONS], [
     'officerLogin',
+    'beginApplicantOnboarding',
+    'listPublicCampaigns',
+    'getPublicCampaign',
     'requestApplicantOtp',
     'verifyApplicantOtp',
     'getSlotInvitationKey',

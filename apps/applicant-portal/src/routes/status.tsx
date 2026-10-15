@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Box, Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Heading from "@atlaskit/heading";
 import SectionMessage from "@atlaskit/section-message";
@@ -85,6 +86,12 @@ export default function StatusPage(): React.ReactElement {
               <Text size="small" color="color.text.subtle">
                 {t("application.id")}: {application.processingCode ?? t("application.not_provided")}
               </Text>
+
+              {application.applicationId !== null && (
+                <Text size="small">
+                  <Link to={`/applications/${application.applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>
+                </Text>
+              )}
 
               <Text size="small" color="color.text.subtle">
                 {t("application.submitted")}:{" "}

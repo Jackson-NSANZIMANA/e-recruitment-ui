@@ -31,6 +31,7 @@ const APP_OWNED_PATHS: readonly string[] = [
   "apply/:step",
   "status",
   "applications",
+  "applications/:applicationId/exam-qr",
 ];
 
 const MOUNTS: readonly SliceMount[] = [

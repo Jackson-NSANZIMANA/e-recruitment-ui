@@ -26,6 +26,12 @@ const PATH_CONST_RE = /export\s+const\s+([A-Z][A-Z0-9_]*_PATH)\s*=\s*'([^']+)'/g
 const ROUTE_RE = /method:\s*'(GET|POST|PUT|PATCH|DELETE)'\s*,\s*\n?\s*path:\s*([A-Za-z_$][\w$]*|'[^']+')/g;
 const WITH_AUTH_RE = /withAuth\(\s*verify\s*,\s*\{\s*kind:\s*(\[[^\]]*\]|'[^']+')/g;
 const FACTORY_RE = /export\s+function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+// A route-builder helper: `function writeRoute(path: string, ...)` whose returned
+// route uses the shorthand `path,`. Each call `writeRoute(SOME_PATH, ...)` is one
+// route registration, attributed to the exported factory that makes the call.
+const HELPER_RE = /(?:^|\n)(?:export\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(\s*path\s*:\s*string\b/g;
+const SHORTHAND_ROUTE_RE = /method:\s*'(GET|POST|PUT|PATCH|DELETE)'\s*,\s*\n?\s*path\s*,/;
+const TOP_LEVEL_FUNCTION_RE = /\n(?:export\s+)?(?:async\s+)?function\s/g;
 
 function decomment(source: string): string {
   let out = '';
@@ -71,7 +77,7 @@ function extractRoutes(source: string, file: string, sessionAuthPaths: ReadonlyS
   const auths = [...clean.matchAll(WITH_AUTH_RE)].map((m) => ({ index: m.index!, kinds: parseKind(m[1]!) }));
   const factories = [...clean.matchAll(FACTORY_RE)].map((m) => ({ index: m.index!, name: m[1]! }));
   const routeMatches = [...clean.matchAll(ROUTE_RE)];
-  return routeMatches.map((match) => {
+  const direct = routeMatches.map((match) => {
     const raw = match[2]!;
     const isLiteral = raw.startsWith("'");
     const nextRoute = routeMatches.map((m) => m.index!).find((i) => i > match.index!);
@@ -89,6 +95,40 @@ function extractRoutes(source: string, file: string, sessionAuthPaths: ReadonlyS
       line: lineOf(clean, match.index!),
     };
   });
+  return [...direct, ...helperRoutes(clean, file, auths, factories)];
+}
+
+function helperRoutes(
+  clean: string,
+  file: string,
+  auths: readonly { index: number; kinds: readonly string[] }[],
+  factories: readonly { index: number; name: string }[],
+): readonly ExtractedRoute[] {
+  const starts = [...clean.matchAll(TOP_LEVEL_FUNCTION_RE)].map((m) => m.index!);
+  const routes: ExtractedRoute[] = [];
+  for (const helper of clean.matchAll(HELPER_RE)) {
+    const name = helper[1]!;
+    const begin = helper.index!;
+    const end = starts.find((i) => i > begin + 1) ?? clean.length;
+    const body = clean.slice(begin, end);
+    const shape = SHORTHAND_ROUTE_RE.exec(body);
+    if (shape === null) continue;
+    const guard = auths.find((a) => a.index > begin && a.index < end);
+    const callRe = new RegExp(`\\b${name.replace(/\$/g, '\\$')}\\(\\s*([A-Z][A-Z0-9_]*_PATH)\\b`, 'g');
+    for (const call of clean.matchAll(callRe)) {
+      if (call.index! >= begin && call.index! < end) continue;
+      routes.push({
+        method: shape[1]!,
+        path: null,
+        constant: call[1]!,
+        factory: factories.filter((f) => f.index < call.index!).at(-1)?.name ?? null,
+        auth: guard !== undefined ? guard.kinds : ['none'],
+        controller: file,
+        line: lineOf(clean, call.index!),
+      });
+    }
+  }
+  return routes;
 }
 
 function sessionRoutesIn(source: string): ReadonlySet<string> {
@@ -135,11 +175,20 @@ export function extractService(servicesDir: string, service: string): ExtractedS
   const routes: ExtractedRoute[] = [];
   const hasHttpDir = existsSync(httpDir) && statSync(httpDir).isDirectory();
   const { source: mainSource, factories, readiness } = readMain(dir);
+  // Controllers also live directly under src/adapters/ (scheduling-service's
+  // campaign-session.controller.ts). A route there is as real as one in http/.
+  const adaptersDir = join(dir, 'src/adapters');
+  const flatControllers = existsSync(adaptersDir) && statSync(adaptersDir).isDirectory()
+    ? readdirSync(adaptersDir).filter((name) => name.endsWith('.controller.ts')).sort()
+    : [];
+  const controllerFiles = [
+    ...(hasHttpDir ? readdirSync(httpDir).filter((name) => name.endsWith('.ts')).sort().map((name) => ({ name, full: join(httpDir, name) })) : []),
+    ...flatControllers.map((name) => ({ name, full: join(adaptersDir, name) })),
+  ];
 
-  if (hasHttpDir) {
-    const files = readdirSync(httpDir).filter((name) => name.endsWith('.ts')).sort();
-    for (const file of files) {
-      const source = readFileSync(join(httpDir, file), 'utf8');
+  {
+    for (const { name: file, full } of controllerFiles) {
+      const source = readFileSync(full, 'utf8');
       const clean = decomment(source);
       for (const match of clean.matchAll(PATH_CONST_RE)) {
         const [, name, value] = match;
@@ -167,7 +216,7 @@ export function extractService(servicesDir: string, service: string): ExtractedS
     return { ...route, path: value };
   });
 
-  return { service, controllerDir: hasHttpDir ? `services/${service}/src/adapters/http` : null, pathConstants, routes: resolved, mountedFactories: factories, mainSource, readinessCallback: readiness, problems };
+  return { service, controllerDir: hasHttpDir ? `services/${service}/src/adapters/http` : flatControllers.length > 0 ? `services/${service}/src/adapters` : null, pathConstants, routes: resolved, mountedFactories: factories, mainSource, readinessCallback: readiness, problems };
 }
 
 export function extractAll(servicesDir: string): readonly ExtractedService[] {

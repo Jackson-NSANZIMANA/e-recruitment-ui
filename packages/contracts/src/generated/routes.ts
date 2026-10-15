@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 37 business operations + 22 probes = 59 total.
+// 54 business operations + 22 probes = 76 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -204,6 +204,82 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "application-service",
+    "operationId": "getDocumentChecklist",
+    "method": "GET",
+    "path": "/v1/applications/document-checklist",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getDocumentChecklistByApplicant",
+    "method": "GET",
+    "path": "/v1/applications/document-checklist/by-applicant",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (DOCUMENT_CHECKLIST_BY_APPLICANT_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "verifyDocumentAtVenue",
+    "method": "POST",
+    "path": "/v1/applications/documents/verify-at-venue",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/document-checklist.controller.ts (VERIFY_DOCUMENT_AT_VENUE_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getExamInvitationByApplicant",
+    "method": "GET",
+    "path": "/v1/applications/exam-invitation/by-applicant",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/exam-invitation.controller.ts (EXAM_INVITATION_BY_APPLICANT_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
     "operationId": "recordFinalDecision",
     "method": "POST",
     "path": "/v1/applications/final-decision",
@@ -321,6 +397,168 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "reach": "service-internal",
     "verified": "controller-verbatim",
     "source": "src/adapters/http/self-withdrawal.controller.ts (WITHDRAW_OWN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "listPublicCampaigns",
+    "method": "GET",
+    "path": "/v1/campaigns",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-public-read.controller.ts (LIST_PUBLIC_CAMPAIGNS_PATH)",
+    "statuses": [
+      "200",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "createCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "cancelCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/cancel",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CANCEL_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "completeCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/complete",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (COMPLETE_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "getPublicCampaign",
+    "method": "GET",
+    "path": "/v1/campaigns/detail",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-public-read.controller.ts (READ_PUBLIC_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "404",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "createCampaignPolicy",
+    "method": "POST",
+    "path": "/v1/campaigns/policy",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CREATE_CAMPAIGN_POLICY_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "publishCampaign",
+    "method": "POST",
+    "path": "/v1/campaigns/publish",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (PUBLISH_CAMPAIGN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "closeCampaignRegistration",
+    "method": "POST",
+    "path": "/v1/campaigns/registration-close",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/campaign-control.controller.ts (CLOSE_CAMPAIGN_REGISTRATION_PATH)",
     "statuses": [
       "200",
       "400",
@@ -826,6 +1064,26 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "identity-service",
+    "operationId": "beginApplicantOnboarding",
+    "method": "POST",
+    "path": "/v1/applicants/auth/onboarding/begin",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ONBOARDING_BEGIN_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "422",
+      "500",
+      "502",
+      "503"
+    ]
+  },
+  {
+    "service": "identity-service",
     "operationId": "requestApplicantOtp",
     "method": "POST",
     "path": "/v1/applicants/auth/otp/request",
@@ -838,6 +1096,7 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "statuses": [
       "202",
       "400",
+      "401",
       "500",
       "502",
       "503"
@@ -901,6 +1160,66 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "422",
       "429",
       "503"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyDocumentChecklist",
+    "method": "GET",
+    "path": "/v1/applicants/me/applications/document-checklist",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_DOCUMENT_CHECKLIST_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "404",
+      "502"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "uploadMyDocument",
+    "method": "POST",
+    "path": "/v1/applicants/me/applications/documents",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-documents.controller.ts (ME_DOCUMENTS_PATH)",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "404",
+      "409",
+      "413",
+      "422",
+      "502"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyExamInvitation",
+    "method": "GET",
+    "path": "/v1/applicants/me/applications/exam-invitation",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_EXAM_INVITATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "404",
+      "502"
     ]
   },
   {
@@ -1103,6 +1422,28 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "statuses": [
       "200",
       "503"
+    ]
+  },
+  {
+    "service": "scheduling-service",
+    "operationId": "configureCampaignSession",
+    "method": "POST",
+    "path": "/v1/campaigns/session",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/campaign-session.controller.ts (CONFIGURE_CAMPAIGN_SESSION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500"
     ]
   },
   {

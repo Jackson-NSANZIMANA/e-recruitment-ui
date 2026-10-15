@@ -8,6 +8,7 @@
     "logout": "Se déconnecter"
   },
   "auth": {
+    "send_code": "Envoyer le code",
     "sign_in": "Se connecter",
     "login_handle": "Identifiant de connexion",
     "password": "Mot de passe",
@@ -114,6 +115,7 @@
     "partial_description": "La passerelle edge a renvoyé la projection de la candidature, mais son historique n’était pas un tableau. Examinez les champs et réessayez avant d’agir."
   },
   "actions": {
+    "continue": "Continuer",
     "approve": "Approuver",
     "reject": "Rejeter",
     "request_correction": "Demander correction",
@@ -169,7 +171,8 @@
     "conflict_description": "Actualisez le dossier et confirmez le statut actuel avant de réessayer.",
     "no_change": "Aucun changement",
     "no_change_description": "Le backend a indiqué NO_CHANGE. Le dossier a été actualisé pour afficher son état actuel.",
-    "transition_receipt": "Résultat du backend : {{outcome}}. Statut précédent : {{fromStatus}}. Statut projeté : {{status}}."
+    "transition_receipt": "Résultat du backend : {{outcome}}. Statut précédent : {{fromStatus}}. Statut projeté : {{status}}.",
+    "no_permission": "Votre rôle permet de consulter cette candidature, pas de la trancher."
   },
   "scan": {
     "start": "Démarrer le scan",
@@ -199,7 +202,8 @@
       "category": "Catégorie",
       "education": "Référence académique",
       "declaration": "Déclaration",
-      "review": "Vérification"
+      "review": "Vérification",
+      "campaign": "Recrutement"
     },
     "category_label": "Catégorie de recrutement",
     "category_help": "Choisissez une catégorie de recrutement. La passerelle déduit l’agence responsable à partir de ce choix.",
@@ -267,6 +271,104 @@
     "sign_in_again": "Se reconnecter",
     "submitting": "Envoi…",
     "rate_limit_title": "Limite d’envoi atteinte",
-    "rate_limit_body": "Veuillez patienter avant de réessayer."
+    "rate_limit_body": "Veuillez patienter avant de réessayer.",
+    "campaign_loading": "Chargement des recrutements ouverts…",
+    "campaign_error_title": "Impossible de charger les recrutements",
+    "campaign_error_body": "Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
+    "campaign_none_title": "Aucun recrutement ouvert pour le moment",
+    "campaign_none_body": "Aucune campagne n’est ouverte aux inscriptions actuellement. Revenez plus tard ou suivez les annonces officielles.",
+    "campaign_help": "Choisissez le recrutement auquel vous postulez.",
+    "campaign_window": "Clôture des inscriptions : {{date}}",
+    "campaign_choose": "Postuler à ce recrutement",
+    "review_campaign": "Recrutement",
+    "documents_title": "Téléversez vos documents",
+    "documents_help": "Téléversez chaque document en PDF, JPEG ou PNG. Le document est seulement reçu ici — il est vérifié plus tard et aucun résultat ne s’affiche sur cet écran.",
+    "document_type_label": "Type de document",
+    "document_file_label": "Fichier (PDF, JPEG ou PNG, 10 Mo maximum)",
+    "upload": "Téléverser le document",
+    "uploading": "Téléversement…",
+    "upload_error_title": "Le document n’a pas été accepté",
+    "upload_error": "Le document n’a pas pu être téléversé. Vérifiez le fichier et réessayez.",
+    "upload_ok_title": "Document reçu",
+    "upload_ok_body": "Reçu : {{types}}. Vous pouvez téléverser un autre document.",
+    "upload_refusals": {
+      "APPLICATION_NOT_FOUND": "Cette candidature est introuvable.",
+      "NOT_ACCEPTING_DOCUMENTS": "Cette candidature n’accepte pas de documents à ce stade.",
+      "UNSUPPORTED_DOCUMENT_TYPE": "Ce type de document n’est pas accepté pour votre recrutement.",
+      "UNSUPPORTED_FILE_CONTENT": "Ce fichier n’est pas un PDF, JPEG ou PNG lisible.",
+      "UNSUPPORTED_FILE_TYPE": "Seuls les fichiers PDF, JPEG et PNG sont acceptés.",
+      "CONTENT_TYPE_MISMATCH": "Le fichier ne correspond pas au type déclaré.",
+      "DOCUMENT_REJECTED_MALWARE": "Ce fichier a été refusé car il peut être dangereux. Analysez votre appareil et utilisez une copie saine.",
+      "FILE_TOO_LARGE": "Ce fichier est trop volumineux (10 Mo maximum).",
+      "MISSING_FILE": "Choisissez d’abord un fichier."
+    }
+  },
+  "documents": {
+    "types": {
+      "NATIONAL_ID": "Carte d’identité nationale",
+      "APPLICATION_FORM_WITH_PHOTO": "Formulaire de candidature avec photo",
+      "BIRTH_CERTIFICATE": "Acte de naissance",
+      "OLEVEL_CERTIFICATE": "Certificat O-Level",
+      "ALEVEL_CERTIFICATE": "Certificat A-Level",
+      "DEGREE_DIPLOMA_COPY": "Diplôme (copie)",
+      "DEGREE_DIPLOMA_NOTARIZED": "Diplôme (copie légalisée)",
+      "GOOD_CONDUCT_CERTIFICATE": "Certificat de bonne conduite",
+      "NON_CONVICTION_CERTIFICATE": "Certificat de non-condamnation",
+      "CELIBACY_CERTIFICATE": "Certificat de célibat",
+      "MEDICAL_CERTIFICATE_GOVT": "Certificat médical (public)"
+    }
+  },
+  "exam_qr": {
+    "title": "Mon code QR d’examen",
+    "open_link": "Ouvrir mon code QR d’examen",
+    "ready_title": "Votre code QR d’examen est prêt",
+    "ready_body": "Téléchargez ou imprimez ce code QR et présentez-le, avec votre carte d’identité nationale, lors de la sélection physique. Les agents le scannent à l’entrée.",
+    "qr_alt": "Code QR d’examen de la candidature {{code}}",
+    "processing_code": "Code de candidature",
+    "venue": "Lieu",
+    "date": "Date",
+    "reporting": "Se présenter à",
+    "valid_until": "Valable jusqu’au",
+    "download": "Télécharger le code QR (PNG)",
+    "downloading": "Préparation…",
+    "print": "Imprimer",
+    "download_failed": "L’image n’a pas pu être créée dans ce navigateur. Utilisez Imprimer ou faites une capture d’écran.",
+    "present_at_gate": "Présentez ce code avec votre carte d’identité nationale à l’entrée de la sélection.",
+    "keep_private": "Ce code est votre convocation personnelle. Ne le partagez pas.",
+    "not_found": "Cette candidature est introuvable parmi les vôtres.",
+    "load_failed": "Votre code QR n’a pas pu être chargé. Vérifiez votre connexion et réessayez.",
+    "unavailable_title": "Votre code QR n’est pas disponible",
+    "unavailable_body": "Votre créneau d’examen est attribué mais le code n’est pas encore prêt. Réessayez plus tard ou contactez l’agence.",
+    "states": {
+      "PENDING": {
+        "title": "Votre candidature est en cours de vérification",
+        "body": "Votre code QR apparaîtra ici automatiquement dès que vos vérifications d’éligibilité seront réussies et votre créneau attribué. Vous pouvez garder cette page ouverte."
+      },
+      "ON_HOLD": {
+        "title": "Votre candidature est en cours d’examen",
+        "body": "Un agent examine votre candidature. Votre code QR est retenu jusqu’à la fin de l’examen."
+      },
+      "COMPLETED": {
+        "title": "Votre sélection est terminée",
+        "body": "L’étape d’examen de votre candidature est terminée ; le code QR n’est plus nécessaire."
+      },
+      "CLOSED": {
+        "title": "Pas de code QR pour cette candidature",
+        "body": "Cette candidature n’est plus active ; il n’y a donc pas de convocation."
+      },
+      "EXPIRED": {
+        "title": "Ce code QR a expiré",
+        "body": "Le jour d’examen de cette convocation est passé."
+      },
+      "UNAVAILABLE": {
+        "title": "Votre code QR n’est pas encore disponible",
+        "body": "Votre créneau d’examen est attribué mais le code n’est pas encore prêt. Réessayez plus tard ou contactez l’agence."
+      },
+      "WALK_IN": {
+        "title": "Inscription sur place",
+        "body": "Vous avez été inscrit sur place le jour de l’examen ; il n’y a donc pas de convocation QR."
+      }
+    }
   }
 }

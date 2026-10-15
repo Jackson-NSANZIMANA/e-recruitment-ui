@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,6 +17,18 @@
 // Route table (method, path, auth kinds, reach):
 //   GET  /v1/applications                               officer            browser
 //   POST /v1/applications                               system             service-internal
+//   GET  /v1/campaigns                                  none               browser
+//   POST /v1/campaigns                                  officer            browser
+//   GET  /v1/campaigns/detail                           none               browser
+//   POST /v1/campaigns/policy                           officer            browser
+//   POST /v1/campaigns/publish                          officer            browser
+//   POST /v1/campaigns/registration-close               officer            browser
+//   POST /v1/campaigns/complete                         officer            browser
+//   POST /v1/campaigns/cancel                           officer            browser
+//   GET  /v1/applications/exam-invitation/by-applicant  system             service-internal
+//   GET  /v1/applications/document-checklist            officer            browser
+//   GET  /v1/applications/document-checklist/by-applicant system             service-internal
+//   POST /v1/applications/documents/verify-at-venue     officer            browser
 //   GET  /v1/applications/amber-queue                   officer            browser
 //   GET  /v1/applications/by-applicant                  system             service-internal
 //   GET  /v1/applications/by-id                         officer            browser
@@ -240,6 +252,166 @@ export const ByApplicantOkSchema = z
     "applications": z.array(ApplicantApplicationSummarySchema),
   }).strict();
 
+/**
+ * HttpError body for a 4xx campaign command. The code set is OPEN: the
+ * campaign write functions raise P0001 with a leading code token, and the
+ * repository forwards that token as `error`. Branch on the codes the UI
+ * knows and show `detail` (always present below 500) for the rest.
+ */
+export const CampaignCommandRejectionSchema = z
+  .object({
+    "error": z.string().regex(/^[A-Z][A-Z0-9_]+$/),
+    "detail": z.string().optional(),
+  }).strict();
+
+/**
+ * Canonical upper-case public code as stored.
+ */
+export const CampaignPublicCodeSchema = z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/);
+
+export const CampaignDraftCreated201Schema = z
+  .object({
+    "status": z.literal('DRAFT_CREATED'),
+    "publicCode": CampaignPublicCodeSchema,
+    "campaignStatus": z.literal('DRAFT'),
+  }).strict();
+
+/**
+ * Trimmed and upper-cased by the backend before validation, so lower case is
+ * accepted on input. The LEGACY- prefix is reserved and accepted only by
+ * completeCampaign.
+ */
+export const CampaignPublicCodeInputSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/);
+
+/**
+ * normalizeCampaignDraft: exact keys, unknown keys are 400 INVALID_REQUEST.
+ * Timestamps need an explicit timezone; dates are YYYY-MM-DD. Arrays are
+ * de-duplicated by rejection, not silently.
+ */
+export const CampaignDraftRequestSchema = z
+  .object({
+    "publicCode": CampaignPublicCodeInputSchema,
+    "campaignLabel": z.string().min(1).max(50),
+    "targetCategories": z.array(ApplicationCategorySchema).min(1),
+    "targetDistricts": z.array(z.string().min(1)).min(1),
+    "registrationOpensAt": z.string(),
+    "registrationClosesAt": z.string(),
+    "examinationStartDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
+    "examinationEndDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
+    "examinationReportingHour": z.number(),
+    "allowsWalkIn": z.boolean(),
+    "targetIntakeCount": z.number().nullable().optional(),
+    "contactPhoneNumbers": z.array(z.string().min(1).max(40)).optional(),
+    "contactWebsite": z.string().max(100).nullable().optional(),
+  }).strict();
+
+/**
+ * Detail withheld above 499, as for ApplicationError500.
+ */
+export const CampaignError500Schema = z
+  .object({
+    "error": z.enum(['CAMPAIGN_READ_ERROR', 'CAMPAIGN_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
+  }).strict();
+
+/**
+ * status and campaignStatus always carry the same value.
+ */
+export const CampaignLifecycle200Schema = z
+  .object({
+    "status": z.enum(['REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED']),
+    "publicCode": CampaignPublicCodeSchema,
+    "campaignStatus": z.enum(['REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED']),
+  }).strict();
+
+/**
+ * normalizeCampaignPolicy. policyDocument is keyed by ApplicationCategory
+ * and must cover exactly the campaign's target categories. Each entry has
+ * the exact keys age {minimumAge, maximumAge, referenceDate}, education
+ * {mode, threshold}, criminalThreshold, requiredDocumentTypes, medicalMode
+ * and legalBasis {code, reference}; the entries are modelled as an open
+ * record here because the key set is per campaign, and the backend validates
+ * every entry field by field.
+ */
+export const CampaignPolicyRequestSchema = z
+  .object({
+    "publicCode": CampaignPublicCodeInputSchema,
+    "policyDocument": z.record(z.unknown()),
+    "legalBasisCode": z.string().min(1).max(64),
+    "legalBasisReference": z.string().min(1).max(256),
+  }).strict();
+
+export const Sha256HexSchema = z.string().regex(/^[0-9a-f]{64}$/);
+
+export const CampaignPolicyVersionCreated201Schema = z
+  .object({
+    "status": z.literal('POLICY_VERSION_CREATED'),
+    "publicCode": CampaignPublicCodeSchema,
+    "policyVersion": z.number(),
+    "policyHash": Sha256HexSchema,
+  }).strict();
+
+/**
+ * Exactly one key. Used by publish, close, complete and cancel.
+ */
+export const CampaignPublicCodeCommandSchema = z
+  .object({
+    "publicCode": CampaignPublicCodeInputSchema,
+  }).strict();
+
+export const CampaignPublished200Schema = z
+  .object({
+    "status": z.literal('CAMPAIGN_PUBLISHED'),
+    "publicCode": CampaignPublicCodeSchema,
+    "campaignStatus": z.literal('REGISTRATION_OPEN'),
+    "policyVersion": z.number(),
+    "coverageVersion": z.number(),
+    "coverageHash": Sha256HexSchema,
+  }).strict();
+
+export const DocumentChecklistItemSchema = z
+  .object({
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+    "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
+    "registry": z.string().nullable(),
+  }).strict();
+
+/**
+ * ADVISORY (ADR-032): never a gate. Types, states and the verifying registry
+ * only — no forensic score, flag, object key or officer id.
+ */
+export const DocumentChecklist200Schema = z
+  .object({
+    "agency": AgencySchema,
+    "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
+    "complete": z.boolean(),
+    "items": z.array(DocumentChecklistItemSchema),
+  }).strict();
+
+export const ExamInvitationPayloadSchema = z
+  .object({
+    "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
+    "ticketId": z.string(),
+    "venueName": z.string(),
+    "examDate": z.string(),
+    "reportingTimeHour": z.number(),
+    "validUntil": z.string(),
+  }).strict();
+
+/**
+ * ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+ * signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+ * (ADR-009), verified offline at the venue.
+ */
+export const ExamInvitationViewSchema = z
+  .object({
+    "state": z.enum(['READY', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
+    "agency": AgencySchema,
+    "processingCode": z.string(),
+    "campaignLabel": z.string().nullable(),
+    "currentStatus": z.string(),
+    "invitation": ExamInvitationPayloadSchema.optional(),
+  }).strict();
+
 export const FinalDecisionRequestSchema = z
   .object({
     "applicationId": UuidSchema,
@@ -347,6 +519,36 @@ export const NoWalkInCampaign409Schema = z
 export const NotFound404Schema = z
   .object({
     "error": z.literal('NOT_FOUND'),
+  }).strict();
+
+/**
+ * The approved public projection. Nothing internal.
+ */
+export const PublicCampaignSchema = z
+  .object({
+    "publicCode": z.string(),
+    "campaignLabel": z.string(),
+    "agency": AgencySchema,
+    "status": z.string(),
+    "registrationOpensAt": z.string(),
+    "registrationClosesAt": z.string(),
+    "examinationStartDate": z.string(),
+    "examinationEndDate": z.string(),
+    "targetCategories": z.array(ApplicationCategorySchema),
+    "targetDistricts": z.array(z.string()),
+    "allowsWalkIn": z.boolean(),
+    "contactPhoneNumbers": z.array(z.string()).nullable(),
+    "contactWebsite": z.string().nullable(),
+  }).strict();
+
+export const PublicCampaignDetail200Schema = z
+  .object({
+    "campaign": PublicCampaignSchema,
+  }).strict();
+
+export const PublicCampaignList200Schema = z
+  .object({
+    "campaigns": z.array(PublicCampaignSchema),
   }).strict();
 
 /**
@@ -460,6 +662,18 @@ export const UnsupportedAgency501Schema = z
   .object({
     "status": z.literal('UNSUPPORTED_AGENCY'),
     "agency": AgencySchema,
+  }).strict();
+
+export const VerifyAtVenue200Schema = z
+  .object({
+    "status": z.enum(['RECORDED', 'ALREADY_RECORDED']),
+    "checklist": DocumentChecklist200Schema,
+  }).strict();
+
+export const VerifyAtVenueRequestSchema = z
+  .object({
+    "applicationId": UuidSchema,
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
   }).strict();
 
 export const WalkInRegisterConflict409Schema = z.discriminatedUnion('status', [
@@ -615,6 +829,208 @@ export const applicationServiceOperations = {
       "409": SubmitConflict409Schema,
       "422": InvalidAcademicInput422Schema,
       "500": ApplicationError500Schema,
+    },
+  },
+  "listPublicCampaigns": {
+    method: "GET",
+    path: "/v1/campaigns",
+    auth: ["none"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": PublicCampaignList200Schema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "createCampaign": {
+    method: "POST",
+    path: "/v1/campaigns",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignDraftRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "201": CampaignDraftCreated201Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "422": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "getPublicCampaign": {
+    method: "GET",
+    path: "/v1/campaigns/detail",
+    auth: ["none"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["publicCode"],
+    responses: {
+      "200": PublicCampaignDetail200Schema,
+      "400": null,
+      "404": null,
+      "500": CampaignError500Schema,
+    },
+  },
+  "createCampaignPolicy": {
+    method: "POST",
+    path: "/v1/campaigns/policy",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignPolicyRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "201": CampaignPolicyVersionCreated201Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "404": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "422": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "publishCampaign": {
+    method: "POST",
+    path: "/v1/campaigns/publish",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignPublicCodeCommandSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": CampaignPublished200Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "404": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "422": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "closeCampaignRegistration": {
+    method: "POST",
+    path: "/v1/campaigns/registration-close",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignPublicCodeCommandSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": CampaignLifecycle200Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "404": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "completeCampaign": {
+    method: "POST",
+    path: "/v1/campaigns/complete",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignPublicCodeCommandSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": CampaignLifecycle200Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "404": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "cancelCampaign": {
+    method: "POST",
+    path: "/v1/campaigns/cancel",
+    auth: ["officer"],
+    reach: "browser",
+    request: CampaignPublicCodeCommandSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": CampaignLifecycle200Schema,
+      "400": CampaignCommandRejectionSchema,
+      "401": Unauthenticated401Schema,
+      "403": CampaignCommandRejectionSchema,
+      "404": CampaignCommandRejectionSchema,
+      "409": CampaignCommandRejectionSchema,
+      "500": CampaignError500Schema,
+    },
+  },
+  "getExamInvitationByApplicant": {
+    method: "GET",
+    path: "/v1/applications/exam-invitation/by-applicant",
+    auth: ["system"],
+    reach: "service-internal",
+    request: null,
+    requestMediaType: null,
+    query: ["applicantId","applicationId"],
+    responses: {
+      "200": ExamInvitationViewSchema,
+      "400": null,
+      "403": null,
+      "404": null,
+    },
+  },
+  "getDocumentChecklist": {
+    method: "GET",
+    path: "/v1/applications/document-checklist",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "401": Unauthenticated401Schema,
+      "403": null,
+      "404": null,
+      "500": ApplicationError500Schema,
+    },
+  },
+  "getDocumentChecklistByApplicant": {
+    method: "GET",
+    path: "/v1/applications/document-checklist/by-applicant",
+    auth: ["system"],
+    reach: "service-internal",
+    request: null,
+    requestMediaType: null,
+    query: ["applicantId","applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "403": null,
+      "404": null,
+    },
+  },
+  "verifyDocumentAtVenue": {
+    method: "POST",
+    path: "/v1/applications/documents/verify-at-venue",
+    auth: ["officer"],
+    reach: "browser",
+    request: VerifyAtVenueRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": VerifyAtVenue200Schema,
+      "400": null,
+      "403": null,
+      "404": null,
+      "409": null,
+      "422": null,
     },
   },
   "listAmberQueue": {

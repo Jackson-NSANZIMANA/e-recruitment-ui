@@ -64,6 +64,12 @@ export interface CallOptions {
   readonly query?: Readonly<Record<string, string>>;
   readonly body?: unknown;
   /**
+   * A multipart form (document upload). Mutually exclusive with `body`. The
+   * Content-Type header is deliberately NOT set: the browser must add the
+   * boundary, and a hand-written one is a broken upload.
+   */
+  readonly form?: FormData;
+  /**
    * Required by the citizen submission operation. It is deliberately a named
    * option rather than arbitrary headers so callers cannot smuggle credentials
    * or override the edge's security headers.
@@ -124,7 +130,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       // the intended failure: a missing CSRF token must break, visibly.
       if (token !== null) headers[CSRF_HEADER] = token;
       if (callOptions.idempotencyKey !== undefined) headers['idempotency-key'] = callOptions.idempotencyKey;
-      headers['content-type'] = 'application/json';
+      if (callOptions.form === undefined) headers['content-type'] = 'application/json';
     }
 
     const started = Date.now();
@@ -135,7 +141,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         // The cookie IS the credential and the browser attaches it.
         credentials: 'include',
         headers,
-        ...(isUnsafe ? { body: JSON.stringify(callOptions.body ?? {}) } : {}),
+        ...(isUnsafe
+          ? { body: callOptions.form !== undefined ? callOptions.form : JSON.stringify(callOptions.body ?? {}) }
+          : {}),
         ...(callOptions.signal !== undefined ? { signal: callOptions.signal } : {}),
       });
     } catch {

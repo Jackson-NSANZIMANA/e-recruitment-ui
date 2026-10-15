@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -16,11 +16,15 @@
 //
 // Route table (method, path, auth kinds, reach):
 //   POST /v1/identities/verify                          system|officer     service-internal
+//   POST /v1/applicants/auth/onboarding/begin           none               browser
 //   POST /v1/applicants/auth/otp/request                none               browser
 //   POST /v1/applicants/auth/otp/verify                 none               browser
 //   POST /v1/applicants/auth/logout                     applicant-session  browser
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications                 applicant-session  browser
+//   GET  /v1/applicants/me/applications/exam-invitation applicant-session  browser
+//   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
+//   POST /v1/applicants/me/applications/documents       applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
 //   GET  /v1/applicants/me/erasure-request              applicant-session  browser
 //   POST /v1/applicants/me/erasure-request              applicant-session  browser
@@ -71,7 +75,7 @@ export const ApplicantApplicationSummarySchema = z
 
 export const ApplicantAuth400Schema = z
   .object({
-    "error": z.enum(['INVALID_REQUEST', 'INVALID_CHANNEL', 'INVALID_NATIONAL_ID']),
+    "error": z.enum(['INVALID_REQUEST', 'INVALID_CHANNEL', 'INVALID_NATIONAL_ID', 'INVALID_PHONE_NUMBER', 'INVALID_CAMPAIGN_CODE']),
     "detail": z.string().optional(),
   }).strict();
 
@@ -96,6 +100,32 @@ export const DeclineErasureRequestSchema = z
   .object({
     "requestId": UuidSchema,
     "note": z.string().min(1).max(200),
+  }).strict();
+
+export const DocumentChecklistItemSchema = z
+  .object({
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+    "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
+    "registry": z.string().nullable(),
+  }).strict();
+
+/**
+ * ADVISORY (ADR-032): never a gate. Types, states and the verifying registry
+ * only — no forensic score, flag, object key or officer id.
+ */
+export const DocumentChecklist200Schema = z
+  .object({
+    "agency": AgencySchema,
+    "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
+    "complete": z.boolean(),
+    "items": z.array(DocumentChecklistItemSchema),
+  }).strict();
+
+export const DocumentUploaded201Schema = z
+  .object({
+    "status": z.literal('UPLOADED'),
+    "documentId": z.string().uuid(),
+    "documentType": z.string(),
   }).strict();
 
 export const EraseIdentityRequestSchema = z
@@ -173,6 +203,31 @@ export const ErasureRequestNone404Schema = z
     "status": z.literal('NONE'),
   }).strict();
 
+export const ExamInvitationPayloadSchema = z
+  .object({
+    "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
+    "ticketId": z.string(),
+    "venueName": z.string(),
+    "examDate": z.string(),
+    "reportingTimeHour": z.number(),
+    "validUntil": z.string(),
+  }).strict();
+
+/**
+ * ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
+ * signed slot invitation (USRP-SLOT.v1…), PII-free by construction
+ * (ADR-009), verified offline at the venue.
+ */
+export const ExamInvitationViewSchema = z
+  .object({
+    "state": z.enum(['READY', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
+    "agency": AgencySchema,
+    "processingCode": z.string(),
+    "campaignLabel": z.string().nullable(),
+    "currentStatus": z.string(),
+    "invitation": ExamInvitationPayloadSchema.optional(),
+  }).strict();
+
 export const Forbidden403Schema = z
   .object({
     "error": z.literal('FORBIDDEN'),
@@ -197,6 +252,12 @@ export const IdentityCreated201Schema = z
 export const IdentityError500Schema = z
   .object({
     "error": z.enum(['IDENTITY_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
+  }).strict();
+
+export const IdentityNotConfirmed422Schema = z
+  .object({
+    "error": z.literal('IDENTITY_NOT_CONFIRMED'),
+    "detail": z.string().optional(),
   }).strict();
 
 export const InvalidApplicantId400Schema = z
@@ -255,11 +316,6 @@ export const NotFoundInNida404Schema = z
     "status": z.literal('NOT_FOUND_IN_NIDA'),
   }).strict();
 
-export const OtpChallenged202Schema = z
-  .object({
-    "status": z.literal('CHALLENGED'),
-  }).strict();
-
 /**
  * REQUEST-ONLY. This schema is referenced by request bodies and by NO
  * response in this document. If it ever appears under a response, that is
@@ -267,15 +323,41 @@ export const OtpChallenged202Schema = z
  */
 export const RawNationalIdSchema = z.string().min(1).max(32);
 
-export const OtpRequestBodySchema = z
+export const OnboardingBeginBodySchema = z
   .object({
     "nationalId": RawNationalIdSchema,
+    "dateOfBirth": z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    "channel": ApplicationChannelSchema,
+  }).strict();
+
+export const OnboardingBegun200Schema = z
+  .object({
+    "onboardingToken": z.string().max(512),
+    "expiresAt": z.string(),
+  }).strict();
+
+export const OnboardingExpired401Schema = z
+  .object({
+    "error": z.literal('ONBOARDING_EXPIRED'),
+    "detail": z.string().optional(),
+  }).strict();
+
+export const OtpChallenged202Schema = z
+  .object({
+    "status": z.literal('CHALLENGED'),
+  }).strict();
+
+export const OtpRequestBodySchema = z
+  .object({
+    "onboardingToken": z.string().min(1).max(512),
+    "phoneNumber": z.string().min(1).max(32),
     "channel": ApplicationChannelSchema,
   }).strict();
 
 export const OtpVerifyBodySchema = z
   .object({
-    "nationalId": RawNationalIdSchema,
+    "onboardingToken": z.string().min(1).max(512),
+    "phoneNumber": z.string().min(1).max(32),
     "otp": z.string().min(1).max(12),
     "channel": ApplicationChannelSchema,
   }).strict();
@@ -283,6 +365,7 @@ export const OtpVerifyBodySchema = z
 export const SubmitApplicationRequestSchema = z
   .object({
     "category": z.string().max(64),
+    "campaignCode": z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/),
     "nesaIndexNumber": z.string().max(64).optional(),
     "hecRegistrationNumber": z.string().max(64).optional(),
   }).strict();
@@ -302,6 +385,13 @@ export const Unauthenticated401Schema = z
   .object({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
+  }).strict();
+
+export const UploadDocumentFormSchema = z
+  .object({
+    "applicationId": UuidSchema,
+    "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+    "file": z.string(),
   }).strict();
 
 export const UpstreamUnavailable502Schema = z
@@ -393,6 +483,23 @@ export const identityServiceOperations = {
       "503": NidaUnavailable503Schema,
     },
   },
+  "beginApplicantOnboarding": {
+    method: "POST",
+    path: "/v1/applicants/auth/onboarding/begin",
+    auth: ["none"],
+    reach: "browser",
+    request: OnboardingBeginBodySchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OnboardingBegun200Schema,
+      "400": ApplicantAuth400Schema,
+      "422": IdentityNotConfirmed422Schema,
+      "500": ApplicantAuthError500Schema,
+      "502": UpstreamUnavailable502Schema,
+      "503": NidaUnavailable503Schema,
+    },
+  },
   "requestApplicantOtp": {
     method: "POST",
     path: "/v1/applicants/auth/otp/request",
@@ -404,6 +511,7 @@ export const identityServiceOperations = {
     responses: {
       "202": OtpChallenged202Schema,
       "400": ApplicantAuth400Schema,
+      "401": OnboardingExpired401Schema,
       "500": ApplicantAuthError500Schema,
       "502": UpstreamUnavailable502Schema,
       "503": NidaUnavailable503Schema,
@@ -472,6 +580,57 @@ export const identityServiceOperations = {
       "422": null,
       "429": null,
       "503": null,
+    },
+  },
+  "getMyExamInvitation": {
+    method: "GET",
+    path: "/v1/applicants/me/applications/exam-invitation",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": ExamInvitationViewSchema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "502": UpstreamUnavailable502Schema,
+    },
+  },
+  "getMyDocumentChecklist": {
+    method: "GET",
+    path: "/v1/applicants/me/applications/document-checklist",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": DocumentChecklist200Schema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "502": UpstreamUnavailable502Schema,
+    },
+  },
+  "uploadMyDocument": {
+    method: "POST",
+    path: "/v1/applicants/me/applications/documents",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: UploadDocumentFormSchema,
+    requestMediaType: "multipart/form-data",
+    query: [],
+    responses: {
+      "201": DocumentUploaded201Schema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "409": null,
+      "413": null,
+      "422": null,
+      "502": UpstreamUnavailable502Schema,
     },
   },
   "withdrawMyApplication": {

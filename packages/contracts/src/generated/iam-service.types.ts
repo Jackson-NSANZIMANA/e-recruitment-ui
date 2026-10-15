@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/iam-service.yaml                          ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab          ║
+// ║  Backend:  bd939f61b3fd2f44299c11229783561f6bee1a0c          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║

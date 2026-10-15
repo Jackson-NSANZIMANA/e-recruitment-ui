@@ -39,7 +39,7 @@ export default defineConfig({
           "Rwanda unified security recruitment — officer and field console",
         // hygiene-allow-hex: see applicant-portal config for rationale.
         theme_color: "#0052CC",
-        background_color: "#FFFFFF",
+        background_color: "#FFFFFF", // hygiene-allow-hex: web manifest, read before any CSS
         display: "standalone",
         orientation: "landscape",
         start_url: "/",

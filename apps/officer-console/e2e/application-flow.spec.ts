@@ -3,7 +3,8 @@ import { expect, test } from '@playwright/test';
 const OFFICER_SESSION = {
   kind: 'officer',
   agency: 'RDF',
-  roles: ['RECRUITMENT_OFFICER'],
+  roles: ['decision_authority'],
+  permissions: ['application.accept', 'adjudication.decide'],
   idleExpiresAt: '2099-01-01T00:00:00.000Z',
   absoluteExpiresAt: '2099-01-02T00:00:00.000Z',
 };
@@ -37,7 +38,8 @@ test('officer login reaches the current dashboard', async ({ page }) => {
   const passwordInput = page.locator('input[name="password"]');
   await passwordInput.fill('correct-horse-battery-staple');
 
-  await page.getByRole("button", { name: /injira/i }).click();
+  // The label follows the detected language: Playwright Chrome reports en-US.
+  await page.getByRole("button", { name: /^(sign in|injira|se connecter)$/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
   await expect(page.getByTestId('metric-total-applications')).toBeVisible({ timeout: 10_000 });
@@ -140,7 +142,7 @@ test('officer detail executes an allowed transition and re-reads authoritative s
 
   await page.goto(`/applications/${applicationId}`);
   await expect(page.getByRole('heading', { name: 'RDF-98002' })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('Final shortlist')).toBeVisible();
+  await expect(page.getByText('Final shortlist', { exact: true }).first()).toBeVisible();
 
   await page.getByRole('button', { name: /^Accept$/ }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -148,5 +150,5 @@ test('officer detail executes an allowed transition and re-reads authoritative s
 
   await expect.poll(() => transitionCalls).toBe(1);
   await expect.poll(() => detailReads).toBeGreaterThan(1);
-  await expect(page.getByText('Accepted')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('Accepted', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
 });

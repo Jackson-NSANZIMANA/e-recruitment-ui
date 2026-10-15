@@ -8,6 +8,7 @@
     "logout": "Sohoka"
   },
   "auth": {
+    "send_code": "Ohereza kode",
     "sign_in": "Injira",
     "login_handle": "Izina ryo kwinjira",
     "password": "Ijambo banga",
@@ -114,6 +115,7 @@
     "partial_description": "Umurongo wa edge watanze amakuru y’ubusabe, ariko amateka ntiyari urutonde. Suzuma ibice by’ubusabe kandi wongere ugerageze mbere yo gufata icyemezo."
   },
   "actions": {
+    "continue": "Komeza",
     "approve": "Emera",
     "reject": "Nanga",
     "request_correction": "Saba gukosorwa",
@@ -169,7 +171,8 @@
     "conflict_description": "Ongera ufungure dosiye urebe imimerere iriho mbere yo kongera kugerageza.",
     "no_change": "Nta gihindutse",
     "no_change_description": "Backend yagaragaje NO_CHANGE. Dosiye yongeye kuvugururwa kugira ngo urebe imimerere iriho.",
-    "transition_receipt": "Igisubizo cya backend: {{outcome}}. Imimerere yabanje: {{fromStatus}}. Imimerere igaragara: {{status}}."
+    "transition_receipt": "Igisubizo cya backend: {{outcome}}. Imimerere yabanje: {{fromStatus}}. Imimerere igaragara: {{status}}.",
+    "no_permission": "Uruhare rwawe rukwemerera kureba iyi dosiye, ntirukwemerera kuyifataho icyemezo."
   },
   "scan": {
     "start": "Tangira gusikana",
@@ -199,7 +202,8 @@
       "category": "Icyiciro",
       "education": "Nimero y’amashuri",
       "declaration": "Itangazo",
-      "review": "Suzuma"
+      "review": "Suzuma",
+      "campaign": "Itangazo"
     },
     "category_label": "Icyiciro cyo gushaka akazi",
     "category_help": "Hitamo icyiciro. Umurongo wa backend ni wo ugena urwego rubishinzwe hashingiwe kuri iki cyiciro.",
@@ -267,6 +271,104 @@
     "sign_in_again": "Ongera winjire",
     "submitting": "Birimo koherezwa…",
     "rate_limit_title": "Umubare w’ukohereza wagezweho",
-    "rate_limit_body": "Tegereza gato mbere yo kongera kohereza ubusabe."
+    "rate_limit_body": "Tegereza gato mbere yo kongera kohereza ubusabe.",
+    "campaign_loading": "Turimo gushaka amatangazo afunguye…",
+    "campaign_error_title": "Amatangazo ntiyabashije kuboneka",
+    "campaign_error_body": "Reba umuyoboro wa interineti hanyuma wongere ugerageze.",
+    "retry": "Ongera ugerageze",
+    "campaign_none_title": "Nta itangazo ry’akazi rifunguye ubu",
+    "campaign_none_body": "Nta itangazo ryemerera kwiyandikisha muri iki gihe. Ongera usuzume nyuma, cyangwa ukurikize amatangazo yemewe.",
+    "campaign_help": "Hitamo itangazo ushaka gusaba.",
+    "campaign_window": "Kwiyandikisha birangira {{date}}",
+    "campaign_choose": "Saba iri tangazo",
+    "review_campaign": "Itangazo",
+    "documents_title": "Ohereza inyandiko zawe",
+    "documents_help": "Ohereza buri nyandiko nka PDF, JPEG cyangwa PNG. Inyandiko ihita yakirwa gusa — izasuzumwa nyuma, kandi nta gisubizo uzabona kuri uru rupapuro.",
+    "document_type_label": "Ubwoko bw’inyandiko",
+    "document_file_label": "Dosiye (PDF, JPEG cyangwa PNG, itarenze 10 MB)",
+    "upload": "Ohereza inyandiko",
+    "uploading": "Biraoherezwa…",
+    "upload_error_title": "Inyandiko ntiyemewe",
+    "upload_error": "Inyandiko ntiyabashije koherezwa. Genzura dosiye hanyuma wongere ugerageze.",
+    "upload_ok_title": "Inyandiko yakiriwe",
+    "upload_ok_body": "Byakiriwe: {{types}}. Ushobora kohereza indi nyandiko.",
+    "upload_refusals": {
+      "APPLICATION_NOT_FOUND": "Iyi dosiye y’isaba ntiyabonetse.",
+      "NOT_ACCEPTING_DOCUMENTS": "Iyi dosiye y’isaba ntiyakira inyandiko muri iki cyiciro.",
+      "UNSUPPORTED_DOCUMENT_TYPE": "Ubu bwoko bw’inyandiko ntibwemewe kuri iri tangazo.",
+      "UNSUPPORTED_FILE_CONTENT": "Iyi dosiye si PDF, JPEG cyangwa PNG ishobora gusomwa.",
+      "UNSUPPORTED_FILE_TYPE": "Dosiye za PDF, JPEG na PNG zonyine nizo zemewe.",
+      "CONTENT_TYPE_MISMATCH": "Dosiye ntihuye n’ubwoko yavuzwe.",
+      "DOCUMENT_REJECTED_MALWARE": "Iyi dosiye yanzwe kuko ishobora guteza ibibazo. Genzura telefone yawe ukoreshe kopi itarimo ikibazo.",
+      "FILE_TOO_LARGE": "Iyi dosiye ni nini cyane (itarenze 10 MB).",
+      "MISSING_FILE": "Banza uhitemo dosiye."
+    }
+  },
+  "documents": {
+    "types": {
+      "NATIONAL_ID": "Indangamuntu",
+      "APPLICATION_FORM_WITH_PHOTO": "Ifishi y’isaba ifite ifoto",
+      "BIRTH_CERTIFICATE": "Icyemezo cy’amavuko",
+      "OLEVEL_CERTIFICATE": "Impamyabumenyi ya O-Level",
+      "ALEVEL_CERTIFICATE": "Impamyabumenyi ya A-Level",
+      "DEGREE_DIPLOMA_COPY": "Impamyabumenyi (kopi)",
+      "DEGREE_DIPLOMA_NOTARIZED": "Impamyabumenyi (kopi yemejwe na noteri)",
+      "GOOD_CONDUCT_CERTIFICATE": "Icyemezo cy’imyitwarire myiza",
+      "NON_CONVICTION_CERTIFICATE": "Icyemezo cy’uko utarakatiwe",
+      "CELIBACY_CERTIFICATE": "Icyemezo cy’ingaragu",
+      "MEDICAL_CERTIFICATE_GOVT": "Icyemezo cya muganga (cya Leta)"
+    }
+  },
+  "exam_qr": {
+    "title": "Kode QR y’ikizamini cyanjye",
+    "open_link": "Fungura kode QR y’ikizamini",
+    "ready_title": "Kode QR y’ikizamini cyawe yabonetse",
+    "ready_body": "Kurura cyangwa ucapure iyi kode QR, uyizane hamwe n’indangamuntu yawe ku isuzuma ry’umubiri. Abakozi bayisoma ku muryango.",
+    "qr_alt": "Kode QR y’ikizamini y’isaba {{code}}",
+    "processing_code": "Kode y’isaba",
+    "venue": "Aho bizabera",
+    "date": "Itariki",
+    "reporting": "Kugera saa",
+    "valid_until": "Ifite agaciro kugeza",
+    "download": "Kurura kode QR (PNG)",
+    "downloading": "Biri gutegurwa…",
+    "print": "Capura",
+    "download_failed": "Ifoto ntiyabashije gukorwa muri iyi mushakisha. Koresha Capura cyangwa ufate ifoto ya ekrani.",
+    "present_at_gate": "Erekana iyi kode hamwe n’indangamuntu yawe ku muryango w’isuzuma.",
+    "keep_private": "Iyi kode ni ubutumire bwawe bwite. Ntuyisangize abandi.",
+    "not_found": "Iyi dosiye y’isaba ntiyabonetse mu zawe.",
+    "load_failed": "Kode QR yawe ntiyabashije kuboneka. Reba interineti hanyuma wongere ugerageze.",
+    "unavailable_title": "Kode QR yawe ntiboneka",
+    "unavailable_body": "Wahawe umwanya w’ikizamini ariko kode ntirategurwa. Ongera urebe nyuma cyangwa uvugane n’urwego.",
+    "states": {
+      "PENDING": {
+        "title": "Dosiye yawe iri gusuzumwa",
+        "body": "Kode QR yawe izahita igaragara hano igenzura ry’ubushobozi bwawe rirangiye kandi wahawe umwanya w’ikizamini. Ushobora kureka uru rupapuro rufunguye."
+      },
+      "ON_HOLD": {
+        "title": "Dosiye yawe iri gusuzumwa n’umukozi",
+        "body": "Umukozi ari gusuzuma dosiye yawe. Kode QR izatangwa isuzuma rirangiye."
+      },
+      "COMPLETED": {
+        "title": "Isuzuma ryawe ryarangiye",
+        "body": "Icyiciro cy’ikizamini cyarangiye; kode QR ntikenewe."
+      },
+      "CLOSED": {
+        "title": "Nta kode QR kuri iyi dosiye",
+        "body": "Iyi dosiye ntigikora, ntabwo rero hari ubutumire bw’ikizamini."
+      },
+      "EXPIRED": {
+        "title": "Iyi kode QR yarangije igihe",
+        "body": "Umunsi w’ikizamini w’ubu butumire warenze."
+      },
+      "UNAVAILABLE": {
+        "title": "Kode QR yawe ntiraboneka",
+        "body": "Wahawe umwanya w’ikizamini ariko kode ntirategurwa. Ongera urebe nyuma cyangwa uvugane n’urwego."
+      },
+      "WALK_IN": {
+        "title": "Kwiyandikisha ku kibuga",
+        "body": "Wiyandikishije ku kibuga ku munsi w’ikizamini, ntabwo rero hari ubutumire bwa QR."
+      }
+    }
   }
 }

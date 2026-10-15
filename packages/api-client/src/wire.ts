@@ -192,6 +192,8 @@ export interface MyApplicationRow {
 /** Exact `POST /edge/v1/me/applications` request and success projection. */
 export interface SubmitApplicationInput {
   readonly category: ApplicationCategory;
+  /** The PUBLIC code of the campaign the citizen chose (ADR-030). */
+  readonly campaignCode: string;
   readonly nesaIndexNumber?: string;
   readonly hecRegistrationNumber?: string;
 }
@@ -215,3 +217,102 @@ export type RowFor<A extends Agency> = Omit<ApplicationListRow, 'agency' | 'stat
   readonly agency: A;
   readonly status: StatusFor<A>;
 };
+
+// ── Public campaigns (BUILD-001 reads, ADR-030) ──────────────────
+
+/** The approved public projection of a published campaign. Nothing internal. */
+export interface PublicCampaign {
+  readonly publicCode: string;
+  readonly campaignLabel: string;
+  readonly agency: Agency;
+  readonly status: string;
+  readonly registrationOpensAt: string;
+  readonly registrationClosesAt: string;
+  readonly examinationStartDate: string;
+  readonly examinationEndDate: string;
+  readonly targetCategories: readonly ApplicationCategory[];
+  readonly targetDistricts: readonly string[];
+  readonly allowsWalkIn: boolean;
+  readonly contactPhoneNumbers: readonly string[] | null;
+  readonly contactWebsite: string | null;
+}
+
+export interface PublicCampaignListResponse {
+  readonly campaigns: readonly PublicCampaign[];
+}
+
+export interface PublicCampaignDetailResponse {
+  readonly campaign: PublicCampaign;
+}
+
+/** `POST /edge/v1/me/applications/documents` — identifiers only, never a verdict. */
+export interface UploadDocumentResponse {
+  readonly status: 'UPLOADED';
+  readonly documentId: string;
+  readonly documentType: string;
+}
+
+export interface UploadDocumentInput {
+  readonly applicationId: string;
+  readonly documentType: string;
+  readonly file: Blob;
+}
+
+// ── Advisory document checklist (ADR-032) ───────────────────────
+
+export type DocumentSatisfaction =
+  | 'API_VERIFIED'
+  | 'UPLOADED_CLEARED'
+  | 'VENUE_VERIFIED'
+  | 'AWAITING_REGISTRY'
+  | 'UNDER_REVIEW'
+  | 'REJECTED'
+  | 'MISSING';
+
+/** ADVISORY: never a gate. No score, flag, object key or officer id. */
+export interface DocumentChecklist {
+  readonly agency: Agency;
+  readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';
+  readonly complete: boolean;
+  readonly items: readonly {
+    readonly documentType: string;
+    readonly satisfaction: DocumentSatisfaction;
+    /** NIDA | NESA | HEC | RIB, or null when it can only be uploaded/presented. */
+    readonly registry: string | null;
+  }[];
+}
+
+export interface VerifyAtVenueResponse {
+  readonly status: 'RECORDED' | 'ALREADY_RECORDED';
+  readonly checklist: DocumentChecklist;
+}
+
+// ── The citizen's exam QR (ADR-033) ─────────────────────────────
+
+export type ExamInvitationState =
+  | 'READY'
+  | 'PENDING'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'CLOSED'
+  | 'EXPIRED'
+  | 'UNAVAILABLE'
+  | 'WALK_IN';
+
+/** `invitation` is present ONLY when state is READY. */
+export interface ExamInvitationView {
+  readonly state: ExamInvitationState;
+  readonly agency: Agency;
+  readonly processingCode: string;
+  readonly campaignLabel: string | null;
+  readonly currentStatus: string;
+  readonly invitation?: {
+    /** The signed slot invitation (USRP-SLOT.v1…) to encode in the QR. */
+    readonly qrPayload: string;
+    readonly ticketId: string;
+    readonly venueName: string;
+    readonly examDate: string;
+    readonly reportingTimeHour: number;
+    readonly validUntil: string;
+  };
+}

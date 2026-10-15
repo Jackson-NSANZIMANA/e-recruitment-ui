@@ -6,8 +6,16 @@ import TextField from "@atlaskit/textfield";
 import Select from "@atlaskit/select";
 import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
-import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, CATEGORY_AGENCY, type ApplicationCategory } from "@usrp/contracts";
-import { ApiError, createApiClient, useSubmitMyApplication, type NormalisedError } from "@usrp/api-client";
+import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, type Agency, type ApplicationCategory } from "@usrp/contracts";
+import {
+  ApiError,
+  createApiClient,
+  usePublicCampaigns,
+  useSubmitMyApplication,
+  useUploadMyDocument,
+  type NormalisedError,
+  type PublicCampaign,
+} from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
 import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
@@ -18,7 +26,15 @@ const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 type AcademicPath = "NESA" | "HEC";
 
 interface WizardData {
-  /** The only required business input accepted by the edge. */
+  /**
+   * The PUBLIC code of the campaign the citizen chose (ADR-030). The server
+   * resolves the real campaign and policy from it; the label and categories
+   * are only what the picker showed, kept so the wizard can narrow choices.
+   */
+  readonly campaignCode?: string;
+  readonly campaignLabel?: string;
+  readonly campaignCategories?: readonly ApplicationCategory[];
+  /** Required business input accepted by the edge. */
   readonly category?: ApplicationCategory;
   /** Exactly one of these is required by the backend's category rule. */
   readonly nesaIndexNumber?: string;
@@ -50,7 +66,25 @@ function loadDraft(): WizardData {
     const parsed: unknown = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
     if (parsed === null || typeof parsed !== "object") return {};
     const raw = parsed as Record<string, unknown>;
-    const draft: { category?: ApplicationCategory; nesaIndexNumber?: string; hecRegistrationNumber?: string; declaration?: boolean } = {};
+    const draft: {
+      campaignCode?: string;
+      campaignLabel?: string;
+      campaignCategories?: readonly ApplicationCategory[];
+      category?: ApplicationCategory;
+      nesaIndexNumber?: string;
+      hecRegistrationNumber?: string;
+      declaration?: boolean;
+    } = {};
+    const campaignCode = raw["campaignCode"];
+    const campaignLabel = raw["campaignLabel"];
+    const campaignCategories = raw["campaignCategories"];
+    if (typeof campaignCode === "string") draft.campaignCode = campaignCode;
+    if (typeof campaignLabel === "string") draft.campaignLabel = campaignLabel;
+    if (Array.isArray(campaignCategories)) {
+      draft.campaignCategories = campaignCategories
+        .map(categoryOrUndefined)
+        .filter((c): c is ApplicationCategory => c !== undefined);
+    }
     const category = categoryOrUndefined(raw["category"]);
     const nesaIndexNumber = raw["nesaIndexNumber"];
     const hecRegistrationNumber = raw["hecRegistrationNumber"];
@@ -84,11 +118,77 @@ function academicPathFor(category: ApplicationCategory | undefined): AcademicPat
   return category === undefined ? undefined : ACADEMIC_PATH_BY_CATEGORY[category];
 }
 
-function StepCategory({ data, onNext }: {
+function StepCampaign({ data, onNext }: {
   readonly data: WizardData;
   readonly onNext: (patch: Partial<WizardData>) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
+  const campaigns = usePublicCampaigns(client);
+
+  if (campaigns.isPending) return <Text>{t("apply.campaign_loading")}</Text>;
+  if (campaigns.isError) {
+    return (
+      <SectionMessage appearance="warning" title={t("apply.campaign_error_title")} headingLevel="h3">
+        <Stack space="space.200">
+          <Text>{t("apply.campaign_error_body")}</Text>
+          <Button onClick={() => { void campaigns.refetch(); }}>{t("apply.retry")}</Button>
+        </Stack>
+      </SectionMessage>
+    );
+  }
+  const open: readonly PublicCampaign[] = campaigns.data.campaigns;
+  if (open.length === 0) {
+    return (
+      <SectionMessage title={t("apply.campaign_none_title")} headingLevel="h3">
+        <Text>{t("apply.campaign_none_body")}</Text>
+      </SectionMessage>
+    );
+  }
+  return (
+    <Stack space="space.300">
+      <Text>{t("apply.campaign_help")}</Text>
+      {open.map((campaign) => (
+        <SectionMessage
+          key={campaign.publicCode}
+          appearance={data.campaignCode === campaign.publicCode ? "success" : "information"}
+          title={campaign.campaignLabel}
+          headingLevel="h3"
+        >
+          <Stack space="space.100">
+            <Text>{t("apply.review_agency")}: {campaign.agency}</Text>
+            <Text size="small" color="color.text.subtle">
+              {t("apply.campaign_window", { date: new Date(campaign.registrationClosesAt).toLocaleDateString() })}
+            </Text>
+            <Inline>
+              <Button
+                appearance="primary"
+                onClick={() => onNext({
+                  campaignCode: campaign.publicCode,
+                  campaignLabel: campaign.campaignLabel,
+                  campaignCategories: campaign.targetCategories,
+                })}
+              >
+                {t("apply.campaign_choose")}
+              </Button>
+            </Inline>
+          </Stack>
+        </SectionMessage>
+      ))}
+    </Stack>
+  );
+}
+
+function StepCategory({ data, onNext, onBack }: {
+  readonly data: WizardData;
+  readonly onNext: (patch: Partial<WizardData>) => void;
+  readonly onBack: () => void;
+}): React.ReactElement {
+  const { t } = useTranslation();
+  // Only the categories THIS campaign targets can be chosen. The server
+  // re-checks; this just stops a citizen picking something it will refuse.
+  const offered = APPLICATION_CATEGORIES.filter(
+    (c) => data.campaignCategories === undefined || data.campaignCategories.includes(c),
+  );
   return (
     <Form<{ category: string }> onSubmit={(values) => {
       const category = categoryOrUndefined(values.category);
@@ -104,7 +204,7 @@ function StepCategory({ data, onNext }: {
               {...(data.category !== undefined ? { defaultValue: data.category } : {})}
             >
               {({ fieldProps }) => {
-                const options = APPLICATION_CATEGORIES.map((category) => ({
+                const options = offered.map((category) => ({
                   label: t(`apply.categories.${category}`),
                   value: category,
                 }));
@@ -139,7 +239,10 @@ function StepCategory({ data, onNext }: {
               </SectionMessage>
             )}
             <FormFooter>
-              <Button type="submit" appearance="primary">{t("actions.next")}</Button>
+              <Inline space="space.200">
+                <Button appearance="subtle" onClick={onBack}>{t("actions.back")}</Button>
+                <Button type="submit" appearance="primary">{t("actions.next")}</Button>
+              </Inline>
             </FormFooter>
           </Stack>
         </form>
@@ -241,8 +344,87 @@ function backendOutcome(error: NormalisedError): string | null {
   }
 }
 
-function SubmissionResult({ result, error, onNewAttempt }: {
+/**
+ * Document upload for the application just filed (ADR-030). The citizen picks
+ * one of the document types the agency ACCEPTS and a file. The response holds
+ * identifiers only: there is deliberately no verdict to show, so "uploaded"
+ * means "received", never "verified".
+ */
+function DocumentsPanel({ applicationId, agency }: {
+  readonly applicationId: string;
+  readonly agency: Agency;
+}): React.ReactElement {
+  const { t } = useTranslation();
+  const upload = useUploadMyDocument(client);
+  const types = AGENCY_DOCUMENT_TYPES[agency];
+  const [documentType, setDocumentType] = useState<string>(types[0] ?? "NATIONAL_ID");
+  const [file, setFile] = useState<File | null>(null);
+  const [received, setReceived] = useState<readonly string[]>([]);
+
+  const refusal = ((): string | null => {
+    const error = upload.error;
+    if (!(error instanceof ApiError)) return error === null ? null : t("apply.upload_error");
+    const code = backendOutcome(error.normalised);
+    return code === null ? t("apply.upload_error") : t(`apply.upload_refusals.${code}`, { defaultValue: t("apply.upload_error") });
+  })();
+
+  return (
+    <Stack space="space.200">
+      <Text weight="bold">{t("apply.documents_title")}</Text>
+      <Text size="small" color="color.text.subtle">{t("apply.documents_help")}</Text>
+      <Field name="documentType" label={t("apply.document_type_label")}>
+        {() => (
+          <Select
+            inputId="document-type"
+            options={types.map((type) => ({ label: t(`documents.types.${type}`), value: type }))}
+            value={{ label: t(`documents.types.${documentType}`), value: documentType }}
+            isClearable={false}
+            onChange={(option) => { if (option !== null && option !== undefined) setDocumentType(option.value); }}
+          />
+        )}
+      </Field>
+      <label htmlFor="document-file">
+        <Text size="small">{t("apply.document_file_label")}</Text>
+      </label>
+      <input
+        id="document-file"
+        type="file"
+        accept="application/pdf,image/jpeg,image/png"
+        onChange={(event) => { setFile(event.target.files?.[0] ?? null); upload.reset(); }}
+      />
+      {refusal !== null && (
+        <SectionMessage appearance="error" title={t("apply.upload_error_title")} headingLevel="h4" aria-live="assertive">
+          <Text>{refusal}</Text>
+        </SectionMessage>
+      )}
+      {received.length > 0 && (
+        <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite">
+          <Text>{t("apply.upload_ok_body", { types: received.map((r) => t(`documents.types.${r}`)).join(", ") })}</Text>
+        </SectionMessage>
+      )}
+      <Inline>
+        <Button
+          appearance="primary"
+          isDisabled={file === null || upload.isPending}
+          onClick={() => {
+            if (file === null) return;
+            upload.mutate(
+              { applicationId, documentType, file },
+              { onSuccess: () => { setReceived((prev) => (prev.includes(documentType) ? prev : [...prev, documentType])); setFile(null); } },
+            );
+          }}
+        >
+          {upload.isPending ? t("apply.uploading") : t("apply.upload")}
+        </Button>
+      </Inline>
+    </Stack>
+  );
+}
+
+function SubmissionResult({ result, applicationId, agency, error, onNewAttempt }: {
   readonly result: "SUBMITTED" | "REPLAYED" | null;
+  readonly applicationId: string | null;
+  readonly agency: Agency | null;
   readonly error: NormalisedError | null;
   readonly onNewAttempt: () => void;
 }): React.ReactElement | null {
@@ -252,6 +434,12 @@ function SubmissionResult({ result, error, onNewAttempt }: {
       <SectionMessage appearance="success" title={result === "REPLAYED" ? t("apply.replay_title") : t("apply.success_title")} headingLevel="h4" aria-live="polite">
         <Stack space="space.200">
           <Text>{result === "REPLAYED" ? t("apply.replay_body") : t("apply.success_body")}</Text>
+          {applicationId !== null && (
+            <Text><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link></Text>
+          )}
+          {applicationId !== null && agency !== null && (
+            <DocumentsPanel applicationId={applicationId} agency={agency} />
+          )}
           <Text><Link to="/status">{t("apply.view_applications")}</Link></Text>
         </Stack>
       </SectionMessage>
@@ -338,6 +526,7 @@ export default function ApplyPage(): React.ReactElement {
   const mutation = useSubmitMyApplication(client);
   const path = academicPathFor(data.category);
   const stepLabels = [
+    t("apply.steps.campaign"),
     t("apply.steps.category"),
     t("apply.steps.education"),
     t("apply.steps.declaration"),
@@ -345,10 +534,19 @@ export default function ApplyPage(): React.ReactElement {
   ];
 
   const advance = (patch: Partial<WizardData>): void => {
-    const updated = { ...data, ...patch };
+    let updated: WizardData = { ...data, ...patch };
+    if (
+      updated.category !== undefined &&
+      updated.campaignCategories !== undefined &&
+      !updated.campaignCategories.includes(updated.category)
+    ) {
+      // A different campaign invalidates a category chosen for another.
+      const { category: _dropped, ...rest } = updated;
+      updated = rest;
+    }
     setData(updated);
     saveDraft(updated);
-    if (patch.category !== undefined || patch.nesaIndexNumber !== undefined || patch.hecRegistrationNumber !== undefined) {
+    if (patch.campaignCode !== undefined || patch.category !== undefined || patch.nesaIndexNumber !== undefined || patch.hecRegistrationNumber !== undefined) {
       // A changed request body is a new filing attempt. A retry without edits
       // keeps the existing UUID so the edge can replay safely.
       setIdempotencyKey(createUuid());
@@ -361,7 +559,7 @@ export default function ApplyPage(): React.ReactElement {
   const back = (): void => setStep((current) => Math.max(0, current - 1));
 
   const submit = async (): Promise<void> => {
-    if (data.category === undefined || path === undefined) return;
+    if (data.category === undefined || data.campaignCode === undefined || path === undefined) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setOfflineAttempt(true);
       mutation.reset();
@@ -370,6 +568,7 @@ export default function ApplyPage(): React.ReactElement {
     setOfflineAttempt(false);
     const input = {
       category: data.category,
+      campaignCode: data.campaignCode,
       ...(path === "NESA" && data.nesaIndexNumber !== undefined ? { nesaIndexNumber: data.nesaIndexNumber } : {}),
       ...(path === "HEC" && data.hecRegistrationNumber !== undefined ? { hecRegistrationNumber: data.hecRegistrationNumber } : {}),
     };
@@ -384,13 +583,15 @@ export default function ApplyPage(): React.ReactElement {
 
   return (
     <WizardLayout title={stepLabels[step] ?? t("apply.title")} currentStep={step} steps={stepLabels} footer={null}>
-      {step === 0 && <StepCategory data={data} onNext={advance} />}
-      {step === 1 && <StepEducation data={data} onNext={advance} onBack={back} />}
-      {step === 2 && <StepDeclaration onNext={advance} onBack={back} />}
-      {step === 3 && (
+      {step === 0 && <StepCampaign data={data} onNext={advance} />}
+      {step === 1 && <StepCategory data={data} onNext={advance} onBack={back} />}
+      {step === 2 && <StepEducation data={data} onNext={advance} onBack={back} />}
+      {step === 3 && <StepDeclaration onNext={advance} onBack={back} />}
+      {step === 4 && (
         <Stack space="space.400">
           <SectionMessage title={t("apply.review_title")} headingLevel="h3">
             <Stack space="space.100">
+              <Text>{t("apply.review_campaign")}: {data.campaignLabel ?? data.campaignCode ?? t("apply.not_selected")}</Text>
               <Text>{t("apply.review_category")}: {data.category === undefined ? t("apply.not_selected") : t(`apply.categories.${data.category}`)}</Text>
               <Text>{t("apply.review_agency")}: {data.category === undefined ? t("apply.not_selected") : CATEGORY_AGENCY[data.category]}</Text>
               <Text>{t("apply.review_credential")}: {path === "NESA" ? data.nesaIndexNumber : data.hecRegistrationNumber}</Text>
@@ -400,6 +601,8 @@ export default function ApplyPage(): React.ReactElement {
           <Text size="small" color="color.text.subtle">{t("apply.review_body")}</Text>
           <SubmissionResult
             result={mutation.data?.outcome ?? null}
+            applicationId={mutation.data?.response.applicationId ?? null}
+            agency={mutation.data?.response.agency ?? null}
             error={offlineAttempt ? { kind: "network" } : submissionError(mutation.error)}
             onNewAttempt={() => { setIdempotencyKey(createUuid()); setOfflineAttempt(false); mutation.reset(); }}
           />

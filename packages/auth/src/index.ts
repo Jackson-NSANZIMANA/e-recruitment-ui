@@ -33,7 +33,7 @@ export {
 } from './session.js';
 
 // ── The edge auth client ──
-export type { EdgeAuthClient, EdgeAuthClientOptions, AuthAttempt } from './edge-client.js';
+export type { EdgeAuthClient, EdgeAuthClientOptions, AuthAttempt, IdentityAttempt } from './edge-client.js';
 export { createEdgeAuthClient, readCsrfToken, EDGE_PATHS, CSRF_HEADER, CSRF_COOKIE_SECURE, CSRF_COOKIE_DEV } from './edge-client.js';
 
 // ── The OTP state machine (pure, testable without React) ──
@@ -60,7 +60,7 @@ export {
 } from './refresh.js';
 
 // ── React surface ──
-export type { ApplicantAuthApi } from './context.js';
+export type { ApplicantAuthApi, IdentityStage } from './context.js';
 export { AuthProvider, useAuth, useOfficerSession, useApplicantAuth, useSessionExpiryMessage } from './context.js';
 export { RouteGuard, OfficerGuard, ApplicantGuard, AgencyGuard } from './guards.js';
 
@@ -68,6 +68,9 @@ export { RouteGuard, OfficerGuard, ApplicantGuard, AgencyGuard } from './guards.
 export {
   OFFICER_LOGIN_FAILED,
   OTP_REQUEST_ACCEPTED,
+  IDENTITY_NOT_CONFIRMED,
+  ONBOARDING_EXPIRED,
+  PHONE_INVALID,
   OTP_INVALID,
   OTP_ATTEMPTS_EXHAUSTED,
   OTP_EXPIRED,

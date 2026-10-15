@@ -8,6 +8,7 @@
     "logout": "Sign out"
   },
   "auth": {
+    "send_code": "Send code",
     "sign_in": "Sign in",
     "login_handle": "Login handle",
     "password": "Password",
@@ -114,6 +115,7 @@
     "partial_description": "The edge returned the application projection, but its history was not an array. Review the application fields and try again before taking action."
   },
   "actions": {
+    "continue": "Continue",
     "approve": "Approve",
     "reject": "Reject",
     "request_correction": "Request correction",
@@ -169,7 +171,8 @@
     "conflict_description": "Refresh the record and confirm the current status before trying again.",
     "no_change": "No change was made",
     "no_change_description": "The backend reported NO_CHANGE. The record was refreshed so you can review its current state.",
-    "transition_receipt": "Backend outcome: {{outcome}}. From status: {{fromStatus}}. Projected status: {{status}}."
+    "transition_receipt": "Backend outcome: {{outcome}}. From status: {{fromStatus}}. Projected status: {{status}}.",
+    "no_permission": "Your role can view this application but not decide it."
   },
   "scan": {
     "start": "Start scanning",
@@ -199,7 +202,8 @@
       "category": "Category",
       "education": "Academic reference",
       "declaration": "Declaration",
-      "review": "Review"
+      "review": "Review",
+      "campaign": "Campaign"
     },
     "category_label": "Recruitment category",
     "category_help": "Choose a recruitment category. The backend derives the responsible agency from this choice.",
@@ -267,6 +271,104 @@
     "sign_in_again": "Sign in again",
     "submitting": "Submitting…",
     "rate_limit_title": "Submission rate limit reached",
-    "rate_limit_body": "Please wait before trying to submit again."
+    "rate_limit_body": "Please wait before trying to submit again.",
+    "campaign_loading": "Loading open recruitments…",
+    "campaign_error_title": "Recruitments could not be loaded",
+    "campaign_error_body": "Check your connection and try again.",
+    "retry": "Try again",
+    "campaign_none_title": "No recruitment is open right now",
+    "campaign_none_body": "There is no campaign open for registration at the moment. Please check again later, or follow the official announcements.",
+    "campaign_help": "Choose the recruitment you are applying to.",
+    "campaign_window": "Registration closes {{date}}",
+    "campaign_choose": "Apply to this recruitment",
+    "review_campaign": "Recruitment",
+    "documents_title": "Upload your documents",
+    "documents_help": "Upload each document as a PDF, JPEG or PNG. A document is only received here — it is checked later, and you will not see a result on this screen.",
+    "document_type_label": "Document type",
+    "document_file_label": "File (PDF, JPEG or PNG, up to 10 MB)",
+    "upload": "Upload document",
+    "uploading": "Uploading…",
+    "upload_error_title": "The document was not accepted",
+    "upload_error": "The document could not be uploaded. Check the file and try again.",
+    "upload_ok_title": "Document received",
+    "upload_ok_body": "Received: {{types}}. You can upload another document.",
+    "upload_refusals": {
+      "APPLICATION_NOT_FOUND": "We could not find this application.",
+      "NOT_ACCEPTING_DOCUMENTS": "This application is not accepting documents at this stage.",
+      "UNSUPPORTED_DOCUMENT_TYPE": "This document type is not accepted for your recruitment.",
+      "UNSUPPORTED_FILE_CONTENT": "This file is not a readable PDF, JPEG or PNG.",
+      "UNSUPPORTED_FILE_TYPE": "Only PDF, JPEG and PNG files are accepted.",
+      "CONTENT_TYPE_MISMATCH": "The file does not match its declared type.",
+      "DOCUMENT_REJECTED_MALWARE": "This file was refused because it may be unsafe. Please scan your device and use a clean copy.",
+      "FILE_TOO_LARGE": "This file is too large (maximum 10 MB).",
+      "MISSING_FILE": "Choose a file first."
+    }
+  },
+  "documents": {
+    "types": {
+      "NATIONAL_ID": "National ID",
+      "APPLICATION_FORM_WITH_PHOTO": "Application form with photo",
+      "BIRTH_CERTIFICATE": "Birth certificate",
+      "OLEVEL_CERTIFICATE": "O-Level certificate",
+      "ALEVEL_CERTIFICATE": "A-Level certificate",
+      "DEGREE_DIPLOMA_COPY": "Degree / diploma (copy)",
+      "DEGREE_DIPLOMA_NOTARIZED": "Degree / diploma (notarized)",
+      "GOOD_CONDUCT_CERTIFICATE": "Good conduct certificate",
+      "NON_CONVICTION_CERTIFICATE": "Non-conviction certificate",
+      "CELIBACY_CERTIFICATE": "Celibacy certificate",
+      "MEDICAL_CERTIFICATE_GOVT": "Medical certificate (government)"
+    }
+  },
+  "exam_qr": {
+    "title": "My exam QR code",
+    "open_link": "Open my exam QR code",
+    "ready_title": "Your exam QR code is ready",
+    "ready_body": "Download or print this QR code and bring it, with your National ID, to the physical screening. Officers scan it at the gate.",
+    "qr_alt": "Exam QR code for application {{code}}",
+    "processing_code": "Application code",
+    "venue": "Venue",
+    "date": "Date",
+    "reporting": "Report at",
+    "valid_until": "Valid until",
+    "download": "Download QR code (PNG)",
+    "downloading": "Preparing…",
+    "print": "Print",
+    "download_failed": "The image could not be created in this browser. Use Print instead, or take a screenshot.",
+    "present_at_gate": "Present this code with your National ID at the screening gate.",
+    "keep_private": "This code is your personal invitation. Do not share it.",
+    "not_found": "We could not find this application among yours.",
+    "load_failed": "Your QR code could not be loaded. Check your connection and try again.",
+    "unavailable_title": "Your QR code is not available",
+    "unavailable_body": "Your exam slot is assigned but the code is not ready yet. Please check again later or contact the agency.",
+    "states": {
+      "PENDING": {
+        "title": "Your application is being checked",
+        "body": "Your QR code will appear here automatically as soon as your eligibility checks pass and your exam slot is assigned. You can keep this page open."
+      },
+      "ON_HOLD": {
+        "title": "Your application is under review",
+        "body": "An officer is reviewing your application. Your QR code is withheld until the review is completed."
+      },
+      "COMPLETED": {
+        "title": "Your screening is complete",
+        "body": "The examination stage of your application is finished; no QR code is needed any more."
+      },
+      "CLOSED": {
+        "title": "No QR code for this application",
+        "body": "This application is no longer active, so there is no exam invitation."
+      },
+      "EXPIRED": {
+        "title": "This QR code has expired",
+        "body": "The exam day for this invitation has passed."
+      },
+      "UNAVAILABLE": {
+        "title": "Your QR code is not available yet",
+        "body": "Your exam slot is assigned but the code is not ready yet. Please check again later or contact the agency."
+      },
+      "WALK_IN": {
+        "title": "Walk-in registration",
+        "body": "You were registered on site on exam day, so there is no QR invitation."
+      }
+    }
   }
 }

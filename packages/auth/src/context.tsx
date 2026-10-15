@@ -17,7 +17,7 @@ import {
   type Session,
   type SessionExpiryReason,
 } from './session.js';
-import { G2G_UNAVAILABLE, OFFICER_LOGIN_FAILED, OTP_ATTEMPTS_EXHAUSTED, OTP_EXPIRED, OTP_INVALID, OTP_REQUEST_ACCEPTED, SESSION_EXPIRED, UNEXPECTED_ERROR } from './copy.js';
+import { G2G_UNAVAILABLE, IDENTITY_NOT_CONFIRMED, ONBOARDING_EXPIRED, PHONE_INVALID, OFFICER_LOGIN_FAILED, OTP_ATTEMPTS_EXHAUSTED, OTP_EXPIRED, OTP_INVALID, OTP_REQUEST_ACCEPTED, SESSION_EXPIRED, UNEXPECTED_ERROR } from './copy.js';
 
 // ══════════════════════════════════════════════════════════════════
 // @usrp/auth — the React surface
@@ -148,7 +148,22 @@ export function useSessionExpiryMessage(): string | null {
 
 // ── The citizen OTP flow ────────────────────────────────────────
 
+/** Onboarding step 1 (National ID + date of birth), before the OTP machine. */
+export type IdentityStage =
+  | { readonly status: 'idle' }
+  | { readonly status: 'confirming' }
+  | { readonly status: 'confirmed' }
+  | { readonly status: 'notConfirmed' }
+  | { readonly status: 'expired' }
+  | { readonly status: 'unavailable'; readonly authority: string }
+  | { readonly status: 'error' };
+
 export interface ApplicantAuthApi {
+  /** Step 1 state. The OTP machine only runs once this is `confirmed`. */
+  readonly identity: IdentityStage;
+  /** True once a phone number was refused as undeliverable (step 2). */
+  readonly phoneInvalid: boolean;
+  readonly confirmIdentity: (nationalId: string, dateOfBirth: string) => Promise<void>;
   readonly otp: OtpState;
   /** Human-facing message for the current state. Never leaks what the API hid. */
   readonly message: string | null;
@@ -157,7 +172,8 @@ export interface ApplicantAuthApi {
   readonly canSubmitCode: boolean;
   /** True when the walk-in lane (ADR-012) should be offered as the real path. */
   readonly offerWalkIn: boolean;
-  readonly requestCode: (nationalId: string) => Promise<void>;
+  /** Step 2 — send the code to this phone number. */
+  readonly requestCode: (phoneNumber: string) => Promise<void>;
   readonly submitCode: (otp: string) => Promise<void>;
   readonly reset: () => void;
 }
@@ -173,7 +189,31 @@ export function useApplicantAuth(edgeBaseUrl: string, client?: EdgeAuthClient): 
   const auth = useMemo(() => client ?? createEdgeAuthClient({ baseUrl: edgeBaseUrl }), [client, edgeBaseUrl]);
   const [otp, dispatch] = useReducer(otpReducer, undefined, initialOtpState);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const nationalIdRef = useRef<string>('');
+  const [identity, setIdentity] = useState<IdentityStage>({ status: 'idle' });
+  const [phoneInvalid, setPhoneInvalid] = useState(false);
+  // The onboarding token and typed phone live in refs only: never state that
+  // renders, never storage, never a URL.
+  const tokenRef = useRef<string>('');
+  const phoneRef = useRef<string>('');
+
+  const confirmIdentity = useCallback(
+    async (nationalId: string, dateOfBirth: string): Promise<void> => {
+      setIdentity({ status: 'confirming' });
+      setPhoneInvalid(false);
+      const attempt = await auth.confirmIdentity(nationalId, dateOfBirth);
+      if (attempt.outcome === 'confirmed') {
+        tokenRef.current = attempt.onboardingToken;
+        setIdentity({ status: 'confirmed' });
+      } else if (attempt.outcome === 'notConfirmed') {
+        setIdentity({ status: 'notConfirmed' });
+      } else if (attempt.outcome === 'upstreamUnavailable') {
+        setIdentity({ status: 'unavailable', authority: attempt.authority });
+      } else {
+        setIdentity({ status: 'error' });
+      }
+    },
+    [auth],
+  );
 
   // A 1s tick so the countdown and the expiry transition are driven by the clock
   // rather than by the citizen happening to submit something.
@@ -188,16 +228,28 @@ export function useApplicantAuth(edgeBaseUrl: string, client?: EdgeAuthClient): 
   }, [otp.status]);
 
   const requestCode = useCallback(
-    async (nationalId: string): Promise<void> => {
-      nationalIdRef.current = nationalId;
-      dispatch({ type: 'REQUEST', nationalId });
-      const attempt = await auth.requestOtp(nationalId);
+    async (phoneNumber: string): Promise<void> => {
+      phoneRef.current = phoneNumber;
+      setPhoneInvalid(false);
+      dispatch({ type: 'REQUEST', subject: phoneNumber });
+      const attempt = await auth.requestOtp(tokenRef.current, phoneNumber);
       if (attempt.outcome === 'upstreamUnavailable') {
         dispatch({ type: 'REQUEST_UPSTREAM_UNAVAILABLE', authority: attempt.authority });
         return;
       }
-      // A 400 shape error and a 202 both land here as "accepted", because the
-      // only thing we may reveal is that we took the request.
+      if (attempt.outcome === 'onboardingExpired') {
+        tokenRef.current = '';
+        dispatch({ type: 'RESET' });
+        setIdentity({ status: 'expired' });
+        return;
+      }
+      if (attempt.outcome === 'invalidPhone') {
+        dispatch({ type: 'RESET' });
+        setPhoneInvalid(true);
+        return;
+      }
+      // A 202 and anything else land here as "accepted": the only thing we may
+      // reveal is that we took the request.
       dispatch({ type: 'REQUEST_ACCEPTED', atMs: Date.now() });
     },
     [auth],
@@ -206,7 +258,7 @@ export function useApplicantAuth(edgeBaseUrl: string, client?: EdgeAuthClient): 
   const submitCode = useCallback(
     async (code: string): Promise<void> => {
       dispatch({ type: 'SUBMIT' });
-      const attempt = await auth.verifyOtp(nationalIdRef.current, code);
+      const attempt = await auth.verifyOtp(tokenRef.current, phoneRef.current, code);
       if (attempt.outcome === 'ok') {
         dispatch({ type: 'SUBMIT_VERIFIED' });
         return;
@@ -221,11 +273,20 @@ export function useApplicantAuth(edgeBaseUrl: string, client?: EdgeAuthClient): 
     [auth],
   );
 
-  const reset = useCallback((): void => { dispatch({ type: 'RESET' }); }, []);
+  const reset = useCallback((): void => {
+    tokenRef.current = '';
+    phoneRef.current = '';
+    setPhoneInvalid(false);
+    setIdentity({ status: 'idle' });
+    dispatch({ type: 'RESET' });
+  }, []);
 
   return {
+    identity,
+    phoneInvalid,
+    confirmIdentity,
     otp,
-    message: otpMessage(otp),
+    message: stageMessage(identity, phoneInvalid) ?? otpMessage(otp),
     attemptsLeft: attemptsRemaining(otp),
     millisLeft: millisRemaining(otp, nowMs),
     canSubmitCode: canSubmit(otp),
@@ -234,6 +295,21 @@ export function useApplicantAuth(edgeBaseUrl: string, client?: EdgeAuthClient): 
     submitCode,
     reset,
   };
+}
+
+function stageMessage(identity: IdentityStage, phoneInvalid: boolean): string | null {
+  switch (identity.status) {
+    case 'notConfirmed':
+      return IDENTITY_NOT_CONFIRMED;
+    case 'expired':
+      return ONBOARDING_EXPIRED;
+    case 'unavailable':
+      return G2G_UNAVAILABLE[identity.authority] ?? UNEXPECTED_ERROR;
+    case 'error':
+      return UNEXPECTED_ERROR;
+    default:
+      return phoneInvalid ? PHONE_INVALID : null;
+  }
 }
 
 function otpMessage(state: OtpState): string | null {

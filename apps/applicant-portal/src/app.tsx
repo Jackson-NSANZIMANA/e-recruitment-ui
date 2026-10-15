@@ -26,6 +26,7 @@ const HomePage = lazy(() => import("./routes/home.js"));
 const ApplicationsPage = lazy(() => import("./routes/applications.js"));
 const StatusPage = lazy(() => import("./routes/status.js"));
 const ApplyPage = lazy(() => import("./routes/apply/index.js"));
+const ExamQrPage = lazy(() => import("./routes/exam-qr.js"));
 
 const FullPageSpinner = (): React.ReactElement => (
   <Box xcss={spinnerStyles.fullPage}>
@@ -49,6 +50,8 @@ const router = createBrowserRouter([
       { path: "apply/:step", element: <ApplyPage /> },
       { path: "status", element: <StatusPage /> },
       { path: "applications", element: <ApplicationsPage /> },
+      // ADR-033: the downloadable exam QR for one of the citizen's applications.
+      { path: "applications/:applicationId/exam-qr", element: <ExamQrPage /> },
 
       // ── Feature slices (ADR-FE-006) ──────────────────────────────────────
       //
