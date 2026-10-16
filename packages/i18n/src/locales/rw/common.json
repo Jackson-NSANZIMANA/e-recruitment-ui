@@ -452,5 +452,11 @@
       "UNSUPPORTED_AGENCY": "Kwandika abaje ku kibuga bikorwa gusa ku matangazo ya RDF.",
       "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga."
     }
+  },
+  "rehearsal": {
+    "apply_notice": "Itangazo ry'imyitozo: ni imyitozo gusa. Si ukwinjiza abakozi nyabo kandi nta muntu winjizwa binyuze muri ryo.",
+    "pass_title": "Urupapuro rw'ikizamini rw'imyitozo",
+    "pass_body": "Uru rupapuro ni urw'imyitozo. Ni imyitozo gusa kandi ntirwemewe mu kwinjiza abakozi nyabo.",
+    "pass_marker": "IMYITOZO: NTIBYEMEWE MU KWINJIZA ABAKOZI"
   }
 }
