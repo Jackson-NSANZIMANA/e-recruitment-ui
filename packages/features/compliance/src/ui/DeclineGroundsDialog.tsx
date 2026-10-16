@@ -58,6 +58,7 @@ export function DeclineGroundsDialog({
 
                   <Field<string>
                     name="note"
+                    defaultValue=""
                     label={t('compliance.decline.note_label')}
                     isRequired
                     validate={(value) => {

@@ -23,6 +23,7 @@
     "lint": "node ../../node_modules/.pnpm/eslint@9.39.5/node_modules/eslint/bin/eslint.js ."
   },
   "dependencies": {
+    "@usrp/auth": "workspace:*",
     "@usrp/contracts": "workspace:*",
     "@usrp/feature-adjudication": "workspace:*",
     "@usrp/feature-applications": "workspace:*",

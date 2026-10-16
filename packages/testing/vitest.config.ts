@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/harness/setup.ts'],
-    include: ['a11y/**/*.test.tsx', '../features/*/src/**/*.test.tsx'],
+    include: ['a11y/**/*.test.tsx', 'auth/**/*.test.tsx', '../features/*/src/**/*.test.tsx'],
     exclude: ['**/node_modules/**', '**/src/model/*.test.ts'],
     passWithNoTests: true,
   },

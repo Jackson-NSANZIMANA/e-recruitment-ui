@@ -86,7 +86,7 @@ export default function LoginPage(): React.ReactElement | null {
             {({ formProps, submitting }) => (
               <form {...formProps} aria-label={t("auth.sign_in")} noValidate>
                 <Stack space="space.300">
-                  <Field name="loginHandle" label={t("auth.login_handle")} isRequired>
+                  <Field name="loginHandle" label={t("auth.login_handle")} isRequired defaultValue="">
                     {({ fieldProps }) => (
                       <TextField
                         {...fieldProps}
@@ -100,7 +100,7 @@ export default function LoginPage(): React.ReactElement | null {
                     )}
                   </Field>
 
-                  <Field name="password" label={t("auth.password")} isRequired>
+                  <Field name="password" label={t("auth.password")} isRequired defaultValue="">
                     {({ fieldProps }) => (
                       <TextField
                         {...fieldProps}

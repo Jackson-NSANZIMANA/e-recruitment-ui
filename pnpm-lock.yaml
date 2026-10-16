@@ -991,6 +991,9 @@ importers:
 
   packages/testing:
     dependencies:
+      '@usrp/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../contracts

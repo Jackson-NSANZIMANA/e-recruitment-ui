@@ -72,7 +72,7 @@ export default function WalkInPage(): React.ReactElement {
           {({ formProps, submitting }) => (
             <form {...formProps}>
               <Stack space="space.400">
-                <Field name="nationalId" label="National ID number" isRequired>
+                <Field name="nationalId" label="National ID number" isRequired defaultValue="">
                   {({ fieldProps }) => <TextField {...fieldProps} inputMode="numeric" maxLength={16} autoComplete="off" autoFocus />}
                 </Field>
                 <Field<ApplicationCategory>
@@ -103,6 +103,7 @@ export default function WalkInPage(): React.ReactElement {
                 {registry !== null && (
                   <Field
                     name="academicReference"
+                    defaultValue=""
                     label={t(registry === "NESA" ? "apply.nesa_label" : "apply.hec_label")}
                     isRequired
                     helperMessage={t("walk_in.academic_help", { registry })}
