@@ -241,7 +241,21 @@ The stage projection is one pure function, `toCitizenStage(status)`, with an exh
 - An interrupted `pnpm install` truncated 49 `node_modules/.bin` shims to 0 bytes. After that, `turbo` and `playwright` exited 0 **without running anything**. The CI evidence bundle should assert non-zero task counts, not just exit codes.
 - The local `a11y` script fails only on its `sudo` `--with-deps` install; that step is correct in CI.
 
-**W1-00 (new, pre-existing defect):** `/applications/:id` → **Accept** opens no confirmation dialog on the dev server. The ADS modal portal (z-index 510) mounts empty, with no console error. It reproduces on the untouched `90c331c` (Vite 5.4.21) and passes against the production build (`vite preview`). The likely cause is React `StrictMode` double-mounting the ADS portal in development. Since commit `843c220` ("both suites green locally"), `application-flow.spec.ts:48` has failed on both profiles. Fix this first in Wave 1; it is the reference surface.
+**W1-00 — done (`5322c65`).** `/applications/:id` → **Accept** opened no confirmation dialog on the dev server. It reproduced on the untouched `90c331c` (Vite 5.4.21) and passed against the production build.
+
+- **Cause:** `@atlaskit/portal` 7.0.2's legacy path creates its container in `useMemo` and removes it in an effect cleanup. React StrictMode's dev-only unmount/remount strands the content in a detached node.
+- **Why it was locked in:** both apps resolved every ADS flag to `false`, which pinned that legacy path.
+- **Fix:** `@usrp/design-system` now holds one allowlist (`resolveAdsFeatureFlag`) that enables only `platform_design_system_team_portal_logic_r18_fix`. A test pins the set.
+- **Verified:** officer E2E passes on both the dev server and the production build.
+
+### Found running against the real backend (2026-10-16)
+
+| ID | Finding | Status |
+|---|---|---|
+| W1-09 | The walk-in form never sent the NESA/HEC reference the backend requires per category, so every walk-in was refused with `422 INVALID_ACADEMIC_INPUT`, shown only as "Something went wrong". The mocked E2E passed because its mock accepted the incomplete body. | **Done (`20b90a9`).** Category is now a Select of the officer's agency's categories, the academic field follows the category, and each register refusal is named (en/rw/fr). Verified live: body carries `nesaIndexNumber`, and the remaining refusal (`NO_WALK_IN_CAMPAIGN`) is named on screen. |
+| W1-10 | **There is no dev data path.** `bootstrap:db` seeds officers but no `agency_admin` and no campaign, and there is no Campaign Studio screen. Against the real stack every list is empty, walk-ins are refused (`NO_WALK_IN_CAMPAIGN`), and the portal has nothing to apply to. Citizens also cannot finish onboarding in a browser, because the OTP is never readable (by design). | **Open.** Ask the backend for a dev-only seed (`NODE_ENV≠production`, like `seed-dev-officers.ts`): one admin, plus one published campaign per agency with a walk-in-enabled RDF session dated today. Also ask for a dev-only OTP sink the E2E harness can read. Until then, W2-01 (Campaign Studio) is the only UI route to data, so consider pulling it ahead of the rest of Wave 1. |
+
+**Lesson for the E2E harness (feeds W2-13):** route-intercepted specs prove the screen sends what *we* think the contract is. Every journey also needs at least one run against the real edge, or contract gaps like W1-09 pass green.
 
 ---
 
