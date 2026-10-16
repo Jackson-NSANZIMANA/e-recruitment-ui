@@ -286,7 +286,13 @@ jobs:
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
+      # The production bundle needs its edge origin (the build refuses without
+      # one). This artefact is the E2E/proof build, whose specs intercept
+      # /edge/v1/** in the browser, so it points at the local harness edge.
+      # A deployment sets its own VITE_EDGE_URL; .env.example documents it.
       - run: pnpm build
+        env:
+          VITE_EDGE_URL: http://localhost:4021
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
