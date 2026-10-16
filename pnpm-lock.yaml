@@ -238,6 +238,9 @@ importers:
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/select':
+        specifier: ^21.0.0
+        version: 21.12.15(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/side-nav-items':
         specifier: ^2.3.10
         version: 2.5.7(@types/react@18.3.31)(eslint@9.39.5)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -7918,7 +7921,7 @@ snapshots:
       '@atlaskit/css': 1.1.6(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       bind-event-listener: 3.0.0
       react: 18.3.1
@@ -7962,7 +7965,7 @@ snapshots:
       '@atlaskit/popup': 7.0.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -7981,7 +7984,7 @@ snapshots:
       '@atlaskit/popup': 9.0.2(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8021,7 +8024,7 @@ snapshots:
     dependencies:
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8037,7 +8040,7 @@ snapshots:
       '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
       '@atlaskit/theme': 28.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8320,7 +8323,7 @@ snapshots:
   '@atlaskit/focus-ring@6.0.0(@types/react@18.3.31)(react@18.3.1)':
     dependencies:
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       react: 18.3.1
@@ -8367,7 +8370,7 @@ snapshots:
     dependencies:
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8419,7 +8422,7 @@ snapshots:
     dependencies:
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
       '@atlaskit/tile': 5.0.0(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8479,7 +8482,7 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8509,7 +8512,7 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
       '@atlaskit/theme': 28.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -8623,7 +8626,7 @@ snapshots:
       '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -8689,7 +8692,7 @@ snapshots:
       '@atlaskit/icon': 38.0.2(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       memoize-one: 6.0.0
@@ -8731,7 +8734,7 @@ snapshots:
       '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@atlaskit/top-layer': 6.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -8754,7 +8757,7 @@ snapshots:
       '@atlaskit/portal': 7.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@atlaskit/top-layer': 6.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -8779,7 +8782,7 @@ snapshots:
       '@atlaskit/portal': 7.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives': 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@atlaskit/top-layer': 6.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -8822,7 +8825,7 @@ snapshots:
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 3.0.0
       '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll': 3.2.1
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -8838,7 +8841,7 @@ snapshots:
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 3.0.0
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -9031,7 +9034,7 @@ snapshots:
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.1(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -9155,7 +9158,7 @@ snapshots:
     dependencies:
       '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       react: 18.3.1
     transitivePeerDependencies:
@@ -9187,7 +9190,7 @@ snapshots:
     dependencies:
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
       '@atlaskit/skeleton': 4.4.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -9320,7 +9323,7 @@ snapshots:
       '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
       '@atlaskit/layering': 6.0.0(react@18.3.1)
       '@atlaskit/react-compiler-gating': 0.2.4(react@18.3.1)
-      '@atlaskit/tokens': 20.4.1(react@18.3.1)
+      '@atlaskit/tokens': 20.6.0(react@18.3.1)
       '@babel/runtime': 7.29.10
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0

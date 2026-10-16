@@ -437,5 +437,20 @@
       "UNKNOWN_TICKET": "Aucune candidature de cette institution ne correspond à ce QR.",
       "TICKET_NOT_ISSUED": "Ce QR n'a pas été émis par le système : il est peut-être modifié ou falsifié."
     }
+  },
+  "walk_in": {
+    "category_help": "Seules les catégories de votre agence sont proposées. La référence académique requise s’affiche après votre choix.",
+    "academic_help": "Cette catégorie exige la référence {{registry}} du candidat. La vérification a lieu après l’enregistrement.",
+    "refusal_title": "Candidat non enregistré",
+    "refusals": {
+      "INVALID_ACADEMIC_INPUT": "La référence académique est absente ou invalide pour cette catégorie. Vérifiez le numéro {{registry}} et réessayez.",
+      "NO_WALK_IN_CAMPAIGN": "Aucune campagne ouverte n’accepte les candidats sur place pour votre agence aujourd’hui. L’enregistrement ne peut pas continuer sur ce site.",
+      "ALREADY_APPLIED": "Ce candidat a déjà une candidature dans cette campagne ({{processingCode}}). Poursuivez avec cette candidature.",
+      "WRONG_AGENCY_CATEGORY": "Cette catégorie relève d’une autre agence. Choisissez une catégorie de votre agence.",
+      "IDENTITY_NOT_VERIFIED": "La vérification d’identité n’est pas terminée pour ce candidat. Relancez la vérification d’identité.",
+      "APPLICANT_NOT_FOUND": "Le dossier d’identité est introuvable. Relancez la vérification d’identité.",
+      "UNSUPPORTED_AGENCY": "L’enregistrement sur place n’est disponible que pour les campagnes RDF.",
+      "FORBIDDEN": "Votre rôle ne permet pas d’enregistrer des candidats sur place."
+    }
   }
 }

@@ -437,5 +437,20 @@
       "UNKNOWN_TICKET": "No application of this agency matches this QR.",
       "TICKET_NOT_ISSUED": "This QR was not issued by the system: it may be altered or forged."
     }
+  },
+  "walk_in": {
+    "category_help": "Only your agency's categories are listed. The academic reference it needs appears after you choose.",
+    "academic_help": "This category needs the candidate's {{registry}} reference. The registry check runs after registration.",
+    "refusal_title": "Walk-in not registered",
+    "refusals": {
+      "INVALID_ACADEMIC_INPUT": "The academic reference is missing or not valid for this category. Check the {{registry}} number and try again.",
+      "NO_WALK_IN_CAMPAIGN": "There is no open campaign that accepts walk-ins for your agency today. Registration cannot continue at this venue.",
+      "ALREADY_APPLIED": "This candidate already has an application in this campaign ({{processingCode}}). Continue with that application instead.",
+      "WRONG_AGENCY_CATEGORY": "That category belongs to another agency. Choose one of your agency's categories.",
+      "IDENTITY_NOT_VERIFIED": "The identity check has not completed for this candidate. Run the identity check again.",
+      "APPLICANT_NOT_FOUND": "The identity record was not found. Run the identity check again.",
+      "UNSUPPORTED_AGENCY": "Walk-in registration is only available for RDF campaigns.",
+      "FORBIDDEN": "Your role cannot register walk-in candidates."
+    }
   }
 }

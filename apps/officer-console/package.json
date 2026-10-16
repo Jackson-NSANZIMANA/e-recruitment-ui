@@ -35,6 +35,7 @@
     "@atlaskit/platform-feature-flags": "^2.1.1",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
+    "@atlaskit/select": "^21.0.0",
     "@atlaskit/side-nav-items": "^2.3.10",
     "@atlaskit/spinner": "^20.1.2",
     "@atlaskit/textfield": "^10.0.1",
