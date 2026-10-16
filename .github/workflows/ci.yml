@@ -19,6 +19,13 @@ permissions:
 
 env:
   NODE_VERSION: '24'
+  # Every production build in this workflow needs its edge origin (the build
+  # refuses without one), and more than one job builds: `test:e2e` depends on
+  # `build`, so the E2E job rebuilds. One workflow-level value keeps every
+  # job's bundle identical. These are proof/E2E builds whose specs intercept
+  # /edge/v1/** in the browser, so they point at the local harness edge; a
+  # deployment sets its own VITE_EDGE_URL (.env.example documents it).
+  VITE_EDGE_URL: http://localhost:4021
   BACKEND_SHA: df80f6517247a00ffd99518fd31bd7c68dd70d65
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
@@ -286,13 +293,7 @@ jobs:
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
-      # The production bundle needs its edge origin (the build refuses without
-      # one). This artefact is the E2E/proof build, whose specs intercept
-      # /edge/v1/** in the browser, so it points at the local harness edge.
-      # A deployment sets its own VITE_EDGE_URL; .env.example documents it.
       - run: pnpm build
-        env:
-          VITE_EDGE_URL: http://localhost:4021
       - run: pnpm verify:extraction
       - run: pnpm size
       - uses: actions/upload-artifact@v4
