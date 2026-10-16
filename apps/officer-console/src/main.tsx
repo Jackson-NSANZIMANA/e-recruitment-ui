@@ -1,6 +1,7 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { setBooleanFeatureFlagResolver } from "@atlaskit/platform-feature-flags";
+import { resolveAdsFeatureFlag } from "@usrp/design-system";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@atlaskit/app-provider/app-provider";
 import { FlagsProvider } from "@atlaskit/flag/flags-provider";
@@ -23,7 +24,7 @@ import { EDGE_BASE_URL } from "./env.js";
 import { OFFICER_SLICE_NAMESPACES } from "./routes/slices.js";
 import { App } from "./app.js";
 
-setBooleanFeatureFlagResolver(() => false);
+setBooleanFeatureFlagResolver(resolveAdsFeatureFlag);
 
 registerAdjudicationLocales();
 registerComplianceLocales();

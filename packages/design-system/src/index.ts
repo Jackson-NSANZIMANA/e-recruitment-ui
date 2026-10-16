@@ -27,6 +27,9 @@ export {
 } from './a11y/index.js';
 export type { ColorMode } from './a11y/index.js';
 
+// --- ADS runtime configuration ---------------------------------------------
+export { ADS_ENABLED_FEATURE_FLAGS, resolveAdsFeatureFlag } from './runtime/feature-flags.js';
+
 // --- Primitives --------------------------------------------------------------
 export { ErrorBoundary } from './components/ErrorBoundary/index.js';
 export { RouterLink } from './components/RouterLink/index.js';

@@ -4,7 +4,7 @@ import Heading from '@atlaskit/heading';
 import SectionMessage from '@atlaskit/section-message';
 import Spinner from '@atlaskit/spinner';
 import TextField from '@atlaskit/textfield';
-import ModalDialog, { ModalBody, ModalFooter, ModalHeader, ModalTitle, CloseButton } from '@atlaskit/modal-dialog';
+import ModalDialog, { ModalBody, ModalFooter, ModalHeader, ModalTitle, ModalTransition, CloseButton } from '@atlaskit/modal-dialog';
 import { Box, Inline, Stack, Text } from '@atlaskit/primitives/compiled';
 import { cssMap } from '@atlaskit/css';
 import { token } from '@atlaskit/tokens';
@@ -106,22 +106,31 @@ interface ConfirmActionProps {
   readonly cancelLabel: string;
 }
 
-function ConfirmAction({ title, body, confirmLabel, appearance = 'primary', isOpen, isPending, onCancel, onConfirm, cancelLabel }: ConfirmActionProps): React.ReactElement | null {
-  if (!isOpen) return null;
+/**
+ * ModalDialog is mounted inside ModalTransition, the documented ADS pattern, so
+ * the dialog plays its exit motion instead of vanishing mid-frame. (The W1-00
+ * "dialog never opens" defect was the portal, not this: see
+ * @usrp/design-system resolveAdsFeatureFlag.)
+ */
+function ConfirmAction({ title, body, confirmLabel, appearance = 'primary', isOpen, isPending, onCancel, onConfirm, cancelLabel }: ConfirmActionProps): React.ReactElement {
   return (
-    <ModalDialog onClose={onCancel} width="small">
-      <ModalHeader>
-        <ModalTitle appearance={appearance === 'danger' ? 'danger' : 'warning'}>{title}</ModalTitle>
-        <CloseButton onClick={onCancel} />
-      </ModalHeader>
-      <ModalBody><Text as="p">{body}</Text></ModalBody>
-      <ModalFooter>
-        <Inline space="space.100" alignInline="end">
-          <Button appearance="subtle" isDisabled={isPending} onClick={() => onCancel()}>{cancelLabel}</Button>
-          <Button appearance={appearance} isDisabled={isPending} onClick={() => onConfirm()}>{confirmLabel}</Button>
-        </Inline>
-      </ModalFooter>
-    </ModalDialog>
+    <ModalTransition>
+      {isOpen && (
+        <ModalDialog onClose={onCancel} width="small">
+          <ModalHeader>
+            <ModalTitle appearance={appearance === 'danger' ? 'danger' : 'warning'}>{title}</ModalTitle>
+            <CloseButton onClick={onCancel} />
+          </ModalHeader>
+          <ModalBody><Text as="p">{body}</Text></ModalBody>
+          <ModalFooter>
+            <Inline space="space.100" alignInline="end">
+              <Button appearance="subtle" isDisabled={isPending} onClick={() => onCancel()}>{cancelLabel}</Button>
+              <Button appearance={appearance} isDisabled={isPending} onClick={() => onConfirm()}>{confirmLabel}</Button>
+            </Inline>
+          </ModalFooter>
+        </ModalDialog>
+      )}
+    </ModalTransition>
   );
 }
 
