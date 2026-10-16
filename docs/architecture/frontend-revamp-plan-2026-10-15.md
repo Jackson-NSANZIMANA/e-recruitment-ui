@@ -1,7 +1,7 @@
 # Frontend Revamp Plan — Architecture, Engineering, Build
 
 **Status:** Proposed · 2026-10-15
-**Input:** [`docs/product/user-facing-feature-spec-2026-10-15.md`](../product/user-facing-feature-spec-2026-10-15.md) (the national deployment baseline, "the baseline")
+**Input:** [`docs/product/usrp-national-baseline-v1.md`](../product/usrp-national-baseline-v1.md) (the national deployment baseline, "the baseline")
 **Scope:** Waves 0–2 in detail; Waves 3–6 in outline
 **Verified against:** frontend `90c331c` (PR #25), backend `1d971ae` (PR #32). The frontend pins backend `df80f65`.
 
@@ -235,6 +235,9 @@ The stage projection is one pure function, `toCitizenStage(status)`, with an exh
 | W0-02 | **Done** | `df80f65` and `1d971ae` share tree `477ec8e`. `contracts/scripts/verify.ts --backend ../e-recruitment` at `df80f65` is green (877 drift assertions, 2,377 total). Without `--backend`, gates B and C silently run at reduced scope, so CI must pass the checkout. |
 | W0-04 | **Done locally** (CI bundle still to do) | Uncached (`--force`, 0 cache hits): typecheck 20/20, lint 18/18, test 17/17 (vitest 4.1.12, 26 tests), build 2/2. Rules, hygiene, surface (44 assertions), extraction and size all pass. Storybook a11y passes, but covers only 3 stories. The security scan is green with every check run, including Trivy. E2E: applicant 16/16; officer 10 passed, 2 failed (W1-00). |
 | W0-04 security | **Done** | Fixed: `.env` files untracked, PEM-header markers removed from a test and a fixture, and the dependency upgrade (vitest 2→4, vite 5→6, vite-plugin-pwa 0.20→1.2, workbox 7.3→7.4, `ads-mcp` deduplicated, scoped `puppeteer>tar-fs`/`puppeteer>ws` overrides). Audit went from 4 critical + 10 high to 0 critical + 3 high; the 3 high have no upstream fix and are registered in `docs/security/audit-exceptions.md`, enforced by the scan (selftest: 16 assertions). |
+| W0-01 | **Done** (S00, 2026-10-16) | Renamed to `docs/product/usrp-national-baseline-v1.md` with an errata box (SHAs, 42 → 43 operations, ADR-034, cite the evidence bundle). The stray prompt was already gone. |
+| W0-03 | **Docs done** (S00) | `frontend-architecture.md` and the contract reconciliation re-pinned to `df80f65`, counts replaced by the evidence bundle. `ConnectionStatus` and `citizen-journey.spec.ts` comments are already current. **Still stale:** the applicant `home.tsx` header says filing has "no citizen path through the edge yet" (S02). |
+| W0-04 bundle | **Done** (S00) | *Evidence bundle* CI job, `tooling/ci/evidence-bundle.mjs`, artefact `evidence-<sha>`. First local run at `c5bda85`: 43 operations (10 untyped), contract verify 2,377 assertions, unit 193 tests in 17 packages (4 selfcheck packages unreported), E2E 28 (24 passed, 4 skipped: 2 live-rehearsal, 2 offline-capture). |
 | W0-05 | **Done** | 7 obsolete `fixme` → 10 real E2E tests (onboarding, campaign-bound apply with idempotency, walk-in with AGE_PENDING). 2 kept: `BLOCKED: W2-12` and `BLOCKED: B-13`. |
 
 **Environment findings:**
