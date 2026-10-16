@@ -437,5 +437,20 @@
       "UNKNOWN_TICKET": "Nta dosiye y'uru rwego ihuye n'iyi kode QR.",
       "TICKET_NOT_ISSUED": "Iyi kode QR ntiyatanzwe na sisitemu: ishobora kuba yarahinduwe cyangwa yarahimbwe."
     }
+  },
+  "walk_in": {
+    "category_help": "Hagaragara ibyiciro by'urwego rwawe gusa. Nimero y'amashuri isabwa igaragara umaze guhitamo.",
+    "academic_help": "Iki cyiciro gisaba nimero ya {{registry}} y'umukandida. Igenzura rikorwa nyuma yo kwiyandikisha.",
+    "refusal_title": "Umukandida ntiyanditswe",
+    "refusals": {
+      "INVALID_ACADEMIC_INPUT": "Nimero y'amashuri ntiyatanzwe cyangwa ntikwiriye iki cyiciro. Reba nimero ya {{registry}} wongere ugerageze.",
+      "NO_WALK_IN_CAMPAIGN": "Nta itangazo rifunguye ryemera abaje ku kibuga uyu munsi ku rwego rwawe. Kwiyandikisha ntibishobora gukomeza aha.",
+      "ALREADY_APPLIED": "Uyu mukandida asanzwe afite ubusabe muri iri tangazo ({{processingCode}}). Komeza n'ubwo busabe.",
+      "WRONG_AGENCY_CATEGORY": "Icyo cyiciro ni icy'urundi rwego. Hitamo icyiciro cy'urwego rwawe.",
+      "IDENTITY_NOT_VERIFIED": "Igenzura ry'umwirondoro ntirirarangira kuri uyu mukandida. Ongera ukore igenzura ry'umwirondoro.",
+      "APPLICANT_NOT_FOUND": "Umwirondoro ntiwabonetse. Ongera ukore igenzura ry'umwirondoro.",
+      "UNSUPPORTED_AGENCY": "Kwandika abaje ku kibuga bikorwa gusa ku matangazo ya RDF.",
+      "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga."
+    }
   }
 }

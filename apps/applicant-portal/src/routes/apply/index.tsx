@@ -275,7 +275,7 @@ function StepEducation({ data, onNext, onBack }: {
                 name="nesaIndexNumber"
                 label={t("apply.nesa_label")}
                 isRequired
-                {...(data.nesaIndexNumber !== undefined ? { defaultValue: data.nesaIndexNumber } : {})}
+                defaultValue={data.nesaIndexNumber ?? ""}
               >
                 {({ fieldProps }) => (
                   <TextField {...fieldProps} required maxLength={64} autoComplete="off" />
@@ -287,7 +287,7 @@ function StepEducation({ data, onNext, onBack }: {
                 name="hecRegistrationNumber"
                 label={t("apply.hec_label")}
                 isRequired
-                {...(data.hecRegistrationNumber !== undefined ? { defaultValue: data.hecRegistrationNumber } : {})}
+                defaultValue={data.hecRegistrationNumber ?? ""}
               >
                 {({ fieldProps }) => (
                   <TextField {...fieldProps} required maxLength={64} autoComplete="off" />

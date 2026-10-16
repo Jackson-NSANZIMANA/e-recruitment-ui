@@ -71,7 +71,18 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+], {
+  // React Router v7 behaviour, opted into now so v6 stops warning and the
+  // upgrade is a no-op. No route here uses actions, fetchers or splats, so
+  // only v7_startTransition (on RouterProvider) changes anything at runtime.
+  future: {
+    v7_relativeSplatPath: true,
+    v7_fetcherPersist: true,
+    v7_normalizeFormMethod: true,
+    v7_partialHydration: true,
+    v7_skipActionErrorRevalidation: true,
+  },
+});
 
 export function App(): React.ReactElement {
   const { i18n } = useTranslation();
@@ -81,7 +92,7 @@ export function App(): React.ReactElement {
 
   return (
     <Suspense fallback={<FullPageSpinner />}>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} future={{ v7_startTransition: true }} />
     </Suspense>
   );
 }

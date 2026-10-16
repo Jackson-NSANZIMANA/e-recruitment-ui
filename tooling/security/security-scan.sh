@@ -151,26 +151,37 @@ check_browser_storage_credentials() {
 # neither is available rather than reporting a pass it did not earn. A scanner
 # that silently no-ops is worse than no scanner: it produces a green line nobody
 # investigates.
+# Trivy findings exit with a DEDICATED code (3). Any other non-zero exit is
+# Trivy failing to run (e.g. its vulnerability DB download timed out), which is
+# NOT a pass but is also NOT a finding: reporting it as "found CRITICAL/HIGH"
+# sends someone hunting for a vulnerability that does not exist.
+TRIVY_FINDINGS_EXIT=3
+report_trivy() {
+  local label="$1" rc="$2"
+  case "$rc" in
+    0) pass "${label}: no CRITICAL/HIGH findings" ;;
+    "$TRIVY_FINDINGS_EXIT") fail "${label} reported CRITICAL/HIGH findings" ;;
+    *) fail "${label} could not complete (exit ${rc}; see its output above) - NOT a pass, NOT a finding" ;;
+  esac
+}
+
 check_trivy() {
   if [ "${NO_TRIVY:-0}" = "1" ]; then skip "Trivy disabled by --no-trivy"; return 0; fi
+  local rc
   if command -v trivy >/dev/null 2>&1; then
-    if trivy fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --quiet .; then
-      pass "Trivy: no CRITICAL/HIGH findings"
-    else
-      fail "Trivy reported CRITICAL/HIGH findings"
-    fi
+    trivy fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code "$TRIVY_FINDINGS_EXIT" --quiet .
+    rc=$?
+    report_trivy "Trivy" "$rc"
   elif command -v docker >/dev/null 2>&1; then
     # Version comes from ci.yml so the advisory scan and the blocking
     # trivy-action step cannot resolve different databases. On run 94637887182
     # they did: 0.58.1 here reported a HIGH in @remix-run/router that the
     # action's 0.70.0 did not. Keep the default in step with ci.yml's
     # TRIVY_VERSION when you bump either one.
-    if docker run --rm -v "$PWD:/scan" "aquasec/trivy:${TRIVY_VERSION:-0.70.0}" fs --scanners vuln \
-         --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --quiet /scan; then
-      pass "Trivy (container): no CRITICAL/HIGH findings"
-    else
-      fail "Trivy (container) reported CRITICAL/HIGH findings"
-    fi
+    docker run --rm -v "$PWD:/scan" "aquasec/trivy:${TRIVY_VERSION:-0.70.0}" fs --scanners vuln \
+      --severity CRITICAL,HIGH --ignore-unfixed --exit-code "$TRIVY_FINDINGS_EXIT" --quiet /scan
+    rc=$?
+    report_trivy "Trivy (container)" "$rc"
   else
     skip "Trivy unavailable (no binary, no docker) - NOT a pass. CI runs it separately."
   fi
@@ -178,18 +189,64 @@ check_trivy() {
 }
 
 # ── 7. pnpm audit ───────────────────────────────────────────────────────────
+# Read the JSON, not the exit code: pnpm exits non-zero both when advisories
+# exist and when the registry's audit endpoint cannot be reached, and only the
+# first is a finding.
 check_pnpm_audit() {
   if [ "${NO_AUDIT:-0}" = "1" ]; then skip "pnpm audit disabled by --no-audit"; return 0; fi
   if ! command -v pnpm >/dev/null 2>&1; then
     skip "pnpm unavailable - NOT a pass"
     return 0
   fi
-  if pnpm audit --audit-level high >/dev/null 2>&1; then
-    pass "pnpm audit: nothing at high or above"
-  else
-    fail "pnpm audit found advisories at high or above"
-  fi
+  local out verdict
+  out="$(pnpm audit --audit-level high --json 2>/dev/null)"
+  verdict="$(printf '%s' "$out" | node -e '
+    let s = "";
+    process.stdin.on("data", (d) => (s += d)).on("end", () => {
+      let r;
+      try { r = JSON.parse(s); } catch { console.log("UNREADABLE"); return; }
+      if (r.error) { console.log("ERROR " + (r.error.code ?? "unknown")); return; }
+      // Count advisories, not metadata: metadata still counts the GHSAs that
+      // pnpm.auditConfig.ignoreGhsas excludes; the advisories map does not.
+      const hits = Object.values(r.advisories ?? {}).filter((a) => a.severity === "high" || a.severity === "critical");
+      console.log("COUNT " + hits.length);
+    });
+  ')"
+  case "$verdict" in
+    "COUNT 0") pass "pnpm audit: nothing at high or above (outside docs/security/audit-exceptions.md)" ;;
+    COUNT*) fail "pnpm audit found ${verdict#COUNT } advisories at high or above" ;;
+    ERROR*) fail "pnpm audit could not reach the registry (${verdict#ERROR }) - NOT a pass, NOT a finding" ;;
+    *) fail "pnpm audit output was unreadable - NOT a pass" ;;
+  esac
   return 0
+}
+
+# Every GHSA ignored in package.json (pnpm.auditConfig.ignoreGhsas) must have a
+# row in docs/security/audit-exceptions.md with a review date that has not
+# passed. An ignore list with no register, or a lapsed date, is how a temporary
+# exception becomes permanent without anyone deciding it.
+check_audit_exceptions() {
+  local out
+  if ! out="$(node -e '
+    const fs = require("fs");
+    const ignored = fs.existsSync("package.json") ? (JSON.parse(fs.readFileSync("package.json", "utf8")).pnpm?.auditConfig?.ignoreGhsas ?? []) : [];
+    const doc = fs.existsSync("docs/security/audit-exceptions.md") ? fs.readFileSync("docs/security/audit-exceptions.md", "utf8") : "";
+    const today = new Date().toISOString().slice(0, 10);
+    const problems = [];
+    for (const id of ignored) {
+      const row = doc.split("\n").find((line) => line.startsWith("| " + id + " "));
+      if (row === undefined) { problems.push(id + " is ignored but has no register row"); continue; }
+      const date = (row.match(/\| (\d{4}-\d{2}-\d{2}) \|\s*$/) ?? [])[1];
+      if (date === undefined) problems.push(id + " has no review date");
+      else if (date < today) problems.push(id + " review date " + date + " has passed");
+    }
+    if (problems.length > 0) { console.log(problems.join("; ")); process.exit(1); }
+    console.log(ignored.length);
+  ' 2>&1)"; then
+    fail "audit exception register: $out"
+  else
+    pass "audit exception register: $out ignored advisories, each registered and in date"
+  fi
 }
 
 run_all() {
@@ -199,6 +256,7 @@ run_all() {
   check_inline_keys
   check_placeholders
   check_browser_storage_credentials
+  check_audit_exceptions
   check_trivy
   check_pnpm_audit
   echo ""
@@ -291,6 +349,14 @@ selftest() {
   # and the rule gets deleted rather than narrowed.
   ( cd "$tmp/repo" && echo 'localStorage.setItem("locale", "rw")' > pref.ts && git add -A && git commit -qm n )
   _expect green "non-credential storage write is allowed"
+
+  # An ignored advisory needs a register row with a review date in the future.
+  ( cd "$tmp/repo" && echo '{"pnpm":{"auditConfig":{"ignoreGhsas":["GHSA-test-0000-0000"]}}}' > package.json && git add -A && git commit -qm g )
+  _expect red "ignored GHSA with no register"
+  ( cd "$tmp/repo" && mkdir -p docs/security && echo '| GHSA-test-0000-0000 | x | x | No | x | 2000-01-01 |' > docs/security/audit-exceptions.md && git add -A && git commit -qm d )
+  _expect red "ignored GHSA whose review date has passed"
+  ( cd "$tmp/repo" && echo '| GHSA-test-0000-0000 | x | x | No | x | 2999-01-01 |' > docs/security/audit-exceptions.md && git add -A && git commit -qm d2 )
+  _expect green "ignored GHSA registered and in date"
 
   echo ""
   hr

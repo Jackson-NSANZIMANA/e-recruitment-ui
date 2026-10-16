@@ -65,10 +65,17 @@ export function AuthProvider({ edgeBaseUrl, client, children }: AuthProviderProp
   const session = state.status === 'authenticated' ? state.session : null;
 
   // Mount: ask the edge. There is no cookie to read and no token to decode.
+  // One request per client: StrictMode re-runs this effect in development,
+  // and the ref (which survives that remount) shares the in-flight answer
+  // instead of asking the edge twice. A signed-out visitor's 401 here is the
+  // expected answer, not a fault.
+  const bootRef = useRef<{ readonly auth: EdgeAuthClient; readonly session: Promise<Session | null> } | null>(null);
   useEffect(() => {
     let cancelled = false;
+    if (bootRef.current?.auth !== auth) bootRef.current = { auth, session: auth.loadSession() };
+    const boot = bootRef.current.session;
     void (async () => {
-      const loaded = await auth.loadSession();
+      const loaded = await boot;
       if (cancelled) return;
       setState(loaded === null ? { status: 'anonymous' } : { status: 'authenticated', session: loaded });
     })();

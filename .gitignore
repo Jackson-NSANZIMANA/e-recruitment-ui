@@ -5,6 +5,7 @@ coverage/
 playwright-report/
 test-results/
 storybook-static/
+.env
 .env.local
 .env.*.local
 *.tsbuildinfo
