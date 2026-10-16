@@ -452,5 +452,11 @@
       "UNSUPPORTED_AGENCY": "L’enregistrement sur place n’est disponible que pour les campagnes RDF.",
       "FORBIDDEN": "Votre rôle ne permet pas d’enregistrer des candidats sur place."
     }
+  },
+  "rehearsal": {
+    "apply_notice": "Campagne de répétition : entraînement uniquement. Ce n’est pas un vrai recrutement et personne n’est engagé à travers elle.",
+    "pass_title": "Laissez-passer de répétition",
+    "pass_body": "Ce laissez-passer appartient à une répétition. Il sert uniquement à l’entraînement et n’est valable pour aucun recrutement réel.",
+    "pass_marker": "RÉPÉTITION : NON VALABLE POUR LE RECRUTEMENT"
   }
 }
