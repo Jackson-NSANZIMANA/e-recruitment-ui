@@ -452,5 +452,11 @@
       "UNSUPPORTED_AGENCY": "Walk-in registration is only available for RDF campaigns.",
       "FORBIDDEN": "Your role cannot register walk-in candidates."
     }
+  },
+  "rehearsal": {
+    "apply_notice": "Rehearsal campaign: practice only. It is not a real recruitment and no one is enlisted from it.",
+    "pass_title": "Rehearsal Exam Pass",
+    "pass_body": "This pass belongs to a rehearsal. It is practice only and is not valid for any real recruitment.",
+    "pass_marker": "REHEARSAL: NOT VALID FOR RECRUITMENT"
   }
 }
