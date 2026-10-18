@@ -1,0 +1,4 @@
+# USRP_EDGE_MODE=proxy: same-origin /edge/** to the edge gateway (one origin,
+# AGENTS.md §2). Caddy adds X-Forwarded-For; set EDGE_TRUSTED_PROXY_HOPS=1 on
+# the gateway so its rate limits key on the client, not on this proxy.
+reverse_proxy {$USRP_EDGE_UPSTREAM}

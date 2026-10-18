@@ -1,0 +1,19 @@
+# Build context for infrastructure/images/spa/Dockerfile (ADR-FE-014): the
+# image compiles from source, so local installs and build output stay out, and
+# .env files never reach a layer.
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/playwright-report
+**/test-results
+**/storybook-static
+**/*.tsbuildinfo
+**/.cache
+.git
+.github
+.env
+.env.*
+**/.env
+**/.env.*
+docs
