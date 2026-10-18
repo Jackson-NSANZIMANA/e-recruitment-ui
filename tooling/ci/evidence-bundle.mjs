@@ -40,6 +40,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const REPO = 'Jackson-NSANZIMANA/e-recruitment-ui';
@@ -47,8 +48,10 @@ const PEER = 'Jackson-NSANZIMANA/e-recruitment';
 const JUNIT_DIR = 'test-results';
 const JUNIT_FILE = 'unit.junit.xml';
 const API_CLIENT = 'packages/api-client';
+/** Every app with a Playwright suite; a missing report is never "passed". */
+export const E2E_APPS = ['applicant-portal', 'officer-console'];
 
-const stripAnsi = (text) => text.replace(/\x1b\[[0-9;]*m/g, '');
+const stripAnsi = stripVTControlCharacters;
 const sha256 = (data) => createHash('sha256').update(data).digest('hex');
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
@@ -58,26 +61,42 @@ const decodeXml = (text) =>
 
 function attributes(text) {
   const out = {};
-  for (const [, key, value] of text.matchAll(/([\w:.-]+)="([^"]*)"/g)) out[key] = decodeXml(value);
+  for (const [, key, dq, sq] of text.matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) out[key] = decodeXml(dq ?? sq);
   return out;
 }
+
+// One element tag. Attribute values are matched as quoted strings, so a raw
+// `>` inside one (node:test writes failure messages unescaped there) does not
+// end the tag early.
+const TAG = /<(\/?)([\w:.-]+)((?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/g;
 
 /** Parse a JUnit report (node:test or vitest) into leaf test cases. */
 export function parseJUnit(xml, root = ROOT) {
   const cases = [];
-  for (const m of xml.matchAll(/<testcase\b([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/g)) {
-    const attrs = attributes(m[1]);
-    const body = m[2] ?? '';
-    const skipped = body.match(/<skipped\b([^>]*?)\/?>/);
-    const failure = body.match(/<(failure|error)\b([^>]*?)\/?>/);
-    const file = attrs.file ?? attrs.classname ?? '';
+  const body = xml.replace(/<!\[CDATA\[[\s\S]*?\]\]>|<!--[\s\S]*?-->/g, '');
+  let open = null;
+  const close = () => {
+    const file = open.attrs.file ?? open.attrs.classname ?? '';
     cases.push({
-      name: attrs.name ?? '',
+      name: open.attrs.name ?? '',
       file: file.startsWith('/') ? relative(root, file) : file,
-      outcome: failure ? 'failed' : skipped ? 'skipped' : 'passed',
-      ...(skipped ? { reason: attributes(skipped[1]).message ?? attributes(skipped[1]).type ?? '' } : {}),
-      ...(failure ? { reason: (attributes(failure[2]).message ?? failure[1]).slice(0, 500) } : {}),
+      outcome: open.failure ? 'failed' : open.skipped ? 'skipped' : 'passed',
+      ...(open.failure ? { reason: open.failure.slice(0, 500) } : open.skipped ? { reason: open.skipped.reason } : {}),
     });
+    open = null;
+  };
+  for (const [, slash, name, attrText, selfClosing] of body.matchAll(TAG)) {
+    if (name === 'testcase') {
+      if (slash) { if (open) close(); continue; }
+      open = { attrs: attributes(attrText), failure: null, skipped: null };
+      if (selfClosing) close();
+    } else if (open && !slash && (name === 'failure' || name === 'error')) {
+      const attrs = attributes(attrText);
+      open.failure ??= attrs.message || attrs.type || `<${name}> without a message`;
+    } else if (open && !slash && name === 'skipped') {
+      const attrs = attributes(attrText);
+      open.skipped ??= { reason: attrs.message ?? attrs.type ?? '' };
+    }
   }
   return cases;
 }
@@ -183,12 +202,14 @@ function summariseUnit(packages) {
   const all = packages.flatMap((p) => (p.cases ?? []).map((c) => ({ package: p.name, ...c })));
   const sum = (key) => packages.reduce((n, p) => n + (p[key] ?? 0), 0);
   const failedPackages = packages.filter((p) => p.exitCode !== 0).map((p) => p.name);
+  // tsx selfchecks have no per-case report: listed, never counted as zero.
+  const unreportedPackages = packages.filter((p) => p.cases === null).map((p) => p.name);
   return {
-    status: failedPackages.length > 0 ? 'failed' : 'passed',
+    status: failedPackages.length > 0 ? 'failed' : unreportedPackages.length > 0 ? 'passed-with-unreported' : 'passed',
     source: `each workspace package's \`test\` script, JUnit via vitest or node --test-reporter (${JUNIT_DIR}/${JUNIT_FILE})`,
-    totals: { packages: packages.length, tests: sum('tests'), passed: sum('passed'), failed: sum('failed'), skipped: sum('skipped') },
+    totals: { packages: packages.length, reportedPackages: packages.length - unreportedPackages.length, tests: sum('tests'), passed: sum('passed'), failed: sum('failed'), skipped: sum('skipped') },
     failedPackages,
-    unreportedPackages: packages.filter((p) => p.cases === null).map((p) => p.name),
+    unreportedPackages,
     skippedTests: all.filter((c) => c.outcome === 'skipped').map(({ outcome, ...c }) => c),
     failedTests: all.filter((c) => c.outcome === 'failed').map(({ outcome, ...c }) => c),
     packages: packages.map(({ cases, ...p }) => p),
@@ -203,23 +224,37 @@ function findFiles(dir, name) {
   });
 }
 
-function summariseE2e(dir) {
-  if (dir === null) return { status: 'not-available', reason: 'no Playwright report directory supplied' };
-  const reports = findFiles(dir, 'results.json');
-  if (reports.length === 0) return { status: 'not-available', reason: `no Playwright results.json under ${dir} (the E2E job did not finish)` };
-  const cases = reports.flatMap((file) => {
-    const app = relative(dir, file).split('/').find((part) => part !== 'apps') ?? 'unknown';
-    return parsePlaywright(JSON.parse(readFileSync(file, 'utf8')), app);
-  });
+/**
+ * Summarise Playwright reports, one per app. Not passed unless every expected
+ * app reported, no test failed and Playwright itself logged no error (a
+ * config or global-setup error leaves `errors` set and the specs empty).
+ */
+export function summariseE2eReports(reports, expectedApps = E2E_APPS) {
+  const cases = reports.flatMap(({ app, report }) => parsePlaywright(report, app));
+  const errors = reports.flatMap(({ app, report }) => (report.errors ?? []).map((e) => ({ app, message: stripAnsi(String(e.message ?? e.value ?? e)).slice(0, 500) })));
+  const reported = new Set(reports.map((r) => r.app));
+  const missingApps = expectedApps.filter((app) => !reported.has(app));
   const count = (outcome) => cases.filter((c) => c.outcome === outcome).length;
   return {
-    status: count('failed') > 0 ? 'failed' : 'passed',
+    status: count('failed') > 0 || errors.length > 0 ? 'failed' : missingApps.length > 0 ? 'incomplete' : 'passed',
     source: 'Playwright JSON reporter (apps/*/playwright-report/results.json, Playwright E2E job)',
     totals: { tests: cases.length, passed: count('passed'), flaky: count('flaky'), failed: count('failed'), skipped: count('skipped') },
+    missingApps,
+    errors,
     skippedTests: cases.filter((c) => c.outcome === 'skipped').map(({ outcome, ...c }) => c),
     failedTests: cases.filter((c) => c.outcome === 'failed').map(({ outcome, ...c }) => c),
     flakyTests: cases.filter((c) => c.outcome === 'flaky').map(({ outcome, ...c }) => c),
   };
+}
+
+function summariseE2e(dir) {
+  if (dir === null) return { status: 'not-available', reason: 'no Playwright report directory supplied' };
+  const files = findFiles(dir, 'results.json');
+  if (files.length === 0) return { status: 'not-available', reason: `no Playwright results.json under ${dir} (the E2E job did not finish)` };
+  return summariseE2eReports(files.map((file) => ({
+    app: relative(dir, file).split('/').find((part) => part !== 'apps') ?? 'unknown',
+    report: JSON.parse(readFileSync(file, 'utf8')),
+  })));
 }
 
 function runProofs(backend) {
@@ -247,8 +282,15 @@ function runProofs(backend) {
 function operationInventory() {
   const script = "import('./src/paths.ts').then((m) => process.stdout.write(JSON.stringify({ sha: m.EDGE_BACKEND_SHA, ops: m.EDGE_OPERATIONS })))";
   const result = spawnSync('pnpm', ['exec', 'tsx', '-e', script], { cwd: join(ROOT, API_CLIENT), encoding: 'utf8' });
-  if (result.status !== 0) return { inventory: { status: 'not-available', reason: `could not load paths.ts: ${result.stderr.slice(0, 300)}` }, pin: null };
-  const { sha, ops } = JSON.parse(result.stdout);
+  let loaded = null;
+  if (result.status === 0) {
+    try { loaded = JSON.parse(result.stdout); } catch { /* reported below */ }
+  }
+  if (loaded === null) {
+    const why = result.error?.message ?? (result.stderr || result.stdout || `exit ${result.status}`);
+    return { inventory: { status: 'not-available', reason: `could not load paths.ts: ${String(why).slice(0, 300)}` }, pin: null };
+  }
+  const { sha, ops } = loaded;
   const sources = ['operations', 'queries'].flatMap((d) => {
     const dir = join(ROOT, API_CLIENT, 'src', d);
     return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.ts')).map((f) => readFileSync(join(dir, f), 'utf8')) : [];
@@ -271,19 +313,24 @@ function operationInventory() {
   };
 }
 
+/**
+ * Do the backend pins agree? ci.yml BACKEND_SHA and paths.ts EDGE_BACKEND_SHA
+ * must both be readable and equal; OpenAPI SHAs, where present, must match
+ * them. An unreadable pin is a disagreement, never silently dropped.
+ */
+export function pinAgreement({ ciBackendSha, edgeBackendSha, openapiShas }) {
+  if (ciBackendSha === null || edgeBackendSha === null) return false;
+  return [edgeBackendSha, ...openapiShas].every((sha) => sha === ciBackendSha);
+}
+
 function peerPin(pathsSha) {
   const ci = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8').match(/^\s*BACKEND_SHA:\s*([0-9a-f]{40})\s*$/m)?.[1] ?? null;
   const openapiDir = join(ROOT, 'packages/contracts/openapi');
   const openapi = existsSync(openapiDir)
     ? [...new Set(readdirSync(openapiDir).filter((f) => f.endsWith('.yaml')).flatMap((f) => [...readFileSync(join(openapiDir, f), 'utf8').matchAll(/\b([0-9a-f]{40})\b/g)].map((m) => m[1])))]
     : [];
-  const all = [ci, pathsSha, ...openapi].filter(Boolean);
-  return {
-    repo: PEER,
-    pinnedSha: ci,
-    sources: { ciBackendSha: ci, edgeBackendSha: pathsSha, openapiShas: openapi },
-    agree: all.length > 0 && all.every((s) => s === all[0]),
-  };
+  const sources = { ciBackendSha: ci, edgeBackendSha: pathsSha ?? null, openapiShas: openapi };
+  return { repo: PEER, pinnedSha: ci, sources, agree: pinAgreement(sources) };
 }
 
 function parseArgs(argv) {
@@ -345,6 +392,8 @@ function main() {
   for (const t of unit.skippedTests ?? []) console.log(`    skipped: ${t.package} › ${t.name}`);
   console.log(`  e2e:        ${e2e.status}${totals(e2e)}`);
   for (const t of e2e.skippedTests ?? []) console.log(`    skipped: ${t.app} › ${t.name}`);
+  for (const app of e2e.missingApps ?? []) console.log(`    missing report: ${app}`);
+  for (const e of e2e.errors ?? []) console.log(`    playwright error (${e.app}): ${e.message.split('\n')[0]}`);
 
   if (inventory.status !== 'available' || !bundle.peer.agree) process.exitCode = 1;
   if (proofs.status === 'failed' || unit.status === 'failed') process.exitCode = 1;

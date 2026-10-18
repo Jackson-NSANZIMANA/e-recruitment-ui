@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { assertionCount, parseJUnit, parsePlaywright, typedOperationIds } from '../evidence-bundle.mjs';
+import { assertionCount, parseJUnit, parsePlaywright, pinAgreement, summariseE2eReports, typedOperationIds } from '../evidence-bundle.mjs';
 
 test('vitest JUnit: classname is the file, a bare <skipped/> counts', () => {
   const xml = '<testsuites name="vitest tests" tests="2"><testsuite name="src/x.test.ts"><testcase classname="src/x.test.ts" name="maps wire &amp; state" time="0.1"></testcase><testcase classname="src/x.test.ts" name="later" time="0"><skipped/></testcase></testsuite></testsuites>';
@@ -58,4 +58,39 @@ test('typed operations are the IDs with a call site; registry-only IDs are not',
     "// createCampaign is not wrapped yet",
   ];
   assert.deepEqual([...typedOperationIds(sources)].sort(), ['listCampaigns', 'readSession']);
+});
+
+test('node:test JUnit: a raw > inside a failure message does not hide the failure', () => {
+  const xml = '<testsuites><testcase name="compares" file="/repo/a.test.mjs" failure="expected 2 > 1"><failure type="testCodeFailure" message="expected 2 > 1 to be false">stack</failure></testcase><testcase name="next" file="/repo/a.test.mjs"/></testsuites>';
+  assert.deepEqual(parseJUnit(xml, '/repo').map((c) => [c.name, c.outcome]), [['compares', 'failed'], ['next', 'passed']]);
+});
+
+const passing = { suites: [{ title: 'a.spec.ts', file: 'a.spec.ts', specs: [{ title: 'ok', tests: [{ projectName: 'chromium', status: 'expected', annotations: [] }] }] }], errors: [] };
+
+test('E2E is passed only when every app reported cleanly', () => {
+  const both = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: passing }]);
+  assert.equal(both.status, 'passed');
+});
+
+test('E2E with an app report missing is incomplete, not passed', () => {
+  const one = summariseE2eReports([{ app: 'applicant-portal', report: passing }]);
+  assert.equal(one.status, 'incomplete');
+  assert.deepEqual(one.missingApps, ['officer-console']);
+});
+
+test('a Playwright top-level error (no specs ran) is a failure', () => {
+  const broken = { suites: [], errors: [{ message: '\x1b[31mError: global setup failed\x1b[0m' }] };
+  const result = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: broken }]);
+  assert.equal(result.status, 'failed');
+  assert.deepEqual(result.errors, [{ app: 'officer-console', message: 'Error: global setup failed' }]);
+});
+
+test('backend pins agree only when ci.yml and paths.ts are both readable and equal', () => {
+  const a = 'a'.repeat(40);
+  const b = 'b'.repeat(40);
+  assert.equal(pinAgreement({ ciBackendSha: a, edgeBackendSha: a, openapiShas: [a] }), true);
+  assert.equal(pinAgreement({ ciBackendSha: a, edgeBackendSha: a, openapiShas: [] }), true);
+  assert.equal(pinAgreement({ ciBackendSha: null, edgeBackendSha: a, openapiShas: [a] }), false);
+  assert.equal(pinAgreement({ ciBackendSha: a, edgeBackendSha: null, openapiShas: [] }), false);
+  assert.equal(pinAgreement({ ciBackendSha: a, edgeBackendSha: a, openapiShas: [b] }), false);
 });

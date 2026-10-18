@@ -83,6 +83,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
       - run: node --test --test-reporter=spec tooling/repo-hygiene/test/*.test.mjs
+      # The evidence collector's parsers decide what the bundle calls passed,
+      # so their selftest sits inside the Quality Gate, not only in the
+      # (ungated) evidence job.
+      - name: Evidence collector selftest
+        run: node --test --test-reporter=spec tooling/ci/test/*.test.mjs
       - run: node tooling/repo-hygiene/verify.mjs
       - run: node --experimental-strip-types tooling/surface-contract/src/cli.ts
 
@@ -418,7 +423,8 @@ jobs:
     # record of what was measured. W0-04: docs cite this artefact instead of
     # hand-written counts and SHAs. Not part of the Quality Gate.
     needs: [hygiene, typecheck, ads-lint, contract-drift, test, a11y, build, e2e, security-scan, gate]
-    if: always()
+    # !cancelled(), not always(): a superseded run leaves no partial bundle.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -450,8 +456,6 @@ jobs:
             tooling/*/node_modules
           key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Evidence collector selftest
-        run: node --test --test-reporter=spec tooling/ci/test/*.test.mjs
       # Unit suites import workspace packages from dist/ (turbo `test` dependsOn ^build).
       - run: pnpm turbo run build
       - name: Fetch the Playwright reports
@@ -464,16 +468,20 @@ jobs:
       # affected-only on PRs) and the static proofs, then writes the bundle.
       # Exits non-zero on a failure, after writing it.
       - name: Write evidence bundle
+        if: ${{ !cancelled() }}
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: >-
           node tooling/ci/evidence-bundle.mjs --out evidence
           --backend "$GITHUB_WORKSPACE/backend" --run-proofs --run-tests
           --e2e-dir e2e-report --needs "$NEEDS"
+      # Named by the commit CI actually tested: on a pull_request run that is
+      # the merge commit, so the push run and the PR run of one head never
+      # publish two different bundles under the same name. On main they agree.
       - name: Upload evidence bundle
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: evidence-${{ env.EVIDENCE_HEAD_SHA }}
+          name: evidence-${{ github.sha }}
           path: evidence/evidence-${{ env.EVIDENCE_HEAD_SHA }}.json
           if-no-files-found: error
