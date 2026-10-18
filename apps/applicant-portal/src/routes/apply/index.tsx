@@ -6,7 +6,7 @@ import TextField from "@atlaskit/textfield";
 import Select from "@atlaskit/select";
 import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
-import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, type Agency, type ApplicationCategory } from "@usrp/contracts";
+import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, isRehearsalCampaign, type Agency, type ApplicationCategory } from "@usrp/contracts";
 import {
   ApiError,
   createApiClient,
@@ -147,14 +147,18 @@ function StepCampaign({ data, onNext }: {
   return (
     <Stack space="space.300">
       <Text>{t("apply.campaign_help")}</Text>
-      {open.map((campaign) => (
+      {open.map((campaign) => {
+        // A rehearsal is practice on the real platform; it must never pass for a real recruitment.
+        const rehearsal = isRehearsalCampaign(campaign);
+        return (
         <SectionMessage
           key={campaign.publicCode}
-          appearance={data.campaignCode === campaign.publicCode ? "success" : "information"}
+          appearance={rehearsal ? "warning" : data.campaignCode === campaign.publicCode ? "success" : "information"}
           title={campaign.campaignLabel}
           headingLevel="h3"
         >
           <Stack space="space.100">
+            {rehearsal && <Text weight="bold">{t("rehearsal.apply_notice")}</Text>}
             <Text>{t("apply.review_agency")}: {campaign.agency}</Text>
             <Text size="small" color="color.text.subtle">
               {t("apply.campaign_window", { date: new Date(campaign.registrationClosesAt).toLocaleDateString() })}
@@ -173,7 +177,8 @@ function StepCampaign({ data, onNext }: {
             </Inline>
           </Stack>
         </SectionMessage>
-      ))}
+        );
+      })}
     </Stack>
   );
 }
