@@ -9,6 +9,14 @@
 
 > **Evidence rule.** `Observed` means supported by the source snapshot, contract, test, or accepted ADR described by a source; it is not independently verified by this merge unless an artefact is cited. `Proposed` means a target capability or threshold. `Owner decision` means agency leadership, recruitment operations, security, legal, or the DPO must decide it. `Unverified` means evidence is unavailable or sources disagree. A route, type, or ADR is not by itself proof that a complete user journey works in the deployed environment.
 
+> **Errata (S00, 2026-10-16). Read before relying on any "current state" claim below.**
+>
+> - **SHAs.** This baseline inspected backend `bd939f61` and frontend `cd27d111` (both 2026-10-15). Both `main` branches have moved on since. The frontend now pins backend `df80f651` (`BACKEND_SHA` in `ci.yml`, `EDGE_BACKEND_SHA` in `paths.ts`).
+> - **Operation count.** "42 backend / 42 frontend operations" was true at `bd939f61`. From `df80f651` there are **43**: ADR-034 added `admitAtGate`.
+> - **ADR-034, single-use gate admission (BUILD-003).** It landed after this snapshot (backend PR #32, frontend PR #25). It provides one admission per QR (DB-unique), bound to the national ID card, with every scan logged, online only. Where this baseline treats gate admission as unbuilt, read it as built for the online case. Offline admission and biometric evidence remain open.
+> - **Do not cite counts or SHAs from this document.** Each CI run of either repository publishes an `evidence-<sha>` artefact (*Evidence bundle* job) holding `evidence-<sha>.json`: the operation inventory with typed and untyped IDs, the pinned peer SHA, proof and test counts with every skipped test named, and the lockfile hash. Cite the bundle for the commit you mean.
+> - The stray prompt text noted in W0-01 is no longer present. This file was renamed from `user-facing-feature-spec-2026-10-15.md`.
+
 ## Contents
 
 - [1. Unified executive conclusion](#1-unified-executive-conclusion)

@@ -1,8 +1,9 @@
 # Frontend Architecture: Current State
 
-**Status:** Authoritative engineering baseline, 2026-10-04
+**Status:** Authoritative engineering baseline, 2026-10-04; refreshed 2026-10-16 (S00) against frontend `c5bda85`
 **Repository:** `Jackson-NSANZIMANA/e-recruitment-ui`
-**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `df80f6517247a00ffd99518fd31bd7c68dd70d65`
+**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `df80f6517247a00ffd99518fd31bd7c68dd70d65` (`BACKEND_SHA` in `ci.yml`, `EDGE_BACKEND_SHA` in `packages/api-client/src/paths.ts`)
+**Counts and SHAs:** not restated by hand. Every CI run publishes an `evidence-<sha>` artefact (*Evidence bundle* job, `tooling/ci/evidence-bundle.mjs`) holding `evidence-<sha>.json`: the edge operation inventory with typed and untyped IDs, the pinned backend SHA (and whether `ci.yml`, `paths.ts` and the OpenAPI documents agree), proof assertion counts, unit and E2E counts with every skipped test named, and the lockfile hash.
 **Detailed reconciliation:** [`cross-repo-contract-reconciliation-2026-10-04.md`](./cross-repo-contract-reconciliation-2026-10-04.md)
 
 This document is implementation guidance, not a historical audit. Older handover and incident documents remain useful as evidence of past drift, but do not override the current pinned contract or executable gates.
@@ -18,7 +19,7 @@ The authoritative layers are:
 - **Service schemas:** `packages/contracts/openapi`, regenerated into `packages/contracts/src/generated`.
 - **UI ownership:** `docs/ui-surfaces/*.json`, verified by `tooling/surface-contract`.
 
-Cross-repository drift is a failing condition. The frontend edge registry is compared with the backend registry on exact method/path plus session, composition, and retry policy. The service manifest is compared with the OpenAPI route set and security metadata.
+Cross-repository drift is a failing condition. The frontend edge registry (43 operations at the pinned SHA) is compared with the backend registry on exact method/path plus session, composition, and retry policy. Registry membership is not the same as a typed client: the seven campaign control-plane operations and the three field-sync operations are registry IDs with no `operations/` function or `wire.ts` type yet. The evidence bundle lists them as `untypedIds`. The service manifest is compared with the OpenAPI route set and security metadata.
 
 ## 2. Credential, agency, and data boundary
 
@@ -79,12 +80,7 @@ npm exec --yes pnpm@9.15.0 -- test
 
 The repository's full pipeline additionally runs generated-mock checks, static hygiene and boundary checks, build, Storybook accessibility, security self-tests, visual proof where configured, and Playwright E2E. A green local subset is not permission to claim the unavailable gates.
 
-Current evidence for this baseline:
-
-- contract drift: **588 assertions, 0 findings**;
-- officer surface contract: **42 assertions, PASS**;
-- edge-dev real-socket proof: **143 assertions, GREEN**;
-- workspace typecheck: **19 packages successful**.
+Current evidence: read the evidence bundle for the commit in question; this document no longer carries counts. The figures it used to quote (588 drift assertions, 42 surface assertions, 19 packages) were stale within weeks. On 2026-10-16 the contract verify alone ran 2,377 assertions, 877 of them drift. Contract drift must be run with `--backend <checkout at BACKEND_SHA>`: without it, gates B and C run at reduced scope.
 
 `contracts/scripts/verify.ts` requires zero generated diff. Run it against the committed generated tree in CI or after committing the generated reconciliation.
 
