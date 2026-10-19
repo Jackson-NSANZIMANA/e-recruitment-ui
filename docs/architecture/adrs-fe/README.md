@@ -10,3 +10,4 @@ the proof that keeps it true; a decision with no gate is a preference.
 | [003](./ADR-FE-003-proof-harness.md) | `pnpm verify:fe`; generated mocks; 7 of 9 proofs need no install | proofs 03-07 |
 | [004](./ADR-FE-004-missing-surfaces.md) | The surfaces with no UI, and `apps/admin-console` | proofs 02, 09 |
 | [005](./ADR-FE-005-offline-first.md) | Offline-first as a constraint, not a feature | proofs 03, 06, 09 |
+| [014](./ADR-FE-014-spa-serving-image.md) | One Caddy serving image per app: strict headers, /edge never the shell, signed and scanned | `tooling/images/verify-spa-image.mjs`, `spa-images` job |
