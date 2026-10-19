@@ -65,7 +65,7 @@ ARG APP
 ARG USRP_BUILD_SHA=unknown
 ARG USRP_BUILD_TIME=unknown
 # Default: deny every powerful feature. The field station passes camera=(self).
-ARG PERMISSIONS_POLICY="camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), interest-cohort=()"
+ARG PERMISSIONS_POLICY="camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()"
 ENV XDG_CONFIG_HOME=/tmp/caddy \
     XDG_DATA_HOME=/tmp/caddy \
     USRP_EDGE_MODE=off \
