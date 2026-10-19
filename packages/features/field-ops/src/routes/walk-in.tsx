@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { Box, Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
+// LinkButton, not the legacy Button: it renders through AppProvider's
+// routerLinkComponent, so an in-app href is a client-side navigation (no full
+// reload that would drop station state or re-probe the session offline).
+import LinkButton from "@atlaskit/button/link";
 import LoadingButton from "@atlaskit/button/loading-button";
 import TextField from "@atlaskit/textfield";
 import Select from "@atlaskit/select";
@@ -117,7 +121,7 @@ export default function WalkInPage({ client }: WalkInPageProps): React.ReactElem
                 <FormFooter>
                   <Inline space="space.200">
                     <LoadingButton type="submit" appearance="primary" isLoading={submitting || isPending} isDisabled={session === null || registry === null}>Register walk-in</LoadingButton>
-                    <Button href="/stations" appearance="subtle">{t("actions.cancel")}</Button>
+                    <LinkButton href="/stations" appearance="subtle">{t("actions.cancel")}</LinkButton>
                   </Inline>
                 </FormFooter>
               </Stack>

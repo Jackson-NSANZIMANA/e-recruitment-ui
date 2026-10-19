@@ -37,3 +37,4 @@ export type {
   MountByReadinessOptions,
   NotBuiltBannerProps,
 } from "./readiness/index.js";
+export { ConnectionStatus } from "./components/ConnectionStatus/index.js";

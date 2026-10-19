@@ -69,6 +69,25 @@ test('the walk-in desk is RDF-only even when another agency holds the permission
   await page.goto('/stations');
   await expect(page.getByText(/no station for this account/i)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('station-walk_in')).toHaveCount(0);
+  // Typing the URL does not open it either: the route is guarded by the same rule.
+  await page.goto('/walk-in');
+  await expect(page.getByTestId('station-unavailable')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByLabel(/national id number/i)).toHaveCount(0);
+});
+
+test('station links navigate inside the app, without a full reload', async ({ page }) => {
+  await signedIn(page, ['admission.gate']);
+  let sessionProbes = 0;
+  page.on('request', (request) => { if (request.url().endsWith('/edge/v1/session')) sessionProbes += 1; });
+  await page.goto('/stations');
+  await expect(page.getByTestId('station-gate')).toBeVisible({ timeout: 15_000 });
+  const probesAfterLoad = sessionProbes;
+  await page.getByTestId('station-gate').getByRole('link', { name: /open station/i }).click();
+  await expect(page.getByLabel(/this gate's venue/i)).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('link', { name: /^stations$/i }).click();
+  await expect(page.getByTestId('station-gate')).toBeVisible();
+  // A full reload re-runs the session probe; client-side navigation does not.
+  expect(sessionProbes).toBe(probesAfterLoad);
 });
 
 test('the production build does not mount the placeholder stations', async ({ page }) => {

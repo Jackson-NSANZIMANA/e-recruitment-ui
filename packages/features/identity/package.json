@@ -7,6 +7,8 @@
   "license": "UNLICENSED",
   "exports": {
     ".": "./src/index.ts",
+    "./officer-login": "./src/routes/officer-login.tsx",
+    "./citizen-login": "./src/routes/citizen-otp.tsx",
     "./locales/*": "./locales/*"
   },
   "scripts": {
@@ -49,5 +51,6 @@
     "react-router-dom": "6.30.1",
     "typescript": "~5.4.0",
     "vitest": "^4.1.12"
-  }
+  },
+  "//exports": "Two narrow entry points so each host imports only the sign-in it mounts: the officer apps never reach the citizen OTP flow and the portal never reaches officer sign-in (S02 review). The barrel still exports both for model consumers."
 }

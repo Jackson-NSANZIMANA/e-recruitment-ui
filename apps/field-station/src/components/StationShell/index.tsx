@@ -1,12 +1,16 @@
 import React from "react";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button";
+// LinkButton, not the legacy Button: it renders through AppProvider's
+// routerLinkComponent, so an in-app href is a client-side navigation (no full
+// reload that would drop station state or re-probe the session offline).
+import LinkButton from "@atlaskit/button/link";
 import Lozenge from "@atlaskit/lozenge";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
 import { useAuth, useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { ConnectionStatus } from "../ConnectionStatus/index.js";
+import { ConnectionStatus } from "@usrp/ui";
 
 const styles = cssMap({
   bar: {
@@ -46,9 +50,9 @@ export function StationShell({ children }: StationShellProps): React.ReactElemen
             {session !== null && <Lozenge appearance="inprogress">{session.agency}</Lozenge>}
           </Inline>
           <Inline space="space.100" alignBlock="center">
-            <Button appearance="subtle" href="/stations">
+            <LinkButton appearance="subtle" href="/stations">
               {t("field_station.all_stations")}
-            </Button>
+            </LinkButton>
             <Button appearance="subtle" onClick={() => { void signOut(); }}>
               {t("nav.logout")}
             </Button>

@@ -22,7 +22,7 @@ import DashboardIcon from "@atlaskit/icon/core/dashboard";
 import AppsIcon from "@atlaskit/icon/core/apps";
 import { useTranslation } from "@usrp/i18n";
 
-import { ConnectionStatus } from "../ConnectionStatus/index.js";
+import { ConnectionStatus } from "@usrp/ui";
 
 export interface AppShellProps {
   children: React.ReactNode;

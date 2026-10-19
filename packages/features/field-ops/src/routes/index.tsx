@@ -15,6 +15,7 @@
 import React, { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 import type { ApiClient } from "@usrp/api-client";
+import { StationGuard } from "./station-guard.tsx";
 
 const StationPicker = lazy(() => import("./stations.tsx"));
 const GatePage = lazy(() => import("./gate.tsx"));
@@ -30,8 +31,8 @@ export interface FieldOpsRouteOptions {
 export function createFieldOpsRoutes({ client }: FieldOpsRouteOptions): readonly RouteObject[] {
   return [
     { path: "stations", element: <StationPicker /> },
-    { path: "gate", element: <GatePage client={client} /> },
-    { path: "walk-in", element: <WalkInPage client={client} /> },
+    { path: "gate", element: <StationGuard path="/gate"><GatePage client={client} /></StationGuard> },
+    { path: "walk-in", element: <StationGuard path="/walk-in"><WalkInPage client={client} /></StationGuard> },
     { path: "check-in", element: <CheckIn /> },
     { path: "conflicts", element: <Conflicts /> },
   ];

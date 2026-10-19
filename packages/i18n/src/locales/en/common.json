@@ -143,7 +143,9 @@
     "banner": "You're offline. Changes will sync when you reconnect.",
     "syncing": "Syncing…",
     "synced": "All changes saved",
-    "sync_unavailable": "Score captures stay on this device. Uploading them to the recruitment record is not available yet, so do not wipe or hand off this tablet before an officer confirms the scores were transferred."
+    "sync_unavailable": "Score captures stay on this device. Uploading them to the recruitment record is not available yet, so do not wipe or hand off this tablet before an officer confirms the scores were transferred.",
+    "no_connection": "You are offline",
+    "nothing_sent": "Nothing is sent or saved while there is no connection: the gate, the walk-in desk and every officer action need the edge. Wait for the connection to return, or follow the paper procedure."
   },
   "a11y": {
     "loading": "Loading…",
@@ -504,6 +506,9 @@
     },
     "moved_title": "This screen has moved to the Field Station",
     "moved_body": "The venue gate and the walk-in desk now run on the Field Station, the exam-day tablet app. Open it on the station device to continue.",
-    "moved_link": "Open the Field Station"
+    "moved_link": "Open the Field Station",
+    "station_unavailable_title": "This station is not available for your account",
+    "station_unavailable_body": "Your role or agency does not include this station. Choose one of your stations instead.",
+    "back_to_stations": "Back to my stations"
   }
 }

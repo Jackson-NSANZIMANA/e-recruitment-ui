@@ -25,9 +25,7 @@ const spinnerStyles = cssMap({
 });
 
 // The citizen sign-in lives in @usrp/feature-identity since S02 (ADR-FE-007 §5).
-const LoginPage = lazy(() =>
-  import("@usrp/feature-identity").then((m) => ({ default: m.CitizenLoginPage })),
-);
+const LoginPage = lazy(() => import("@usrp/feature-identity/citizen-login"));
 const HomePage = lazy(() => import("./routes/home.js"));
 const ApplicationsPage = lazy(() => import("./routes/applications.js"));
 const StatusPage = lazy(() => import("./routes/status.js"));

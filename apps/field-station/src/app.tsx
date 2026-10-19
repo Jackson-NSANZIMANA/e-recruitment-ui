@@ -14,7 +14,7 @@ import { NotFoundPage } from "@usrp/ui";
 // Login is deliberately EAGER, as in officer-console: it is the recovery path
 // when the network is degraded, a service worker has just updated, or a lazy
 // chunk is unavailable. On a venue tablet that is not an edge case.
-import { OfficerLoginPage } from "@usrp/feature-identity";
+import OfficerLoginPage from "@usrp/feature-identity/officer-login";
 import { StationShell } from "./components/StationShell/index.js";
 import { FIELD_SLICE_ROUTES } from "./routes/slices.js";
 import { gateByReadiness } from "./routes/readiness.js";

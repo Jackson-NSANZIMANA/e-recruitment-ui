@@ -28,7 +28,7 @@ const spinnerStyles = cssMap({
 // degraded, a service worker has just updated, or a lazy chunk is unavailable.
 // The first actionable screen must not depend on a secondary JS fetch.
 // One implementation for every app since S02 (ADR-FE-007 §5).
-import { OfficerLoginPage } from "@usrp/feature-identity";
+import OfficerLoginPage from "@usrp/feature-identity/officer-login";
 
 const DashboardPage = lazy(() => import("./routes/dashboard.js"));
 const ApplicationsPage = lazy(() => import("./routes/applications.js"));

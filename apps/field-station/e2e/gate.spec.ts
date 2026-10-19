@@ -69,7 +69,8 @@ test('an officer without admission.gate sees why, and no gate on the station pic
   await mockSession(page, ['application.read', 'walkin.register']);
   await page.route('**/edge/v1/gate/admissions', (route) => route.abort());
   await page.goto('/gate');
-  await expect(page.getByText(/cannot admit at the gate|ntizikwemerera kwinjiza|ne permet pas d'admettre/i)).toBeVisible({ timeout: 15_000 });
+  // The station guard answers before the gate renders (ADR-FE-011).
+  await expect(page.getByTestId('station-unavailable')).toBeVisible({ timeout: 15_000 });
   await page.goto('/stations');
   await expect(page.getByTestId('station-walk_in')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('station-gate')).toHaveCount(0);

@@ -4,18 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="USRP Field Station — exam-day tablet for Rwanda Security Recruitment" />
-    <!-- Positive polarity (light bg / dark text) is enforced globally via ADS CSS reset.
-         This matches the HCI sunlight-readability requirement for field tablets. -->
+    <!-- Positive polarity (light bg / dark text): the sunlight-readability
+         requirement for field tablets, enforced by the ADS CSS reset. -->
     <meta name="color-scheme" content="light" />
-    <!-- lang="en" is the PRE-HYDRATION default and nothing more. src/app.tsx sets
-         documentElement.lang from the resolved i18n language on mount, so the
-         served document must declare the language its own markup is actually
-         written in. This attribute previously said "rw" while every string in the
-         shell was hardcoded English - WCAG 3.1.1 failing, and worse than a
-         missing attribute, because it actively instructs a screen reader to apply
-         Kinyarwanda pronunciation to English text. -->
+    <!-- lang="en" is only the pre-hydration default: src/app.tsx sets
+         documentElement.lang from the resolved i18n language on mount. -->
     <title>USRP Field Station</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />  </head>
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

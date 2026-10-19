@@ -9,7 +9,10 @@
 import React from "react";
 import { Box, Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Heading from "@atlaskit/heading";
-import Button from "@atlaskit/button";
+// LinkButton, not the legacy Button: it renders through AppProvider's
+// routerLinkComponent, so an in-app href is a client-side navigation (no full
+// reload that would drop station state or re-probe the session offline).
+import LinkButton from "@atlaskit/button/link";
 import Lozenge from "@atlaskit/lozenge";
 import SectionMessage from "@atlaskit/section-message";
 import { cssMap } from "@atlaskit/css";
@@ -66,9 +69,9 @@ export default function StationPicker(): React.ReactElement {
                     <Text as="p">{t(`field_station.stations.${station.id}.body`)}</Text>
                   </Stack>
                   {station.path !== null ? (
-                    <Button appearance="primary" href={station.path}>
+                    <LinkButton appearance="primary" href={station.path}>
                       {t("field_station.open")}
-                    </Button>
+                    </LinkButton>
                   ) : (
                     <Lozenge>{t("field_station.not_yet_available")}</Lozenge>
                   )}

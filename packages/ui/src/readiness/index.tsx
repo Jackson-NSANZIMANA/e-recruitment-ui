@@ -12,7 +12,10 @@ import React from "react";
 import type { RouteObject } from "react-router-dom";
 import SectionMessage from "@atlaskit/section-message";
 import Heading from "@atlaskit/heading";
-import Button from "@atlaskit/button";
+// LinkButton, not the legacy Button: it renders through AppProvider's
+// routerLinkComponent, so an in-app href is a client-side navigation (no full
+// reload that would drop station state or re-probe the session offline).
+import LinkButton from "@atlaskit/button/link";
 import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
@@ -75,9 +78,9 @@ export function NotFoundPage({ homePath }: { readonly homePath: string }): React
         </Heading>
         <Text as="p">{t("readiness.not_found_body")}</Text>
         <Box>
-          <Button appearance="primary" href={homePath}>
+          <LinkButton appearance="primary" href={homePath}>
             {t("readiness.not_found_home")}
-          </Button>
+          </LinkButton>
         </Box>
       </Stack>
     </Box>
