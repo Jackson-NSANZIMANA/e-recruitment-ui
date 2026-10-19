@@ -36,8 +36,9 @@
 //
 // "Could not measure" is recorded as `not-available`, never as zero.
 // Zero dependencies; Node built-ins only. Twin of the backend's
-// scripts/release-bundle.mjs (same schema, usrp-release/v1); the peer here is
-// the backend commit this frontend pins (BACKEND_SHA in ci.yml).
+// scripts/release-bundle.mjs (same schema, usrp-release/v1) except that it
+// reads THIS repository's evidence shape (proof results, unit + e2e suites);
+// the peer is the backend commit this frontend pins (BACKEND_SHA in ci.yml).
 //
 //   usage: node tooling/ci/release-bundle.mjs --tag <tag> --sha <sha> --images <dir>
 //          [--evidence <file>] [--verification <file>] [--peer-sha <sha>]
@@ -124,25 +125,41 @@ export function readImage(dir) {
   };
 }
 
-/** The parts of the S00 evidence bundle a release cites, skips kept apart. */
+/** One test suite of the frontend evidence bundle (unit or e2e), skips kept apart. */
+function suite(t) {
+  if (t === undefined || t.totals === undefined) return { status: t?.status ?? 'not-available', reason: t?.reason ?? 'absent' };
+  return {
+    status: t.status,
+    ...t.totals,
+    skippedTests: (t.skippedTests ?? []).map((s) => `${s.package ?? s.app ?? ''} › ${s.name ?? s.title ?? ''}`),
+  };
+}
+
+/**
+ * The parts of this repository's S00 evidence bundle (tooling/ci/evidence-bundle.mjs)
+ * a release cites. Its shape differs from the backend's: proofs are named
+ * static checks (`results`), and tests are `{ unit, e2e }`.
+ */
 export function summariseEvidence(raw, file) {
   if (raw === null) return { status: 'not-available', reason: `evidence bundle not found: ${file}` };
   const ev = JSON.parse(raw);
   const p = ev.proofs ?? {};
-  const t = ev.tests ?? {};
+  const unit = suite(ev.tests?.unit);
+  const e2e = suite(ev.tests?.e2e);
+  const worst = [unit.status, e2e.status].includes('failed') ? 'failed'
+    : [unit.status, e2e.status].includes('not-available') ? 'not-available' : 'passed';
   return {
     status: 'available',
     file: basename(file),
     sha256: sha256(raw),
     commit: ev.commit?.sha ?? null,
     run: ev.commit?.run ?? null,
-    operations: ev.operations?.status === 'available' ? { count: ev.operations.count, sha256: ev.operations.sha256 } : { status: ev.operations?.status ?? 'not-available' },
+    peer: ev.peer ?? null,
+    operations: ev.operations?.status === 'available' ? { count: ev.operations.count, sha256: ev.operations.sha256 ?? null } : { status: ev.operations?.status ?? 'not-available' },
     proofs: p.status === undefined || p.status === 'not-available'
       ? { status: 'not-available', reason: p.reason ?? 'absent' }
-      : { status: p.status, passed: p.passed, skipped: p.skipped, failed: p.failed, skippedChecks: p.skippedChecks ?? [], failedChecks: p.failedChecks ?? [] },
-    tests: t.totals === undefined
-      ? { status: t.status ?? 'not-available', reason: t.reason ?? 'absent' }
-      : { status: t.status, ...t.totals, skippedTests: (t.skippedTests ?? []).map((s) => `${s.package} › ${s.name}`), failedPackages: t.failedPackages ?? [] },
+      : { status: p.status, results: (p.results ?? []).map((r) => ({ name: r.name, status: r.status, assertions: r.assertions ?? null })) },
+    tests: { status: worst, unit, e2e },
     jobs: ev.jobs ?? null,
   };
 }

@@ -13,10 +13,14 @@ const SBOM = JSON.stringify({ bomFormat: 'CycloneDX', specVersion: '1.6', compon
 const CLEAN_SCAN = JSON.stringify({ Results: [{ Target: 'x', Vulnerabilities: [] }] });
 const EVIDENCE = JSON.stringify({
   commit: { sha: SHA, run: 'https://example.invalid/run/1' },
+  peer: { repo: 'b', pinnedSha: 'd'.repeat(40), agree: true },
   operations: { status: 'available', count: 47, sha256: 'c'.repeat(64) },
-  proofs: { status: 'passed-with-skips', passed: 60, skipped: 1, failed: 0, skippedChecks: ['first-admin'], failedChecks: [] },
-  tests: { status: 'passed', totals: { packages: 8, reportedPackages: 8, tests: 300, passed: 299, failed: 0, skipped: 1 }, skippedTests: [{ package: 'p', name: 't' }], failedPackages: [] },
-  jobs: { verify: 'success' },
+  proofs: { status: 'passed', results: [{ name: 'contracts verify', status: 'passed', assertions: 12 }] },
+  tests: {
+    unit: { status: 'passed', totals: { packages: 8, reportedPackages: 8, tests: 300, passed: 299, failed: 0, skipped: 1 }, skippedTests: [{ package: 'p', name: 't' }] },
+    e2e: { status: 'passed', totals: { tests: 40, passed: 38, flaky: 0, failed: 0, skipped: 2 }, skippedTests: [] },
+  },
+  jobs: { gate: 'success' },
 });
 
 function imageDir(root, name, meta, { sbom = SBOM, scan = CLEAN_SCAN } = {}) {
@@ -36,12 +40,16 @@ test('SBOM and scan summaries count what is there and flag what is not', () => {
   assert.deepEqual([scan.critical, scan.high, scan.findings], [0, 1, ['CVE-1 (p)']]);
 });
 
-test('evidence summary keeps skips apart from passes', () => {
+test('evidence summary reads the frontend shape and keeps skips apart from passes', () => {
   const ev = summariseEvidence(EVIDENCE, 'evidence.json');
-  assert.equal(ev.proofs.skipped, 1);
-  assert.deepEqual(ev.proofs.skippedChecks, ['first-admin']);
-  assert.deepEqual(ev.tests.skippedTests, ['p › t']);
+  assert.equal(ev.tests.status, 'passed');
+  assert.equal(ev.tests.unit.skipped, 1);
+  assert.deepEqual(ev.tests.unit.skippedTests, ['p › t']);
+  assert.equal(ev.tests.e2e.skipped, 2);
+  assert.deepEqual(ev.proofs.results.map((r) => r.name), ['contracts verify']);
   assert.equal(summariseEvidence(null, 'x.json').status, 'not-available');
+  const red = summariseEvidence(JSON.stringify({ ...JSON.parse(EVIDENCE), tests: { unit: { status: 'failed', totals: { tests: 1, failed: 1 } } } }), 'e.json');
+  assert.equal(red.tests.status, 'failed');
 });
 
 test('a signed, scanned, attested image with green evidence has no release blockers', () => {

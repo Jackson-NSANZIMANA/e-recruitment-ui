@@ -31,9 +31,12 @@ is live.
    `https://officer.usrp.gov.rw`) until S07 fixes hosting. A same-origin mode
    in `env.ts` (relative `/edge`) would make one image serve every
    environment; that is S02's file, recorded here as a follow-up.
-3. **Runtime:** Caddy 2.11 binary on `alpine:3.23`, both by digest,
-   `apk upgrade`d; user `65532`; admin API off; no file capability on the
-   binary, so it runs under `cap_drop: [ALL]`, `read_only: true`,
+3. **Runtime:** Caddy 2.11.7 **built from source** in the image (the official
+   image's Go 1.26.8 and `golang.org/x/net` 0.59.0 carry fixable HIGH CVEs) on
+   `golang:1.27-alpine` with x/net 0.60.0, standard modules only, onto
+   `alpine:3.23`; every base by digest, `apk upgrade`d; user `65532`; admin
+   API off; no file capability on the binary, so it runs under
+   `cap_drop: [ALL]`, `read_only: true`,
    `tmpfs: /tmp`; listens on 8080; `HEALTHCHECK` on `/healthz`.
    **Size budget 80 MB**; measured 69.6 MB (applicant-portal) and 70.0 MB
    (officer-console).

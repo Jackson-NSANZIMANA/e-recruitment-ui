@@ -45,15 +45,29 @@ RUN USRP_APP="$APP" USRP_EDGE_URL="$VITE_EDGE_URL" USRP_BUILD_SHA="$USRP_BUILD_S
     node infrastructure/images/spa/stamp.mjs "apps/$APP/dist" \
  && mv "apps/$APP/dist" /site
 
-# ── Caddy binary without its file capability ───────────────────────
-# The stock binary carries cap_net_bind_service as a file capability, which
-# makes exec fail under `cap_drop: [ALL]`. This image listens on 8080, so the
-# capability is dropped: `install` copies the bytes and no xattrs.
-FROM caddy:2.11-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS caddy
-RUN install -m 0755 /usr/bin/caddy /caddy
+# ── Caddy, built from source with a patched toolchain ──────────────
+# The official caddy:2.11.7 image is built with Go 1.26.8 and
+# golang.org/x/net 0.59.0, both with fixable HIGH CVEs. This stage builds the
+# same Caddy release the way xcaddy does (standard modules only), on a current
+# Go toolchain and with x/net raised. Module downloads are verified against
+# sum.golang.org; versions are pinned here, the rest is resolved by Go's
+# minimal version selection, so the build is deterministic. The binary carries
+# no file capability (the stock one does, and fails under `cap_drop: [ALL]`).
+FROM golang:1.27-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS caddy
+ARG CADDY_VERSION=v2.11.7
+ARG XNET_VERSION=v0.60.0
+ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOFLAGS=-trimpath
+WORKDIR /src
+RUN printf '%s\n' 'package main' \
+      'import (' '  caddycmd "github.com/caddyserver/caddy/v2/cmd"' '  _ "github.com/caddyserver/caddy/v2/modules/standard"' ')' \
+      'func main() { caddycmd.Main() }' > main.go \
+ && go mod init usrp/caddy \
+ && go get "github.com/caddyserver/caddy/v2@${CADDY_VERSION}" "golang.org/x/net@${XNET_VERSION}" \
+ && go mod tidy \
+ && go build -ldflags "-s -w" -o /caddy . \
+ && /caddy version
 
-# ── Runtime: Caddy on the same Alpine, non-root, no admin API ──────
-# A clean base, so the 50 MB binary exists in exactly one layer.
+# ── Runtime: Caddy on Alpine, non-root, no admin API ───────────────
 FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0 AS runtime
 RUN apk upgrade --no-cache && mkdir -p /tmp/caddy && chown 65532:65532 /tmp/caddy
 COPY --from=caddy /caddy /usr/local/bin/caddy
