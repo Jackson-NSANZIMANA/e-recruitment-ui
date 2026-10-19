@@ -1,0 +1,78 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.field-station-notice",
+  "title": "Field Station notice",
+  "audience": "officer",
+  "owner": "apps/officer-console",
+  "purpose": "Tell an officer who reaches /gate or /walk-in that those stations moved to the Field Station (ADR-FE-007), instead of a 404.",
+  "routes": [
+    {
+      "path": "/field-station",
+      "app": "officer-console",
+      "source": "apps/officer-console/src/routes/field-station-notice.tsx",
+      "role": "notice"
+    },
+    {
+      "path": "/gate",
+      "app": "officer-console",
+      "source": "apps/officer-console/src/app.tsx",
+      "role": "redirect"
+    },
+    {
+      "path": "/walk-in",
+      "app": "officer-console",
+      "source": "apps/officer-console/src/app.tsx",
+      "role": "redirect"
+    }
+  ],
+  "operations": [],
+  "ads": [
+    {
+      "name": "SectionMessage",
+      "source": "apps/officer-console/src/routes/field-station-notice.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "Heading",
+      "source": "apps/officer-console/src/routes/field-station-notice.tsx",
+      "import": "@atlaskit/heading"
+    }
+  ],
+  "states": [
+    {
+      "surface": "notice",
+      "required": [
+        "moved",
+        "moved-with-link"
+      ],
+      "source": "apps/officer-console/src/routes/field-station-notice.tsx",
+      "evidence": [
+        "field_station.moved_body",
+        "FIELD_STATION_URL"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone"
+  ],
+  "tests": [
+    "apps/officer-console/e2e/production-readiness.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/production-readiness.spec.ts"
+      ]
+    }
+  }
+}

@@ -16,6 +16,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "scan:cssmap": "node scripts/scan-cssmap.cjs src",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

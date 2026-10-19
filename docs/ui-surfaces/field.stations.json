@@ -1,0 +1,75 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "field.stations",
+  "title": "Station picker",
+  "audience": "field-officer",
+  "owner": "packages/features/field-ops",
+  "purpose": "List the stations the officer's session grants (ADR-FE-011), link the built ones and mark the rest not yet available.",
+  "routes": [
+    {
+      "path": "/stations",
+      "app": "field-station",
+      "source": "packages/features/field-ops/src/routes/stations.tsx",
+      "role": "picker"
+    }
+  ],
+  "operations": [],
+  "ads": [
+    {
+      "name": "Heading",
+      "source": "packages/features/field-ops/src/routes/stations.tsx",
+      "import": "@atlaskit/heading"
+    },
+    {
+      "name": "Lozenge",
+      "source": "packages/features/field-ops/src/routes/stations.tsx",
+      "import": "@atlaskit/lozenge"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/stations.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "picker",
+      "required": [
+        "stations",
+        "unbuilt-station",
+        "no-station"
+      ],
+      "source": "packages/features/field-ops/src/routes/stations.tsx",
+      "evidence": [
+        "stations.length === 0",
+        "station.path !== null",
+        "not_yet_available"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "each station is a heading with its action, reachable by keyboard"
+  ],
+  "tests": [
+    "apps/field-station/e2e/stations.spec.ts",
+    "packages/features/field-ops/src/model/stations.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/stations.spec.ts"
+      ]
+    }
+  }
+}

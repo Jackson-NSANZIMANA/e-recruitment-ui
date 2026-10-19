@@ -1,0 +1,69 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.applications",
+  "title": "Citizen applications and status",
+  "audience": "citizen",
+  "owner": "apps/applicant-portal",
+  "purpose": "List the citizen's filed applications across the three agencies with their current status.",
+  "routes": [
+    {
+      "path": "/status",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/status.tsx",
+      "role": "list"
+    },
+    {
+      "path": "/applications",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/applications.tsx",
+      "role": "list"
+    }
+  ],
+  "operations": [
+    "listMyApplications"
+  ],
+  "ads": [
+    {
+      "name": "Spinner",
+      "source": "apps/applicant-portal/src/routes/status.tsx",
+      "import": "@atlaskit/spinner"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "apps/applicant-portal/src/routes/status.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "list",
+      "required": [
+        "loading",
+        "populated",
+        "error"
+      ],
+      "source": "apps/applicant-portal/src/routes/status.tsx",
+      "evidence": [
+        "isLoading",
+        "isError",
+        "SectionMessage"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone"
+  ],
+  "tests": [],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "SCREEN-BUILT"
+  }
+}

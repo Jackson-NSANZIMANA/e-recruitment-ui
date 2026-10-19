@@ -1,21 +1,54 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "USRP UI surface contract",
+  "title": "USRP UI surface contract (v2: readiness ladder, ADR-FE-009)",
   "type": "object",
-  "required": ["schemaVersion", "id", "title", "audience", "owner", "purpose", "routes", "operations", "ads", "states", "accessibility", "tests", "rules"],
+  "required": ["schemaVersion", "id", "title", "audience", "owner", "purpose", "routes", "operations", "ads", "states", "accessibility", "tests", "rules", "readiness"],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]+$" },
     "title": { "type": "string", "minLength": 1 },
     "audience": { "enum": ["citizen", "officer", "field-officer", "shared"] },
     "owner": { "type": "string", "minLength": 1 },
     "purpose": { "type": "string", "minLength": 1 },
-    "routes": { "type": "array", "minItems": 1 },
+    "routes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "app", "source", "role"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^/" },
+          "app": { "enum": ["applicant-portal", "officer-console", "field-station"] },
+          "source": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
     "operations": { "type": "array", "items": { "type": "string" } },
-    "ads": { "type": "array", "minItems": 1 },
-    "states": { "type": "array", "minItems": 1 },
-    "accessibility": { "type": "array", "minItems": 1 },
-    "tests": { "type": "array", "minItems": 1 },
-    "rules": { "type": "object" }
+    "ads": { "type": "array", "$comment": "Required non-empty from SCREEN-BUILT." },
+    "states": { "type": "array", "$comment": "Required non-empty, each evidenced in source, from SCREEN-BUILT." },
+    "accessibility": { "type": "array" },
+    "tests": { "type": "array" },
+    "rules": { "type": "object" },
+    "readiness": {
+      "type": "object",
+      "required": ["rung"],
+      "properties": {
+        "rung": {
+          "enum": ["DECLARED", "EDGE-AVAILABLE", "CLIENT-WIRED", "SCREEN-BUILT", "E2E-PROVEN", "LOAD-PROVEN", "OPERATIONALLY-READY"],
+          "$comment": "Production builds mount SCREEN-BUILT and above only. Each rung includes every check below it; see tooling/surface-contract/src/verify.ts."
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "e2e": { "type": "array", "items": { "type": "string" }, "$comment": "Required from E2E-PROVEN: each spec exists and has no fixme/skip." },
+            "contract": { "type": "string", "pattern": "^[0-9a-f]{40}$", "$comment": "When given, must equal EDGE_BACKEND_SHA." },
+            "a11y": { "type": "string" },
+            "signoff": { "type": "string", "$comment": "Required from LOAD-PROVEN: a reference to the sign-off held outside this repo." }
+          }
+        },
+        "blockedBy": { "type": "array", "items": { "type": "string" }, "$comment": "Required below SCREEN-BUILT: what the screen is waiting for (backlog id or session)." }
+      }
+    }
   }
 }

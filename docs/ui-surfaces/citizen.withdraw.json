@@ -1,0 +1,39 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.withdraw",
+  "title": "Citizen self-withdrawal",
+  "audience": "citizen",
+  "owner": "packages/features/compliance",
+  "purpose": "Let a citizen withdraw an application themselves, irreversibly, under Law N 058/2021. Placeholder until S10b builds it.",
+  "routes": [
+    {
+      "path": "/my/withdraw",
+      "app": "applicant-portal",
+      "source": "packages/features/compliance/src/routes/withdraw.tsx",
+      "role": "action"
+    }
+  ],
+  "operations": [
+    "withdrawMyApplication"
+  ],
+  "ads": [],
+  "states": [],
+  "accessibility": [],
+  "tests": [
+    "apps/applicant-portal/e2e/readiness.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "CLIENT-WIRED",
+    "blockedBy": [
+      "S10b"
+    ]
+  }
+}
