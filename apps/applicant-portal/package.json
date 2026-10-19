@@ -41,6 +41,7 @@
     "@usrp/contracts": "workspace:*",
     "@usrp/design-system": "workspace:^",
     "@usrp/feature-compliance": "workspace:*",
+    "@usrp/feature-identity": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "@usrp/ui": "workspace:*",
     "qrcode-generator": "2.0.4",

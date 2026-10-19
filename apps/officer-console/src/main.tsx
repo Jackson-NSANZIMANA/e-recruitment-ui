@@ -16,7 +16,6 @@ import { RouterLink, ErrorBoundary } from "@usrp/ui";
 
 import { registerAdjudicationLocales } from "@usrp/feature-adjudication";
 import { registerComplianceLocales } from "@usrp/feature-compliance";
-import { registerFieldOpsLocales } from "@usrp/feature-field-ops";
 import { registerSchedulingLocales } from "@usrp/feature-scheduling";
 import { registerApplicationsLocales } from "@usrp/feature-applications";
 
@@ -28,7 +27,6 @@ setBooleanFeatureFlagResolver(resolveAdsFeatureFlag);
 
 registerAdjudicationLocales();
 registerComplianceLocales();
-registerFieldOpsLocales();
 registerSchedulingLocales();
 registerApplicationsLocales();
 assertNamespaceRegistered(...OFFICER_SLICE_NAMESPACES, 'applications');

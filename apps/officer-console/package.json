@@ -49,7 +49,7 @@
     "@usrp/feature-adjudication": "workspace:*",
     "@usrp/feature-applications": "workspace:*",
     "@usrp/feature-compliance": "workspace:*",
-    "@usrp/feature-field-ops": "workspace:*",
+    "@usrp/feature-identity": "workspace:*",
     "@usrp/feature-scheduling": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "@usrp/ui": "workspace:*",

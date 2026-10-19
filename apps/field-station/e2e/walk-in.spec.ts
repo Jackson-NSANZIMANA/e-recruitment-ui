@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * RDF walk-in lane (ADR-012) over the real bundle, with the edge intercepted:
+ * RDF walk-in lane (ADR-012) over the Field Station's production bundle (moved
+ * from apps/officer-console/e2e in S02, ADR-FE-007), with the edge intercepted:
  * brokered NIDA check → register → on-site vetting. `409 AGE_PENDING` is the
  * officer's retry, not the client's, so the screen must show it and wait.
  */

@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Venue gate (BUILD-003, ADR-034) over the real production bundle, with the
- * edge intercepted. Proves the screen sends exactly what the contract says,
+ * Venue gate (BUILD-003, ADR-034) over the Field Station's production bundle,
+ * with the edge intercepted. Moved here from apps/officer-console/e2e in S02
+ * (ADR-FE-007) together with the screen. Proves the screen sends exactly what the contract says,
  * shows green only for ADMITTED, and treats a second scan of the same QR as
  * the refusal it is.
  */
@@ -64,10 +65,12 @@ test('the gate admits once and refuses the same QR the second time', async ({ pa
   await expect(outcome).toContainText(VENUE);
 });
 
-test('an officer without admission.gate sees why, and no gate in the menu', async ({ page }) => {
-  await mockSession(page, ['application.read']);
+test('an officer without admission.gate sees why, and no gate on the station picker', async ({ page }) => {
+  await mockSession(page, ['application.read', 'walkin.register']);
   await page.route('**/edge/v1/gate/admissions', (route) => route.abort());
   await page.goto('/gate');
   await expect(page.getByText(/cannot admit at the gate|ntizikwemerera kwinjiza|ne permet pas d'admettre/i)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole('link', { name: /venue gate|irembo ry'ikizamini|porte du site/i })).toHaveCount(0);
+  await page.goto('/stations');
+  await expect(page.getByTestId('station-walk_in')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId('station-gate')).toHaveCount(0);
 });
