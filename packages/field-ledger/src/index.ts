@@ -10,6 +10,6 @@ export type { SignerPort } from './signer.ts';
 export { SYNC_STATES, TERMINAL_STATES, NOT_ACCEPTED_STATES, transition } from './sync-machine.ts';
 export type { SyncState, SyncEvent, SyncPolicy, AckOutcome, TransitionResult } from './sync-machine.ts';
 export { RECORD_STATUSES, ackForResult, readSyncResponse, eventsForBatch, readResolveResponse } from './sync-mapping.ts';
-export type { RecordStatus, RecordSyncResult, SyncResponseReading, ResolveReading } from './sync-mapping.ts';
+export type { RecordStatus, RecordSyncResult, SentRecord, SyncResponseReading, ResolveReading } from './sync-mapping.ts';
 export { createLedger } from './ledger.ts';
 export type { Ledger, LedgerDeps, LedgerClock } from './ledger.ts';

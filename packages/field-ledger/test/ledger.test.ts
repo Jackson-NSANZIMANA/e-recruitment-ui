@@ -72,6 +72,13 @@ describe('the ledger', () => {
     expect(second.envelope.supersedes).toBe(first.envelope.recordId);
   });
 
+  it('concurrent appends get distinct, gap-free sequences, and list() is in capture order', async () => {
+    const { ledger } = await make();
+    const records = await Promise.all(Array.from({ length: 8 }, (_, i) => ledger.append({ ...DRAFT, payload: { ...DRAFT.payload, n: i } })));
+    expect(records.map((r) => r.envelope.localSequence).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect((await ledger.list()).map((r) => r.envelope.localSequence)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
   it('a stored record is never overwritten', async () => {
     const { ledger, storage } = await make();
     const record = await ledger.append(DRAFT);

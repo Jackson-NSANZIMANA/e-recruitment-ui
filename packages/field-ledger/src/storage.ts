@@ -32,11 +32,21 @@ export interface StoragePort {
   /** Append a new record. Rejects if the recordId already exists (records never overwrite). */
   put(record: StoredRecord): Promise<void>;
   get(recordId: string): Promise<StoredRecord | null>;
-  /** All records, oldest first (recordIds are UUIDv7). */
+  /**
+   * All records in capture order: by device, then localSequence. Not by the
+   * UUIDv7 recordId, whose sub-millisecond bits are random and whose clock
+   * can be skewed; localSequence is allocated in append order.
+   */
   list(): Promise<readonly StoredRecord[]>;
   setState(recordId: string, state: SyncState, reason: string | undefined, updatedAt: string): Promise<void>;
   /** The highest localSequence stored for a device (0 when none). */
   lastSequence(deviceId: string): Promise<number>;
+}
+
+/** Capture order: device, then the per-device localSequence. */
+export function byCaptureOrder(a: StoredRecord, b: StoredRecord): number {
+  if (a.envelope.deviceId !== b.envelope.deviceId) return a.envelope.deviceId < b.envelope.deviceId ? -1 : 1;
+  return a.envelope.localSequence - b.envelope.localSequence;
 }
 
 export class DuplicateRecordError extends Error {
@@ -56,7 +66,7 @@ export function createMemoryStorage(health: StorageHealth = { persisted: false, 
       records.set(record.envelope.recordId, record);
     },
     get: async (id) => records.get(id) ?? null,
-    list: async () => [...records.values()].sort((a, b) => (a.envelope.recordId < b.envelope.recordId ? -1 : 1)),
+    list: async () => [...records.values()].sort(byCaptureOrder),
     setState: async (id, state, reason, updatedAt) => {
       const current = records.get(id);
       if (current === undefined) throw new Error(`no record ${id}`);
@@ -123,7 +133,7 @@ export function createIndexedDbStorage(options: IndexedDbOptions = {}): StorageP
       }
     },
     get: async (id) => ((await request((await tx('readonly')).get(id))) as StoredRecord | undefined) ?? null,
-    list: async () => (await request((await tx('readonly')).getAll())) as StoredRecord[],
+    list: async () => [...((await request((await tx('readonly')).getAll())) as StoredRecord[])].sort(byCaptureOrder),
     setState: async (id, state, reason, updatedAt) => {
       const store = await tx('readwrite');
       const current = (await request(store.get(id))) as StoredRecord | undefined;

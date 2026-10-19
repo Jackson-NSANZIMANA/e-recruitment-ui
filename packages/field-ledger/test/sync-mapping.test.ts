@@ -23,18 +23,40 @@ describe('syncFieldScores → per-record events', () => {
 
   it('a SYNCED batch where every record was forged accepts nothing', () => {
     const body = { status: 'SYNCED', results: [{ applicationId: A, deviceId: 'tab-014', status: 'REJECTED', reason: 'BAD_SIGNATURE' }] };
-    expect(eventsForBatch([A], 200, body).get(A)).toEqual({ type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: 'BAD_SIGNATURE' });
+    expect(eventsForBatch([{ recordId: 'r1', applicationId: A, deviceId: 'tab-014' }], 200, body).get('r1')).toEqual({ type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: 'BAD_SIGNATURE' });
   });
 
-  it('a record missing from the answer is uncertain, never saved', () => {
-    const body = { status: 'SYNCED', results: [{ applicationId: A, deviceId: 'tab-014', status: 'ACCEPTED', scoreId: B }] };
-    const events = eventsForBatch([A, C], 200, body);
-    expect(events.get(A)).toEqual({ type: 'ACK', outcome: 'ACCEPTED' });
-    expect(events.get(C)).toEqual({ type: 'SEND_UNCERTAIN' });
+  it('two records for one application get their own answers, by position', () => {
+    const sent = [
+      { recordId: 'capture', applicationId: A, deviceId: 'tab-014' },
+      { recordId: 'correction', applicationId: A, deviceId: 'tab-014' },
+    ];
+    const body = { status: 'SYNCED', results: [
+      { applicationId: A, deviceId: 'tab-014', status: 'ACCEPTED', scoreId: B },
+      { applicationId: A, deviceId: 'tab-014', status: 'CONFLICT', scoreId: C },
+    ] };
+    const events = eventsForBatch(sent, 200, body);
+    expect(events.get('capture')).toEqual({ type: 'ACK', outcome: 'ACCEPTED' });
+    expect(events.get('correction')).toEqual({ type: 'ACK', outcome: 'STALE_CONFLICT', reason: 'CONFLICT' });
+  });
+
+  it('a short, reordered or mismatched answer makes the whole batch uncertain, never saved', () => {
+    const sent = [{ recordId: 'r1', applicationId: A, deviceId: 'tab-014' }, { recordId: 'r2', applicationId: C, deviceId: 'tab-014' }];
+    const short = { status: 'SYNCED', results: [{ applicationId: A, deviceId: 'tab-014', status: 'ACCEPTED' }] };
+    const swapped = { status: 'SYNCED', results: [
+      { applicationId: C, deviceId: 'tab-014', status: 'ACCEPTED' },
+      { applicationId: A, deviceId: 'tab-014', status: 'ACCEPTED' },
+    ] };
+    for (const body of [short, swapped]) {
+      const events = eventsForBatch(sent, 200, body);
+      expect(events.get('r1')).toEqual({ type: 'SEND_UNCERTAIN' });
+      expect(events.get('r2')).toEqual({ type: 'SEND_UNCERTAIN' });
+    }
   });
 
   it('a whole-batch 400 rejects every record with its code', () => {
-    expect(eventsForBatch([A, B], 400, { error: 'INVALID_RECORD', detail: 'x' }).get(B)).toEqual({ type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: 'INVALID_RECORD' });
+    const sent = [{ recordId: 'r1', applicationId: A, deviceId: 'd' }, { recordId: 'r2', applicationId: B, deviceId: 'd' }];
+    expect(eventsForBatch(sent, 400, { error: 'INVALID_RECORD', detail: 'x' }).get('r2')).toEqual({ type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: 'INVALID_RECORD' });
   });
 
   it('a network failure, a 5xx, or an off-contract 200 is uncertain', () => {

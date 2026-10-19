@@ -81,17 +81,36 @@ export function readSyncResponse(httpStatus: number | null, body: unknown): Sync
   return { kind: 'per-record', results: b['results'] };
 }
 
-/** The event for each sent record, keyed by applicationId, from one sync answer. */
-export function eventsForBatch(sentApplicationIds: readonly string[], httpStatus: number | null, body: unknown): ReadonlyMap<string, SyncEvent> {
+/** One record as it was sent in a batch, in order. */
+export interface SentRecord {
+  readonly recordId: string;
+  readonly applicationId: string;
+  readonly deviceId: string;
+}
+
+/**
+ * The event for each sent record, keyed by recordId, from one sync answer.
+ *
+ * The backend echoes no recordId: sync-field-scores.service.ts returns exactly
+ * one result per uploaded record, IN UPLOAD ORDER (`for (const record of
+ * command.records) results.push(...)`). So results are paired POSITIONALLY,
+ * and each pair must also agree on applicationId and deviceId. Keying by
+ * applicationId would collapse two records for one application (a capture and
+ * its correction) into one ACK. Any disagreement — a different count, or a
+ * pair that does not match — makes the whole batch uncertain, never saved.
+ */
+export function eventsForBatch(sent: readonly SentRecord[], httpStatus: number | null, body: unknown): ReadonlyMap<string, SyncEvent> {
   const reading = readSyncResponse(httpStatus, body);
   const events = new Map<string, SyncEvent>();
-  for (const id of sentApplicationIds) {
-    if (reading.kind === 'batch-rejected') events.set(id, { type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: reading.code });
-    else events.set(id, { type: 'SEND_UNCERTAIN' });
-  }
-  if (reading.kind === 'per-record') {
-    for (const result of reading.results) if (events.has(result.applicationId)) events.set(result.applicationId, ackForResult(result));
-  }
+  const paired =
+    reading.kind === 'per-record' &&
+    reading.results.length === sent.length &&
+    reading.results.every((result, i) => result.applicationId === sent[i]!.applicationId && result.deviceId === sent[i]!.deviceId);
+  sent.forEach((record, i) => {
+    if (reading.kind === 'batch-rejected') events.set(record.recordId, { type: 'ACK', outcome: 'REJECTED_VALIDATION', reason: reading.code });
+    else if (paired && reading.kind === 'per-record') events.set(record.recordId, ackForResult(reading.results[i]!));
+    else events.set(record.recordId, { type: 'SEND_UNCERTAIN' });
+  });
   return events;
 }
 
