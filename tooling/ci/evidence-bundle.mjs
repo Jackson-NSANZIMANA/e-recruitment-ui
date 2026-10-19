@@ -49,7 +49,7 @@ const JUNIT_DIR = 'test-results';
 const JUNIT_FILE = 'unit.junit.xml';
 const API_CLIENT = 'packages/api-client';
 /** Every app with a Playwright suite; a missing report is never "passed". */
-export const E2E_APPS = ['applicant-portal', 'officer-console'];
+export const E2E_APPS = ['applicant-portal', 'officer-console', 'field-station'];
 
 const stripAnsi = stripVTControlCharacters;
 const sha256 = (data) => createHash('sha256').update(data).digest('hex');
