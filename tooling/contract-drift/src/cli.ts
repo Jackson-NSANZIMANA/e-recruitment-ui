@@ -17,11 +17,12 @@
 // than no gate at all.
 // ════════════════════════════════════════════════════════════════
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { extractAll } from './extract.ts';
 import { gateA, gateB, gateC, type Finding, type Manifest } from './drift.ts';
-import { gateD } from './edge.ts';
+import { gateD, parseFrontendEdgeRegistry } from './edge.ts';
+import { gateE, readBackendEdgeContract } from './parity.ts';
 import { ROUTE_TABLE } from '../../../packages/contracts/src/generated/routes.ts';
 
 const HERE = new URL('..', import.meta.url).pathname;
@@ -72,6 +73,7 @@ function main(): void {
     skipped.push('B manifest<->backend source: no checkout. Pass --backend <path> or set USRP_BACKEND_PATH.');
     skipped.push('C built-but-unmounted routes: needs the same checkout.');
     skipped.push('D frontend edge registry<->backend edge registry: needs the same checkout.');
+    skipped.push('E contract parity v2 (request/response schema, 409/422 outcomes, idempotency): needs the same checkout.');
   } else {
     const servicesDir = resolve(backend, 'services');
     if (!existsSync(servicesDir)) {
@@ -92,6 +94,26 @@ function main(): void {
       assertions += d.assertions;
       ran.push(`D frontend edge registry<->backend edge registry (${d.assertions} assertions)`);
     }
+    // Gate E — contract parity v2 against the backend's own edge document.
+    const edgeDocPath = join(backend, 'services/edge-gateway/openapi/edge-v1.yaml');
+    if (!existsSync(edgeDocPath)) {
+      findings.push({ gate: 'E', severity: 'error', service: 'edge-gateway', message: `backend edge document is missing: ${edgeDocPath}` });
+      assertions += 1;
+    } else {
+      const repo = resolve(HERE, '../..');
+      const opsDir = join(repo, 'packages/api-client/src/operations');
+      const e = gateE(readBackendEdgeContract(readFileSync(edgeDocPath, 'utf8')), {
+        registry: parseFrontendEdgeRegistry(readFileSync(frontendEdgeRegistryPath, 'utf8')).map((o) => ({ id: o.id, method: o.method, path: o.path })),
+        wireSource: readFileSync(join(repo, 'packages/api-client/src/wire.ts'), 'utf8'),
+        operationSources: readdirSync(opsDir).filter((n) => n.endsWith('.ts')).map((n) => readFileSync(join(opsDir, n), 'utf8')),
+        readFile: (p) => (existsSync(join(repo, p)) ? readFileSync(join(repo, p), 'utf8') : null),
+      });
+      for (const f of e.findings) {
+        findings.push({ gate: 'E', severity: f.severity, service: 'edge-gateway', message: `[${f.dimension}] ${f.operation}: ${f.message}` });
+      }
+      assertions += e.assertions;
+      ran.push(`E contract parity v2: request/response schema, 409/422 outcomes, idempotency (${e.assertions} assertions)`);
+    }
     findings.push(...b.findings, ...c.findings);
     assertions += b.assertions + c.assertions;
     ran.push(`B manifest<->backend source (${b.assertions} assertions)`);
@@ -110,7 +132,9 @@ function main(): void {
     console.error('');
     process.exit(1);
   }
-  console.log(`  OK      ${assertions} assertions, 0 findings`);
+  const notes = findings.filter((f) => f.severity === 'note');
+  for (const n of notes) console.log(`  note    gate ${n.gate} ${n.message}`);
+  console.log(`  OK      ${assertions} assertions, 0 findings${notes.length > 0 ? ` (${notes.length} note(s))` : ''}`);
   if (skipped.length > 0) {
     console.log('\n  NOTE: gates B and C did not run. Gate A alone proves the OpenAPI matches');
     console.log('        the pinned manifest; it CANNOT tell you the manifest still matches the');
