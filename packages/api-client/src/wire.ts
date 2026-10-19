@@ -372,3 +372,112 @@ export type GateAdmissionResult =
   | { readonly outcome: 'WRONG_VENUE'; readonly ticketVenueName: string }
   | { readonly outcome: 'TOO_EARLY' | 'EXPIRED'; readonly examDate: string }
   | { readonly outcome: 'INVALID_TICKET'; readonly reason: InvalidTicketReason };
+
+// ══════════════════════════════════════════════════════════════════
+// Campaign control (BUILD-001, ADR-030) — the seven officer writes.
+//
+// Requests transcribed from services/edge-gateway/openapi/edge-v1.yaml at the
+// pinned EDGE_BACKEND_SHA (each is `additionalProperties: false`; the edge
+// rejects any other key). Responses transcribed from the stored command
+// replies in application-service campaign-control.pg-repository.ts and
+// scheduling-service campaign-session.pg-repository.ts, because the edge
+// document does not describe them. Every write REQUIRES a UUID
+// Idempotency-Key; a replay returns the stored original body with
+// `Idempotency-Replayed: true`. Agency is never sent: it is the officer's.
+// ══════════════════════════════════════════════════════════════════
+
+export interface CreateCampaignInput {
+  readonly publicCode: string;
+  readonly campaignLabel: string;
+  readonly targetCategories: readonly ApplicationCategory[];
+  readonly targetDistricts: readonly string[];
+  readonly registrationOpensAt: string;
+  readonly registrationClosesAt: string;
+  readonly examinationStartDate: string;
+  readonly examinationEndDate: string;
+  readonly examinationReportingHour: number;
+  readonly allowsWalkIn: boolean;
+  readonly targetIntakeCount?: number | null;
+  readonly contactPhoneNumbers?: readonly string[];
+  readonly contactWebsite?: string | null;
+}
+
+export interface CampaignCategoryPolicy {
+  readonly age: { readonly minimumAge: number; readonly maximumAge: number; readonly referenceDate: string };
+  readonly education: { readonly mode: string; readonly threshold: string | number };
+  readonly criminalThreshold: string;
+  readonly requiredDocumentTypes: readonly string[];
+  readonly medicalMode: string;
+  readonly legalBasis: { readonly code: string; readonly reference: string };
+}
+
+export interface CreateCampaignPolicyInput {
+  readonly publicCode: string;
+  /** One complete entry per target category; official values come from the officer, never defaults. */
+  readonly policyDocument: Readonly<Record<string, CampaignCategoryPolicy>>;
+  readonly legalBasisCode: string;
+  readonly legalBasisReference: string;
+}
+
+export interface ConfigureCampaignSessionInput {
+  readonly publicCode: string;
+  readonly district: string;
+  readonly province: string;
+  readonly venueName: string;
+  readonly examDate: string;
+  readonly reportingTimeHour: number;
+  readonly capacityLimit: number | null;
+  /** Required as UNBOUNDED_CAPACITY when capacityLimit is null. */
+  readonly capacityDecisionCode?: 'UNBOUNDED_CAPACITY';
+  readonly isActive: boolean;
+}
+
+/** publish, registration-close, complete and cancel all take only the public code. */
+export interface CampaignPublicCodeInput {
+  readonly publicCode: string;
+}
+
+export interface CampaignDraftCreated {
+  readonly status: 'DRAFT_CREATED';
+  readonly publicCode: string;
+  readonly campaignStatus: 'DRAFT';
+}
+
+export interface CampaignPolicyVersionCreated {
+  readonly status: 'POLICY_VERSION_CREATED';
+  readonly publicCode: string;
+  readonly policyVersion: number;
+  readonly policyHash: string;
+}
+
+export interface CampaignSessionConfigured {
+  readonly status: 'SESSION_CONFIGURED' | 'SESSION_UNCHANGED';
+  readonly publicCode: string;
+  readonly district: string;
+  readonly coverageVersion: number;
+  readonly coverageHash: string;
+  readonly capacityDecisionCode?: 'UNBOUNDED_CAPACITY' | null;
+}
+
+export interface CampaignPublished {
+  readonly status: 'CAMPAIGN_PUBLISHED';
+  readonly publicCode: string;
+  readonly campaignStatus: 'REGISTRATION_OPEN';
+  readonly policyVersion: number;
+  readonly coverageVersion: number;
+  readonly coverageHash: string;
+}
+
+export type CampaignLifecycleState = 'REGISTRATION_CLOSED' | 'COMPLETED' | 'CANCELLED';
+
+export interface CampaignLifecycleChanged<S extends CampaignLifecycleState = CampaignLifecycleState> {
+  readonly status: S;
+  readonly publicCode: string;
+  readonly campaignStatus: S;
+}
+
+/** Every campaign write answers with its body plus whether the edge replayed it. */
+export interface CampaignCommandResult<T> {
+  readonly result: T;
+  readonly replayed: boolean;
+}

@@ -458,5 +458,52 @@
     "pass_title": "Laissez-passer de répétition",
     "pass_body": "Ce laissez-passer appartient à une répétition. Il sert uniquement à l’entraînement et n’est valable pour aucun recrutement réel.",
     "pass_marker": "RÉPÉTITION : NON VALABLE POUR LE RECRUTEMENT"
+  },
+  "readiness": {
+    "not_built_title": "Non construit (développement uniquement)",
+    "not_built_body": "Cet écran est au niveau de maturité {{rung}} ({{surface}}). Les versions de production ne l'incluent pas.",
+    "undeclared_body": "Aucun manifeste de surface ne déclare cette route ; les versions de production ne l'incluent donc pas.",
+    "not_found_title": "Page introuvable",
+    "not_found_body": "Cette page ne fait pas partie de cette version de l'application.",
+    "not_found_home": "Aller à la page d'accueil"
+  },
+  "field_station": {
+    "app_title": "USRP Poste de terrain",
+    "stations_title": "Choisissez votre poste",
+    "stations_intro": "Seuls les postes autorisés par votre rôle sont listés. Demandez à votre superviseur si le vôtre manque.",
+    "no_stations_title": "Aucun poste pour ce compte",
+    "no_stations_body": "Votre rôle ne comprend aucun poste du jour d'examen. Utilisez plutôt la Console officier.",
+    "open": "Ouvrir le poste",
+    "not_yet_available": "Pas encore disponible",
+    "all_stations": "Postes",
+    "stations": {
+      "gate": {
+        "title": "Porte du site",
+        "body": "Scannez le QR d'examen et admettez chaque candidat une seule fois."
+      },
+      "documents": {
+        "title": "Documents papier",
+        "body": "Enregistrez chaque document papier requis vu sur le site."
+      },
+      "physical": {
+        "title": "Épreuve physique",
+        "body": "Saisissez les résultats de l'épreuve physique d'un candidat à la fois."
+      },
+      "medical": {
+        "title": "Médical",
+        "body": "Enregistrez l'examen médical selon le mode de votre agence."
+      },
+      "walk_in": {
+        "title": "Accueil sans inscription (RDF)",
+        "body": "Vérifiez, inscrivez et contrôlez les candidats venus sans inscription."
+      },
+      "supervisor": {
+        "title": "Superviseur",
+        "body": "Suivez la synchronisation et résolvez les conflits de saisie."
+      }
+    },
+    "moved_title": "Cet écran a été déplacé vers le Poste de terrain",
+    "moved_body": "La porte du site et l'accueil sans inscription fonctionnent désormais sur le Poste de terrain, l'application tablette du jour d'examen. Ouvrez-la sur l'appareil du poste pour continuer.",
+    "moved_link": "Ouvrir le Poste de terrain"
   }
 }

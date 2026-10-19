@@ -458,5 +458,52 @@
     "pass_title": "Rehearsal Exam Pass",
     "pass_body": "This pass belongs to a rehearsal. It is practice only and is not valid for any real recruitment.",
     "pass_marker": "REHEARSAL: NOT VALID FOR RECRUITMENT"
+  },
+  "readiness": {
+    "not_built_title": "Not built (development only)",
+    "not_built_body": "This screen is at readiness rung {{rung}} ({{surface}}). Production builds do not include it.",
+    "undeclared_body": "No surface manifest declares this route, so production builds do not include it.",
+    "not_found_title": "Page not found",
+    "not_found_body": "This page is not part of this version of the app.",
+    "not_found_home": "Go to the start page"
+  },
+  "field_station": {
+    "app_title": "USRP Field Station",
+    "stations_title": "Choose your station",
+    "stations_intro": "Only the stations your role allows are listed. Ask your supervisor if yours is missing.",
+    "no_stations_title": "No station for this account",
+    "no_stations_body": "Your role does not include an exam-day station. Use the Officer Console instead.",
+    "open": "Open station",
+    "not_yet_available": "Not yet available",
+    "all_stations": "Stations",
+    "stations": {
+      "gate": {
+        "title": "Venue gate",
+        "body": "Scan the exam QR and admit each candidate once."
+      },
+      "documents": {
+        "title": "Paper documents",
+        "body": "Record each required paper document seen at the venue."
+      },
+      "physical": {
+        "title": "Physical test",
+        "body": "Capture one candidate's physical test results at a time."
+      },
+      "medical": {
+        "title": "Medical",
+        "body": "Record the medical review in your agency's mode."
+      },
+      "walk_in": {
+        "title": "Walk-in desk (RDF)",
+        "body": "Verify, register and vet walk-in candidates."
+      },
+      "supervisor": {
+        "title": "Supervisor",
+        "body": "Review sync status and resolve capture conflicts."
+      }
+    },
+    "moved_title": "This screen has moved to the Field Station",
+    "moved_body": "The venue gate and the walk-in desk now run on the Field Station, the exam-day tablet app. Open it on the station device to continue.",
+    "moved_link": "Open the Field Station"
   }
 }
