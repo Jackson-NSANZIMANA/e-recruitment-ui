@@ -1,0 +1,23 @@
+{
+  "name": "@usrp/field-ledger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Field Station's durable record log (ADR-FE-010): the signed record envelope, StoragePort (IndexedDB + navigator.storage.persist()), SignerPort (WebCrypto Ed25519, non-extractable), and the client sync state machine. Platform package, not a feature: no domain vocabulary beyond 'record', no UI, no feature imports.",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@usrp/eslint-config": "workspace:*",
+    "eslint": "^9.39.5",
+    "typescript": "~5.4.0",
+    "vitest": "^4.1.12"
+  }
+}
