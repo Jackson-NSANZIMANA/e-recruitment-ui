@@ -45,13 +45,18 @@ RUN USRP_APP="$APP" USRP_EDGE_URL="$VITE_EDGE_URL" USRP_BUILD_SHA="$USRP_BUILD_S
     node infrastructure/images/spa/stamp.mjs "apps/$APP/dist" \
  && mv "apps/$APP/dist" /site
 
-# ── Runtime: Caddy, non-root, no admin API ─────────────────────────
-FROM caddy:2.11-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS runtime
+# ── Caddy binary without its file capability ───────────────────────
 # The stock binary carries cap_net_bind_service as a file capability, which
 # makes exec fail under `cap_drop: [ALL]`. This image listens on 8080, so the
-# capability is dropped by reinstalling the binary (install copies no xattrs).
-RUN install -m 0755 /usr/bin/caddy /usr/local/bin/caddy && rm /usr/bin/caddy \
- && mkdir -p /tmp/caddy && chown 65532:65532 /tmp/caddy
+# capability is dropped: `install` copies the bytes and no xattrs.
+FROM caddy:2.11-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS caddy
+RUN install -m 0755 /usr/bin/caddy /caddy
+
+# ── Runtime: Caddy on the same Alpine, non-root, no admin API ──────
+# A clean base, so the 50 MB binary exists in exactly one layer.
+FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0 AS runtime
+RUN apk upgrade --no-cache && mkdir -p /tmp/caddy && chown 65532:65532 /tmp/caddy
+COPY --from=caddy /caddy /usr/local/bin/caddy
 COPY infrastructure/images/spa/Caddyfile infrastructure/images/spa/edge-off.caddy infrastructure/images/spa/edge-proxy.caddy /etc/caddy/
 COPY --from=build /site /srv
 
