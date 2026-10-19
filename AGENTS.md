@@ -6,9 +6,11 @@ It describes **how** to work here, not **what** to build.
 ## 1. What this is
 
 Unified Security Recruitment Portal — frontend monorepo for RDF, RNP, RCS.
-Two deployable PWAs (`apps/applicant-portal`, `apps/officer-console`), one
-shared ADS-aligned design foundation, six vertical feature slices, and
-one edge-contract boundary. See `docs/architecture/frontend-architecture.md`.
+Three deployable PWAs (`apps/applicant-portal`, `apps/officer-console`,
+`apps/field-station` — ADR-FE-007), one shared ADS-aligned design foundation,
+vertical feature slices, the `@usrp/field-ledger` platform package, and one
+edge-contract boundary. Every route has a surface manifest with a readiness
+rung (ADR-FE-009); production mounts only SCREEN-BUILT and above. See `docs/architecture/frontend-architecture.md`.
 
 ## 2. Immutable security invariants
 
