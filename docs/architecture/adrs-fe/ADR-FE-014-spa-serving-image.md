@@ -52,9 +52,10 @@ is live.
    - no `Server` banner.
 5. **Routing:**
    - `/edge` and `/edge/**`: `USRP_EDGE_MODE=proxy` reverse-proxies to
-     `USRP_EDGE_UPSTREAM` (one origin per app, AGENTS.md §2; set
-     `EDGE_TRUSTED_PROXY_HOPS=1` on the gateway); `off` (the default) answers
-     404. **Never `index.html`.**
+     `USRP_EDGE_UPSTREAM` (one origin per app, AGENTS.md §2; set the
+     gateway's `EDGE_TRUSTED_PROXY_HOPS` to the number of proxies in front of
+     it: 1 for this container, plus one per ingress); `off` (the default)
+     answers 404. **Never `index.html`.**
    - `/assets/**`: `immutable`, and a missing asset is a 404.
    - any other path with an extension: the file or a 404, never the shell.
    - everything else: the SPA shell, `no-cache`.
