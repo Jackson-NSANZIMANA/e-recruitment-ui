@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, normaliseErrorBody } from "@usrp/api-client";
-import { academicInput, academicPathOf, walkInCategories, walkInRefusal } from "./model.js";
+import { academicInput, academicPathOf, walkInCategories, walkInRefusal } from "./walk-in.ts";
 
 /** An ApiError exactly as the transport builds it from a wire response. */
 const wire = (status: number, body: unknown): ApiError => new ApiError(normaliseErrorBody(status, body), `HTTP ${String(status)}`);

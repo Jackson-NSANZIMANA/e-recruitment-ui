@@ -1,5 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// officer-console — what the gate screen says for each answer (ADR-034)
+// field-ops — what the gate screen says for each answer (ADR-034)
+//
+// Moved from apps/officer-console/src/gate/outcome.ts in S02 (ADR-FE-007):
+// the gate runs on the Field Station now, and the logic belongs to the slice.
 //
 // PURE. One place maps a GateAdmissionResult to the message an officer acts
 // on, so the screen and its tests agree. The rule of the gate is simple and

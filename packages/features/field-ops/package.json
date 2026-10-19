@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Walk-in registration and vetting (RDF only). Device enrolment, score sync and conflict resolution are reachable through the reconciled edge contract; durable offline capture remains disabled until its queue and replay proof exist.",
+  "description": "The Field Station stations: the venue gate and the RDF walk-in desk (moved from officer-console in S02, ADR-FE-007), the permission-derived station model (ADR-FE-011), and the placeholders S08 fills (check-in, conflicts). Durable offline capture remains disabled until its queue and replay proof exist.",
   "license": "UNLICENSED",
   "exports": {
     ".": "./src/index.ts",
@@ -21,13 +21,21 @@
     "@atlaskit/button": "^25.0.2",
     "@atlaskit/css": "^1.0.0",
     "@atlaskit/dynamic-table": "^19.1.5",
+    "@atlaskit/form": "^16.1.5",
+    "@atlaskit/heading": "^7.0.1",
+    "@atlaskit/lozenge": "^15.0.1",
     "@atlaskit/modal-dialog": "^16.3.0",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
+    "@atlaskit/select": "^21.0.0",
+    "@atlaskit/textfield": "^10.0.1",
+    "@atlaskit/tokens": "^16.4.0",
     "@compiled/react": "^1.0.0",
     "@usrp/api-client": "workspace:*",
+    "@usrp/auth": "workspace:*",
     "@usrp/contracts": "workspace:*",
-    "@usrp/i18n": "workspace:*"
+    "@usrp/i18n": "workspace:*",
+    "@usrp/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.3.1",

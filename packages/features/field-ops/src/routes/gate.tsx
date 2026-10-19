@@ -1,5 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// officer-console — Venue gate: single-use admission (BUILD-003, ADR-034)
+// field-ops — Venue gate: single-use admission (BUILD-003, ADR-034)
+//
+// Moved from apps/officer-console/src/routes/gate.tsx in S02 (ADR-FE-007). The
+// host app injects the edge client; this slice never reads an app's env.
 //
 // The screening officer's exam-day screen. Three inputs, one decision:
 //   1. this gate's venue (set once, remembered on the device);
@@ -23,14 +26,12 @@ import { ErrorMessage, HelperMessage, Label } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
-import { createApiClient, useAdmitAtGate, type GateAdmissionResult } from "@usrp/api-client";
+import { useAdmitAtGate, type ApiClient, type GateAdmissionResult } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 import { QrScanner } from "@usrp/ui";
-import { EDGE_BASE_URL } from "../env.js";
-import { gateMessage, normaliseNationalId, readStoredVenue, storeVenue } from "../gate/outcome.js";
+import { gateMessage, normaliseNationalId, readStoredVenue, storeVenue } from "../model/gate.ts";
 
-const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 const MAX_VENUE_LENGTH = 200;
 const MAX_TICKET_LENGTH = 4096;
 
@@ -38,7 +39,11 @@ const styles = cssMap({
   page: { maxWidth: "640px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") },
 });
 
-export default function GatePage(): React.ReactElement {
+export interface GatePageProps {
+  readonly client: ApiClient;
+}
+
+export default function GatePage({ client }: GatePageProps): React.ReactElement {
   const { t } = useTranslation();
   const session = useOfficerSession();
   const admit = useAdmitAtGate(client);

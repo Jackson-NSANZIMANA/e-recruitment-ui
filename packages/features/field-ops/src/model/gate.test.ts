@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GateAdmissionResult } from "@usrp/api-client";
-import { gateMessage, kigaliTime, normaliseNationalId, reportingTime } from "./outcome.js";
+import { gateMessage, kigaliTime, normaliseNationalId, reportingTime } from "./gate.ts";
 
 const CANDIDATE = { applicationId: "22222222-2222-4222-8222-222222222222", processingCode: "RDF-90001", category: "GENERAL_ENLISTMENT" };
 

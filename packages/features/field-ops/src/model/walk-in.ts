@@ -1,4 +1,6 @@
-// Walk-in lane (ADR-012): which categories the desk may offer, which registry
+// field-ops — walk-in lane (ADR-012). Moved from apps/officer-console/src/walk-in/model.ts
+// in S02 (ADR-FE-007).
+// which categories the desk may offer, which registry
 // reference each one needs, and what a refusal means. Pure, so the screen's
 // decisions are testable without a browser.
 import {
