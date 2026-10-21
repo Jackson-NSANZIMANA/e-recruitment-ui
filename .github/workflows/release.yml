@@ -62,6 +62,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
+          # The release job runs only node scripts and installs no pnpm. Without
+          # this, setup-node reads packageManager: pnpm and fails looking for it
+          # (v0.1.0-rc1's tag run, 39597858082).
+          package-manager-cache: false
 
       - name: Resolve the commit and its peer
         id: resolve
