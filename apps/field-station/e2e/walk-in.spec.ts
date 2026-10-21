@@ -44,12 +44,25 @@ async function register(page: Page): Promise<{ verify: unknown; register: unknow
     });
   });
   await page.goto('/walk-in');
-  await page.getByLabel(/national id number/i).fill(NID);
+  await fillField(page, /national id number/i, NID);
   await chooseCategory(page);
-  await page.getByLabel(/nesa index number/i).fill(NESA);
+  await fillField(page, /nesa index number/i, NESA);
   await page.getByRole('button', { name: /register walk-in/i }).click();
   await expect(page.getByText(/walk-in registered/i)).toBeVisible({ timeout: 15_000 });
   return bodies;
+}
+
+/**
+ * ADS Field registers its onChange in an effect, after the input is in the DOM;
+ * a fill that lands in between is dropped (seen on slow CI runners). Fill until
+ * the form has the value — the officer-visible behaviour is unchanged.
+ */
+async function fillField(page: Page, label: RegExp, value: string): Promise<void> {
+  const field = page.getByLabel(label);
+  await expect(async () => {
+    await field.fill(value);
+    await expect(field).toHaveValue(value, { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
 }
 
 /** ADS Select: open it, pick the option by its translated label. */
@@ -111,9 +124,9 @@ test('a refusal is named for the officer, not collapsed into "something went wro
   });
 
   await page.goto('/walk-in');
-  await page.getByLabel(/national id number/i).fill(NID);
+  await fillField(page, /national id number/i, NID);
   await chooseCategory(page);
-  await page.getByLabel(/nesa index number/i).fill(NESA);
+  await fillField(page, /nesa index number/i, NESA);
   await page.getByRole('button', { name: /register walk-in/i }).click();
   await expect(page.getByText(/no open campaign that accepts walk-ins/i)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/something went wrong/i)).toHaveCount(0);

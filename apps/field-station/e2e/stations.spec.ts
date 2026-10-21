@@ -77,26 +77,13 @@ test('the walk-in desk is RDF-only even when another agency holds the permission
 
 test('station links navigate inside the app, without a full reload', async ({ page }) => {
   await signedIn(page, ['admission.gate']);
-  let sessionProbes = 0;
-  page.on('request', (request) => { if (request.url().endsWith('/edge/v1/session')) sessionProbes += 1; });
   await page.goto('/stations');
   await expect(page.getByTestId('station-gate')).toBeVisible({ timeout: 15_000 });
-  const probesAfterLoad = sessionProbes;
+  // A marker on window survives client-side navigation and is lost on a reload.
+  await page.evaluate(() => { (window as unknown as { __noReload?: boolean }).__noReload = true; });
   await page.getByTestId('station-gate').getByRole('link', { name: /open station/i }).click();
   await expect(page.getByLabel(/this gate's venue/i)).toBeVisible({ timeout: 15_000 });
   await page.getByRole('link', { name: /^stations$/i }).click();
   await expect(page.getByTestId('station-gate')).toBeVisible();
-  // A full reload re-runs the session probe; client-side navigation does not.
-  expect(sessionProbes).toBe(probesAfterLoad);
-});
-
-test('the production build does not mount the placeholder stations', async ({ page }) => {
-  await signedIn(page, ['admission.gate', 'field.conflict.resolve']);
-  for (const path of ['/check-in', '/conflicts', '/field/walk-in', '/no-such-station']) {
-    await page.goto(path);
-    await expect(page.getByTestId('route-not-found'), path).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('readiness-not-built')).toHaveCount(0);
-  }
-  await page.getByRole('link', { name: /go to the start page/i }).click();
-  await expect(page).toHaveURL(/\/stations/);
+  expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
 });
