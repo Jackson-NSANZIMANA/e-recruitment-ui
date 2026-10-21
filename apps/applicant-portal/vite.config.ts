@@ -2,6 +2,9 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import compiled from "@compiled/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
+import { fileURLToPath } from "node:url";
+// ADR-FE-009 lock 2: below-floor route sources are not shipped in production.
+import { readinessStubPlugin } from "../../tooling/surface-contract/src/vite-readiness.ts";
 
 // A production bundle without VITE_EDGE_URL builds successfully and then
 // throws in env.ts at startup: the user gets a blank page and the failure is
@@ -23,6 +26,7 @@ export default defineConfig(({ command, mode }) => {
   assertEdgeUrl(command, mode);
   return {
     plugins: [
+      readinessStubPlugin({ app: "applicant-portal", repoRoot: fileURLToPath(new URL("../..", import.meta.url)) }),
       // Must precede react(). Extracts @compiled/react and @atlaskit/css
       // calls into static CSS at build time.
       compiled({
@@ -74,6 +78,15 @@ export default defineConfig(({ command, mode }) => {
         },
       }),
     ],
+    resolve: {
+      // ONE router and ONE React in the bundle. @usrp/auth pins its own
+      // react-router-dom for its tests, and without this its <Navigate> (the
+      // RouteGuard redirect) resolved to a second router copy and threw
+      // "<Navigate> may be used only in the context of a <Router>" on every
+      // unauthenticated visit to a guarded path. Found by the S02 Field
+      // Station E2E; the same latent crash existed in the other two apps.
+      dedupe: ["react", "react-dom", "react-router-dom"],
+    },
     build: {
       target: "es2022",
       sourcemap: "hidden",

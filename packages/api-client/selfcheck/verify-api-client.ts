@@ -343,6 +343,64 @@ ok('refusal mapping: every documented shape', [
 ok('refusal mapping: a shape missing its detail is not a result', gateResultFromRefusal(409, 'IDENTITY_MISMATCH', {}) === null &&
   gateResultFromRefusal(422, 'INVALID_TICKET', { reason: 'EXPIRED' }) === null);
 
+
+// ── Campaign control (BUILD-001), typed in S02 ───────────────────
+import { createCampaign, publishCampaign, cancelCampaign, decodeCampaignCommand } from '../src/operations/campaign-control.js';
+{
+  const calls: { url: string; init: RequestInit }[] = [];
+  let status = 201;
+  let body: unknown = { status: 'DRAFT_CREATED', publicCode: 'RDF-2027-A', campaignStatus: 'DRAFT' };
+  let replayHeader = false;
+  const campaignClient = createApiClient({
+    baseUrl: '',
+    readCsrfToken: () => 'csrf-echo',
+    retryPolicy: { maxRetries: 2, baseDelayMs: 0, maxDelayMs: 0 },
+    fetchImpl: async (input, init) => {
+      calls.push({ url: String(input), init: init ?? {} });
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json', ...(replayHeader ? { 'Idempotency-Replayed': 'true' } : {}) },
+      });
+    },
+  });
+  const KEY = '123e4567-e89b-42d3-a456-426614174099';
+  const draft = {
+    publicCode: 'RDF-2027-A', campaignLabel: 'RDF 2027 intake', targetCategories: ['GENERAL_ENLISTMENT'] as const,
+    targetDistricts: ['Gasabo'], registrationOpensAt: '2027-01-01T06:00:00.000Z', registrationClosesAt: '2027-02-01T21:00:00.000Z',
+    examinationStartDate: '2027-03-01', examinationEndDate: '2027-03-05', examinationReportingHour: 7, allowsWalkIn: true,
+  };
+  const created = await createCampaign(campaignClient, draft, KEY);
+  const first = calls[0]!;
+  const headers = new Headers(first.init.headers);
+  ok('createCampaign posts to the exact edge route', first.url === '/edge/v1/campaigns' && first.init.method === 'POST');
+  ok('createCampaign sends the caller\'s Idempotency-Key and CSRF', headers.get('idempotency-key') === KEY && headers.get('x-csrf-token') === 'csrf-echo');
+  ok('createCampaign sends exactly the draft, no agency', first.init.body === JSON.stringify(draft) && !String(first.init.body).includes('agency'));
+  deepEq('createCampaign decodes the stored reply', created, { result: { status: 'DRAFT_CREATED', publicCode: 'RDF-2027-A', campaignStatus: 'DRAFT' }, replayed: false });
+
+  status = 200; replayHeader = true;
+  body = { status: 'CAMPAIGN_PUBLISHED', publicCode: 'RDF-2027-A', campaignStatus: 'REGISTRATION_OPEN', policyVersion: 1, coverageVersion: 3, coverageHash: 'a'.repeat(64) };
+  const published = await publishCampaign(campaignClient, { publicCode: 'RDF-2027-A' }, KEY);
+  ok('a replayed publish is reported as a replay', published.replayed && published.result.coverageVersion === 3);
+  ok('publish sends only the public code', calls[1]!.init.body === JSON.stringify({ publicCode: 'RDF-2027-A' }));
+
+  replayHeader = false; status = 503; body = { error: 'UPSTREAM_UNAVAILABLE' };
+  const before = calls.length;
+  let threw = false;
+  try { await cancelCampaign(campaignClient, { publicCode: 'RDF-2027-A' }, KEY); } catch { threw = true; }
+  ok('a campaign write is never retried by the client, even on 503', threw && calls.length === before + 1);
+
+  let refused = false;
+  try { await createCampaign(campaignClient, draft, 'not-a-uuid'); } catch (e) { refused = e instanceof ApiError && e.normalised.kind === 'malformed'; }
+  ok('a non-UUID Idempotency-Key is refused before the network', refused && calls.length === before + 1);
+
+  let malformedBody = false;
+  try { decodeCampaignCommand('publishCampaign', { status: 'CAMPAIGN_PUBLISHED', publicCode: 'X' }); } catch (e) { malformedBody = e instanceof ApiError && e.normalised.kind === 'malformed'; }
+  ok('an off-contract 2xx campaign body is malformed, not a cast', malformedBody);
+  let wrongState = false;
+  try { decodeCampaignCommand('cancelCampaign', { status: 'COMPLETED', publicCode: 'X', campaignStatus: 'COMPLETED' }); } catch { wrongState = true; }
+  ok('a lifecycle reply naming another state is refused', wrongState);
+}
+
 const total = passed + failures.length;
 if (failures.length > 0) {
   process.stderr.write(`\n  ✗ api-client selfcheck FAILED — ${failures.length} of ${total} assertions\n\n`);

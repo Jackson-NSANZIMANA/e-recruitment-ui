@@ -165,3 +165,31 @@ export { usePublicCampaigns, usePublicCampaign } from './queries/campaigns.js';
 export { useMyDocumentChecklist, useDocumentChecklist, useVerifyDocumentAtVenue } from './queries/documents.js';
 export { useMyExamInvitation, EXAM_INVITATION_POLL_MS, EXAM_INVITATION_READY_POLL_MS } from './queries/exam-invitation.js';
 export { useAdmitAtGate } from './queries/gate.js';
+
+// ── Campaign control (BUILD-001, ADR-030): typed in S02, screens in S05 ──
+export {
+  createCampaign,
+  createCampaignPolicy,
+  configureCampaignSession,
+  publishCampaign,
+  closeCampaignRegistration,
+  completeCampaign,
+  cancelCampaign,
+  decodeCampaignCommand,
+  CAMPAIGN_CONTROL_OPERATIONS,
+} from './operations/campaign-control.js';
+export type { CampaignControlOperation } from './operations/campaign-control.js';
+export type {
+  CreateCampaignInput,
+  CampaignCategoryPolicy,
+  CreateCampaignPolicyInput,
+  ConfigureCampaignSessionInput,
+  CampaignPublicCodeInput,
+  CampaignDraftCreated,
+  CampaignPolicyVersionCreated,
+  CampaignSessionConfigured,
+  CampaignPublished,
+  CampaignLifecycleState,
+  CampaignLifecycleChanged,
+  CampaignCommandResult,
+} from './wire.js';

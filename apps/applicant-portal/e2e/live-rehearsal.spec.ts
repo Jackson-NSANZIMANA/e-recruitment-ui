@@ -9,17 +9,18 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
  *   Persona A: sign in (code from the dev SMS inbox) → apply to the RDF
  *              rehearsal campaign → age, NESA and RIB gates → slot → Exam
  *              Pass READY (marked as a rehearsal) → admitted at the gate by an
- *              officer in the console → the citizen's pass shows ADMITTED.
+ *              officer on the Field Station (ADR-FE-007, S02) → the citizen's
+ *              pass shows ADMITTED.
  *   Persona B: same campaign at age 26 → refused at the age gate, no pass.
  *
- * Opt-in: USRP_LIVE=1 with `pnpm dev` + `pnpm rehearse` running in the backend
- * and both apps on :3000 / :3001. Re-runnable the same day: a persona who
+ * Opt-in: USRP_LIVE=1 with `pnpm dev` + `pnpm rehearse` running in the backend,
+ * the portal on :3000 and the Field Station on :3002 (USRP_FIELD_URL). Re-runnable the same day: a persona who
  * already applied, or was already admitted, continues from that state.
  * Mocked specs prove the screen sends what WE think the contract is; this one
  * proves the platform agrees (it found W1-09 the day it was first run).
  */
 const LIVE = process.env['USRP_LIVE'] === '1';
-const OFFICER_URL = process.env['USRP_OFFICER_URL'] ?? 'http://localhost:3001';
+const FIELD_URL = process.env['USRP_FIELD_URL'] ?? 'http://localhost:3002';
 const INBOX = resolve(process.env['USRP_DEV_SMS_INBOX'] ?? '../../../e-recruitment/.dev-sms/inbox.jsonl');
 const PIPELINE_TIMEOUT_MS = 120_000;
 
@@ -87,15 +88,16 @@ async function myRdfApplication(page: Page): Promise<{ applicationId: string; st
   return { applicationId: rdf[0]!.applicationId!, status: rdf[0]!.status };
 }
 
-async function officerConsole(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({ baseURL: OFFICER_URL });
+/** An RDF screening officer signed in on the Field Station, at the station picker. */
+async function fieldStation(browser: Browser): Promise<Page> {
+  const context = await browser.newContext({ baseURL: FIELD_URL });
   const page = await context.newPage();
   await page.addInitScript(() => window.localStorage.setItem('usrp_lang', 'en'));
   await page.goto('/login');
   await page.getByLabel(/login handle|username|handle/i).fill('rdf.officer');
   await page.getByLabel(/password/i).fill('DevOfficer#2026');
   await page.getByRole('button', { name: /sign in|log in|login/i }).click();
-  await expect(page).toHaveURL(/dashboard/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/stations/, { timeout: 20_000 });
   return page;
 }
 
@@ -124,8 +126,9 @@ test('Persona A: online application → gates → rehearsal Exam Pass → admitt
     await expect(page.getByText('Rehearsal Exam Pass')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/REHEARSAL: NOT VALID FOR RECRUITMENT/)).toBeVisible();
 
-    const officer = await officerConsole(browser);
-    await officer.goto('/gate');
+    const officer = await fieldStation(browser);
+    await officer.getByTestId('station-gate').getByRole('link', { name: /open station/i }).click();
+    await expect(officer).toHaveURL(/\/gate$/);
     const venue = officer.getByLabel(/this gate's venue/i);
     await venue.fill(A.venue);
     await venue.press('Enter');

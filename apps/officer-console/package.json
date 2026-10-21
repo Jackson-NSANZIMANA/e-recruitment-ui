@@ -19,7 +19,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@atlaskit/app-provider": "^5.3.0",
+    "@atlaskit/app-provider": "^8.1.0",
     "@atlaskit/button": "^25.0.2",
     "@atlaskit/css": "^1.0.0",
     "@atlaskit/css-reset": "^8.1.2",
@@ -49,7 +49,7 @@
     "@usrp/feature-adjudication": "workspace:*",
     "@usrp/feature-applications": "workspace:*",
     "@usrp/feature-compliance": "workspace:*",
-    "@usrp/feature-field-ops": "workspace:*",
+    "@usrp/feature-identity": "workspace:*",
     "@usrp/feature-scheduling": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "@usrp/ui": "workspace:*",

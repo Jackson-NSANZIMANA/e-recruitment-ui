@@ -1,0 +1,59 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.home",
+  "title": "Citizen home",
+  "audience": "citizen",
+  "owner": "apps/applicant-portal",
+  "purpose": "The authenticated citizen's landing page: the three agencies and the way to their applications and to apply.",
+  "routes": [
+    {
+      "path": "/home",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/home.tsx",
+      "role": "landing"
+    }
+  ],
+  "operations": [],
+  "ads": [
+    {
+      "name": "Heading",
+      "source": "apps/applicant-portal/src/routes/home.tsx",
+      "import": "@atlaskit/heading"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "apps/applicant-portal/src/routes/home.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "home",
+      "required": [
+        "applicant",
+        "not-applicant"
+      ],
+      "source": "apps/applicant-portal/src/routes/home.tsx",
+      "evidence": [
+        "isApplicant",
+        "SectionMessage"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone"
+  ],
+  "tests": [],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "SCREEN-BUILT"
+  }
+}

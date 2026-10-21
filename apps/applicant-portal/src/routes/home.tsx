@@ -25,10 +25,11 @@ const pageStyles = cssMap({
  * the OTP challenge at /login, and re-checking a National ID on a citizen
  * surface would rebuild the enumeration oracle ADR-021 refuses to expose.
  *
- * What is offered is only what the platform can serve a citizen today. Filing a
- * new application is NOT among it: POST /v1/applications is service-internal and
- * has no citizen path through the edge yet, so /apply collects a draft and says
- * so rather than presenting a Submit button that cannot work.
+ * What is offered is only what the platform can serve a citizen. Filing IS among
+ * it: /apply submits through the edge's `submitMyApplication` operation
+ * (ADR-027) under a citizen-held Idempotency-Key, and /status lists what was
+ * filed. (This comment said the opposite until S02: the W0-03 leftover the
+ * programme board recorded.)
  */
 export default function HomePage(): React.ReactElement {
   const { t } = useTranslation();

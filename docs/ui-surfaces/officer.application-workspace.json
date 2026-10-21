@@ -1,6 +1,6 @@
 {
   "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "officer.application-workspace",
   "title": "Officer application workspace",
   "audience": "officer",
@@ -9,11 +9,13 @@
   "routes": [
     {
       "path": "/applications",
+      "app": "officer-console",
       "source": "apps/officer-console/src/routes/applications.tsx",
       "role": "list"
     },
     {
       "path": "/applications/:id",
+      "app": "officer-console",
       "source": "apps/officer-console/src/routes/application-detail.tsx",
       "role": "detail"
     }
@@ -59,21 +61,52 @@
   "states": [
     {
       "surface": "list",
-      "required": ["loading", "populated", "empty", "filtered-empty", "error"],
+      "required": [
+        "loading",
+        "populated",
+        "empty",
+        "filtered-empty",
+        "error"
+      ],
       "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
-      "evidence": ["isLoading", "isError", "applications.empty"]
+      "evidence": [
+        "isLoading",
+        "isError",
+        "applications.empty"
+      ]
     },
     {
       "surface": "detail",
-      "required": ["loading", "populated", "not-found", "forbidden", "partial"],
+      "required": [
+        "loading",
+        "populated",
+        "not-found",
+        "forbidden",
+        "partial"
+      ],
       "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
-      "evidence": ["isLoading", "ApiError", "isPending"]
+      "evidence": [
+        "isLoading",
+        "ApiError",
+        "isPending"
+      ]
     },
     {
       "surface": "actions",
-      "required": ["idle", "pending", "success", "failure", "conflict"],
+      "required": [
+        "idle",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
       "source": "apps/officer-console/src/components/ApplicationActions/index.tsx",
-      "evidence": ["isPending", "aria-live", "conflict", "onActionComplete"]
+      "evidence": [
+        "isPending",
+        "aria-live",
+        "conflict",
+        "onActionComplete"
+      ]
     }
   ],
   "accessibility": [
@@ -94,5 +127,14 @@
     "pii": "no-national-id-or-hash",
     "interactiveTargetMinimumPx": 48,
     "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/application-flow.spec.ts"
+      ],
+      "contract": "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+    }
   }
 }

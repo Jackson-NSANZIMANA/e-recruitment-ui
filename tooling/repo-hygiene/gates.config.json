@@ -122,11 +122,6 @@
         "reason": "Lint config itself; its correctness is proven by the rule unit tests in tooling/repo-hygiene/test/predicates.test.mjs. NOTE: its `typecheck` is `echo 'no ts in eslint-config'`, which is the stub this gate's own error message calls the hollow gate in disguise. Defensible only because the package is genuinely CommonJS-only with no .ts file; if a single .ts lands here, that echo must become a real tsc invocation.",
         "owner": "frontend-architect"
       },
-      "@usrp/ui": {
-        "scripts": ["test"],
-        "reason": "DEBT, and expiring. Being split: the domain-free half has already moved to @usrp/design-system (which has a real test), the rest is assigned to feature slices per tooling/repo-hygiene/MIGRATION-MAP.md. Declares typecheck and lint. Do not invest in tests for code scheduled for deletion; finish the migration instead.",
-        "owner": "frontend-architect"
-      },
       "@usrp/contract-drift": {
         "scripts": ["lint", "test"],
         "reason": "DEBT. Declares typecheck. Its real proof is `selftest` (30 assertions that plant every kind of drift and assert each gate goes red), which ci.yml runs as drift:selftest BEFORE trusting the tool - so the package is genuinely proven, just not under the script names this gate looks for. Renaming selftest to test is the cheap close; it was not done here because ci.yml and packages/contracts both invoke the current name.",
@@ -159,12 +154,18 @@
       "maxTotalGzipKb": 1200,
       "maxChunkGzipKb": 500,
       "$comment": "CORRECTED 2026-09-13. This previously read 'institutional desktop clients on agency networks' and justified the looser ceiling on that basis. It is WRONG about the device class: this app is also the FIELD TABLET, which ADR-FE-005 describes at a venue with no signal for hours, and it now ships a service worker and a precached shell for that reason. The looser ceiling is still defensible - the heavier ADS surface (navigation-system, dynamic-table, form) is real and the tablet installs the app once rather than re-downloading it per visit - but it must be recalibrated against a real dist WITH the field tablet in mind, not a desk on a LAN."
+    },
+    "apps/field-station": {
+      "distDir": "dist",
+      "maxTotalGzipKb": 900,
+      "maxChunkGzipKb": 400,
+      "$comment": "ADDED 2026-10-18 (S02, ADR-FE-007). The managed exam-day tablet. Tighter than officer-console on purpose: it ships no desktop administration surface (no navigation-system, dynamic-table or modal-dialog), it is precached once per device before the exam-day change freeze, and every kilobyte is re-downloaded on each attested release. Provisional until calibrated against the first CI build, like the others."
     }
   },
 
   "compiledExtraction": {
     "$comment": "Proves the architecture doc's build-time-extraction claim instead of trusting it. Runs against a real build. NOTE: this gate could not have passed once any packages/features/* slice was mounted in an app, because those slices declared @compiled/react ^0.18.0 against the apps' ^1.0.0 - two majors of the styling runtime in one graph. Aligned 2026-09-08.",
-    "apps": ["apps/applicant-portal", "apps/officer-console"],
+    "apps": ["apps/applicant-portal", "apps/officer-console", "apps/field-station"],
     "distDir": "dist"
   }
 }

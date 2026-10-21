@@ -1,0 +1,79 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.sign-in",
+  "title": "Officer sign-in",
+  "audience": "officer",
+  "owner": "packages/features/identity",
+  "purpose": "Let an officer open a session with a login handle and password; the edge holds the credential and the browser holds only a cookie.",
+  "routes": [
+    {
+      "path": "/login",
+      "app": "officer-console",
+      "source": "packages/features/identity/src/routes/officer-login.tsx",
+      "role": "sign-in"
+    }
+  ],
+  "operations": [
+    "officerLogin",
+    "readSession"
+  ],
+  "ads": [
+    {
+      "name": "Form",
+      "source": "packages/features/identity/src/routes/officer-login.tsx",
+      "import": "@atlaskit/form"
+    },
+    {
+      "name": "TextField",
+      "source": "packages/features/identity/src/routes/officer-login.tsx",
+      "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/identity/src/routes/officer-login.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "sign-in",
+      "required": [
+        "idle",
+        "submitting",
+        "refused",
+        "authenticated"
+      ],
+      "source": "packages/features/identity/src/routes/officer-login.tsx",
+      "evidence": [
+        "serverError",
+        "submitting",
+        "authenticated"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label",
+    "the refusal is announced (role=alert)"
+  ],
+  "tests": [
+    "apps/officer-console/e2e/application-flow.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/application-flow.spec.ts"
+      ]
+    }
+  }
+}

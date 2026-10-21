@@ -1,0 +1,85 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "field.walk-in",
+  "title": "Walk-in desk (RDF)",
+  "audience": "field-officer",
+  "owner": "packages/features/field-ops",
+  "purpose": "Verify a walk-in's identity through the edge, register them in one of the officer's agency's categories with the academic reference it needs, and record on-site vetting (ADR-012).",
+  "routes": [
+    {
+      "path": "/walk-in",
+      "app": "field-station",
+      "source": "packages/features/field-ops/src/routes/walk-in.tsx",
+      "role": "station"
+    }
+  ],
+  "operations": [
+    "verifyIdentity",
+    "registerWalkIn",
+    "vetWalkIn"
+  ],
+  "ads": [
+    {
+      "name": "Form",
+      "source": "packages/features/field-ops/src/routes/walk-in.tsx",
+      "import": "@atlaskit/form"
+    },
+    {
+      "name": "Select",
+      "source": "packages/features/field-ops/src/routes/walk-in.tsx",
+      "import": "@atlaskit/select"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/walk-in.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "walk-in",
+      "required": [
+        "form",
+        "pending",
+        "registered",
+        "refused",
+        "age-pending",
+        "vetted",
+        "failed"
+      ],
+      "source": "packages/features/field-ops/src/routes/walk-in.tsx",
+      "evidence": [
+        "isPending",
+        "refusal",
+        "agePending",
+        "vetted",
+        "genericFailure"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label"
+  ],
+  "tests": [
+    "apps/field-station/e2e/walk-in.spec.ts",
+    "packages/features/field-ops/src/model/walk-in.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/walk-in.spec.ts"
+      ]
+    }
+  }
+}

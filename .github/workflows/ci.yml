@@ -90,6 +90,9 @@ jobs:
         run: node --test --test-reporter=spec tooling/ci/test/*.test.mjs
       - run: node tooling/repo-hygiene/verify.mjs
       - run: node --experimental-strip-types tooling/surface-contract/src/cli.ts
+      # ADR-FE-009: each readiness rung's evidence check is watched going red.
+      - name: Surface readiness selftest
+        run: node --experimental-strip-types tooling/surface-contract/src/cli.ts --selftest
 
   install:
     name: Install
@@ -351,6 +354,8 @@ jobs:
             apps/applicant-portal/playwright-report/
             apps/officer-console/test-results/
             apps/applicant-portal/test-results/
+            apps/field-station/playwright-report/
+            apps/field-station/test-results/
           retention-days: 7
           if-no-files-found: ignore
 
@@ -518,6 +523,12 @@ jobs:
             origin: https://officer.usrp.gov.rw
             permissions: ''
             camera: false
+          # S02 (ADR-FE-007): the exam-day tablet scans QR codes, so it alone
+          # may use the camera, and only from its own origin.
+          - app: field-station
+            origin: https://field.usrp.gov.rw
+            permissions: 'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), serial=()'
+            camera: true
     env:
       APP: ${{ matrix.app }}
       IMAGE: ghcr.io/jackson-nsanzimana/usrp-${{ matrix.app }}

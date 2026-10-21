@@ -1,0 +1,40 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "field.conflicts",
+  "title": "Capture conflicts",
+  "audience": "field-officer",
+  "owner": "packages/features/field-ops",
+  "purpose": "The supervisor's sync centre and conflict resolution. resolveFieldSyncConflict is on the edge but has no typed client yet; S08 builds it on @usrp/field-ledger.",
+  "routes": [
+    {
+      "path": "/conflicts",
+      "app": "field-station",
+      "source": "packages/features/field-ops/src/routes/conflicts.tsx",
+      "role": "station"
+    }
+  ],
+  "operations": [
+    "resolveFieldSyncConflict"
+  ],
+  "ads": [],
+  "states": [],
+  "accessibility": [],
+  "tests": [
+    "apps/field-station/e2e/stations.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "EDGE-AVAILABLE",
+    "blockedBy": [
+      "S08",
+      "W2-12"
+    ]
+  }
+}

@@ -143,7 +143,9 @@
     "banner": "Nta interineti ufite. Impinduka zizahuzwa igihe uzongera guhuza.",
     "syncing": "Guhuza…",
     "synced": "Impinduka zose zabitswe",
-    "sync_unavailable": "Amanota yafashwe asigara kuri iki gikoresho. Kuyohereza kuri dosiye y'ishakisha ntibishoboka ubu, bityo ntukuremo amakuru cyangwa uhereze iyi tablet mbere y'uko umukozi yemeza ko amanota yoherejwe."
+    "sync_unavailable": "Amanota yafashwe asigara kuri iki gikoresho. Kuyohereza kuri dosiye y'ishakisha ntibishoboka ubu, bityo ntukuremo amakuru cyangwa uhereze iyi tablet mbere y'uko umukozi yemeza ko amanota yoherejwe.",
+    "no_connection": "Nta interineti ufite",
+    "nothing_sent": "Nta kintu cyoherezwa cyangwa ngo kibikwe igihe nta interineti: irembo, aho abaje batiyandikishije bakirirwa n'ibindi bikorwa byose by'umukozi bikenera interineti. Tegereza ko igaruka, cyangwa ukurikize uburyo bw'impapuro."
   },
   "a11y": {
     "loading": "Birapakirwa…",
@@ -458,5 +460,55 @@
     "pass_title": "Urupapuro rw'ikizamini rw'imyitozo",
     "pass_body": "Uru rupapuro ni urw'imyitozo. Ni imyitozo gusa kandi ntirwemewe mu kwinjiza abakozi nyabo.",
     "pass_marker": "IMYITOZO: NTIBYEMEWE MU KWINJIZA ABAKOZI"
+  },
+  "readiness": {
+    "not_built_title": "Ntikirubakwa (mu igerageza gusa)",
+    "not_built_body": "Iyi paji iri ku rwego rwa {{rung}} ({{surface}}). Ntishyirwa muri verisiyo ikoreshwa n'abantu.",
+    "undeclared_body": "Nta nyandiko y'iyi paji ihari, bityo ntishyirwa muri verisiyo ikoreshwa n'abantu.",
+    "not_found_title": "Paji ntiyabonetse",
+    "not_found_body": "Iyi paji ntiri muri iyi verisiyo ya porogaramu.",
+    "not_found_home": "Subira ku ntangiriro"
+  },
+  "field_station": {
+    "app_title": "USRP Sitasiyo y'aho ikizamini kibera",
+    "stations_title": "Hitamo sitasiyo yawe",
+    "stations_intro": "Hagaragara gusa sitasiyo inshingano zawe zemera. Baza umuyobozi wawe niba iyawe itagaragara.",
+    "no_stations_title": "Nta sitasiyo kuri iyi konti",
+    "no_stations_body": "Inshingano zawe ntizirimo sitasiyo y'umunsi w'ikizamini. Koresha Officer Console.",
+    "open": "Fungura sitasiyo",
+    "not_yet_available": "Ntiraboneka",
+    "all_stations": "Sitasiyo",
+    "stations": {
+      "gate": {
+        "title": "Irembo ry'aho ikizamini kibera",
+        "body": "Sikana kode QR y'ikizamini, winjize buri mukandida rimwe gusa."
+      },
+      "documents": {
+        "title": "Inyandiko z'impapuro",
+        "body": "Andika buri nyandiko isabwa yabonetse aho ikizamini kibera."
+      },
+      "physical": {
+        "title": "Ikizamini ngororamubiri",
+        "body": "Andika ibisubizo by'ikizamini ngororamubiri by'umukandida umwe icyarimwe."
+      },
+      "medical": {
+        "title": "Ubuzima",
+        "body": "Andika isuzuma ry'ubuzima uko urwego rwawe rubiteganya."
+      },
+      "walk_in": {
+        "title": "Aho abaje batiyandikishije bakirirwa (RDF)",
+        "body": "Genzura, wandike kandi usuzume abakandida baje batiyandikishije."
+      },
+      "supervisor": {
+        "title": "Umugenzuzi",
+        "body": "Reba uko amakuru yoherejwe, ukemure amakimbirane y'ibyanditswe."
+      }
+    },
+    "moved_title": "Iyi paji yimuriwe kuri Field Station",
+    "moved_body": "Irembo ry'aho ikizamini kibera n'aho abaje batiyandikishije bakirirwa ubu bikorera kuri Field Station, porogaramu ya tablet y'umunsi w'ikizamini. Yifungurire ku gikoresho cya sitasiyo kugira ngo ukomeze.",
+    "moved_link": "Fungura Field Station",
+    "station_unavailable_title": "Iyi sitasiyo ntiboneka kuri konti yawe",
+    "station_unavailable_body": "Inshingano zawe cyangwa urwego rwawe ntibirimo iyi sitasiyo. Hitamo imwe muri sitasiyo zawe.",
+    "back_to_stations": "Subira kuri sitasiyo zanjye"
   }
 }

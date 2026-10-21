@@ -14,3 +14,27 @@ export { QrScanner } from "./components/QrScanner/index.js";
 export { DocumentUpload } from "./components/DocumentUpload/index.js";
 export { RouterLink } from "./components/RouterLink/index.js";
 export { ErrorBoundary } from "./components/ErrorBoundary/index.js";
+
+// ─── Readiness ladder (ADR-FE-009) ─────────────────────────────────────────────
+export {
+  READINESS_RUNGS,
+  PRODUCTION_FLOOR,
+  isReadinessRung,
+  rungAtLeast,
+  normaliseRoutePath,
+  joinRoutePath,
+  readinessIndex,
+  mountDecision,
+  mountByReadiness,
+  NotBuiltBanner,
+  NotFoundPage,
+} from "./readiness/index.js";
+export type {
+  ReadinessRung,
+  SurfaceApp,
+  RouteReadiness,
+  MountDecision,
+  MountByReadinessOptions,
+  NotBuiltBannerProps,
+} from "./readiness/index.js";
+export { ConnectionStatus } from "./components/ConnectionStatus/index.js";

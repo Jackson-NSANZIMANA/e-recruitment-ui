@@ -68,19 +68,19 @@ test('node:test JUnit: a raw > inside a failure message does not hide the failur
 const passing = { suites: [{ title: 'a.spec.ts', file: 'a.spec.ts', specs: [{ title: 'ok', tests: [{ projectName: 'chromium', status: 'expected', annotations: [] }] }] }], errors: [] };
 
 test('E2E is passed only when every app reported cleanly', () => {
-  const both = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: passing }]);
-  assert.equal(both.status, 'passed');
+  const all = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: passing }, { app: 'field-station', report: passing }]);
+  assert.equal(all.status, 'passed');
 });
 
 test('E2E with an app report missing is incomplete, not passed', () => {
   const one = summariseE2eReports([{ app: 'applicant-portal', report: passing }]);
   assert.equal(one.status, 'incomplete');
-  assert.deepEqual(one.missingApps, ['officer-console']);
+  assert.deepEqual(one.missingApps, ['officer-console', 'field-station']);
 });
 
 test('a Playwright top-level error (no specs ran) is a failure', () => {
   const broken = { suites: [], errors: [{ message: '\x1b[31mError: global setup failed\x1b[0m' }] };
-  const result = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: broken }]);
+  const result = summariseE2eReports([{ app: 'applicant-portal', report: passing }, { app: 'officer-console', report: broken }, { app: 'field-station', report: passing }]);
   assert.equal(result.status, 'failed');
   assert.deepEqual(result.errors, [{ app: 'officer-console', message: 'Error: global setup failed' }]);
 });
