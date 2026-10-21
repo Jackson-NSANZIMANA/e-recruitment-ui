@@ -523,6 +523,12 @@ jobs:
             origin: https://officer.usrp.gov.rw
             permissions: ''
             camera: false
+          # S02 (ADR-FE-007): the exam-day tablet scans QR codes, so it alone
+          # may use the camera, and only from its own origin.
+          - app: field-station
+            origin: https://field.usrp.gov.rw
+            permissions: 'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), serial=()'
+            camera: true
     env:
       APP: ${{ matrix.app }}
       IMAGE: ghcr.io/jackson-nsanzimana/usrp-${{ matrix.app }}
