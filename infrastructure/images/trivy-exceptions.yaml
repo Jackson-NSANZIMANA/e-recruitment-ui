@@ -1,0 +1,10 @@
+# Registered Trivy exceptions for the published SPA images (ADR-FE-014).
+#
+# The image scan in ci.yml blocks on any fixable CRITICAL or HIGH finding. The
+# ONLY way past it is an entry here, reviewed like code:
+#
+#   vulnerabilities:
+#     - id: CVE-YYYY-NNNNN
+#       statement: why it is not exploitable here, and who accepted it
+#       expired_at: 2026-12-31                # mandatory: exceptions expire
+vulnerabilities: []
