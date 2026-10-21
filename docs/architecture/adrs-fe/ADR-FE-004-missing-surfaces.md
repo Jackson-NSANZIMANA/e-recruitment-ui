@@ -51,6 +51,8 @@ paths by this job.
 
 ## 4. `apps/admin-console` — proposed
 
+> **Superseded by ADR-FE-007 (2026-10-18).** There is no admin console: administration lives in `officer-console`, and the third app is `apps/field-station`.
+
 `superadmin-bff` was reserved and never built, and **there is no superadmin
 principal**: RLS is `FORCE`d on every ops schema and no principal kind bypasses
 it. Cross-agency reads exist only for `kind: 'system'` on specific routes, never

@@ -17,6 +17,8 @@ pnpm --filter @usrp/contracts drift:selftest              # prove it can go red
 | **A** | `packages/contracts/src/generated/routes.ts` ↔ `route-manifest.json` | no |
 | **B** | `route-manifest.json` ↔ live backend source | yes |
 | **C** | every exported `*_PATH` ↔ what `main.ts` actually mounts | yes |
+| **D** | `packages/api-client/src/paths.ts` ↔ backend `edge-operations.ts` (method, path, session, retry, composition) | yes |
+| **E** | contract parity v2 (S02, ADR-FE-012): request and response schemas, 409/422 outcome unions, Idempotency-Key requirement and scope — frontend source ↔ backend `edge-v1.yaml` | yes |
 
 `route-manifest.json` is the middle term: hand-mined backend facts, pinned to a
 SHA. Neither gate can be green while the other is stale — a backend change
@@ -27,6 +29,25 @@ Fails on: a **missing** route, an **extra** route, a **changed method**, a
 **changed auth kind**, a **system-token route marked browser-reachable**, a
 **renamed path constant**, a **readiness probe that stopped checking anything**,
 and a route that is **built and never mounted**.
+
+## Gate E — contract parity v2
+
+`src/parity.ts` reads the backend's `services/edge-gateway/openapi/edge-v1.yaml`
+(with `src/yaml-lite.ts`, which accepts the flow style that document uses) and
+compares, per operation matched by method + path:
+
+| dimension | frontend side (read from source) | fails when |
+|---|---|---|
+| request | the `wire.ts` interface named in `PARITY_TABLE` | a required field is missing or optional; an extra field meets `additionalProperties: false` |
+| response | the `wire.ts` interface named for a 2xx | the frontend requires a field the backend never sends |
+| outcomes | the union / const named in `PARITY_TABLE` | a documented 409/422 code is not handled |
+| idempotency | the api-client call site passes `idempotencyKey` | the backend requires a key the client does not send, or the reverse; or the documented replay scope stops naming actor, operation, key and body |
+
+`PARITY_TABLE` only names WHICH symbol answers for an operation, never a
+field. `KNOWN_DIVERGENCES` downgrades a matching finding to a note with its
+reason and owner; an entry that matches nothing fails the gate. The permission
+dimension waits for the backend's `x-usrp-permission` (S04). The selftest plants
+a failing fixture for each dimension (`src/parity-selftest.ts`).
 
 ## Why gate C exists
 

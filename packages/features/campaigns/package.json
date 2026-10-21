@@ -1,0 +1,45 @@
+{
+  "name": "@usrp/feature-campaigns",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Campaigns: the public catalogue and the officer Campaign Studio. S02 scaffold: the lifecycle model, the typed adapter over the seven campaign-control operations, and the refusal vocabulary. S05 builds the Studio screens; nothing here is mounted yet.",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": "./src/index.ts",
+    "./locales/*": "./locales/*"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "//dependencies": "@usrp/api-client supplies the typed campaign-control operations (createCampaign \u2026 cancelCampaign) with their wire types from edge-v1.yaml at the pinned SHA. No other slice is imported (ADR-FE-001).",
+  "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
+  "dependencies": {
+    "@atlaskit/css": "^1.0.0",
+    "@atlaskit/lozenge": "^15.0.1",
+    "@atlaskit/primitives": "^22.2.1",
+    "@compiled/react": "^1.0.0",
+    "@usrp/api-client": "workspace:*",
+    "@usrp/contracts": "workspace:*",
+    "@usrp/i18n": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@usrp/eslint-config": "workspace:*",
+    "eslint": "^9.39.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.1",
+    "typescript": "~5.4.0",
+    "vitest": "^4.1.12"
+  }
+}

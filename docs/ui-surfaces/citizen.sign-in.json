@@ -1,0 +1,82 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.sign-in",
+  "title": "Citizen sign-in",
+  "audience": "citizen",
+  "owner": "packages/features/identity",
+  "purpose": "Let a citizen open a session with National ID + date of birth, then a phone, then a one-time code, without the copy ever revealing whether an identity or a message exists.",
+  "routes": [
+    {
+      "path": "/login",
+      "app": "applicant-portal",
+      "source": "packages/features/identity/src/routes/citizen-otp.tsx",
+      "role": "sign-in"
+    }
+  ],
+  "operations": [
+    "beginApplicantOnboarding",
+    "requestOtp",
+    "verifyOtp",
+    "readSession"
+  ],
+  "ads": [
+    {
+      "name": "Form",
+      "source": "packages/features/identity/src/routes/citizen-otp.tsx",
+      "import": "@atlaskit/form"
+    },
+    {
+      "name": "TextField",
+      "source": "packages/features/identity/src/routes/citizen-otp.tsx",
+      "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/identity/src/routes/citizen-otp.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "sign-in",
+      "required": [
+        "identity",
+        "phone",
+        "code",
+        "rejected",
+        "walk-in-fallback"
+      ],
+      "source": "packages/features/identity/src/routes/citizen-otp.tsx",
+      "evidence": [
+        "otp.status",
+        "offerWalkIn",
+        "SectionMessage"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label",
+    "the answer to an OTP request never says whether a message was sent"
+  ],
+  "tests": [
+    "apps/applicant-portal/e2e/citizen-journey.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/applicant-portal/e2e/citizen-journey.spec.ts"
+      ]
+    }
+  }
+}

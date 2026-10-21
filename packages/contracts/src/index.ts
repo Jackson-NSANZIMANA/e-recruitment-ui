@@ -60,6 +60,9 @@ export type {
   RouteReach,
 } from './agency.js';
 
+// ── Rehearsal campaigns (synthetic; never a real recruitment) ──
+export { REHEARSAL_CODE_PREFIX, REHEARSAL_LABEL_PREFIX, isRehearsalCampaign } from './rehearsal.js';
+
 // ── Binding the wire types to the divergence model ──
 export {
   ALL_AGENCIES,

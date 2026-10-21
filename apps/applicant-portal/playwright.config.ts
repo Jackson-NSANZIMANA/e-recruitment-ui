@@ -13,7 +13,11 @@ export default defineConfig({
   forbidOnly: !!process.env["CI"],
   retries: process.env["CI"] ? 2 : 0,
   workers: process.env["CI"] ? 1 : undefined,
-  reporter: process.env["CI"] ? "github" : "html",
+  // CI also writes JSON: the evidence bundle reads it to count and name
+  // skipped specs (tooling/ci/evidence-bundle.mjs).
+  reporter: process.env["CI"]
+    ? [["github"], ["json", { outputFile: "playwright-report/results.json" }]]
+    : "html",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",

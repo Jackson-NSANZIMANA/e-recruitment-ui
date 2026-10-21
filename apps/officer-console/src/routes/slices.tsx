@@ -9,7 +9,6 @@
 import type { RouteObject } from "react-router-dom";
 import { AdjudicationRoutes } from "@usrp/feature-adjudication";
 import { ComplianceOfficerRoutes } from "@usrp/feature-compliance";
-import { FieldOpsRoutes } from "@usrp/feature-field-ops";
 import { SchedulingRoutes } from "@usrp/feature-scheduling";
 
 /** A slice's contribution, labelled so a collision names its owner. */
@@ -33,12 +32,14 @@ const APP_OWNED_PATHS: readonly string[] = [
   "applications/:id",
   "walk-in",
   "gate",
+  "field-station",
 ];
 
 const MOUNTS: readonly SliceMount[] = [
   { slice: "@usrp/feature-adjudication", routes: AdjudicationRoutes },
   { slice: "@usrp/feature-compliance", routes: ComplianceOfficerRoutes },
-  { slice: "@usrp/feature-field-ops", routes: FieldOpsRoutes },
+  // @usrp/feature-field-ops is NOT mounted here since S02: its routes run on
+  // apps/field-station (ADR-FE-007). /gate and /walk-in redirect to a notice.
   { slice: "@usrp/feature-scheduling", routes: SchedulingRoutes },
 ];
 
@@ -96,6 +97,5 @@ export const OFFICER_SLICE_ROUTES: readonly RouteObject[] = MOUNTS.flatMap((moun
 export const OFFICER_SLICE_NAMESPACES: readonly string[] = [
   "adjudication",
   "compliance",
-  "field_ops",
   "scheduling",
 ];

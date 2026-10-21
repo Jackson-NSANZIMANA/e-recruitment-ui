@@ -1,0 +1,70 @@
+# ══════════════════════════════════════════════════════════════════
+# SPA static server (ADR-FE-014). Environment (set by the image):
+#   USRP_EDGE_MODE          off (default: /edge answers 404) | proxy
+#   USRP_EDGE_UPSTREAM      edge-gateway origin when proxying, e.g. http://edge-gateway:4021
+#   USRP_CONNECT_SRC        extra CSP connect-src (the build's VITE_EDGE_URL)
+#   USRP_PERMISSIONS_POLICY Permissions-Policy value (camera only on field-station)
+#
+# Rules this file exists to keep, each pinned by tooling/images/verify-spa-image.mjs:
+#   • /edge and /edge/** never fall through to index.html;
+#   • index.html, sw.js, registerSW.js, the manifest and version.json are
+#     revalidated on every load (no-cache), hashed /assets/** are immutable;
+#   • a missing file with an extension is a 404, never the SPA shell;
+#   • strict CSP (no inline script), HSTS, nosniff, no-referrer on everything.
+# ══════════════════════════════════════════════════════════════════
+{
+	admin off
+	auto_https off
+	persist_config off
+	servers {
+		# Requests come only from the ingress in front of this container.
+		trusted_proxies static private_ranges
+	}
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' {$USRP_CONNECT_SRC}; manifest-src 'self'; worker-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "{$USRP_PERMISSIONS_POLICY}"
+		Cross-Origin-Opener-Policy "same-origin"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	# The edge is never the SPA. Proxied to the gateway, or a plain 404.
+	@edge path /edge /edge/*
+	handle @edge {
+		import /etc/caddy/edge-{$USRP_EDGE_MODE:off}.caddy
+	}
+
+	handle /healthz {
+		header Cache-Control "no-store"
+		respond "ok" 200
+	}
+
+	# Content-hashed bundles: cache forever; a missing one is a 404.
+	handle /assets/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Any other path with a file extension is a real file or a 404.
+	@file path_regexp file \.[A-Za-z0-9]+$
+	handle @file {
+		header Cache-Control "no-cache"
+		file_server
+	}
+
+	# Client-side routes: the SPA shell, always revalidated.
+	handle {
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

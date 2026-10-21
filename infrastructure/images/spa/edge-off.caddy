@@ -1,0 +1,3 @@
+# USRP_EDGE_MODE=off: this origin serves no edge. Never the SPA shell.
+header Cache-Control "no-store"
+respond "Not Found" 404

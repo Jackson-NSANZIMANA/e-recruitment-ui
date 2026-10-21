@@ -24,6 +24,7 @@ import {
   findUndersizedTouchTargets,
   MIN_TOUCH_TARGET_PX,
 } from './lib/predicates.mjs';
+import { fieldLedgerViolations, fieldStationViolations } from './lib/app-boundaries.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -113,12 +114,28 @@ for (const r of hRoots) {
   }
 }
 
+// 5 --- composition rules for the Field Station and the field ledger (S02)
+//   ADR-FE-007: apps/field-station composes only identity, scheduling,
+//   field-ops and the applications model. ADR-FE-010: packages/field-ledger
+//   imports no feature slice and no UI.
+const COMPOSITION = [
+  ['apps/field-station/src', 'field-station-composition', fieldStationViolations],
+  ['packages/field-ledger/src', 'field-ledger-platform', fieldLedgerViolations],
+];
+for (const [dir, rule, check] of COMPOSITION) {
+  for (const file of walk(join(root, dir), new Set(['.ts', '.tsx']))) {
+    const rel = relative(root, file);
+    filesScanned += 1;
+    for (const v of check(readFileSync(file, 'utf8'))) violations.push({ rule, file: rel, line: v.line, detail: v.detail });
+  }
+}
+
 console.log(
   '[boundaries] ' + filesScanned + ' file scan(s) across ' + (bRoots.length + hRoots.length) + ' root(s)',
 );
 
 if (violations.length === 0) {
-  console.log('[boundaries] PASS - domain-free, token-pure, 48px floor held.');
+  console.log('[boundaries] PASS - domain-free, token-pure, 48px floor held; field-station and field-ledger composition held.');
   process.exit(0);
 }
 

@@ -20,12 +20,9 @@ import { LinkMenuItem } from "@atlaskit/side-nav-items/link-menu-item";
 import { MenuList } from "@atlaskit/side-nav-items/menu-list";
 import DashboardIcon from "@atlaskit/icon/core/dashboard";
 import AppsIcon from "@atlaskit/icon/core/apps";
-import PersonAddIcon from "@atlaskit/icon/core/person-add";
-import PersonAddedIcon from "@atlaskit/icon/core/person-added";
-import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 
-import { ConnectionStatus } from "../ConnectionStatus/index.js";
+import { ConnectionStatus } from "@usrp/ui";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -51,8 +48,8 @@ export interface AppShellProps {
  */
 export function AppShell({ children }: AppShellProps): React.ReactElement {
   const { t } = useTranslation();
-  // Navigation only — the edge and the owning service enforce admission.gate.
-  const canAdmit = useOfficerSession()?.permissions.includes("admission.gate") ?? false;
+  // The venue gate and the walk-in desk left this menu in S02: they run on the
+  // Field Station (ADR-FE-007); /gate and /walk-in redirect to a notice.
 
   return (
     <Root>
@@ -92,20 +89,6 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
             >
               {t("nav.applications")}
             </LinkMenuItem>
-            <LinkMenuItem
-              href="/walk-in"
-              elemBefore={<PersonAddIcon label="" color="currentColor" />}
-            >
-              {t("nav.walk_in")}
-            </LinkMenuItem>
-            {canAdmit && (
-              <LinkMenuItem
-                href="/gate"
-                elemBefore={<PersonAddedIcon label="" color="currentColor" />}
-              >
-                {t("nav.gate")}
-              </LinkMenuItem>
-            )}
           </MenuList>
         </SideNavBody>
       </SideNav>

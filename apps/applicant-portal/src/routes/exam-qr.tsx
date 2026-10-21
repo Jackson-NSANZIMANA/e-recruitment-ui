@@ -23,6 +23,7 @@ import Spinner from "@atlaskit/spinner";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
 import { ApiError, createApiClient, useMyExamInvitation, type ExamInvitationView } from "@usrp/api-client";
+import { isRehearsalCampaign } from "@usrp/contracts";
 import { useTranslation } from "@usrp/i18n";
 import { EDGE_BASE_URL } from "../env.js";
 import { QR_DARK, QR_LIGHT, QUIET_ZONE, downloadBlob, qrMatrix, qrSvgPath, renderTicketPng, ticketFilename } from "../qr/exam-qr.js";
@@ -56,7 +57,11 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
     return <SectionMessage appearance="error" title={t("exam_qr.unavailable_title")} headingLevel="h2"><Text>{t("exam_qr.unavailable_body")}</Text></SectionMessage>;
   }
   const modules = matrix.length + QUIET_ZONE * 2;
+  const rehearsal = isRehearsalCampaign(view);
   const details: readonly string[] = [
+    // First line of the pass, on screen, on paper and in the PNG: a rehearsal
+    // pass can be printed and carried to a venue, so it says what it is.
+    ...(rehearsal ? [t("rehearsal.pass_marker")] : []),
     `${t("exam_qr.processing_code")}: ${view.processingCode}`,
     `${t("exam_qr.venue")}: ${invitation.venueName}`,
     `${t("exam_qr.date")}: ${invitation.examDate} · ${t("exam_qr.reporting")}: ${hour(invitation.reportingTimeHour)}`,
@@ -80,6 +85,11 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
 
   return (
     <Stack space="space.300">
+      {rehearsal && (
+        <SectionMessage appearance="warning" title={t("rehearsal.pass_title")} headingLevel="h2">
+          <Text>{t("rehearsal.pass_body")}</Text>
+        </SectionMessage>
+      )}
       <SectionMessage appearance="success" title={t("exam_qr.ready_title")} headingLevel="h2">
         <Text>{t("exam_qr.ready_body")}</Text>
       </SectionMessage>

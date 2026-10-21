@@ -1,0 +1,91 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.apply",
+  "title": "Citizen application wizard",
+  "audience": "citizen",
+  "owner": "apps/applicant-portal",
+  "purpose": "Let a citizen pick an open campaign, choose a category, give the academic reference it needs, consent, and file once under a citizen-held Idempotency-Key.",
+  "routes": [
+    {
+      "path": "/apply",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "role": "wizard"
+    },
+    {
+      "path": "/apply/:step",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "role": "wizard-step"
+    }
+  ],
+  "operations": [
+    "listCampaigns",
+    "submitMyApplication"
+  ],
+  "ads": [
+    {
+      "name": "Form",
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "import": "@atlaskit/form"
+    },
+    {
+      "name": "Select",
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "import": "@atlaskit/select"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "wizard",
+      "required": [
+        "campaigns",
+        "category",
+        "academic",
+        "consent",
+        "pending",
+        "filed",
+        "replayed",
+        "already-applied",
+        "key-reused"
+      ],
+      "source": "apps/applicant-portal/src/routes/apply/index.tsx",
+      "evidence": [
+        "isPending",
+        "serverError",
+        "isRehearsal"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "each step has one heading and a programmatic label per field"
+  ],
+  "tests": [
+    "apps/applicant-portal/e2e/apply-flow.spec.ts",
+    "apps/applicant-portal/e2e/offline.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/applicant-portal/e2e/apply-flow.spec.ts",
+        "apps/applicant-portal/e2e/offline.spec.ts"
+      ]
+    }
+  }
+}

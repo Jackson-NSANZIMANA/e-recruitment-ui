@@ -1,0 +1,37 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.verify-invitation",
+  "title": "Offline invitation verifier",
+  "audience": "officer",
+  "owner": "packages/features/scheduling",
+  "purpose": "Verify a signed slot invitation (USRP-SLOT.v1) offline. Becomes the gate's degraded rung on the Field Station in S08.",
+  "routes": [
+    {
+      "path": "/scheduling/verify-invitation",
+      "app": "officer-console",
+      "source": "packages/features/scheduling/src/routes/verify-invitation.tsx",
+      "role": "verifier"
+    }
+  ],
+  "operations": [],
+  "ads": [],
+  "states": [],
+  "accessibility": [],
+  "tests": [
+    "apps/officer-console/e2e/production-readiness.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "DECLARED",
+    "blockedBy": [
+      "S08"
+    ]
+  }
+}

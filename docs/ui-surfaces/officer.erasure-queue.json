@@ -1,0 +1,39 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.erasure-queue",
+  "title": "DPO erasure queue",
+  "audience": "officer",
+  "owner": "packages/features/compliance",
+  "purpose": "The data-protection officer's erasure queue and decline-with-grounds. Its operations are not browser-edge operations yet.",
+  "routes": [
+    {
+      "path": "/compliance/erasure-queue",
+      "app": "officer-console",
+      "source": "packages/features/compliance/src/routes/dpo-queue.tsx",
+      "role": "queue"
+    }
+  ],
+  "operations": [],
+  "ads": [],
+  "states": [],
+  "accessibility": [],
+  "tests": [
+    "apps/officer-console/e2e/production-readiness.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "DECLARED",
+    "blockedBy": [
+      "B-13",
+      "S04",
+      "S06"
+    ]
+  }
+}

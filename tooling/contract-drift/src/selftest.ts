@@ -2,6 +2,7 @@
 import { extractAll, extractService } from './extract.ts';
 import { gateA, gateB, gateC, type Manifest, type RouteFactLike } from './drift.ts';
 import { gateD } from './edge.ts';
+import { runParitySelftest } from './parity-selftest.ts';
 const FIXTURE_SERVICES = new URL('../fixtures/backend/services', import.meta.url).pathname;
 let passed = 0; const failures: string[] = [];
 function assert(condition: boolean, what: string): void { if (condition) passed += 1; else failures.push(what); }
@@ -47,4 +48,5 @@ const edgeBackend = `export const EDGE_OPERATIONS = Object.freeze({\n  requestAp
 assertEqual(gateD(edgeFrontend, edgeBackend).findings, [], 'gate D clean with product-friendly operation alias');
 const edgeMissing = `export const EDGE_OPERATIONS = [\n  { id: 'different', method: 'GET', edgePath: '/edge/v1/different', session: 'anonymous', retryOnG2G: false, composition: 'local' },\n] as const satisfies readonly EdgeOperation[];`;
 assert(gateD(edgeMissing, edgeBackend).findings.some((f) => f.message.includes('MISSING FRONTEND EDGE OPERATION')), 'gate D missing operation');
+runParitySelftest(assert);
 if (failures.length > 0) { console.error(`contract-drift selftest FAILED — ${failures.length} of ${passed + failures.length}`); for (const failure of failures) console.error(`  ✗ ${failure}`); process.exit(1); } console.log(`contract-drift selftest OK — ${passed} assertions`);

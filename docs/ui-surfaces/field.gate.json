@@ -1,0 +1,84 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "field.gate",
+  "title": "Venue gate",
+  "audience": "field-officer",
+  "owner": "packages/features/field-ops",
+  "purpose": "Admit a candidate once at the venue gate: scan the exam QR, type the national ID from the card, and show the server's answer, green only for ADMITTED (ADR-034).",
+  "routes": [
+    {
+      "path": "/gate",
+      "app": "field-station",
+      "source": "packages/features/field-ops/src/routes/gate.tsx",
+      "role": "station"
+    }
+  ],
+  "operations": [
+    "admitAtGate"
+  ],
+  "ads": [
+    {
+      "name": "TextField",
+      "source": "packages/features/field-ops/src/routes/gate.tsx",
+      "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/gate.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "QrScanner",
+      "source": "packages/features/field-ops/src/routes/gate.tsx",
+      "import": "@usrp/ui"
+    }
+  ],
+  "states": [
+    {
+      "surface": "gate",
+      "required": [
+        "no-permission",
+        "venue",
+        "scan",
+        "pending",
+        "admitted",
+        "refused",
+        "failed"
+      ],
+      "source": "packages/features/field-ops/src/routes/gate.tsx",
+      "evidence": [
+        "allowed",
+        "editingVenue",
+        "isPending",
+        "gate-outcome",
+        "isError"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "the outcome is announced and focus moves to the next-candidate action",
+    "the QR credential is never displayed"
+  ],
+  "tests": [
+    "apps/field-station/e2e/gate.spec.ts",
+    "packages/features/field-ops/src/model/gate.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/gate.spec.ts"
+      ]
+    }
+  }
+}

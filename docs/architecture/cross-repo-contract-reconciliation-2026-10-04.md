@@ -1,9 +1,10 @@
 # Cross-repository frontend contract reconciliation
 
-**Status:** current engineering baseline
+**Status:** current engineering baseline; refreshed 2026-10-16 (S00)
 **Frontend checkout:** `Jackson-NSANZIMANA/e-recruitment-ui`
-**Frontend base:** `93d6764ba44ebe906fc2e159c3b9fb296726e386`
-**Backend baseline:** `Jackson-NSANZIMANA/e-recruitment@06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab`
+**Frontend base:** `c5bda857e231390c7ac866a05165486f9b7de4b5` (was `93d6764`)
+**Backend baseline:** `Jackson-NSANZIMANA/e-recruitment@df80f6517247a00ffd99518fd31bd7c68dd70d65` (was `06d9f9b6`)
+**Counts and SHAs:** not restated by hand. Every CI run publishes an `evidence-<sha>` artefact (*Evidence bundle* job, `tooling/ci/evidence-bundle.mjs`) holding `evidence-<sha>.json`: the edge operation inventory with typed and untyped IDs, the pinned backend SHA (and whether `ci.yml`, `paths.ts` and the OpenAPI documents agree), proof assertion counts, unit and E2E counts with every skipped test named, and the lockfile hash.
 **Scope:** browser edge, service OpenAPI, generated client artifacts, officer application workspace
 
 This is the evidence register for the frontend/backend reconciliation. It is intentionally checked in beside the executable gates so a future change has a clear place to update the claim and a command that can reject an unproven claim.
@@ -21,12 +22,9 @@ This is the evidence register for the frontend/backend reconciliation. It is int
 
 ## Current contract inventory
 
-- 11 service OpenAPI documents.
-- 59 generated service operations.
-- 210 generated schemas.
-- 27 browser edge operations in the frontend registry, reconciled by gate D to the backend registry.
-- 151 structural fixture cases, including applicant submission and a negative national-ID leakage case.
-- Backend SHA pinned in OpenAPI and generated artifacts: `06d9f9b6b1bc935a20beb8bd87ee8f96bc437aab`.
+- **43 browser edge operations** in the frontend registry, reconciled by gate D to the backend registry's 43 at the pinned SHA. 33 have a typed `operations/` or `queries/` function. 10 are registry IDs only: `createCampaign`, `createCampaignPolicy`, `configureCampaignSession`, `publishCampaign`, `closeCampaignRegistration`, `completeCampaign`, `cancelCampaign`, `enrollFieldDevice`, `syncFieldScores`, `resolveFieldSyncConflict`.
+- Backend SHA pinned in `ci.yml`, `paths.ts` and every OpenAPI document: `df80f6517247a00ffd99518fd31bd7c68dd70d65`. The evidence bundle checks that the three agree.
+- Service OpenAPI documents, generated operations, schemas and fixture cases: counted by `packages/contracts/scripts/verify.ts` on each run and recorded in the evidence bundle. The 2026-10-04 figures (27 edge operations, 151 fixtures) are superseded.
 
 The submission contract is deliberately named in OpenAPI rather than expressed as inline schemas. The repository generator rejects inline request/response schemas, so `SubmitApplicationRequest` and `SubmitApplicationResponse` are component references and are included in the generated types and Zod validators.
 
@@ -62,7 +60,7 @@ npm exec --yes pnpm@9.15.0 -- --filter @usrp/edge-dev selfcheck
 npm exec --yes pnpm@9.15.0 -- typecheck
 ```
 
-The current frontend-only drift baseline is **588 assertions, 0 findings**. The current surface contract is **42 assertions, PASS**. The edge development proof is **143 assertions over real sockets, GREEN**. `contracts/scripts/verify.ts` additionally requires a clean generated-artifact diff; run it after the generated files are committed or in CI against the committed tree.
+Assertion counts are in the evidence bundle, not here. As of 2026-10-16, verify against the pinned backend ran 2,377 assertions (877 drift) and the surface contract 44, all green. `contracts/scripts/verify.ts` additionally requires a clean generated-artifact diff; run it after the generated files are committed or in CI against the committed tree. Always pass `--backend`: without it, gates B and C run at reduced scope.
 
 ## Change protocol
 

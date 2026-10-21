@@ -1,0 +1,77 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.exam-pass",
+  "title": "Citizen Exam Pass",
+  "audience": "citizen",
+  "owner": "apps/applicant-portal",
+  "purpose": "Show the citizen's signed exam QR when it is READY, and say plainly when it is pending, on hold, unavailable or already used at the gate.",
+  "routes": [
+    {
+      "path": "/applications/:applicationId/exam-qr",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/exam-qr.tsx",
+      "role": "pass"
+    }
+  ],
+  "operations": [
+    "getMyExamInvitation"
+  ],
+  "ads": [
+    {
+      "name": "SectionMessage",
+      "source": "apps/applicant-portal/src/routes/exam-qr.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "Spinner",
+      "source": "apps/applicant-portal/src/routes/exam-qr.tsx",
+      "import": "@atlaskit/spinner"
+    }
+  ],
+  "states": [
+    {
+      "surface": "pass",
+      "required": [
+        "loading",
+        "pending",
+        "ready",
+        "on-hold",
+        "admitted",
+        "error"
+      ],
+      "source": "apps/applicant-portal/src/routes/exam-qr.tsx",
+      "evidence": [
+        "state === \"READY\"",
+        "state === \"PENDING\"",
+        "state === \"ON_HOLD\"",
+        "state === \"ADMITTED\"",
+        "isError"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "the QR has a text alternative that is not the credential"
+  ],
+  "tests": [
+    "apps/applicant-portal/e2e/exam-qr-admitted.spec.ts",
+    "apps/applicant-portal/src/qr/exam-qr.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/applicant-portal/e2e/exam-qr-admitted.spec.ts"
+      ]
+    }
+  }
+}

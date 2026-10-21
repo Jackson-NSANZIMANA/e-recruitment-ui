@@ -10,7 +10,10 @@ import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { RouteGuard, ApplicantGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
+import { NotFoundPage } from "@usrp/ui";
 import { CITIZEN_SLICE_ROUTES } from "./routes/slices.js";
+import { gateByReadiness } from "./routes/readiness.js";
+import { EDGE_BASE_URL } from "./env.js";
 
 const spinnerStyles = cssMap({
   fullPage: {
@@ -21,7 +24,8 @@ const spinnerStyles = cssMap({
   },
 });
 
-const LoginPage = lazy(() => import("./routes/login.js"));
+// The citizen sign-in lives in @usrp/feature-identity since S02 (ADR-FE-007 §5).
+const LoginPage = lazy(() => import("@usrp/feature-identity/citizen-login"));
 const HomePage = lazy(() => import("./routes/home.js"));
 const ApplicationsPage = lazy(() => import("./routes/applications.js"));
 const StatusPage = lazy(() => import("./routes/status.js"));
@@ -34,8 +38,8 @@ const FullPageSpinner = (): React.ReactElement => (
   </Box>
 );
 
-const router = createBrowserRouter([
-  { path: "/login", element: <LoginPage /> },
+const router = createBrowserRouter(gateByReadiness([
+  { path: "/login", element: <LoginPage edgeBaseUrl={EDGE_BASE_URL} /> },
   {
     path: "/",
     element: (
@@ -67,9 +71,10 @@ const router = createBrowserRouter([
         ),
         children: [...CITIZEN_SLICE_ROUTES],
       },
+      { path: "*", element: <NotFoundPage homePath="/home" /> },
     ],
   },
-], {
+]), {
   // React Router v7 behaviour, opted into now so v6 stops warning and the
   // upgrade is a no-op. No route here uses actions, fetchers or splats, so
   // only v7_startTransition (on RouterProvider) changes anything at runtime.
