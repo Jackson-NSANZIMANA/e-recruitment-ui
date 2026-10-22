@@ -48,6 +48,12 @@ const PROBES: readonly string[] = ['/health', '/ready'];
  *                          uniform 422, durable per-ID lockout, strict limits.
  *   listPublicCampaigns    BUILD-001 public read: open campaigns, safe
  *   getPublicCampaign      projection only (no internal ids/policy/capacity).
+ *   officerActivate        ADR-036 (S01): an officer redeems the one-time
+ *                          activation code a SECOND administrator released
+ *                          (Addendum A) and sets their password. The code is the
+ *                          credential: 100 bits, single use, hashed, 24 h, one
+ *                          indistinguishable refusal, rate-limited per handle and
+ *                          per client at the edge. Reviewed by S06.
  *   getSlotInvitationKey   scheduling-service, inline route in src/main.ts,
  *                          returns the key material used to validate a slot
  *                          invitation. Anonymous in the backend as read.
@@ -60,6 +66,7 @@ export const ANONYMOUS_BROWSER_OPERATIONS: readonly string[] = [
   'requestApplicantOtp',
   'verifyApplicantOtp',
   'getSlotInvitationKey',
+  'officerActivate',
 ];
 
 export function auditRoutes(routes: readonly RouteLike[]): readonly RouteProblem[] {
