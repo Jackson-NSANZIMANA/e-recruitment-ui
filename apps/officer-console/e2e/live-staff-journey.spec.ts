@@ -31,7 +31,8 @@ const ADMIN_PW = 'RehearsalAdmin#2026';
 const STAFF_PW = 'RehearsalStaff#2026';
 const OFFICER_PW = 'DevOfficer#2026';
 const A = { nid: '1200380123456789', dob: '2003-03-15', phone: '0788123456', masked: '***56' };
-const HANDLE = `reh.rdf.med.${Date.now().toString(36)}`;
+// USRP_LIVE_HANDLE lets the last step be re-run alone against an officer a previous run created.
+const HANDLE = process.env['USRP_LIVE_HANDLE'] ?? `reh.rdf.med.${Date.now().toString(36)}`;
 const NEW_PW = 'Live-Journey-Pw#2026';
 
 test.describe.configure({ mode: 'serial' });
@@ -214,7 +215,8 @@ test('persona A completes the physical test; the medical officer records the ver
 
 test('rdf.admin disables the officer and their open session ends', async ({ browser }) => {
   test.setTimeout(120_000);
-  const officer = state.officer ?? (await officerPage(browser, HANDLE, NEW_PW));
+  // A fresh, OPEN session of the officer (the medical step closed the earlier one).
+  const officer = await officerPage(browser, HANDLE, NEW_PW);
   expect((await officer.request.get("/edge/v1/session")).status()).toBe(200);
   const admin = await officerPage(browser, 'rdf.admin', ADMIN_PW);
   await admin.goto('/staff');
