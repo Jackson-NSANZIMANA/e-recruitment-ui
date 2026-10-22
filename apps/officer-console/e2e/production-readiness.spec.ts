@@ -27,11 +27,9 @@ async function signedIn(page: Page): Promise<void> {
   );
 }
 
-// The seven placeholders the programme listed as reachable, as the console
-// mounted them before S02 (the three field-ops ones moved to the Field Station).
+// The placeholders the programme listed as reachable. S02 moved the field-ops
+// ones to the Field Station; S06 replaced the amber and erasure queues with real screens.
 const RETIRED_PLACEHOLDERS = [
-  '/adjudication/amber-queue',
-  '/compliance/erasure-queue',
   '/scheduling/verify-invitation',
   '/field/walk-in',
   '/field/check-in',
@@ -77,7 +75,7 @@ test('the production bundle ships none of the placeholder screens\' code', () =>
     .map((name) => readFileSync(`${assets}${name}`, 'utf8'))
     .join('\n');
   expect(shipped.length).toBeGreaterThan(10_000);
-  for (const marker of ['adjudication.queue.title', 'compliance.queue.title', 'scheduling.verify.title', 'field_ops.check_in.title', 'field_ops.conflicts.title']) {
+  for (const marker of ['scheduling.verify.title', 'field_ops.check_in.title', 'field_ops.conflicts.title']) {
     expect(shipped.includes(marker), marker).toBe(false);
   }
 });

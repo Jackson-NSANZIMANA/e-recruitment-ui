@@ -46,7 +46,7 @@ function RefusalMessage({ error, t }: { readonly error: unknown; readonly t: T }
   if (o.kind === 'conflict') {
     const holder = lockedBy(o.data);
     if (o.outcome === 'CROSS_AGENCY_LOCKED' || o.outcome === 'CROSS_AGENCY_ACCEPT_LOCK') {
-      return <SectionMessage appearance="warning" title={t('applications.errors.crossAgencyLockedTitle')}><Text as="p">{holder === null ? t('applications.errors.crossAgencyLocked') : t('applications.errors.crossAgencyLockedBy', { agency: holder })}</Text></SectionMessage>;
+      return <SectionMessage appearance="warning" title={t('applications.errors.crossAgencyLockedTitle')} headingLevel="h3"><Text as="p">{holder === null ? t('applications.errors.crossAgencyLocked') : t('applications.errors.crossAgencyLockedBy', { agency: holder })}</Text></SectionMessage>;
     }
     return <SectionMessage appearance="warning"><Text as="p">{t('applications.errors.conflict')}</Text></SectionMessage>;
   }
