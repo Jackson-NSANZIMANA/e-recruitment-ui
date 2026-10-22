@@ -33,6 +33,26 @@ export const applicationKeys = {
   statusHistory: (applicationId: string) => ['applications', 'status-history', applicationId] as const,
 };
 
+export const staffKeys = {
+  all: ['staff'] as const,
+  list: () => ['staff', 'officers'] as const,
+};
+
+export const searchKeys = {
+  all: ['applications', 'search'] as const,
+  query: (q: unknown) => ['applications', 'search', q] as const,
+};
+
+export const evidenceKeys = {
+  all: ['evidence'] as const,
+  byApplication: (applicationId: string) => ['evidence', applicationId] as const,
+};
+
+export const erasureKeys = {
+  all: ['erasure-queue'] as const,
+  queue: () => ['erasure-queue', 'pending'] as const,
+};
+
 export const campaignKeys = {
   all: ['campaigns'] as const,
   list: () => ['campaigns', 'list'] as const,

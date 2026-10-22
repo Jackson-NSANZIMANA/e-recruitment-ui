@@ -1,4 +1,5 @@
 import { BROWSER_ROUTES, ROUTE_TABLE, SERVICE_INTERNAL_ROUTES, type RouteFact } from '@usrp/contracts';
+import { PENDING_EDGE_OPERATIONS } from './pending.js';
 
 export interface EdgeOperation {
   readonly id: string;
@@ -86,7 +87,7 @@ export const EDGE_OPERATIONS = [
 export type EdgeOperationId = (typeof EDGE_OPERATIONS)[number]['id'];
 export type AnonymousEdgeOperationId = Extract<(typeof EDGE_OPERATIONS)[number], { readonly session: 'anonymous' }>['id'];
 const BY_ID: ReadonlyMap<string, EdgeOperation> = new Map(EDGE_OPERATIONS.map((edgeOperation): readonly [string, EdgeOperation] => [edgeOperation.id, edgeOperation]));
-export function operation(id: string): EdgeOperation { const found = BY_ID.get(id); if (found === undefined) throw new Error(`Unknown edge operation "${id}". Add it to EDGE_OPERATIONS in paths.ts.`); return found; }
+export function operation(id: string): EdgeOperation { const found = BY_ID.get(id) ?? PENDING_EDGE_OPERATIONS.find((pending) => pending.id === id); if (found === undefined) throw new Error(`Unknown edge operation "${id}". Add it to EDGE_OPERATIONS in paths.ts.`); return found; }
 export function isEdgeOperationId(id: string): id is EdgeOperationId { return BY_ID.has(id); }
 export const EDGE_PATHS: readonly string[] = [...new Set(EDGE_OPERATIONS.map((edgeOperation) => edgeOperation.edgePath))];
 export class ContractMismatchError extends Error { readonly problems: readonly string[]; constructor(problems: readonly string[]) { super(`@usrp/api-client disagrees with @usrp/contracts:\n  ${problems.join('\n  ')}`); this.name = 'ContractMismatchError'; this.problems = problems; } }
