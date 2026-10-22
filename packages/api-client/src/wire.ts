@@ -532,6 +532,8 @@ export interface OfficerChangeResponse {
   readonly officer: OfficerRow;
   readonly sessionsRevoked: number;
 }
+/** 204 No Content: the transport hands back an empty object. */
+export type ActivateOfficerResponse = Readonly<Record<string, never>>;
 export interface ActivateOfficerInput { readonly loginHandle: string; readonly activationCode: string; readonly password: string }
 
 export interface ApplicationSearchRow {

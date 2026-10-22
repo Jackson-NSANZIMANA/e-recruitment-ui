@@ -13,6 +13,7 @@
 import type { ApiClient } from '../transport.js';
 import type {
   ActivateOfficerInput,
+  ActivateOfficerResponse,
   AssignOfficerPostsInput,
   CreateOfficerInput,
   OfficerChangeResponse,
@@ -40,5 +41,5 @@ export const enableOfficer = (client: ApiClient, input: OfficerReasonInput): Pro
 export const revokeOfficerSessions = (client: ApiClient, input: OfficerReasonInput): Promise<OfficerChangeResponse> =>
   client.call<OfficerChangeResponse>('revokeOfficerSessions', { body: input });
 /** Anonymous: the one-time code is the credential. 204 on success; 401 ACTIVATION_REJECTED is one answer for every failure. */
-export const activateOfficer = (client: ApiClient, input: ActivateOfficerInput): Promise<unknown> =>
-  client.call<unknown>('activateOfficer', { body: input });
+export const activateOfficer = (client: ApiClient, input: ActivateOfficerInput): Promise<ActivateOfficerResponse> =>
+  client.call<ActivateOfficerResponse>('activateOfficer', { body: input });

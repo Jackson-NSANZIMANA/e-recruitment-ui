@@ -7,9 +7,16 @@
 // ═══════════════════════════════════════════════════════════════
 
 import type { RouteObject } from "react-router-dom";
-import { AdjudicationRoutes } from "@usrp/feature-adjudication";
-import { ComplianceOfficerRoutes } from "@usrp/feature-compliance";
+import { createApiClient } from "@usrp/api-client";
+import { createAdjudicationRoutes } from "@usrp/feature-adjudication";
+import { createApplicationsRoutes } from "@usrp/feature-applications";
+import { createComplianceOfficerRoutes } from "@usrp/feature-compliance";
+import { createStaffRoutes } from "@usrp/feature-identity";
 import { SchedulingRoutes } from "@usrp/feature-scheduling";
+import { EDGE_BASE_URL } from "../env.js";
+
+/** The one edge client the slices share. */
+export const edgeClient = createApiClient({ baseUrl: EDGE_BASE_URL });
 
 /** A slice's contribution, labelled so a collision names its owner. */
 interface SliceMount {
@@ -28,16 +35,17 @@ interface SliceMount {
  */
 const APP_OWNED_PATHS: readonly string[] = [
   "dashboard",
-  "applications",
-  "applications/:id",
   "walk-in",
   "gate",
   "field-station",
 ];
 
 const MOUNTS: readonly SliceMount[] = [
-  { slice: "@usrp/feature-adjudication", routes: AdjudicationRoutes },
-  { slice: "@usrp/feature-compliance", routes: ComplianceOfficerRoutes },
+  // S06: the workspace, the queues and staff administration moved into their slices.
+  { slice: "@usrp/feature-applications", routes: createApplicationsRoutes({ client: edgeClient }) },
+  { slice: "@usrp/feature-adjudication", routes: createAdjudicationRoutes({ client: edgeClient }) },
+  { slice: "@usrp/feature-compliance", routes: createComplianceOfficerRoutes({ client: edgeClient }) },
+  { slice: "@usrp/feature-identity", routes: createStaffRoutes({ client: edgeClient }) },
   // @usrp/feature-field-ops is NOT mounted here since S02: its routes run on
   // apps/field-station (ADR-FE-007). /gate and /walk-in redirect to a notice.
   { slice: "@usrp/feature-scheduling", routes: SchedulingRoutes },
@@ -95,7 +103,9 @@ export const OFFICER_SLICE_ROUTES: readonly RouteObject[] = MOUNTS.flatMap((moun
 
 /** Namespaces the mounted slices resolve keys against. Registered in main.tsx. */
 export const OFFICER_SLICE_NAMESPACES: readonly string[] = [
+  "applications",
   "adjudication",
   "compliance",
+  "identity",
   "scheduling",
 ];

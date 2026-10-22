@@ -20,9 +20,22 @@ import { LinkMenuItem } from "@atlaskit/side-nav-items/link-menu-item";
 import { MenuList } from "@atlaskit/side-nav-items/menu-list";
 import DashboardIcon from "@atlaskit/icon/core/dashboard";
 import AppsIcon from "@atlaskit/icon/core/apps";
+import ChecklistIcon from "@atlaskit/icon/core/list-checklist";
+import DeleteIcon from "@atlaskit/icon/core/delete";
+import LockIcon from "@atlaskit/icon/core/lock-locked";
 import { useTranslation } from "@usrp/i18n";
 
+import { useOfficerSession } from "@usrp/auth";
 import { ConnectionStatus } from "@usrp/ui";
+import { navItemsFor, type NavItem } from "../../nav.js";
+
+const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
+  dashboard: <DashboardIcon label="" color="currentColor" />,
+  applications: <AppsIcon label="" color="currentColor" />,
+  queues: <ChecklistIcon label="" color="currentColor" />,
+  erasure: <DeleteIcon label="" color="currentColor" />,
+  staff: <LockIcon label="" color="currentColor" />,
+};
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -48,6 +61,8 @@ export interface AppShellProps {
  */
 export function AppShell({ children }: AppShellProps): React.ReactElement {
   const { t } = useTranslation();
+  const session = useOfficerSession();
+  const items = navItemsFor(session?.permissions ?? []);
   // The venue gate and the walk-in desk left this menu in S02: they run on the
   // Field Station (ADR-FE-007); /gate and /walk-in redirect to a notice.
 
@@ -77,18 +92,11 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
       <SideNav label={t("a11y.open_menu")}>
         <SideNavBody>
           <MenuList>
-            <LinkMenuItem
-              href="/dashboard"
-              elemBefore={<DashboardIcon label="" color="currentColor" />}
-            >
-              {t("nav.dashboard")}
-            </LinkMenuItem>
-            <LinkMenuItem
-              href="/applications"
-              elemBefore={<AppsIcon label="" color="currentColor" />}
-            >
-              {t("nav.applications")}
-            </LinkMenuItem>
+            {items.map((item) => (
+              <LinkMenuItem key={item.id} href={item.href} elemBefore={NAV_ICONS[item.id]}>
+                {t(item.labelKey)}
+              </LinkMenuItem>
+            ))}
           </MenuList>
         </SideNavBody>
       </SideNav>
