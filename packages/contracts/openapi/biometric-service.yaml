@@ -24,7 +24,7 @@ info:
     UNION COVERS 403. That is recorded here rather than normalised away,
     because normalising it in the contract would hide it from the only people
     who can fix it.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
   x-usrp-service-port-var: "PORT_BIOMETRIC_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -155,8 +155,103 @@ paths:
         "200":
           description: "Always. See the description."
 
+  /v1/biometric/policy:
+    get:
+      operationId: "biometricPolicy"
+      summary: "The biometric evidence policy in force for the agency"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/biometric-evidence.controller.ts"
+      x-usrp-verified: "proxy-derived"
+      responses:
+        200:
+          description: "{ agency, mode, … }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricAny"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricError"
+
+  /v1/biometric/evidence:
+    post:
+      operationId: "biometricEvidenceRecord"
+      summary: "Record device-signed evidence (never an image)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/biometric-evidence.controller.ts"
+      x-usrp-verified: "proxy-derived"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BiometricEvidenceEnvelope"
+      responses:
+        201:
+          description: "Recorded."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricAny"
+        200:
+          description: "ALREADY_RECORDED."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricAny"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricError"
+        409:
+          description: "Refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricError"
+        422:
+          description: "INVALID_EVIDENCE."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricError"
+
 components:
   schemas:
+    BiometricEvidenceEnvelope:
+      description: "{ record, signature } (ADR-037 §4). Signed on the device; the browser never builds it."
+      type: "object"
+      additionalProperties: true
+
+    BiometricAny:
+      description: "Not consumed by S06; shape asserted from edge-v1.yaml."
+      type: "object"
+      additionalProperties: true
+
+    BiometricError:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["INVALID_REQUEST", "INVALID_EVIDENCE", "IMAGE_PAYLOAD_REFUSED", "REPLAY_CONFLICT", "BIOMETRIC_OFF", "MODE_MISMATCH", "PERMISSION_DENIED", "UNAUTHENTICATED"]
+        detail:
+          type: "string"
+
     Uuid:
       type: "string"
       format: "uuid"

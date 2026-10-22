@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/biometric-service.yaml                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -18,6 +18,8 @@
 //   POST /v1/biometric/verify                           officer            browser
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
+//   GET  /v1/biometric/policy                           officer            browser
+//   POST /v1/biometric/evidence                         officer            browser
 //
 // `.strict()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
@@ -35,6 +37,17 @@ export const AgencyMismatch403Schema = z
     "status": z.literal('AGENCY_MISMATCH'),
   }).strict();
 
+/**
+ * Not consumed by S06; shape asserted from edge-v1.yaml.
+ */
+export const BiometricAnySchema = z.record(z.unknown());
+
+export const BiometricErrorSchema = z
+  .object({
+    "error": z.enum(['INVALID_REQUEST', 'INVALID_EVIDENCE', 'IMAGE_PAYLOAD_REFUSED', 'REPLAY_CONFLICT', 'BIOMETRIC_OFF', 'MODE_MISMATCH', 'PERMISSION_DENIED', 'UNAUTHENTICATED']),
+    "detail": z.string().optional(),
+  }).strict();
+
 export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 export const BiometricEvaluatedSchema = z
@@ -46,6 +59,12 @@ export const BiometricEvaluatedSchema = z
     "livenessPass": z.boolean(),
     "faceMatchPass": z.boolean(),
   }).strict();
+
+/**
+ * { record, signature } (ADR-037 §4). Signed on the device; the browser
+ * never builds it.
+ */
+export const BiometricEvidenceEnvelopeSchema = z.record(z.unknown());
 
 export const Forbidden403Schema = z
   .object({
@@ -143,6 +162,36 @@ export const biometricServiceOperations = {
     query: [],
     responses: {
       "200": null,
+    },
+  },
+  "biometricPolicy": {
+    method: "GET",
+    path: "/v1/biometric/policy",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": BiometricAnySchema,
+      "403": BiometricErrorSchema,
+    },
+  },
+  "biometricEvidenceRecord": {
+    method: "POST",
+    path: "/v1/biometric/evidence",
+    auth: ["officer"],
+    reach: "browser",
+    request: BiometricEvidenceEnvelopeSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": BiometricAnySchema,
+      "201": BiometricAnySchema,
+      "400": BiometricErrorSchema,
+      "403": BiometricErrorSchema,
+      "409": BiometricErrorSchema,
+      "422": BiometricErrorSchema,
     },
   },
 } as const;

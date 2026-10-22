@@ -25,7 +25,7 @@ info:
 
     On every route the officer's agency and subject id come from the verified
     token, never the body.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
   x-usrp-service-port-var: "PORT_FIELD_SYNC_SERVICE"
   x-usrp-transport-faults:
     - status: 405
