@@ -17,6 +17,8 @@ export interface QueueRow {
   readonly id: string;
   readonly primary: string;
   readonly secondary?: string;
+  /** Extra content under the primary label (a signal, a flag); already translated. */
+  readonly detail?: React.ReactNode;
   /** Already-translated status label. */
   readonly status: string;
   /** ISO instant the record entered this queue (or last changed). */
@@ -72,6 +74,7 @@ export function QueueTable({ caption, rows, now = new Date(), thresholds, onOpen
                 ? <Button appearance="subtle" spacing="compact" onClick={() => onOpen(r.id)}>{r.primary}</Button>
                 : <Text weight="medium">{r.primary}</Text>}
               {r.secondary !== undefined && <Text size="small" color="color.text.subtle">{r.secondary}</Text>}
+              {r.detail}
             </Inline>
           ),
         },
