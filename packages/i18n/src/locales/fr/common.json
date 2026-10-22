@@ -6,7 +6,10 @@
     "scheduling": "Planification",
     "settings": "Paramètres",
     "logout": "Se déconnecter",
-    "gate": "Porte du site"
+    "gate": "Porte du site",
+    "queues": "Files de travail",
+    "erasure": "Demandes d'effacement",
+    "staff": "Personnel"
   },
   "auth": {
     "send_code": "Envoyer le code",

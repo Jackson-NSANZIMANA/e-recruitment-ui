@@ -6,7 +6,10 @@
     "scheduling": "Gateganya",
     "settings": "Igenamiterere",
     "logout": "Sohoka",
-    "gate": "Irembo ry'ikizamini"
+    "gate": "Irembo ry'ikizamini",
+    "queues": "Imirongo y'akazi",
+    "erasure": "Ibyifuzo byo gusiba",
+    "staff": "Abakozi"
   },
   "auth": {
     "send_code": "Ohereza kode",

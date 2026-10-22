@@ -6,7 +6,10 @@
     "scheduling": "Scheduling",
     "settings": "Settings",
     "logout": "Sign out",
-    "gate": "Venue gate"
+    "gate": "Venue gate",
+    "queues": "Queues",
+    "erasure": "Erasure requests",
+    "staff": "Staff"
   },
   "auth": {
     "send_code": "Send code",
