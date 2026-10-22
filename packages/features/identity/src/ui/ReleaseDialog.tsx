@@ -46,7 +46,7 @@ export function ReleaseDialog({ handle, code, expiresAt, onClose }: ReleaseDialo
     }
   };
   const print = (): void => {
-    const w = window.open('', '_blank', 'noopener,noreferrer,width=640,height=480');
+    const w = window.open('', '_blank', 'width=640,height=480');
     if (w === null) return;
     w.document.open();
     w.document.write(activationSheetHtml({
@@ -60,7 +60,7 @@ export function ReleaseDialog({ handle, code, expiresAt, onClose }: ReleaseDialo
   };
 
   return (
-    <ModalDialog onClose={onClose} width="medium" testId="release-dialog">
+    <ModalDialog onClose={onClose} width="medium" testId="release-dialog" shouldCloseOnEscapePress={false} shouldCloseOnOverlayClick={false}>
       <ModalHeader>
         <ModalTitle>{t('identity.release.title')}</ModalTitle>
         <CloseButton onClick={onClose} />

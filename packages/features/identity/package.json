@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./officer-login": "./src/routes/officer-login.tsx",
     "./citizen-login": "./src/routes/citizen-otp.tsx",
-    "./locales/*": "./locales/*"
+    "./locales/*": "./locales/*",
+    "./activate": "./src/routes/activate.tsx"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

@@ -124,8 +124,9 @@ function FinalPanel({ client, agency, applicationId, t }: PanelProps): React.Rea
         title={confirm === 'reject' ? t('applications.actions.confirmRejectTitle') : t('applications.actions.confirmShortlistTitle')}
         body={confirm === 'reject' ? t('applications.actions.confirmRejectBody') : t('applications.actions.confirmShortlistBody')}
         confirmLabel={confirm === 'reject' ? t('applications.actions.confirmReject') : t('applications.actions.confirmShortlist')}
-      />
-      {mutation.isError && <RefusalMessage error={mutation.error} t={t} />}
+      >
+        {mutation.isError && <RefusalMessage error={mutation.error} t={t} />}
+      </ConfirmAction>
     </Panel>
   );
 }
@@ -184,8 +185,9 @@ function AdjudicatePanel({ client, agency, applicationId, t }: PanelProps): Reac
         title={confirm === 'reject' ? t('applications.actions.confirmRejectTitle') : t('applications.actions.confirmClearTitle')}
         body={confirm === 'reject' ? t('applications.actions.confirmRejectBody') : t('applications.actions.confirmClearBody')}
         confirmLabel={confirm === 'reject' ? t('applications.actions.confirmReject') : t('applications.actions.confirmClear')}
-      />
-      {mutation.isError && <RefusalMessage error={mutation.error} t={t} />}
+      >
+        {mutation.isError && <RefusalMessage error={mutation.error} t={t} />}
+      </ConfirmAction>
     </Panel>
   );
 }

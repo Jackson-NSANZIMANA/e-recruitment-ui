@@ -13,7 +13,7 @@ export type { CitizenLoginPageProps } from './routes/citizen-otp.tsx';
 export { SessionExpiryNotice } from './ui/SessionExpiryNotice.tsx';
 // S06: staff administration and officer activation.
 export { createStaffRoutes, createActivationRoutes } from './routes/index.tsx';
-export { StaffPage } from './ui/StaffPage.tsx';
-export { ActivatePage } from './ui/ActivatePage.tsx';
+// The pages are NOT re-exported: they load lazily through the route factories, and a
+// barrel export would pull them into every app that imports a sign-in screen.
 export * from './model/staff.ts';
 export * from './model/role-table.ts';

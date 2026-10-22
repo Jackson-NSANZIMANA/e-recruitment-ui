@@ -25,9 +25,12 @@ interface FormValues {
 export function DeclineGroundsDialog({
   onCancel,
   onConfirm,
+  error,
 }: {
   readonly onCancel: () => void;
   readonly onConfirm: (note: string) => void;
+  /** A refusal of the decision, shown inside the modal where it can be read. */
+  readonly error?: React.ReactNode;
 }): React.ReactElement {
   const { t } = useTranslation('compliance');
 
@@ -104,6 +107,7 @@ export function DeclineGroundsDialog({
                     }}
                   </Field>
                 </Stack>
+                {error}
               </ModalBody>
 
               <ModalFooter>

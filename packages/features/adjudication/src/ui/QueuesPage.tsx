@@ -20,7 +20,7 @@ import {
 import { useOfficerSession } from '@usrp/auth';
 import type { Agency } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { ConfirmAction, FreshnessStamp, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
+import { ConfirmAction, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { useNavigate } from 'react-router-dom';
 import { byQueueAge, holdKindOf, type AmberRow, type AmberStatus } from '../model/amber.js';
 import { QUEUE_STATUSES, rowTransitions, runBulk, visibleQueues, type BulkResult, type QueueId, type RowTransition } from '../model/queues.js';
@@ -225,7 +225,7 @@ function SearchQueue({ client, agency, queue, permissions }: { readonly client: 
         appearance={bulk?.action === 'reject' ? 'danger' : 'primary'}
         title={t(bulk?.action === 'reject' ? 'adjudication.bulk.confirmRejectTitle' : 'adjudication.bulk.confirmShortlistTitle')}
         body={t('adjudication.bulk.confirmBody', { count: apps.filter((a) => a.status === 'MEDICAL_REVIEW').length })}
-        consequences={[t('adjudication.bulk.oneByOne')]}
+        consequences={[t('adjudication.bulk.oneByOne'), apps.filter((a) => a.status === 'MEDICAL_REVIEW').map((a) => a.processingCode).join(', ')]}
         confirmLabel={t(bulk?.action === 'reject' ? 'adjudication.row.reject' : 'adjudication.row.shortlist')}
         onCancel={() => setBulk(null)}
         onConfirm={() => void runAll()}
@@ -245,7 +245,6 @@ export function QueuesPage({ client, initial = 'amber' }: QueuesPageProps): Reac
   const permissions = session?.permissions ?? [];
   const agency: Agency = session?.agency ?? 'RDF';
   const visible = visibleQueues(permissions);
-  const [now] = React.useState(() => new Date().toISOString());
   if (visible.length === 0) return <Box xcss={styles.root}><StateBoundary state="forbidden"><span /></StateBoundary></Box>;
   const selected = Math.max(0, visible.indexOf(initial));
   return (
@@ -253,7 +252,6 @@ export function QueuesPage({ client, initial = 'amber' }: QueuesPageProps): Reac
       <Stack space="space.200">
         <Inline spread="space-between" alignBlock="center" shouldWrap>
           <Heading size="xlarge" as="h1">{t('adjudication.queue.title')}</Heading>
-          <FreshnessStamp updatedAt={now} />
         </Inline>
         <Tabs id="officer-queues" defaultSelected={selected}>
           <TabList>

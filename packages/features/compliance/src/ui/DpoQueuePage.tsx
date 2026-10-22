@@ -97,8 +97,11 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
         </StateBoundary>
         {declining !== null && (
           <>
-            <DeclineGroundsDialog onCancel={close} onConfirm={(note) => void submitDecline(note)} />
-            {decide.isError && <SectionMessage appearance="error" testId="dpo-error"><Text as="p">{failureText(decide.error, t)}</Text></SectionMessage>}
+            <DeclineGroundsDialog
+              onCancel={close}
+              onConfirm={(note) => void submitDecline(note)}
+              error={decide.isError ? <SectionMessage appearance="error" testId="dpo-error"><Text as="p">{failureText(decide.error, t)}</Text></SectionMessage> : null}
+            />
           </>
         )}
         <ConfirmAction

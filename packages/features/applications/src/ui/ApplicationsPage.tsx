@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from '@atlaskit/button/new';
 import Heading from '@atlaskit/heading';
+import SectionMessage from '@atlaskit/section-message';
 import Select from '@atlaskit/select';
 import TextField from '@atlaskit/textfield';
 import { Box, Inline, Stack, Text } from '@atlaskit/primitives/compiled';
@@ -46,10 +47,12 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
   const [filters, setFilters] = React.useState<ListFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = React.useState<ListFilters>(EMPTY_FILTERS);
   // Page one is the query; "load more" appends further cursor pages imperatively.
-  const [more, setMore] = React.useState<{ rows: readonly ApplicationSearchRow[]; cursor: string | null } | null>(null);
+  const [moreState, setMore] = React.useState<{ rows: readonly ApplicationSearchRow[]; cursor: string | null; forUpdatedAt: number } | null>(null);
   const [moreBusy, setMoreBusy] = React.useState(false);
   const [moreFailed, setMoreFailed] = React.useState(false);
   const query = useSearchApplications(client, searchQueryOf(filters));
+  // Extra pages belong to the exact first page they followed; a refetch of page one discards them.
+  const more = moreState !== null && moreState.forUpdatedAt === query.dataUpdatedAt ? moreState : null;
   const pages: readonly ApplicationSearchRow[] = [...(query.data?.applications ?? []), ...(more?.rows ?? [])];
   const nextCursor = more !== null ? more.cursor : (query.data?.nextCursor ?? null);
 
@@ -64,7 +67,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
     setMoreFailed(false);
     try {
       const page = await searchApplications(client, searchQueryOf(filters, nextCursor));
-      setMore({ rows: [...(more?.rows ?? []), ...page.applications], cursor: page.nextCursor });
+      setMore({ rows: [...(more?.rows ?? []), ...page.applications], cursor: page.nextCursor, forUpdatedAt: query.dataUpdatedAt });
     } catch {
       setMoreFailed(true);
     } finally {
@@ -72,9 +75,11 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
     }
   };
 
+  // A 400 is a filter value the backend refused (unknown category, bad campaign code or district): say so, do not offer a retry of the same query.
+  const badFilter = query.isError && httpStatusOf(query.error) === 400;
   const state = listState({
     isLoading: query.isLoading,
-    errorStatus: query.isError ? httpStatusOf(query.error) : null,
+    errorStatus: query.isError && !badFilter ? httpStatusOf(query.error) : null,
     rowCount: pages.length,
     filtersActive: filtersActive(filters),
   });
@@ -130,8 +135,13 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
           </Inline>
         </Box>
 
+        {badFilter && (
+          <SectionMessage appearance="warning" testId="filter-invalid" title={t('applications.filters.invalidTitle')} headingLevel="h2">
+            <Text as="p">{t('applications.filters.invalidBody')}</Text>
+          </SectionMessage>
+        )}
         <StateBoundary
-          state={state}
+          state={badFilter ? 'ready' : state}
           onRetry={() => void query.refetch()}
           onClearFilters={() => { setDraft(EMPTY_FILTERS); apply(EMPTY_FILTERS); }}
         >
