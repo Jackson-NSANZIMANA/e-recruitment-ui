@@ -431,6 +431,10 @@
       },
       "INVALID_TICKET": {
         "title": "QR invalide — ne pas admettre"
+      },
+      "MANUAL_IDENTITY_REQUIRED": {
+        "title": "Un superviseur doit confirmer l'identité",
+        "body": "La carte correspond, mais les éléments pour {{code}} exigent un superviseur de terrain. N'admettez pas avant sa confirmation."
       }
     },
     "invalid_reasons": {
@@ -452,7 +456,8 @@
       "IDENTITY_NOT_VERIFIED": "La vérification d’identité n’est pas terminée pour ce candidat. Relancez la vérification d’identité.",
       "APPLICANT_NOT_FOUND": "Le dossier d’identité est introuvable. Relancez la vérification d’identité.",
       "UNSUPPORTED_AGENCY": "L’enregistrement sur place n’est disponible que pour les campagnes RDF.",
-      "FORBIDDEN": "Votre rôle ne permet pas d’enregistrer des candidats sur place."
+      "FORBIDDEN": "Votre rôle ne permet pas d’enregistrer des candidats sur place.",
+      "VALIDATION_FAILED": "Les informations d'enregistrement n'ont pas été acceptées. Vérifiez chaque champ et réessayez."
     }
   },
   "rehearsal": {
