@@ -369,6 +369,7 @@ export type GateAdmissionResult =
     }
   | { readonly outcome: 'NOT_ADMISSIBLE'; readonly candidate: GateCandidate; readonly currentStatus: string }
   | { readonly outcome: 'IDENTITY_MISMATCH'; readonly candidate: GateCandidate }
+  | { readonly outcome: 'MANUAL_IDENTITY_REQUIRED'; readonly candidate: GateCandidate }
   | { readonly outcome: 'WRONG_VENUE'; readonly ticketVenueName: string }
   | { readonly outcome: 'TOO_EARLY' | 'EXPIRED'; readonly examDate: string }
   | { readonly outcome: 'INVALID_TICKET'; readonly reason: InvalidTicketReason };

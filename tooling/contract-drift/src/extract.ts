@@ -25,6 +25,10 @@ export interface ExtractedService {
 const PATH_CONST_RE = /export\s+const\s+([A-Z][A-Z0-9_]*_PATH)\s*=\s*'([^']+)'/g;
 const ROUTE_RE = /method:\s*'(GET|POST|PUT|PATCH|DELETE)'\s*,\s*\n?\s*path:\s*([A-Za-z_$][\w$]*|'[^']+')/g;
 const WITH_AUTH_RE = /withAuth\(\s*verify\s*,\s*\{\s*kind:\s*(\[[^\]]*\]|'[^']+')/g;
+// `const officer = { kind: 'officer' } as const;` then `withAuth(verify, officer, ...)`
+// (iam-service officer-admin). Resolved only when the const is declared in the same file.
+const KIND_CONST_RE = /const\s+([A-Za-z_$][\w$]*)\s*=\s*\{\s*kind:\s*(\[[^\]]*\]|'[^']+')\s*\}/g;
+const WITH_AUTH_CONST_RE = /withAuth\(\s*verify\s*,\s*([A-Za-z_$][\w$]*)\s*,/g;
 const FACTORY_RE = /export\s+function\s+([A-Za-z_$][\w$]*)\s*\(/g;
 // A route-builder helper: `function writeRoute(path: string, ...)` whose returned
 // route uses the shorthand `path,`. Each call `writeRoute(SOME_PATH, ...)` is one
@@ -74,7 +78,14 @@ function parseKind(raw: string): readonly string[] {
 
 function extractRoutes(source: string, file: string, sessionAuthPaths: ReadonlySet<string>): readonly ExtractedRoute[] {
   const clean = decomment(source);
-  const auths = [...clean.matchAll(WITH_AUTH_RE)].map((m) => ({ index: m.index!, kinds: parseKind(m[1]!) }));
+  const kindConsts = new Map([...clean.matchAll(KIND_CONST_RE)].map((m) => [m[1]!, parseKind(m[2]!)] as const));
+  const auths = [
+    ...[...clean.matchAll(WITH_AUTH_RE)].map((m) => ({ index: m.index!, kinds: parseKind(m[1]!) })),
+    ...[...clean.matchAll(WITH_AUTH_CONST_RE)].flatMap((m) => {
+      const kinds = kindConsts.get(m[1]!);
+      return kinds === undefined ? [] : [{ index: m.index!, kinds }];
+    }),
+  ].sort((a, b) => a.index - b.index);
   const factories = [...clean.matchAll(FACTORY_RE)].map((m) => ({ index: m.index!, name: m[1]! }));
   const routeMatches = [...clean.matchAll(ROUTE_RE)];
   const direct = routeMatches.map((match) => {
