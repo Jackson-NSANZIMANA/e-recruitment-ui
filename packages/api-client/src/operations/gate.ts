@@ -51,6 +51,7 @@ export function gateResultFromRefusal(
       return candidate !== null && typeof currentStatus === 'string' ? { outcome, candidate, currentStatus } : null;
     }
     case 'IDENTITY_MISMATCH':
+    case 'MANUAL_IDENTITY_REQUIRED':
       return candidate !== null ? { outcome, candidate } : null;
     case 'WRONG_VENUE': {
       const ticketVenueName = data['ticketVenueName'];
