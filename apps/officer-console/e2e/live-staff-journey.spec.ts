@@ -37,11 +37,17 @@ const NEW_PW = 'Live-Journey-Pw#2026';
 test.describe.configure({ mode: 'serial' });
 test.skip(!LIVE, 'live journey: set USRP_LIVE=1 with the backend (four-eyes branch) running and `pnpm rehearse` staged');
 
+/** The edge hands out the CSRF echo on the first session read; a write sent before it lands is (correctly) refused. */
+async function csrfReady(page: Page): Promise<void> {
+  await expect.poll(async () => (await page.context().cookies()).some((c) => c.name === 'usrp_csrf_dev' || c.name === '__Host-usrp_csrf'), { timeout: 20_000 }).toBe(true);
+}
+
 async function officerPage(browser: Browser, handle: string, password: string): Promise<Page> {
   const context = await browser.newContext({ baseURL: CONSOLE });
   const page = await context.newPage();
   await page.addInitScript(() => window.localStorage.setItem('usrp_lang', 'en'));
   await page.goto('/login');
+  await csrfReady(page);
   await page.locator('input[name="loginHandle"]').fill(handle);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole('button', { name: /^sign in$/i }).click();
@@ -88,8 +94,8 @@ test('rdf.admin creates an officer and is told the release waits for a second ad
   const admin = await officerPage(browser, 'rdf.admin', ADMIN_PW);
   await admin.goto('/staff');
   await admin.getByLabel('Login handle').fill(HANDLE);
-  await admin.getByLabel('Posts').click();
-  await admin.getByText('Reviewer', { exact: true }).click();
+  await admin.getByRole('combobox', { name: 'Posts' }).click();
+  await admin.getByRole('option', { name: 'Reviewer', exact: true }).click();
   await admin.getByRole('button', { name: 'Create officer' }).click();
   await expect(admin.getByTestId('created-pending-release')).toContainText('Pending release by a second administrator', { timeout: 20_000 });
   await expect(admin.getByTestId('staff-table')).toContainText(HANDLE);
@@ -116,6 +122,7 @@ test('rdf.admin2 releases the code once; the officer activates and signs in', as
   const page = await context.newPage();
   await page.addInitScript(() => window.localStorage.setItem('usrp_lang', 'en'));
   await page.goto('/activate');
+  await csrfReady(page);
   await page.getByLabel('Login handle').fill(HANDLE);
   await page.getByLabel('Activation code').fill(code);
   await page.getByLabel('New password').fill(NEW_PW);
@@ -124,6 +131,7 @@ test('rdf.admin2 releases the code once; the officer activates and signs in', as
   await expect(page.getByTestId('activate-done')).toBeVisible({ timeout: 20_000 });
   // The code works once: a replay is the same single refusal.
   await page.reload();
+  await csrfReady(page);
   await page.getByLabel('Login handle').fill(HANDLE);
   await page.getByLabel('Activation code').fill(code);
   await page.getByLabel('New password').fill(`${NEW_PW}-again`);
@@ -143,12 +151,10 @@ test('rdf.admin assigns medical_officer with a reason; the officer\'s open sessi
   await admin.goto('/staff');
   await admin.getByRole('button', { name: `Assign posts: ${HANDLE}` }).click();
   const dialog = admin.getByTestId('confirm-action');
-  await dialog.getByLabel('Posts').click();
-  await admin.getByText('Medical officer', { exact: true }).click();
-  // reviewer is replaced by medical_officer: remove it.
-  await dialog.getByLabel('Remove Reviewer').click();
-  await dialog.getByLabel('Reason').click();
-  await admin.getByText('Posting change', { exact: true }).click();
+  await dialog.getByRole('combobox', { name: 'Posts' }).click();
+  await admin.getByRole('option', { name: 'Medical officer', exact: true }).click();
+  await dialog.getByRole('combobox', { name: 'Reason' }).click();
+  await admin.getByRole('option', { name: 'Posting change', exact: true }).click();
   await admin.getByTestId('confirm-action-confirm').click();
   await expect(admin.getByTestId('staff-notice')).toContainText('Posts changed', { timeout: 20_000 });
   await admin.context().close();
@@ -186,7 +192,8 @@ test('persona A completes the physical test; the medical officer records the ver
   const director = await officerPage(browser, 'rdf.director', OFFICER_PW);
   await director.goto(`/applications/${state.applicationId}`);
   const heading = director.getByRole('heading', { name: 'Final decision' });
-  if (await heading.isVisible({ timeout: 20_000 }).catch(() => false)) {
+  const needsFinal = await heading.waitFor({ timeout: 20_000 }).then(() => true, () => false);
+  if (needsFinal) {
     await director.getByRole('button', { name: 'Shortlist', exact: true }).click();
     await director.getByTestId('confirm-action-confirm').click();
   }
@@ -214,8 +221,8 @@ test('rdf.admin disables the officer and their open session ends', async ({ brow
   await admin.getByRole('button', { name: `Disable: ${HANDLE}` }).click();
   const dialog = admin.getByTestId('confirm-action');
   await expect(dialog).toContainText('will be signed out now');
-  await dialog.getByLabel('Reason').click();
-  await admin.getByText('Left the service', { exact: true }).click();
+  await dialog.getByRole('combobox', { name: 'Reason' }).click();
+  await admin.getByRole('option', { name: 'Left the service', exact: true }).click();
   await admin.getByTestId('confirm-action-confirm').click();
   await expect(admin.getByTestId('staff-notice')).toContainText('was disabled', { timeout: 20_000 });
   await admin.context().close();
