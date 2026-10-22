@@ -4,8 +4,5 @@ export { type ApiClient, type CallOptions, APPLICATIONS_OPERATIONS, type Applica
 export * from './api/applications.ts';
 export * from './ui/StatusLozenge.tsx';
 export { APPLICATIONS_NAMESPACE, registerApplicationsLocales } from './locales.ts';
-export { ApplicationsPage } from './ui/ApplicationsPage.tsx';
-export type { ApplicationsPageProps } from './ui/ApplicationsPage.tsx';
-export { ApplicationDetailPage } from './ui/ApplicationDetailPage.tsx';
 export { createApplicationsRoutes } from './routes/index.tsx';
 export * from './model/workspace.ts';

@@ -13,7 +13,7 @@ import type {
 } from '../wire.js';
 
 export function useSearchApplications(client: ApiClient, q: ApplicationSearchQuery): UseQueryResult<ApplicationSearchResponse, Error> {
-  return useQuery({ queryKey: searchKeys.query(q), queryFn: () => searchApplications(client, q), retry: false, placeholderData: (prev) => prev });
+  return useQuery({ queryKey: searchKeys.query(q), queryFn: () => searchApplications(client, q), retry: false });
 }
 
 export function useBiometricEvidence(client: ApiClient, applicationId: string, enabled = true): UseQueryResult<BiometricEvidenceResponse, Error> {
