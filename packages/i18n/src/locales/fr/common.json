@@ -510,5 +510,73 @@
     "station_unavailable_title": "Ce poste n'est pas disponible pour votre compte",
     "station_unavailable_body": "Votre rôle ou votre agence ne comprend pas ce poste. Choisissez plutôt l'un de vos postes.",
     "back_to_stations": "Retour à mes postes"
+  },
+  "ui": {
+    "state": {
+      "loading": {
+        "title": "Chargement",
+        "body": "Veuillez patienter pendant la récupération des données."
+      },
+      "empty": {
+        "title": "Rien pour l'instant",
+        "body": "Aucun enregistrement à afficher."
+      },
+      "filtered-empty": {
+        "title": "Aucun enregistrement correspondant",
+        "body": "Aucun enregistrement ne correspond à la recherche ou aux filtres actuels."
+      },
+      "forbidden": {
+        "title": "Non autorisé",
+        "body": "Votre poste ne vous permet pas de voir ou de faire cela."
+      },
+      "not-found": {
+        "title": "Introuvable",
+        "body": "Cet enregistrement n'existe pas dans le périmètre de votre agence."
+      },
+      "partial": {
+        "title": "Des données manquent",
+        "body": "Une partie de cette vue n'a pas pu être chargée. Ce qui s'affiche peut être incomplet."
+      },
+      "stale": {
+        "title": "Cette vue est peut-être périmée",
+        "body": "Elle a été chargée il y a un moment. Actualisez avant d'agir."
+      },
+      "upstream-failure": {
+        "title": "Un service est indisponible",
+        "body": "La demande n'a pas pu aboutir. Rien n'a été modifié."
+      },
+      "conflict": {
+        "title": "L'enregistrement a changé",
+        "body": "Une autre action a modifié cet enregistrement. Rechargez et vérifiez son état actuel."
+      },
+      "retry": "Réessayer",
+      "clearFilters": "Effacer les filtres"
+    },
+    "confirm": {
+      "cancel": "Annuler"
+    },
+    "mask": {
+      "reveal": "Afficher",
+      "hide": "Masquer"
+    },
+    "freshness": {
+      "updated": "Mis à jour il y a {{age}}",
+      "stale": "Périmé"
+    },
+    "age": {
+      "minute_one": "{{count}} minute",
+      "minute_other": "{{count}} minutes",
+      "hour_one": "{{count}} heure",
+      "hour_other": "{{count}} heures",
+      "day_one": "{{count}} jour",
+      "day_other": "{{count}} jours"
+    },
+    "queue": {
+      "item": "Dossier",
+      "status": "Statut",
+      "age": "Attente",
+      "lastAction": "Dernière action",
+      "actions": "Actions"
+    }
   }
 }
