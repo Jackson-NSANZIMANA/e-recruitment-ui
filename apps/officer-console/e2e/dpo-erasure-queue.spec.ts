@@ -21,8 +21,7 @@ test('declining needs written grounds, and the grounds travel with the decision'
   await page.route('**/edge/v1/erasure-requests/decision', (route) => { body = route.request().postData() ?? ''; return json(route, 200, { requestId: ID1, decision: 'DECLINED' }); });
   await page.goto('/compliance/erasure-queue');
   await page.getByRole('button', { name: /^Decline: / }).first().click();
-  await page.getByRole('button', { name: 'Decline request' }).click();
-  await expect(page.getByText('A ground is required.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Decline request' })).toBeDisabled();
   expect(body).toBe('');
   await page.getByLabel('Ground for declining').fill('An application is still active');
   await page.getByRole('button', { name: 'Decline request' }).click();
