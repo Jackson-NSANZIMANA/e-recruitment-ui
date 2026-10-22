@@ -212,7 +212,7 @@ export {
 export type {
   OfficerRow, OfficerStatus, ActivationState, OfficerListResponse, CreateOfficerInput, OfficerOpenedResponse,
   OfficerTargetInput, OfficerReleasedResponse, AssignablePost, AssignOfficerPostsInput, OfficerReasonInput,
-  OfficerChangeResponse, ActivateOfficerInput, ApplicationSearchRow, ApplicationSearchResponse,
+  OfficerChangeResponse, ActivateOfficerInput, ActivateOfficerResponse, ApplicationSearchRow, ApplicationSearchResponse,
   ApplicationSearchQuery, BiometricEvidenceRow, BiometricEvidenceResponse, ErasureRequestRow,
   ErasureQueueResponse, ErasureDecisionInput, ErasureDecisionResponse,
 } from './wire.js';
