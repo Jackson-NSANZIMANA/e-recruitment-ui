@@ -1,35 +1,244 @@
 {
   "service": "iam-service",
   "cases": [
-    { "id": "token-issued", "schema": "TokenIssued", "expect": "accept",
+    {
+      "id": "token-issued",
+      "schema": "TokenIssued",
+      "expect": "accept",
       "why": "officer-login and service-token success. TWO FIELDS. This is the shape, not an abridgement of it.",
-      "value": { "token": "eyJhbGciOiJFZDI1NTE5In0.eyJzdWIiOiIxIn0.sig", "expiresAt": "2026-08-27T09:44:00.000Z" } },
-    { "id": "token-rejects-user-object", "schema": "TokenIssued", "expect": "reject",
+      "value": {
+        "token": "eyJhbGciOiJFZDI1NTE5In0.eyJzdWIiOiIxIn0.sig",
+        "expiresAt": "2026-08-27T09:44:00.000Z"
+      }
+    },
+    {
+      "id": "token-rejects-user-object",
+      "schema": "TokenIssued",
+      "expect": "reject",
       "why": "THE CENTRAL IAM GAP, pinned as a fixture. Login returns no user, no agency, no roles. A console that expects them here is expecting an endpoint that does not exist (GET /v1/auth/officer/me is proposed, not built).",
-      "value": { "token": "t", "expiresAt": "2026-08-27T09:44:00.000Z", "user": { "id": "1", "agency": "RDF", "roles": ["REVIEWER"] } } },
-    { "id": "token-rejects-refresh", "schema": "TokenIssued", "expect": "reject",
+      "value": {
+        "token": "t",
+        "expiresAt": "2026-08-27T09:44:00.000Z",
+        "user": {
+          "id": "1",
+          "agency": "RDF",
+          "roles": [
+            "REVIEWER"
+          ]
+        }
+      }
+    },
+    {
+      "id": "token-rejects-refresh",
+      "schema": "TokenIssued",
+      "expect": "reject",
       "why": "There is no refresh token and no refresh endpoint. An officer token is valid until it expires, by design (ADR-016); the UI re-authenticates.",
-      "value": { "token": "t", "expiresAt": "2026-08-27T09:44:00.000Z", "refreshToken": "r" } },
-    { "id": "invalid-credentials", "schema": "InvalidCredentials401", "expect": "accept",
+      "value": {
+        "token": "t",
+        "expiresAt": "2026-08-27T09:44:00.000Z",
+        "refreshToken": "r"
+      }
+    },
+    {
+      "id": "invalid-credentials",
+      "schema": "InvalidCredentials401",
+      "expect": "accept",
       "why": "One shape for unknown handle, wrong password AND disabled account. No enumeration.",
-      "value": { "error": "INVALID_CREDENTIALS", "detail": "Invalid handle or password." } },
-    { "id": "credentials-rejects-client-code", "schema": "InvalidCredentials401", "expect": "reject",
+      "value": {
+        "error": "INVALID_CREDENTIALS",
+        "detail": "Invalid handle or password."
+      }
+    },
+    {
+      "id": "credentials-rejects-client-code",
+      "schema": "InvalidCredentials401",
+      "expect": "reject",
       "why": "The two grants have DIFFERENT 401 codes. INVALID_CLIENT belongs to the service-token route.",
-      "value": { "error": "INVALID_CLIENT" } },
-    { "id": "invalid-client", "schema": "InvalidClient401", "expect": "accept",
+      "value": {
+        "error": "INVALID_CLIENT"
+      }
+    },
+    {
+      "id": "invalid-client",
+      "schema": "InvalidClient401",
+      "expect": "accept",
       "why": "service-token 401. Unknown client, wrong secret and disabled client are one shape here too — the enumeration discipline is identical to login.",
-      "value": { "error": "INVALID_CLIENT", "detail": "Invalid client id or secret." } },
-    { "id": "login-request", "schema": "OfficerLoginRequest", "expect": "accept",
+      "value": {
+        "error": "INVALID_CLIENT",
+        "detail": "Invalid client id or secret."
+      }
+    },
+    {
+      "id": "login-request",
+      "schema": "OfficerLoginRequest",
+      "expect": "accept",
       "why": "Both fields required, bounded 128 / 256.",
-      "value": { "loginHandle": "j.nsanzimana", "password": "correct-horse-battery-staple" } },
-    { "id": "login-request-rejects-email-field", "schema": "OfficerLoginRequest", "expect": "reject",
+      "value": {
+        "loginHandle": "j.nsanzimana",
+        "password": "correct-horse-battery-staple"
+      }
+    },
+    {
+      "id": "login-request-rejects-email-field",
+      "schema": "OfficerLoginRequest",
+      "expect": "reject",
       "why": "The field is loginHandle, not email or username. A login form bound to the wrong name is a 400 on every submit.",
-      "value": { "email": "j@rdf.gov.rw", "password": "x" } },
-    { "id": "login-request-rejects-empty-handle", "schema": "OfficerLoginRequest", "expect": "reject",
+      "value": {
+        "email": "j@rdf.gov.rw",
+        "password": "x"
+      }
+    },
+    {
+      "id": "login-request-rejects-empty-handle",
+      "schema": "OfficerLoginRequest",
+      "expect": "reject",
       "why": "Controller checks length === 0 before anything else. Empty is a 400, not an auth failure.",
-      "value": { "loginHandle": "", "password": "x" } },
-    { "id": "invalid-request-400", "schema": "InvalidRequest400", "expect": "accept",
+      "value": {
+        "loginHandle": "",
+        "password": "x"
+      }
+    },
+    {
+      "id": "invalid-request-400",
+      "schema": "InvalidRequest400",
+      "expect": "accept",
       "why": "Shape error. Deliberately NOT a signal about whether the handle exists.",
-      "value": { "error": "INVALID_REQUEST", "detail": "Field \"loginHandle\" is required." } }
+      "value": {
+        "error": "INVALID_REQUEST",
+        "detail": "Field \"loginHandle\" is required."
+      }
+    },
+    {
+      "id": "officer-list",
+      "schema": "OfficerListOk",
+      "expect": "accept",
+      "why": "listOfficers: allowlisted rows only (ADR-036; activationState and releasableByYou added by Addendum A).",
+      "value": {
+        "officers": [
+          {
+            "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "loginHandle": "rdf.medical.one",
+            "posts": [
+              "medical_officer"
+            ],
+            "status": "pending",
+            "createdAt": "2026-10-22T08:00:00.000Z",
+            "activatedAt": null,
+            "lastLoginAt": null,
+            "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+            "activationState": "PENDING_RELEASE",
+            "releasableByYou": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-list-rejects-credential",
+      "schema": "OfficerListOk",
+      "expect": "reject",
+      "why": "No credential, code hash or password ever crosses.",
+      "value": {
+        "officers": [
+          {
+            "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "loginHandle": "rdf.medical.one",
+            "posts": [
+              "medical_officer"
+            ],
+            "status": "pending",
+            "createdAt": "2026-10-22T08:00:00.000Z",
+            "activatedAt": null,
+            "lastLoginAt": null,
+            "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+            "activationState": "PENDING_RELEASE",
+            "releasableByYou": false,
+            "credential": "scrypt$16384$8$1$x"
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-created",
+      "schema": "OfficerOpened",
+      "expect": "accept",
+      "why": "createOfficer / reissue: the officer only. Four-eyes: the creating administrator never receives a code.",
+      "value": {
+        "outcome": "CREATED",
+        "officer": {
+          "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+          "loginHandle": "rdf.medical.one",
+          "posts": [
+            "medical_officer"
+          ],
+          "status": "pending",
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "activatedAt": null,
+          "lastLoginAt": null,
+          "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+          "activationState": "PENDING_RELEASE",
+          "releasableByYou": false
+        }
+      }
+    },
+    {
+      "id": "officer-created-rejects-activation-code",
+      "schema": "OfficerOpened",
+      "expect": "reject",
+      "why": "FOUR-EYES, pinned: create/reissue carry NO activation object (ADR-036 Addendum A).",
+      "value": {
+        "outcome": "CREATED",
+        "officer": {
+          "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+          "loginHandle": "rdf.medical.one",
+          "posts": [
+            "medical_officer"
+          ],
+          "status": "pending",
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "activatedAt": null,
+          "lastLoginAt": null,
+          "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+          "activationState": "PENDING_RELEASE",
+          "releasableByYou": false
+        },
+        "activation": {
+          "code": "BQMX3-BPRPQ-THZGX-A2R59",
+          "expiresAt": "2026-10-23T08:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "officer-change",
+      "schema": "OfficerChangeOk",
+      "expect": "accept",
+      "why": "assign posts / disable / enable / revoke sessions.",
+      "value": {
+        "outcome": "DISABLED",
+        "officer": {
+          "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+          "loginHandle": "rdf.medical.one",
+          "posts": [
+            "medical_officer"
+          ],
+          "status": "disabled",
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "activatedAt": null,
+          "lastLoginAt": null,
+          "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+          "activationState": null,
+          "releasableByYou": false
+        },
+        "sessionsRevoked": 2
+      }
+    },
+    {
+      "id": "officer-admin-error-same-admin",
+      "schema": "OfficerAdminError",
+      "expect": "accept",
+      "why": "The creating administrator asking to release.",
+      "value": {
+        "error": "SAME_ADMIN"
+      }
+    }
   ]
 }

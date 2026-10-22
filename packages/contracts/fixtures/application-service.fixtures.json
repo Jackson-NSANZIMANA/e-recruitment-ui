@@ -1,188 +1,1276 @@
 {
   "service": "application-service",
   "cases": [
-    { "id": "list-ok", "schema": "ListApplicationsOk", "expect": "accept",
+    {
+      "id": "list-ok",
+      "schema": "ListApplicationsOk",
+      "expect": "accept",
       "why": "listApplicationsRoute OK branch: { agency, applications }.",
-      "value": { "agency": "RDF", "applications": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90823", "category": "GENERAL_ENLISTMENT", "status": "SUBMITTED", "submittedAt": "2026-08-01T09:12:00.000Z" }
-      ] } },
-    { "id": "list-ok-empty", "schema": "ListApplicationsOk", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "applications": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-90823",
+            "category": "GENERAL_ENLISTMENT",
+            "status": "SUBMITTED",
+            "submittedAt": "2026-08-01T09:12:00.000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "list-ok-empty",
+      "schema": "ListApplicationsOk",
+      "expect": "accept",
       "why": "An agency with nothing filed. Empty array, not null, not absent.",
-      "value": { "agency": "RCS", "applications": [] } },
-    { "id": "list-rejects-pagination-envelope", "schema": "ListApplicationsOk", "expect": "reject",
+      "value": {
+        "agency": "RCS",
+        "applications": []
+      }
+    },
+    {
+      "id": "list-rejects-pagination-envelope",
+      "schema": "ListApplicationsOk",
+      "expect": "reject",
       "why": "The deprecated frontend's PaginatedResult<T>. NOTHING in this platform paginates; the read caps at 100 and returns a bare array.",
-      "value": { "agency": "RDF", "applications": [], "total": 0, "page": 1, "pageSize": 20 } },
-    { "id": "list-rejects-invented-status", "schema": "ListApplicationsOk", "expect": "reject",
+      "value": {
+        "agency": "RDF",
+        "applications": [],
+        "total": 0,
+        "page": 1,
+        "pageSize": 20
+      }
+    },
+    {
+      "id": "list-rejects-invented-status",
+      "schema": "ListApplicationsOk",
+      "expect": "reject",
       "why": "UNDER_REVIEW is one of the twelve statuses the deprecated frontend invented. It exists in no schema.",
-      "value": { "agency": "RDF", "applications": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-1", "category": "GENERAL_ENLISTMENT", "status": "UNDER_REVIEW", "submittedAt": null } ] } },
-    { "id": "list-rejects-expired-status", "schema": "ListApplicationsOk", "expect": "reject",
+      "value": {
+        "agency": "RDF",
+        "applications": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-1",
+            "category": "GENERAL_ENLISTMENT",
+            "status": "UNDER_REVIEW",
+            "submittedAt": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "list-rejects-expired-status",
+      "schema": "ListApplicationsOk",
+      "expect": "reject",
       "why": "EXPIRED was in the old TERMINAL_STATUSES. It never existed in any ops schema.",
-      "value": { "agency": "RNP", "applications": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RNP-1", "category": "POLICE_GENERAL", "status": "EXPIRED", "submittedAt": null } ] } },
-    { "id": "list-rejects-pii-leak", "schema": "ListApplicationsOk", "expect": "reject",
+      "value": {
+        "agency": "RNP",
+        "applications": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RNP-1",
+            "category": "POLICE_GENERAL",
+            "status": "EXPIRED",
+            "submittedAt": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "list-rejects-pii-leak",
+      "schema": "ListApplicationsOk",
+      "expect": "reject",
       "why": "INVARIANT 2. No officer read carries a name; the processing code stands in for the applicant. .strict() is what catches it.",
-      "value": { "agency": "RDF", "applications": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-1", "category": "GENERAL_ENLISTMENT", "status": "SUBMITTED", "submittedAt": null, "applicantName": "Mugisha K." } ] } },
-    { "id": "amber-ok-document-hold", "schema": "AmberQueueOk", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "applications": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-1",
+            "category": "GENERAL_ENLISTMENT",
+            "status": "SUBMITTED",
+            "submittedAt": null,
+            "applicantName": "Mugisha K."
+          }
+        ]
+      }
+    },
+    {
+      "id": "amber-ok-document-hold",
+      "schema": "AmberQueueOk",
+      "expect": "accept",
       "why": "amberQueueRoute: a document hold, forensic fields populated.",
-      "value": { "agency": "RDF", "queue": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90823", "status": "DOCUMENT_REVIEW_AMBER", "documentType": "ALEVEL_CERTIFICATE", "forensicsScore": 0.62, "forensicsFlags": { "fontMismatch": true }, "queuedAt": "2026-08-02T10:00:00.000Z" } ] } },
-    { "id": "amber-ok-adjudication-hold", "schema": "AmberQueueOk", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "queue": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-90823",
+            "status": "DOCUMENT_REVIEW_AMBER",
+            "documentType": "ALEVEL_CERTIFICATE",
+            "forensicsScore": 0.62,
+            "forensicsFlags": {
+              "fontMismatch": true
+            },
+            "queuedAt": "2026-08-02T10:00:00.000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "amber-ok-adjudication-hold",
+      "schema": "AmberQueueOk",
+      "expect": "accept",
       "why": "The SAME array carries ADJUDICATION_REVIEW holds with every document field NULL. A UI assuming documentType is present renders blanks here.",
-      "value": { "agency": "RDF", "queue": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90824", "status": "ADJUDICATION_REVIEW", "documentType": null, "forensicsScore": null, "forensicsFlags": null, "queuedAt": null } ] } },
-    { "id": "amber-rejects-missing-nullable-key", "schema": "AmberQueueOk", "expect": "reject",
+      "value": {
+        "agency": "RDF",
+        "queue": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-90824",
+            "status": "ADJUDICATION_REVIEW",
+            "documentType": null,
+            "forensicsScore": null,
+            "forensicsFlags": null,
+            "queuedAt": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "amber-rejects-missing-nullable-key",
+      "schema": "AmberQueueOk",
+      "expect": "reject",
       "why": "documentType is REQUIRED-and-nullable. Absent is not the same as null, and the controller always emits the key.",
-      "value": { "agency": "RDF", "queue": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-1", "status": "ADJUDICATION_REVIEW", "forensicsScore": null, "forensicsFlags": null, "queuedAt": null } ] } },
-    { "id": "by-applicant-ok", "schema": "ByApplicantOk", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "queue": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-1",
+            "status": "ADJUDICATION_REVIEW",
+            "forensicsScore": null,
+            "forensicsFlags": null,
+            "queuedAt": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "by-applicant-ok",
+      "schema": "ByApplicantOk",
+      "expect": "accept",
       "why": "byApplicantRoute OK: no agency on the envelope, agency on each row.",
-      "value": { "applications": [
-        { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90823", "category": "GENERAL_ENLISTMENT", "status": "SLOT_ASSIGNED", "submittedAt": "2026-08-01T09:12:00.000Z", "agency": "RDF" },
-        { "applicationId": "b4e2d3c5-6f71-4a82-93a4-1b2c3d4e5f60", "processingCode": "RNP-40021", "category": "POLICE_GENERAL", "status": "ACADEMIC_VETTING", "submittedAt": "2026-08-03T11:00:00.000Z", "agency": "RNP" } ] } },
-    { "id": "by-applicant-rejects-envelope-agency", "schema": "ByApplicantOk", "expect": "reject",
+      "value": {
+        "applications": [
+          {
+            "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "processingCode": "RDF-90823",
+            "category": "GENERAL_ENLISTMENT",
+            "status": "SLOT_ASSIGNED",
+            "submittedAt": "2026-08-01T09:12:00.000Z",
+            "agency": "RDF"
+          },
+          {
+            "applicationId": "b4e2d3c5-6f71-4a82-93a4-1b2c3d4e5f60",
+            "processingCode": "RNP-40021",
+            "category": "POLICE_GENERAL",
+            "status": "ACADEMIC_VETTING",
+            "submittedAt": "2026-08-03T11:00:00.000Z",
+            "agency": "RNP"
+          }
+        ]
+      }
+    },
+    {
+      "id": "by-applicant-rejects-envelope-agency",
+      "schema": "ByApplicantOk",
+      "expect": "reject",
       "why": "This envelope has no agency field — the read is cross-agency by design. Adding one implies a scope the route does not have.",
-      "value": { "agency": "RDF", "applications": [] } },
-    { "id": "detail-ok", "schema": "FindApplicationOk", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "applications": []
+      }
+    },
+    {
+      "id": "detail-ok",
+      "schema": "FindApplicationOk",
+      "expect": "accept",
       "why": "byIdRoute OK. The full intersection column set, every key present.",
-      "value": { "agency": "RDF", "application": {
-        "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90823", "category": "GENERAL_ENLISTMENT", "status": "MEDICAL_REVIEW",
-        "nesaIndexNumber": "RW2024/1001", "nesaVerifiedAt": "2026-08-02T08:00:00.000Z",
-        "hecRegistrationNumber": null, "hecVerifiedAt": null, "declaredSpecialistField": null,
-        "academicStatus": "ACADEMIC_PASSED", "academicEligibilityDetail": { "eligible": true, "reason": null, "details": {} },
-        "ageEligibilityStatus": "AGE_PASSED", "ageVerifiedAt": "2026-08-02T08:00:00.000Z",
-        "ageEligibilityDetail": { "eligible": true, "ageAtEvaluation": 22, "appliedMaxAge": 25, "reason": null },
-        "criminalClearanceStatus": "CLEARED", "criminalClearanceAt": "2026-08-03T08:00:00.000Z",
-        "documentLane": "GREEN", "documentForensicsScore": 0.94, "documentForensicsFlags": {},
-        "documentReviewedById": null, "documentReviewedAt": null, "documentReviewDecision": null,
-        "assignedDistrict": "GASABO", "assignedVenueName": "Kigali Stadium",
-        "physicalTestScheduledAt": "2026-08-20T06:00:00.000Z", "physicalTestCompletedAt": null,
-        "qrInvitationIssuedAt": "2026-08-10T06:00:00.000Z", "smsNotificationSentAt": "2026-08-10T06:05:00.000Z",
-        "finalDecisionById": null, "finalDecisionAt": null, "finalDecisionNotes": null,
-        "submittedAt": "2026-08-01T09:12:00.000Z", "createdAt": "2026-08-01T09:12:00.000Z", "updatedAt": "2026-08-10T06:05:00.000Z" } } },
-    { "id": "detail-accepts-lax-timestamp", "schema": "StatusHistoryEntry", "expect": "accept",
+      "value": {
+        "agency": "RDF",
+        "application": {
+          "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+          "processingCode": "RDF-90823",
+          "category": "GENERAL_ENLISTMENT",
+          "status": "MEDICAL_REVIEW",
+          "nesaIndexNumber": "RW2024/1001",
+          "nesaVerifiedAt": "2026-08-02T08:00:00.000Z",
+          "hecRegistrationNumber": null,
+          "hecVerifiedAt": null,
+          "declaredSpecialistField": null,
+          "academicStatus": "ACADEMIC_PASSED",
+          "academicEligibilityDetail": {
+            "eligible": true,
+            "reason": null,
+            "details": {}
+          },
+          "ageEligibilityStatus": "AGE_PASSED",
+          "ageVerifiedAt": "2026-08-02T08:00:00.000Z",
+          "ageEligibilityDetail": {
+            "eligible": true,
+            "ageAtEvaluation": 22,
+            "appliedMaxAge": 25,
+            "reason": null
+          },
+          "criminalClearanceStatus": "CLEARED",
+          "criminalClearanceAt": "2026-08-03T08:00:00.000Z",
+          "documentLane": "GREEN",
+          "documentForensicsScore": 0.94,
+          "documentForensicsFlags": {},
+          "documentReviewedById": null,
+          "documentReviewedAt": null,
+          "documentReviewDecision": null,
+          "assignedDistrict": "GASABO",
+          "assignedVenueName": "Kigali Stadium",
+          "physicalTestScheduledAt": "2026-08-20T06:00:00.000Z",
+          "physicalTestCompletedAt": null,
+          "qrInvitationIssuedAt": "2026-08-10T06:00:00.000Z",
+          "smsNotificationSentAt": "2026-08-10T06:05:00.000Z",
+          "finalDecisionById": null,
+          "finalDecisionAt": null,
+          "finalDecisionNotes": null,
+          "submittedAt": "2026-08-01T09:12:00.000Z",
+          "createdAt": "2026-08-01T09:12:00.000Z",
+          "updatedAt": "2026-08-10T06:05:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "detail-accepts-lax-timestamp",
+      "schema": "StatusHistoryEntry",
+      "expect": "accept",
       "why": "DELIBERATE LAXITY, recorded as a case so nobody 'fixes' it by accident: the backend does not validate the format of any timestamp it RETURNS, so this package does not either. A client-side format assertion that rejects real server data is an outage.",
-      "value": { "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "fromStatus": null, "toStatus": "SUBMITTED", "note": null, "actor": "SYSTEM", "actorKind": "SYSTEM", "at": "2026-08-01 09:12:00+02", "correlationId": null } },
-    { "id": "history-first-entry-null-from", "schema": "StatusHistoryOk", "expect": "accept",
+      "value": {
+        "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "fromStatus": null,
+        "toStatus": "SUBMITTED",
+        "note": null,
+        "actor": "SYSTEM",
+        "actorKind": "SYSTEM",
+        "at": "2026-08-01 09:12:00+02",
+        "correlationId": null
+      }
+    },
+    {
+      "id": "history-first-entry-null-from",
+      "schema": "StatusHistoryOk",
+      "expect": "accept",
       "why": "fromStatus is null on the first entry — nothing preceded it. Modelled as oneOf[status, null].",
-      "value": { "agency": "RDF", "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "history": [
-        { "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "fromStatus": null, "toStatus": "SUBMITTED", "note": null, "actor": "SYSTEM", "actorKind": "SYSTEM", "at": "2026-08-01T09:12:00.000Z", "correlationId": "c1" },
-        { "entryId": "b4e2d3c5-6f71-4a82-93a4-1b2c3d4e5f60", "fromStatus": "SUBMITTED", "toStatus": "ACADEMIC_VETTING", "note": "NESA verified", "actor": "SYSTEM", "actorKind": "SYSTEM", "at": "2026-08-02T08:00:00.000Z", "correlationId": "c2" } ] } },
-    { "id": "history-rejects-bad-actor-kind", "schema": "StatusHistoryEntry", "expect": "reject",
+      "value": {
+        "agency": "RDF",
+        "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "history": [
+          {
+            "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+            "fromStatus": null,
+            "toStatus": "SUBMITTED",
+            "note": null,
+            "actor": "SYSTEM",
+            "actorKind": "SYSTEM",
+            "at": "2026-08-01T09:12:00.000Z",
+            "correlationId": "c1"
+          },
+          {
+            "entryId": "b4e2d3c5-6f71-4a82-93a4-1b2c3d4e5f60",
+            "fromStatus": "SUBMITTED",
+            "toStatus": "ACADEMIC_VETTING",
+            "note": "NESA verified",
+            "actor": "SYSTEM",
+            "actorKind": "SYSTEM",
+            "at": "2026-08-02T08:00:00.000Z",
+            "correlationId": "c2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-rejects-bad-actor-kind",
+      "schema": "StatusHistoryEntry",
+      "expect": "reject",
       "why": "actorKind is SYSTEM | OFFICER. There is no APPLICANT actor: no citizen-authored transition exists in the trail, because withdraw-own is applied by a system principal.",
-      "value": { "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "fromStatus": "SUBMITTED", "toStatus": "WITHDRAWN", "note": "self", "actor": "applicant", "actorKind": "APPLICANT", "at": "2026-08-01T09:12:00.000Z", "correlationId": null } },
-    { "id": "submitted-201", "schema": "ApplicationSubmitted201", "expect": "accept",
+      "value": {
+        "entryId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "fromStatus": "SUBMITTED",
+        "toStatus": "WITHDRAWN",
+        "note": "self",
+        "actor": "applicant",
+        "actorKind": "APPLICANT",
+        "at": "2026-08-01T09:12:00.000Z",
+        "correlationId": null
+      }
+    },
+    {
+      "id": "submitted-201",
+      "schema": "ApplicationSubmitted201",
+      "expect": "accept",
       "why": "submitApplicationRoute SUBMITTED branch.",
-      "value": { "status": "SUBMITTED", "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90823", "agency": "RDF" } },
-    { "id": "transition-applied", "schema": "TransitionOk200", "expect": "accept",
+      "value": {
+        "status": "SUBMITTED",
+        "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "processingCode": "RDF-90823",
+        "agency": "RDF"
+      }
+    },
+    {
+      "id": "transition-applied",
+      "schema": "TransitionOk200",
+      "expect": "accept",
       "why": "officer-transitions mapOutcome APPLIED. Note it returns the TRANSITION, not an application.",
-      "value": { "status": "APPLIED", "fromStatus": "PHYSICAL_TEST_COMPLETE", "toStatus": "MEDICAL_REVIEW" } },
-    { "id": "transition-no-change", "schema": "TransitionOk200", "expect": "accept",
+      "value": {
+        "status": "APPLIED",
+        "fromStatus": "PHYSICAL_TEST_COMPLETE",
+        "toStatus": "MEDICAL_REVIEW"
+      }
+    },
+    {
+      "id": "transition-no-change",
+      "schema": "TransitionOk200",
+      "expect": "accept",
       "why": "NO_CHANGE is a 200, not an error. Idempotent success.",
-      "value": { "status": "NO_CHANGE", "currentStatus": "MEDICAL_REVIEW" } },
-    { "id": "transition-rejects-application-object", "schema": "TransitionOk200", "expect": "reject",
+      "value": {
+        "status": "NO_CHANGE",
+        "currentStatus": "MEDICAL_REVIEW"
+      }
+    },
+    {
+      "id": "transition-rejects-application-object",
+      "schema": "TransitionOk200",
+      "expect": "reject",
       "why": "The deprecated frontend expected the updated application back from a status write. No transition route returns one; you must refetch by-id.",
-      "value": { "status": "APPLIED", "fromStatus": "MEDICAL_REVIEW", "toStatus": "FINAL_SHORTLIST", "application": { "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f" } } },
-    { "id": "transition-rejects-unknown-discriminant", "schema": "TransitionOk200", "expect": "reject",
+      "value": {
+        "status": "APPLIED",
+        "fromStatus": "MEDICAL_REVIEW",
+        "toStatus": "FINAL_SHORTLIST",
+        "application": {
+          "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f"
+        }
+      }
+    },
+    {
+      "id": "transition-rejects-unknown-discriminant",
+      "schema": "TransitionOk200",
+      "expect": "reject",
       "why": "A discriminated union with an unlisted tag. UPDATED is not an outcome kind this controller emits.",
-      "value": { "status": "UPDATED", "fromStatus": "MEDICAL_REVIEW", "toStatus": "FINAL_SHORTLIST" } },
-    { "id": "accept-cross-agency-locked", "schema": "AcceptConflict409", "expect": "accept",
+      "value": {
+        "status": "UPDATED",
+        "fromStatus": "MEDICAL_REVIEW",
+        "toStatus": "FINAL_SHORTLIST"
+      }
+    },
+    {
+      "id": "accept-cross-agency-locked",
+      "schema": "AcceptConflict409",
+      "expect": "accept",
       "why": "ADR-014. ONLY the accept route emits this, and lockedByAgency may be the officer's own agency via a second application.",
-      "value": { "status": "CROSS_AGENCY_LOCKED", "lockedByAgency": "RNP" } },
-    { "id": "accept-not-applicable", "schema": "AcceptConflict409", "expect": "accept",
+      "value": {
+        "status": "CROSS_AGENCY_LOCKED",
+        "lockedByAgency": "RNP"
+      }
+    },
+    {
+      "id": "accept-not-applicable",
+      "schema": "AcceptConflict409",
+      "expect": "accept",
       "why": "The other member of accept's 409 union.",
-      "value": { "status": "NOT_APPLICABLE", "currentStatus": "ACCEPTED" } },
-    { "id": "medical-invalid-input-422", "schema": "InvalidMedicalInput422", "expect": "accept",
+      "value": {
+        "status": "NOT_APPLICABLE",
+        "currentStatus": "ACCEPTED"
+      }
+    },
+    {
+      "id": "medical-invalid-input-422",
+      "schema": "InvalidMedicalInput422",
+      "expect": "accept",
       "why": "ADR-013 mode mismatch: board fields sent to a certificate agency. reason names the mode the caller's agency uses — show it.",
-      "value": { "status": "INVALID_MEDICAL_INPUT", "reason": "RNP uses CERTIFICATE mode; send certVerdict." } },
-    { "id": "medical-422-requires-reason", "schema": "InvalidMedicalInput422", "expect": "reject",
+      "value": {
+        "status": "INVALID_MEDICAL_INPUT",
+        "reason": "RNP uses CERTIFICATE mode; send certVerdict."
+      }
+    },
+    {
+      "id": "medical-422-requires-reason",
+      "schema": "InvalidMedicalInput422",
+      "expect": "reject",
       "why": "reason is required. A 422 with no reason strands the officer with an unactionable refusal.",
-      "value": { "status": "INVALID_MEDICAL_INPUT" } },
-    { "id": "walk-in-registered-201", "schema": "WalkInRegistered201", "expect": "accept",
+      "value": {
+        "status": "INVALID_MEDICAL_INPUT"
+      }
+    },
+    {
+      "id": "walk-in-registered-201",
+      "schema": "WalkInRegistered201",
+      "expect": "accept",
       "why": "The ONLY response in the platform that returns a bearer credential (qrInvitationCode).",
-      "value": { "status": "REGISTERED", "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f", "processingCode": "RDF-90825", "qrInvitationCode": "QR.eyJhbGciOiJFZDI1NTE5In0.signed" } },
-    { "id": "walk-in-vet-applied-carries-age-status", "schema": "WalkInVetOk200", "expect": "accept",
+      "value": {
+        "status": "REGISTERED",
+        "applicationId": "a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "processingCode": "RDF-90825",
+        "qrInvitationCode": "QR.eyJhbGciOiJFZDI1NTE5In0.signed"
+      }
+    },
+    {
+      "id": "walk-in-vet-applied-carries-age-status",
+      "schema": "WalkInVetOk200",
+      "expect": "accept",
       "why": "vet's APPLIED carries an extra ageStatus the other three transitions do not.",
-      "value": { "status": "APPLIED", "fromStatus": "WALK_IN_REGISTERED", "toStatus": "WALK_IN_ON_SITE_VETTING", "ageStatus": "AGE_PASSED" } },
-    { "id": "walk-in-vet-age-pending-retryable", "schema": "WalkInVetConflict409", "expect": "accept",
+      "value": {
+        "status": "APPLIED",
+        "fromStatus": "WALK_IN_REGISTERED",
+        "toStatus": "WALK_IN_ON_SITE_VETTING",
+        "ageStatus": "AGE_PASSED"
+      }
+    },
+    {
+      "id": "walk-in-vet-age-pending-retryable",
+      "schema": "WalkInVetConflict409",
+      "expect": "accept",
       "why": "THE ONLY RETRYABLE 409 IN THE PLATFORM. The age verdict rides the backbone and may not have landed.",
-      "value": { "status": "AGE_PENDING", "currentStatus": "WALK_IN_REGISTERED" } },
-    { "id": "walk-in-501-unsupported-agency", "schema": "UnsupportedAgency501", "expect": "accept",
+      "value": {
+        "status": "AGE_PENDING",
+        "currentStatus": "WALK_IN_REGISTERED"
+      }
+    },
+    {
+      "id": "walk-in-501-unsupported-agency",
+      "schema": "UnsupportedAgency501",
+      "expect": "accept",
       "why": "RNP/RCS officers get an honest 501, because rdf_ops is the only schema modelling WALK_IN_*.",
-      "value": { "status": "UNSUPPORTED_AGENCY", "agency": "RNP" } },
-    { "id": "walk-in-400-un-underscored", "schema": "WalkInRegisterRequest400", "expect": "accept",
+      "value": {
+        "status": "UNSUPPORTED_AGENCY",
+        "agency": "RNP"
+      }
+    },
+    {
+      "id": "walk-in-400-un-underscored",
+      "schema": "WalkInRegisterRequest400",
+      "expect": "accept",
       "why": "RECORDED DEFECT: this controller builds codes with field.toUpperCase(), so applicantId becomes APPLICANTID. Two spellings of one code on one service.",
-      "value": { "error": "MISSING_APPLICANTID", "detail": "Field \"applicantId\" is required." } },
-    { "id": "walk-in-400-rejects-underscored", "schema": "WalkInRegisterRequest400", "expect": "reject",
+      "value": {
+        "error": "MISSING_APPLICANTID",
+        "detail": "Field \"applicantId\" is required."
+      }
+    },
+    {
+      "id": "walk-in-400-rejects-underscored",
+      "schema": "WalkInRegisterRequest400",
+      "expect": "reject",
       "why": "The SAME concept on the submit route spells it MISSING_APPLICANT_ID. A client switching on the code needs both spellings, and this fixture is what stops someone 'tidying' the enum into one.",
-      "value": { "error": "MISSING_APPLICANT_ID" } },
-    { "id": "submit-400-underscored", "schema": "SubmitRequest400", "expect": "accept",
+      "value": {
+        "error": "MISSING_APPLICANT_ID"
+      }
+    },
+    {
+      "id": "submit-400-underscored",
+      "schema": "SubmitRequest400",
+      "expect": "accept",
       "why": "The other half of the same defect: the submit controller DOES underscore.",
-      "value": { "error": "MISSING_APPLICANT_ID", "detail": "Field \"applicantId\" is required." } },
-    { "id": "read-404-keyed-on-error", "schema": "NotFound404", "expect": "accept",
+      "value": {
+        "error": "MISSING_APPLICANT_ID",
+        "detail": "Field \"applicantId\" is required."
+      }
+    },
+    {
+      "id": "read-404-keyed-on-error",
+      "schema": "NotFound404",
+      "expect": "accept",
       "why": "The READ routes' 404 keys on error. Bare by design — a sibling agency's real id and a nonexistent one are byte-identical.",
-      "value": { "error": "NOT_FOUND" } },
-    { "id": "read-404-rejects-detail", "schema": "NotFound404", "expect": "reject",
+      "value": {
+        "error": "NOT_FOUND"
+      }
+    },
+    {
+      "id": "read-404-rejects-detail",
+      "schema": "NotFound404",
+      "expect": "reject",
       "why": "Adding detail here turns 404 into a cross-agency existence oracle. This fixture is the guard on that decision.",
-      "value": { "error": "NOT_FOUND", "detail": "belongs to RNP" } },
-    { "id": "write-404-keyed-on-status", "schema": "TransitionNotFound404", "expect": "accept",
+      "value": {
+        "error": "NOT_FOUND",
+        "detail": "belongs to RNP"
+      }
+    },
+    {
+      "id": "write-404-keyed-on-status",
+      "schema": "TransitionNotFound404",
+      "expect": "accept",
       "why": "The WRITE routes' 404 keys on status. Same word, different key, same service — one guard cannot serve both.",
-      "value": { "status": "NOT_FOUND" } },
-    { "id": "write-404-rejects-error-key", "schema": "TransitionNotFound404", "expect": "reject",
+      "value": {
+        "status": "NOT_FOUND"
+      }
+    },
+    {
+      "id": "write-404-rejects-error-key",
+      "schema": "TransitionNotFound404",
+      "expect": "reject",
       "why": "Proves the two 404 shapes are genuinely not interchangeable.",
-      "value": { "error": "NOT_FOUND" } },
-    { "id": "withdraw-own-ok", "schema": "WithdrawOwnOk200", "expect": "accept",
+      "value": {
+        "error": "NOT_FOUND"
+      }
+    },
+    {
+      "id": "withdraw-own-ok",
+      "schema": "WithdrawOwnOk200",
+      "expect": "accept",
       "why": "self-withdrawal WITHDRAWN branch: agency + fromStatus.",
-      "value": { "status": "WITHDRAWN", "agency": "RDF", "fromStatus": "DOCUMENT_REVIEW_GREEN" } },
-    { "id": "withdraw-own-no-change", "schema": "WithdrawOwnOk200", "expect": "accept",
+      "value": {
+        "status": "WITHDRAWN",
+        "agency": "RDF",
+        "fromStatus": "DOCUMENT_REVIEW_GREEN"
+      }
+    },
+    {
+      "id": "withdraw-own-no-change",
+      "schema": "WithdrawOwnOk200",
+      "expect": "accept",
       "why": "Idempotent: already WITHDRAWN. No writes, no audit row, still a 200.",
-      "value": { "status": "NO_CHANGE", "agency": "RDF" } },
-    { "id": "error-500-no-detail", "schema": "ApplicationError500", "expect": "accept",
+      "value": {
+        "status": "NO_CHANGE",
+        "agency": "RDF"
+      }
+    },
+    {
+      "id": "error-500-no-detail",
+      "schema": "ApplicationError500",
+      "expect": "accept",
       "why": "HttpError.expose = status < 500, so every 5xx detail written in the backend is discarded before the wire.",
-      "value": { "error": "APPLICATION_READ_ERROR" } },
-    { "id": "error-500-rejects-detail", "schema": "ApplicationError500", "expect": "reject",
+      "value": {
+        "error": "APPLICATION_READ_ERROR"
+      }
+    },
+    {
+      "id": "error-500-rejects-detail",
+      "schema": "ApplicationError500",
+      "expect": "reject",
       "why": "There is NEVER a detail on a 5xx. UI that reads one is reading undefined.",
-      "value": { "error": "INTERNAL_ERROR", "detail": "connection terminated unexpectedly" } },
-    { "id": "error-rejects-generic-envelope", "schema": "ApplicationError500", "expect": "reject",
+      "value": {
+        "error": "INTERNAL_ERROR",
+        "detail": "connection terminated unexpectedly"
+      }
+    },
+    {
+      "id": "error-rejects-generic-envelope",
+      "schema": "ApplicationError500",
+      "expect": "reject",
       "why": "The flattened { code, message } shape this platform never emits. Errors are discriminated, per status, per route.",
-      "value": { "code": "INTERNAL", "message": "Something went wrong" } },
-    {"id": "public-campaign-list", "schema": "PublicCampaignList200", "expect": "accept", "why": "listPublicCampaigns 200: the public projection (the code a citizen quotes, dates, targets, contacts) — campaign-public-read.controller.ts.", "value": {"campaigns": [{"publicCode": "RDF-2026-A", "campaignLabel": "RDF General Enlistment 2026", "agency": "RDF", "status": "REGISTRATION_OPEN", "registrationOpensAt": "2026-10-01T00:00:00.000Z", "registrationClosesAt": "2026-11-15T00:00:00.000Z", "examinationStartDate": "2026-12-01", "examinationEndDate": "2026-12-10", "targetCategories": ["GENERAL_ENLISTMENT"], "targetDistricts": ["GASABO", "HUYE"], "allowsWalkIn": true, "contactPhoneNumbers": ["+250788000000"], "contactWebsite": null}]}},
-    {"id": "public-campaign-list-rejects-internal-fields", "schema": "PublicCampaignList200", "expect": "reject", "why": "No internal ids, policy hashes, capacity or counts may reach the public (BUILD-001 allowlist).", "value": {"campaigns": [{"publicCode": "RDF-2026-A", "campaignLabel": "RDF General Enlistment 2026", "agency": "RDF", "status": "REGISTRATION_OPEN", "registrationOpensAt": "2026-10-01T00:00:00.000Z", "registrationClosesAt": "2026-11-15T00:00:00.000Z", "examinationStartDate": "2026-12-01", "examinationEndDate": "2026-12-10", "targetCategories": ["GENERAL_ENLISTMENT"], "targetDistricts": ["GASABO", "HUYE"], "allowsWalkIn": true, "contactPhoneNumbers": ["+250788000000"], "contactWebsite": null, "campaignId": "99000000-0000-4000-8000-0000000000c1", "policyHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "registeredCount": 412}]}},
-    {"id": "public-campaign-detail", "schema": "PublicCampaignDetail200", "expect": "accept", "why": "getPublicCampaign 200: one published campaign by public code — campaign-public-read.controller.ts.", "value": {"campaign": {"publicCode": "RDF-2026-A", "campaignLabel": "RDF General Enlistment 2026", "agency": "RDF", "status": "REGISTRATION_OPEN", "registrationOpensAt": "2026-10-01T00:00:00.000Z", "registrationClosesAt": "2026-11-15T00:00:00.000Z", "examinationStartDate": "2026-12-01", "examinationEndDate": "2026-12-10", "targetCategories": ["GENERAL_ENLISTMENT"], "targetDistricts": ["GASABO", "HUYE"], "allowsWalkIn": true, "contactPhoneNumbers": ["+250788000000"], "contactWebsite": null}}},
-    {"id": "document-checklist", "schema": "DocumentChecklist200", "expect": "accept", "why": "ADR-032 advisory checklist: types, states and the verifying registry only (document-checklist.controller.ts / applicant-auth.controller.ts).", "value": {"agency": "RDF", "source": "POLICY_VERSION", "complete": false, "items": [{"documentType": "NATIONAL_ID", "satisfaction": "API_VERIFIED", "registry": "NIDA"}, {"documentType": "GOOD_CONDUCT_CERTIFICATE", "satisfaction": "VENUE_VERIFIED", "registry": null}]}},
-    {"id": "document-checklist-rejects-score", "schema": "DocumentChecklist200", "expect": "reject", "why": "A forensic score must never ride on a checklist item (forgery-tuning oracle).", "value": {"agency": "RDF", "source": "POLICY_VERSION", "complete": false, "items": [{"documentType": "NATIONAL_ID", "satisfaction": "API_VERIFIED", "registry": "NIDA", "forensicsScore": 0.97}]}},
-    {"id": "document-checklist-rejects-unknown-state", "schema": "DocumentChecklist200", "expect": "reject", "why": "Satisfaction is a closed set; an invented state is a contract break.", "value": {"agency": "RDF", "source": "POLICY_VERSION", "complete": false, "items": [{"documentType": "NATIONAL_ID", "satisfaction": "PROBABLY_FINE", "registry": "NIDA"}]}},
-    {"id": "verify-at-venue-recorded", "schema": "VerifyAtVenue200", "expect": "accept", "why": "verify-at-venue 200: RECORDED with the updated checklist — document-checklist.controller.ts.", "value": {"status": "RECORDED", "checklist": {"agency": "RDF", "source": "POLICY_VERSION", "complete": false, "items": [{"documentType": "NATIONAL_ID", "satisfaction": "API_VERIFIED", "registry": "NIDA"}, {"documentType": "GOOD_CONDUCT_CERTIFICATE", "satisfaction": "VENUE_VERIFIED", "registry": null}]}}},
-    {"id": "verify-at-venue-rejects-officer-id", "schema": "VerifyAtVenue200", "expect": "reject", "why": "The officer who cleared a paper is never echoed in a response.", "value": {"status": "RECORDED", "checklist": {"agency": "RDF", "source": "POLICY_VERSION", "complete": false, "items": [{"documentType": "NATIONAL_ID", "satisfaction": "API_VERIFIED", "registry": "NIDA"}, {"documentType": "GOOD_CONDUCT_CERTIFICATE", "satisfaction": "VENUE_VERIFIED", "registry": null}]}, "officerId": "11111111-1111-4111-8111-111111111111"}},
-    {"id": "exam-invitation-ready", "schema": "ExamInvitationView", "expect": "accept", "why": "ADR-033 READY: the signed slot invitation plus PII-free display claims (exam-invitation.controller.ts).", "value": {"state": "READY", "agency": "RDF", "processingCode": "RDF-00042", "campaignLabel": "RDF General Enlistment 2026", "currentStatus": "SLOT_ASSIGNED", "invitation": {"qrPayload": "USRP-SLOT.v1.eyJ0aWNrZXRJZCI6IlRLVC0xIn0.c2lnbmF0dXJl", "ticketId": "TKT-1", "venueName": "ULK Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "validUntil": "2026-12-01T23:59:59.000Z"}}},
-    {"id": "exam-invitation-pending", "schema": "ExamInvitationView", "expect": "accept", "why": "Before a slot is assigned there is a state and no payload.", "value": {"state": "PENDING", "agency": "RDF", "processingCode": "RDF-00042", "campaignLabel": null, "currentStatus": "ACADEMIC_VETTING"}},
-    {"id": "exam-invitation-rejects-foreign-payload", "schema": "ExamInvitationView", "expect": "reject", "why": "A QR payload that is not a USRP-SLOT.v1 token (e.g. a URL) must never be rendered.", "value": {"state": "READY", "agency": "RDF", "processingCode": "RDF-00042", "campaignLabel": "RDF General Enlistment 2026", "currentStatus": "SLOT_ASSIGNED", "invitation": {"qrPayload": "https://evil.example/x", "ticketId": "TKT-1", "venueName": "ULK Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "validUntil": "2026-12-01T23:59:59.000Z"}}},
-    {"id": "campaign-draft-created", "schema": "CampaignDraftCreated201", "expect": "accept", "why": "campaign-control.pg-repository.ts #createDraft responseBody, verbatim: status, canonical publicCode, campaignStatus DRAFT.", "value": {"status": "DRAFT_CREATED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "DRAFT"}},
-    {"id": "campaign-draft-rejects-internal-id", "schema": "CampaignDraftCreated201", "expect": "reject", "why": "The internal campaignId never leaves the service; the public code is the only handle an officer UI holds.", "value": {"status": "DRAFT_CREATED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "DRAFT", "campaignId": "5d1c0d2e-9b7e-4c55-8f2a-0a5b8e3c1f00"}},
-    {"id": "campaign-draft-rejects-lowercase-code", "schema": "CampaignDraftCreated201", "expect": "reject", "why": "normalizePublicCode upper-cases before storage; a lower-case code on the wire means the canonicalisation was bypassed.", "value": {"status": "DRAFT_CREATED", "publicCode": "rnp-2026-intake", "campaignStatus": "DRAFT"}},
-    {"id": "campaign-policy-version-created", "schema": "CampaignPolicyVersionCreated201", "expect": "accept", "why": "#createPolicyVersion responseBody: the version number and the lowercase SHA-256 of the canonical policy.", "value": {"status": "POLICY_VERSION_CREATED", "publicCode": "RNP-2026-INTAKE", "policyVersion": 1, "policyHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}},
-    {"id": "campaign-policy-rejects-uppercase-hash", "schema": "CampaignPolicyVersionCreated201", "expect": "reject", "why": "validateHash insists on a lowercase SHA-256 digest; anything else is INVALID_HASH server-side.", "value": {"status": "POLICY_VERSION_CREATED", "publicCode": "RNP-2026-INTAKE", "policyVersion": 1, "policyHash": "9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08"}},
-    {"id": "campaign-published", "schema": "CampaignPublished200", "expect": "accept", "why": "#publish responseBody: the frozen policy version plus the exact coverage version and digest.", "value": {"status": "CAMPAIGN_PUBLISHED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "REGISTRATION_OPEN", "policyVersion": 2, "coverageVersion": 4, "coverageHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}},
-    {"id": "campaign-published-rejects-missing-coverage", "schema": "CampaignPublished200", "expect": "reject", "why": "Publication without coverage evidence is exactly what INCOMPLETE_COVERAGE exists to prevent; a success body without it is a lie.", "value": {"status": "CAMPAIGN_PUBLISHED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "REGISTRATION_OPEN", "policyVersion": 2}},
-    {"id": "campaign-registration-closed", "schema": "CampaignLifecycle200", "expect": "accept", "why": "Lifecycle responseBody: status and campaignStatus both carry lifecycle.responseState.", "value": {"status": "REGISTRATION_CLOSED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "REGISTRATION_CLOSED"}},
-    {"id": "campaign-completed-legacy-code", "schema": "CampaignLifecycle200", "expect": "accept", "why": "completeCampaign is the one command that accepts a pre-BUILD-001 LEGACY-<32 hex> code.", "value": {"status": "COMPLETED", "publicCode": "LEGACY-0123456789ABCDEF0123456789ABCDEF", "campaignStatus": "COMPLETED"}},
-    {"id": "campaign-lifecycle-rejects-published", "schema": "CampaignLifecycle200", "expect": "reject", "why": "Publication has its own body with coverage evidence; the lifecycle body covers close, complete and cancel only.", "value": {"status": "PUBLISHED", "publicCode": "RNP-2026-INTAKE", "campaignStatus": "PUBLISHED"}},
-    {"id": "campaign-command-rejection", "schema": "CampaignCommandRejection", "expect": "accept", "why": "HttpError below 500 exposes { error, detail }. The code set is open (P0001 tokens), so only the token shape is pinned.", "value": {"error": "INCOMPLETE_COVERAGE", "detail": "Every target district needs an active configured session."}},
-    {"id": "campaign-command-rejection-rejects-prose-code", "schema": "CampaignCommandRejection", "expect": "reject", "why": "error is a machine token; a sentence in it means a raw database message leaked.", "value": {"error": "duplicate key value violates unique constraint"}},
-    {"id": "campaign-error-500", "schema": "CampaignError500", "expect": "accept", "why": "5xx detail is withheld by errorToResult.", "value": {"error": "CAMPAIGN_PERSISTENCE_ERROR"}},
-    {"id": "campaign-error-500-rejects-detail", "schema": "CampaignError500", "expect": "reject", "why": "HttpError.expose is false at 500 and above; a detail string here is an information leak.", "value": {"error": "CAMPAIGN_PERSISTENCE_ERROR", "detail": "relation public_core.campaigns does not exist"}},
-    {"id": "application-gate-admitted", "schema": "GateDecisionAdmitted200", "expect": "accept", "why": "gate-admission.controller.ts 200 body: the candidate's public identifiers and the admission.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true}},
-    {"id": "application-gate-admitted-rejects-nid", "schema": "GateDecisionAdmitted200", "expect": "reject", "why": "The national ID (or its hash) never reaches the gate tablet.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true, "nationalIdHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
-    {"id": "application-gate-candidate-rejects-applicant-id", "schema": "GateDecisionAdmitted200", "expect": "reject", "why": "The candidate carries public identifiers only; the internal applicant id stays inside.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT", "applicantId": "33333333-3333-4333-8333-333333333333"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true}},
-    {"id": "application-gate-already-admitted", "schema": "GateDecisionConflict409", "expect": "accept", "why": "A spent QR: where and when, and whether it was this officer.", "value": {"error": "ALREADY_ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "admittedAt": "2026-12-01T06:01:00.000Z", "venueName": "IPRC Kicukiro Stadium", "admittedBySelf": false}},
-    {"id": "application-gate-wrong-venue", "schema": "GateDecisionConflict409", "expect": "accept", "why": "Names the ticket's venue so the officer can redirect the candidate.", "value": {"error": "WRONG_VENUE", "ticketVenueName": "Amahoro Stadium"}},
-    {"id": "application-gate-too-early", "schema": "GateDecisionConflict409", "expect": "accept", "why": "Kigali calendar day before the exam.", "value": {"error": "TOO_EARLY", "examDate": "2026-12-01"}},
-    {"id": "application-gate-mismatch", "schema": "GateDecisionConflict409", "expect": "accept", "why": "Impostor: card does not match the ticket's applicant.", "value": {"error": "IDENTITY_MISMATCH", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}}},
-    {"id": "application-gate-conflict-rejects-unknown-code", "schema": "GateDecisionConflict409", "expect": "reject", "why": "The 409 vocabulary is closed; a new code is a contract change.", "value": {"error": "SOMETHING_NEW"}},
-    {"id": "application-gate-invalid-ticket", "schema": "GateDecisionInvalidTicket422", "expect": "accept", "why": "Forged or altered QR.", "value": {"error": "INVALID_TICKET", "reason": "TICKET_NOT_ISSUED"}},
-    {"id": "application-gate-invalid-ticket-rejects-reason", "schema": "GateDecisionInvalidTicket422", "expect": "reject", "why": "Only the four ticket refusals exist.", "value": {"error": "INVALID_TICKET", "reason": "EXPIRED"}},
-    {"id": "application-exam-invitation-admitted", "schema": "ExamInvitationView", "expect": "accept", "why": "ADR-034: once spent, only where and when; never the QR.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z"}}},
-    {"id": "application-exam-invitation-admitted-rejects-extra", "schema": "ExamInvitationView", "expect": "reject", "why": "The admission carries no officer identity.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z", "officerId": "x"}}}
+      "value": {
+        "code": "INTERNAL",
+        "message": "Something went wrong"
+      }
+    },
+    {
+      "id": "public-campaign-list",
+      "schema": "PublicCampaignList200",
+      "expect": "accept",
+      "why": "listPublicCampaigns 200: the public projection (the code a citizen quotes, dates, targets, contacts) — campaign-public-read.controller.ts.",
+      "value": {
+        "campaigns": [
+          {
+            "publicCode": "RDF-2026-A",
+            "campaignLabel": "RDF General Enlistment 2026",
+            "agency": "RDF",
+            "status": "REGISTRATION_OPEN",
+            "registrationOpensAt": "2026-10-01T00:00:00.000Z",
+            "registrationClosesAt": "2026-11-15T00:00:00.000Z",
+            "examinationStartDate": "2026-12-01",
+            "examinationEndDate": "2026-12-10",
+            "targetCategories": [
+              "GENERAL_ENLISTMENT"
+            ],
+            "targetDistricts": [
+              "GASABO",
+              "HUYE"
+            ],
+            "allowsWalkIn": true,
+            "contactPhoneNumbers": [
+              "+250788000000"
+            ],
+            "contactWebsite": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "public-campaign-list-rejects-internal-fields",
+      "schema": "PublicCampaignList200",
+      "expect": "reject",
+      "why": "No internal ids, policy hashes, capacity or counts may reach the public (BUILD-001 allowlist).",
+      "value": {
+        "campaigns": [
+          {
+            "publicCode": "RDF-2026-A",
+            "campaignLabel": "RDF General Enlistment 2026",
+            "agency": "RDF",
+            "status": "REGISTRATION_OPEN",
+            "registrationOpensAt": "2026-10-01T00:00:00.000Z",
+            "registrationClosesAt": "2026-11-15T00:00:00.000Z",
+            "examinationStartDate": "2026-12-01",
+            "examinationEndDate": "2026-12-10",
+            "targetCategories": [
+              "GENERAL_ENLISTMENT"
+            ],
+            "targetDistricts": [
+              "GASABO",
+              "HUYE"
+            ],
+            "allowsWalkIn": true,
+            "contactPhoneNumbers": [
+              "+250788000000"
+            ],
+            "contactWebsite": null,
+            "campaignId": "99000000-0000-4000-8000-0000000000c1",
+            "policyHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "registeredCount": 412
+          }
+        ]
+      }
+    },
+    {
+      "id": "public-campaign-detail",
+      "schema": "PublicCampaignDetail200",
+      "expect": "accept",
+      "why": "getPublicCampaign 200: one published campaign by public code — campaign-public-read.controller.ts.",
+      "value": {
+        "campaign": {
+          "publicCode": "RDF-2026-A",
+          "campaignLabel": "RDF General Enlistment 2026",
+          "agency": "RDF",
+          "status": "REGISTRATION_OPEN",
+          "registrationOpensAt": "2026-10-01T00:00:00.000Z",
+          "registrationClosesAt": "2026-11-15T00:00:00.000Z",
+          "examinationStartDate": "2026-12-01",
+          "examinationEndDate": "2026-12-10",
+          "targetCategories": [
+            "GENERAL_ENLISTMENT"
+          ],
+          "targetDistricts": [
+            "GASABO",
+            "HUYE"
+          ],
+          "allowsWalkIn": true,
+          "contactPhoneNumbers": [
+            "+250788000000"
+          ],
+          "contactWebsite": null
+        }
+      }
+    },
+    {
+      "id": "document-checklist",
+      "schema": "DocumentChecklist200",
+      "expect": "accept",
+      "why": "ADR-032 advisory checklist: types, states and the verifying registry only (document-checklist.controller.ts / applicant-auth.controller.ts).",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "API_VERIFIED",
+            "registry": "NIDA"
+          },
+          {
+            "documentType": "GOOD_CONDUCT_CERTIFICATE",
+            "satisfaction": "VENUE_VERIFIED",
+            "registry": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "document-checklist-rejects-score",
+      "schema": "DocumentChecklist200",
+      "expect": "reject",
+      "why": "A forensic score must never ride on a checklist item (forgery-tuning oracle).",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "API_VERIFIED",
+            "registry": "NIDA",
+            "forensicsScore": 0.97
+          }
+        ]
+      }
+    },
+    {
+      "id": "document-checklist-rejects-unknown-state",
+      "schema": "DocumentChecklist200",
+      "expect": "reject",
+      "why": "Satisfaction is a closed set; an invented state is a contract break.",
+      "value": {
+        "agency": "RDF",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "NATIONAL_ID",
+            "satisfaction": "PROBABLY_FINE",
+            "registry": "NIDA"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verify-at-venue-recorded",
+      "schema": "VerifyAtVenue200",
+      "expect": "accept",
+      "why": "verify-at-venue 200: RECORDED with the updated checklist — document-checklist.controller.ts.",
+      "value": {
+        "status": "RECORDED",
+        "checklist": {
+          "agency": "RDF",
+          "source": "POLICY_VERSION",
+          "complete": false,
+          "items": [
+            {
+              "documentType": "NATIONAL_ID",
+              "satisfaction": "API_VERIFIED",
+              "registry": "NIDA"
+            },
+            {
+              "documentType": "GOOD_CONDUCT_CERTIFICATE",
+              "satisfaction": "VENUE_VERIFIED",
+              "registry": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "verify-at-venue-rejects-officer-id",
+      "schema": "VerifyAtVenue200",
+      "expect": "reject",
+      "why": "The officer who cleared a paper is never echoed in a response.",
+      "value": {
+        "status": "RECORDED",
+        "checklist": {
+          "agency": "RDF",
+          "source": "POLICY_VERSION",
+          "complete": false,
+          "items": [
+            {
+              "documentType": "NATIONAL_ID",
+              "satisfaction": "API_VERIFIED",
+              "registry": "NIDA"
+            },
+            {
+              "documentType": "GOOD_CONDUCT_CERTIFICATE",
+              "satisfaction": "VENUE_VERIFIED",
+              "registry": null
+            }
+          ]
+        },
+        "officerId": "11111111-1111-4111-8111-111111111111"
+      }
+    },
+    {
+      "id": "exam-invitation-ready",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "ADR-033 READY: the signed slot invitation plus PII-free display claims (exam-invitation.controller.ts).",
+      "value": {
+        "state": "READY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "USRP-SLOT.v1.eyJ0aWNrZXRJZCI6IlRLVC0xIn0.c2lnbmF0dXJl",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        }
+      }
+    },
+    {
+      "id": "exam-invitation-pending",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "Before a slot is assigned there is a state and no payload.",
+      "value": {
+        "state": "PENDING",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": null,
+        "currentStatus": "ACADEMIC_VETTING"
+      }
+    },
+    {
+      "id": "exam-invitation-rejects-foreign-payload",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "A QR payload that is not a USRP-SLOT.v1 token (e.g. a URL) must never be rendered.",
+      "value": {
+        "state": "READY",
+        "agency": "RDF",
+        "processingCode": "RDF-00042",
+        "campaignLabel": "RDF General Enlistment 2026",
+        "currentStatus": "SLOT_ASSIGNED",
+        "invitation": {
+          "qrPayload": "https://evil.example/x",
+          "ticketId": "TKT-1",
+          "venueName": "ULK Stadium",
+          "examDate": "2026-12-01",
+          "reportingTimeHour": 8,
+          "validUntil": "2026-12-01T23:59:59.000Z"
+        }
+      }
+    },
+    {
+      "id": "campaign-draft-created",
+      "schema": "CampaignDraftCreated201",
+      "expect": "accept",
+      "why": "campaign-control.pg-repository.ts #createDraft responseBody, verbatim: status, canonical publicCode, campaignStatus DRAFT.",
+      "value": {
+        "status": "DRAFT_CREATED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "DRAFT"
+      }
+    },
+    {
+      "id": "campaign-draft-rejects-internal-id",
+      "schema": "CampaignDraftCreated201",
+      "expect": "reject",
+      "why": "The internal campaignId never leaves the service; the public code is the only handle an officer UI holds.",
+      "value": {
+        "status": "DRAFT_CREATED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "DRAFT",
+        "campaignId": "5d1c0d2e-9b7e-4c55-8f2a-0a5b8e3c1f00"
+      }
+    },
+    {
+      "id": "campaign-draft-rejects-lowercase-code",
+      "schema": "CampaignDraftCreated201",
+      "expect": "reject",
+      "why": "normalizePublicCode upper-cases before storage; a lower-case code on the wire means the canonicalisation was bypassed.",
+      "value": {
+        "status": "DRAFT_CREATED",
+        "publicCode": "rnp-2026-intake",
+        "campaignStatus": "DRAFT"
+      }
+    },
+    {
+      "id": "campaign-policy-version-created",
+      "schema": "CampaignPolicyVersionCreated201",
+      "expect": "accept",
+      "why": "#createPolicyVersion responseBody: the version number and the lowercase SHA-256 of the canonical policy.",
+      "value": {
+        "status": "POLICY_VERSION_CREATED",
+        "publicCode": "RNP-2026-INTAKE",
+        "policyVersion": 1,
+        "policyHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+      }
+    },
+    {
+      "id": "campaign-policy-rejects-uppercase-hash",
+      "schema": "CampaignPolicyVersionCreated201",
+      "expect": "reject",
+      "why": "validateHash insists on a lowercase SHA-256 digest; anything else is INVALID_HASH server-side.",
+      "value": {
+        "status": "POLICY_VERSION_CREATED",
+        "publicCode": "RNP-2026-INTAKE",
+        "policyVersion": 1,
+        "policyHash": "9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08"
+      }
+    },
+    {
+      "id": "campaign-published",
+      "schema": "CampaignPublished200",
+      "expect": "accept",
+      "why": "#publish responseBody: the frozen policy version plus the exact coverage version and digest.",
+      "value": {
+        "status": "CAMPAIGN_PUBLISHED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "REGISTRATION_OPEN",
+        "policyVersion": 2,
+        "coverageVersion": 4,
+        "coverageHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+      }
+    },
+    {
+      "id": "campaign-published-rejects-missing-coverage",
+      "schema": "CampaignPublished200",
+      "expect": "reject",
+      "why": "Publication without coverage evidence is exactly what INCOMPLETE_COVERAGE exists to prevent; a success body without it is a lie.",
+      "value": {
+        "status": "CAMPAIGN_PUBLISHED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "REGISTRATION_OPEN",
+        "policyVersion": 2
+      }
+    },
+    {
+      "id": "campaign-registration-closed",
+      "schema": "CampaignLifecycle200",
+      "expect": "accept",
+      "why": "Lifecycle responseBody: status and campaignStatus both carry lifecycle.responseState.",
+      "value": {
+        "status": "REGISTRATION_CLOSED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "REGISTRATION_CLOSED"
+      }
+    },
+    {
+      "id": "campaign-completed-legacy-code",
+      "schema": "CampaignLifecycle200",
+      "expect": "accept",
+      "why": "completeCampaign is the one command that accepts a pre-BUILD-001 LEGACY-<32 hex> code.",
+      "value": {
+        "status": "COMPLETED",
+        "publicCode": "LEGACY-0123456789ABCDEF0123456789ABCDEF",
+        "campaignStatus": "COMPLETED"
+      }
+    },
+    {
+      "id": "campaign-lifecycle-rejects-published",
+      "schema": "CampaignLifecycle200",
+      "expect": "reject",
+      "why": "Publication has its own body with coverage evidence; the lifecycle body covers close, complete and cancel only.",
+      "value": {
+        "status": "PUBLISHED",
+        "publicCode": "RNP-2026-INTAKE",
+        "campaignStatus": "PUBLISHED"
+      }
+    },
+    {
+      "id": "campaign-command-rejection",
+      "schema": "CampaignCommandRejection",
+      "expect": "accept",
+      "why": "HttpError below 500 exposes { error, detail }. The code set is open (P0001 tokens), so only the token shape is pinned.",
+      "value": {
+        "error": "INCOMPLETE_COVERAGE",
+        "detail": "Every target district needs an active configured session."
+      }
+    },
+    {
+      "id": "campaign-command-rejection-rejects-prose-code",
+      "schema": "CampaignCommandRejection",
+      "expect": "reject",
+      "why": "error is a machine token; a sentence in it means a raw database message leaked.",
+      "value": {
+        "error": "duplicate key value violates unique constraint"
+      }
+    },
+    {
+      "id": "campaign-error-500",
+      "schema": "CampaignError500",
+      "expect": "accept",
+      "why": "5xx detail is withheld by errorToResult.",
+      "value": {
+        "error": "CAMPAIGN_PERSISTENCE_ERROR"
+      }
+    },
+    {
+      "id": "campaign-error-500-rejects-detail",
+      "schema": "CampaignError500",
+      "expect": "reject",
+      "why": "HttpError.expose is false at 500 and above; a detail string here is an information leak.",
+      "value": {
+        "error": "CAMPAIGN_PERSISTENCE_ERROR",
+        "detail": "relation public_core.campaigns does not exist"
+      }
+    },
+    {
+      "id": "application-gate-admitted",
+      "schema": "GateDecisionAdmitted200",
+      "expect": "accept",
+      "why": "gate-admission.controller.ts 200 body: the candidate's public identifiers and the admission.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true
+      }
+    },
+    {
+      "id": "application-gate-admitted-rejects-nid",
+      "schema": "GateDecisionAdmitted200",
+      "expect": "reject",
+      "why": "The national ID (or its hash) never reaches the gate tablet.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true,
+        "nationalIdHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "application-gate-candidate-rejects-applicant-id",
+      "schema": "GateDecisionAdmitted200",
+      "expect": "reject",
+      "why": "The candidate carries public identifiers only; the internal applicant id stays inside.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT",
+          "applicantId": "33333333-3333-4333-8333-333333333333"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true
+      }
+    },
+    {
+      "id": "application-gate-already-admitted",
+      "schema": "GateDecisionConflict409",
+      "expect": "accept",
+      "why": "A spent QR: where and when, and whether it was this officer.",
+      "value": {
+        "error": "ALREADY_ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "venueName": "IPRC Kicukiro Stadium",
+        "admittedBySelf": false
+      }
+    },
+    {
+      "id": "application-gate-wrong-venue",
+      "schema": "GateDecisionConflict409",
+      "expect": "accept",
+      "why": "Names the ticket's venue so the officer can redirect the candidate.",
+      "value": {
+        "error": "WRONG_VENUE",
+        "ticketVenueName": "Amahoro Stadium"
+      }
+    },
+    {
+      "id": "application-gate-too-early",
+      "schema": "GateDecisionConflict409",
+      "expect": "accept",
+      "why": "Kigali calendar day before the exam.",
+      "value": {
+        "error": "TOO_EARLY",
+        "examDate": "2026-12-01"
+      }
+    },
+    {
+      "id": "application-gate-mismatch",
+      "schema": "GateDecisionConflict409",
+      "expect": "accept",
+      "why": "Impostor: card does not match the ticket's applicant.",
+      "value": {
+        "error": "IDENTITY_MISMATCH",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        }
+      }
+    },
+    {
+      "id": "application-gate-conflict-rejects-unknown-code",
+      "schema": "GateDecisionConflict409",
+      "expect": "reject",
+      "why": "The 409 vocabulary is closed; a new code is a contract change.",
+      "value": {
+        "error": "SOMETHING_NEW"
+      }
+    },
+    {
+      "id": "application-gate-invalid-ticket",
+      "schema": "GateDecisionInvalidTicket422",
+      "expect": "accept",
+      "why": "Forged or altered QR.",
+      "value": {
+        "error": "INVALID_TICKET",
+        "reason": "TICKET_NOT_ISSUED"
+      }
+    },
+    {
+      "id": "application-gate-invalid-ticket-rejects-reason",
+      "schema": "GateDecisionInvalidTicket422",
+      "expect": "reject",
+      "why": "Only the four ticket refusals exist.",
+      "value": {
+        "error": "INVALID_TICKET",
+        "reason": "EXPIRED"
+      }
+    },
+    {
+      "id": "application-exam-invitation-admitted",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "ADR-034: once spent, only where and when; never the QR.",
+      "value": {
+        "state": "ADMITTED",
+        "agency": "RDF",
+        "processingCode": "RDF-90001",
+        "campaignLabel": "RDF 2026",
+        "currentStatus": "PHYSICAL_TEST_SCHEDULED",
+        "admission": {
+          "venueName": "IPRC Kicukiro Stadium",
+          "admittedAt": "2026-12-01T06:01:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "application-exam-invitation-admitted-rejects-extra",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "The admission carries no officer identity.",
+      "value": {
+        "state": "ADMITTED",
+        "agency": "RDF",
+        "processingCode": "RDF-90001",
+        "campaignLabel": "RDF 2026",
+        "currentStatus": "PHYSICAL_TEST_SCHEDULED",
+        "admission": {
+          "venueName": "IPRC Kicukiro Stadium",
+          "admittedAt": "2026-12-01T06:01:00.000Z",
+          "officerId": "x"
+        }
+      }
+    },
+    {
+      "id": "search-ok",
+      "schema": "ApplicationSearchOk",
+      "expect": "accept",
+      "why": "searchApplications: keyset page with total; non-PII rows.",
+      "value": {
+        "agency": "RDF",
+        "applications": [
+          {
+            "applicationId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "processingCode": "RDF-90823",
+            "category": "SOLDIER",
+            "status": "SUBMITTED",
+            "submittedAt": "2026-10-20T08:00:00.000Z"
+          }
+        ],
+        "total": 1,
+        "nextCursor": null
+      }
+    },
+    {
+      "id": "search-rejects-name",
+      "schema": "ApplicationSearchOk",
+      "expect": "reject",
+      "why": "No name or National ID in a search row.",
+      "value": {
+        "agency": "RDF",
+        "applications": [
+          {
+            "applicationId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "processingCode": "RDF-90823",
+            "category": "SOLDIER",
+            "status": "SUBMITTED",
+            "submittedAt": "2026-10-20T08:00:00.000Z",
+            "fullName": "X"
+          }
+        ],
+        "total": 1,
+        "nextCursor": null
+      }
+    },
+    {
+      "id": "biometric-evidence-ok",
+      "schema": "BiometricEvidenceOk",
+      "expect": "accept",
+      "why": "getBiometricEvidence: advisory evidence, never a verdict field.",
+      "value": {
+        "applicationId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+        "evidence": [
+          {
+            "recordId": "8a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "ticketId": "T1",
+            "referenceSource": "CARD_PORTRAIT",
+            "method": "FACE_MATCH",
+            "consentState": "GRANTED",
+            "outcome": "NO_MATCH",
+            "notAttemptedReason": null,
+            "livenessScoreBp": 9100,
+            "matchScoreBp": 4100,
+            "modelId": "m",
+            "modelVersion": "1",
+            "thresholdPolicyVersion": "1",
+            "mode": "ADVISORY",
+            "capturedAt": "2026-10-21T08:00:00.000Z",
+            "receivedAt": "2026-10-21T08:00:01.000Z",
+            "manualIdentity": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "biometric-evidence-rejects-device",
+      "schema": "BiometricEvidenceOk",
+      "expect": "reject",
+      "why": "Never a device id, key id, signature or officer id.",
+      "value": {
+        "applicationId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+        "evidence": [
+          {
+            "recordId": "8a010f35-7018-4d7a-9c64-10a91a9e29d9",
+            "deviceId": "d1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "manual-identity-ok",
+      "schema": "ManualIdentityOk",
+      "expect": "accept",
+      "why": "confirmManualIdentity.",
+      "value": {
+        "status": "CONFIRMED",
+        "confirmationId": "c1",
+        "recordId": "8a010f35-7018-4d7a-9c64-10a91a9e29d9",
+        "confirmedAt": "2026-10-21T08:00:00.000Z"
+      }
+    },
+    {
+      "id": "admin-read-opaque",
+      "schema": "OpaqueAdminRead",
+      "expect": "accept",
+      "why": "Opaque on purpose: no S06 screen consumes it (proxy-derived).",
+      "value": {
+        "agency": "RDF",
+        "campaigns": [],
+        "total": 0,
+        "nextCursor": null
+      }
+    }
   ]
 }

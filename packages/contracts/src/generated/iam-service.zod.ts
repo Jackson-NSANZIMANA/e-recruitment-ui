@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/iam-service.yaml                          ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -19,6 +19,14 @@
 //   POST /v1/auth/service/token                         none               service-internal
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
+//   GET  /v1/officers                                   officer            browser
+//   POST /v1/officers                                   officer            browser
+//   POST /v1/officers/activation/reissue                officer            browser
+//   POST /v1/officers/posts                             officer            browser
+//   POST /v1/officers/disable                           officer            browser
+//   POST /v1/officers/enable                            officer            browser
+//   POST /v1/officers/sessions/revoke                   officer            browser
+//   POST /v1/auth/officer/activate                      none               browser
 //
 // `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
@@ -45,11 +53,80 @@ export const InvalidRequest400Schema = z
     "detail": z.string().optional(),
   });
 
+export const OfficerActivateRequestSchema = z
+  .object({
+    "loginHandle": z.string(),
+    "activationCode": z.string(),
+    "password": z.string(),
+  }).strict();
+
+export const OfficerAdminErrorSchema = z
+  .object({
+    "error": z.enum(['INVALID_REQUEST', 'INVALID_HANDLE', 'INVALID_POSTS', 'UNKNOWN_POST', 'INVALID_REASON', 'AGENCY_ADMIN_NOT_ASSIGNABLE', 'SELF_MODIFICATION', 'NOT_FOUND', 'HANDLE_TAKEN', 'LAST_ACTIVE_ADMIN', 'NOT_PENDING_ACTIVATION', 'SAME_ADMIN', 'ALREADY_RELEASED', 'ACTIVATION_EXPIRED', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'WEAK_PASSWORD', 'ACTIVATION_REJECTED']),
+    "detail": z.string().optional(),
+  }).strict();
+
+export const OfficerRowSchema = z
+  .object({
+    "officerId": z.string().uuid(),
+    "loginHandle": z.string(),
+    "posts": z.array(z.string()),
+    "status": z.enum(['active', 'disabled', 'pending']),
+    "createdAt": z.string(),
+    "activatedAt": z.string().nullable(),
+    "lastLoginAt": z.string().nullable(),
+    "activationExpiresAt": z.string().nullable(),
+    "activationState": z.string().nullable(),
+    "releasableByYou": z.boolean(),
+  }).strict();
+
+export const OfficerChangeOkSchema = z
+  .object({
+    "outcome": z.enum(['ASSIGNED', 'DISABLED', 'ENABLED', 'REVOKED', 'UNCHANGED']),
+    "officer": OfficerRowSchema,
+    "sessionsRevoked": z.number(),
+  }).strict();
+
+export const OfficerCreateRequestSchema = z
+  .object({
+    "loginHandle": z.string(),
+    "posts": z.array(z.string()),
+  }).strict();
+
+export const OfficerListOkSchema = z
+  .object({
+    "officers": z.array(OfficerRowSchema),
+  }).strict();
+
 export const OfficerLoginRequestSchema = z
   .strictObject({
     "loginHandle": z.string().min(1).max(128),
     "password": z.string().min(1).max(256),
   });
+
+export const OfficerOpenedSchema = z
+  .object({
+    "outcome": z.enum(['CREATED', 'REISSUED']),
+    "officer": OfficerRowSchema,
+  }).strict();
+
+export const OfficerPostsRequestSchema = z
+  .object({
+    "targetOfficerId": z.string().uuid(),
+    "posts": z.array(z.string()),
+    "reasonCode": z.string(),
+  }).strict();
+
+export const OfficerReasonRequestSchema = z
+  .object({
+    "targetOfficerId": z.string().uuid(),
+    "reasonCode": z.string(),
+  }).strict();
+
+export const OfficerTargetRequestSchema = z
+  .object({
+    "targetOfficerId": z.string().uuid(),
+  }).strict();
 
 export const ServiceTokenRequestSchema = z
   .strictObject({
@@ -125,6 +202,147 @@ export const iamServiceOperations = {
     responses: {
       "200": null,
       "503": null,
+    },
+  },
+  "officerList": {
+    method: "GET",
+    path: "/v1/officers",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": OfficerListOkSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerCreate": {
+    method: "POST",
+    path: "/v1/officers",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerCreateRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerOpenedSchema,
+      "201": OfficerOpenedSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerReissueActivation": {
+    method: "POST",
+    path: "/v1/officers/activation/reissue",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerTargetRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerOpenedSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerAssignPosts": {
+    method: "POST",
+    path: "/v1/officers/posts",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerPostsRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerChangeOkSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerDisable": {
+    method: "POST",
+    path: "/v1/officers/disable",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerReasonRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerChangeOkSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerEnable": {
+    method: "POST",
+    path: "/v1/officers/enable",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerReasonRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerChangeOkSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerRevokeSessions": {
+    method: "POST",
+    path: "/v1/officers/sessions/revoke",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerReasonRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerChangeOkSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerActivate": {
+    method: "POST",
+    path: "/v1/auth/officer/activate",
+    auth: ["none"],
+    reach: "browser",
+    request: OfficerActivateRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "204": null,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
     },
   },
 } as const;
