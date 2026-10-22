@@ -6,7 +6,10 @@
     "scheduling": "Scheduling",
     "settings": "Settings",
     "logout": "Sign out",
-    "gate": "Venue gate"
+    "gate": "Venue gate",
+    "queues": "Queues",
+    "erasure": "Erasure requests",
+    "staff": "Staff"
   },
   "auth": {
     "send_code": "Send code",
@@ -431,6 +434,10 @@
       },
       "INVALID_TICKET": {
         "title": "Invalid QR — do not admit"
+      },
+      "MANUAL_IDENTITY_REQUIRED": {
+        "title": "A supervisor must confirm identity",
+        "body": "The card matched, but the evidence for {{code}} needs a field supervisor. Do not admit until the supervisor confirms."
       }
     },
     "invalid_reasons": {
@@ -452,7 +459,8 @@
       "IDENTITY_NOT_VERIFIED": "The identity check has not completed for this candidate. Run the identity check again.",
       "APPLICANT_NOT_FOUND": "The identity record was not found. Run the identity check again.",
       "UNSUPPORTED_AGENCY": "Walk-in registration is only available for RDF campaigns.",
-      "FORBIDDEN": "Your role cannot register walk-in candidates."
+      "FORBIDDEN": "Your role cannot register walk-in candidates.",
+      "VALIDATION_FAILED": "The registration details were not accepted. Check each field and try again."
     }
   },
   "rehearsal": {
@@ -510,5 +518,74 @@
     "station_unavailable_title": "This station is not available for your account",
     "station_unavailable_body": "Your role or agency does not include this station. Choose one of your stations instead.",
     "back_to_stations": "Back to my stations"
+  },
+  "ui": {
+    "state": {
+      "loading": {
+        "title": "Loading",
+        "body": "Please wait while the data is retrieved."
+      },
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "There are no records to show."
+      },
+      "filtered-empty": {
+        "title": "No matching records",
+        "body": "No record matches the current search or filters."
+      },
+      "forbidden": {
+        "title": "Not permitted",
+        "body": "Your post does not allow you to see or do this."
+      },
+      "not-found": {
+        "title": "Not found",
+        "body": "This record does not exist in your agency scope."
+      },
+      "partial": {
+        "title": "Some data is missing",
+        "body": "Part of this view could not be loaded. What is shown may be incomplete."
+      },
+      "stale": {
+        "title": "This view may be out of date",
+        "body": "It was loaded a while ago. Refresh before you act on it."
+      },
+      "upstream-failure": {
+        "title": "A service is unavailable",
+        "body": "The request could not be completed. Check the connection and try again."
+      },
+      "conflict": {
+        "title": "The record has changed",
+        "body": "Another action changed this record. Reload and review its current state."
+      },
+      "retry": "Retry",
+      "clearFilters": "Clear filters"
+    },
+    "confirm": {
+      "cancel": "Cancel"
+    },
+    "mask": {
+      "reveal": "Reveal",
+      "hide": "Hide"
+    },
+    "freshness": {
+      "updated": "Updated {{age}} ago",
+      "stale": "Out of date",
+      "unknown": "Update time unknown"
+    },
+    "age": {
+      "minute_one": "{{count}} minute",
+      "minute_other": "{{count}} minutes",
+      "hour_one": "{{count}} hour",
+      "hour_other": "{{count}} hours",
+      "day_one": "{{count}} day",
+      "day_other": "{{count}} days"
+    },
+    "queue": {
+      "item": "Record",
+      "status": "Status",
+      "age": "Waiting",
+      "lastAction": "Last action",
+      "actions": "Actions"
+    }
   }
 }

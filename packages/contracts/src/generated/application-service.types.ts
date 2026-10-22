@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -35,8 +35,12 @@ import type {
   ApplicationChannelSchema,
   ApplicationDetailSchema,
   ApplicationError500Schema,
+  ApplicationSearchRowSchema,
+  ApplicationSearchOkSchema,
   ApplicationSubmitted201Schema,
   ApplicationSummarySchema,
+  BiometricEvidenceRowSchema,
+  BiometricEvidenceOkSchema,
   ByApplicantOkSchema,
   CampaignCommandRejectionSchema,
   CampaignPublicCodeSchema,
@@ -74,11 +78,15 @@ import type {
   InvalidMedicalInput422Schema,
   InvalidRequest400Schema,
   ListApplicationsOkSchema,
+  ManualIdentityOkSchema,
+  ManualIdentityRequestSchema,
   MedicalReviewRequestSchema,
   MedicalReviewRequest400Schema,
   NoOpenCampaign409Schema,
   NoWalkInCampaign409Schema,
   NotFound404Schema,
+  OpaqueAdminReadSchema,
+  OperationalReadErrorSchema,
   PublicCampaignSchema,
   PublicCampaignDetail200Schema,
   PublicCampaignList200Schema,
@@ -131,8 +139,12 @@ export type ApplicantNotFound404 = z.infer<typeof ApplicantNotFound404Schema>;
 export type ApplicationChannel = z.infer<typeof ApplicationChannelSchema>;
 export type ApplicationDetail = z.infer<typeof ApplicationDetailSchema>;
 export type ApplicationError500 = z.infer<typeof ApplicationError500Schema>;
+export type ApplicationSearchRow = z.infer<typeof ApplicationSearchRowSchema>;
+export type ApplicationSearchOk = z.infer<typeof ApplicationSearchOkSchema>;
 export type ApplicationSubmitted201 = z.infer<typeof ApplicationSubmitted201Schema>;
 export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
+export type BiometricEvidenceRow = z.infer<typeof BiometricEvidenceRowSchema>;
+export type BiometricEvidenceOk = z.infer<typeof BiometricEvidenceOkSchema>;
 export type ByApplicantOk = z.infer<typeof ByApplicantOkSchema>;
 export type CampaignCommandRejection = z.infer<typeof CampaignCommandRejectionSchema>;
 export type CampaignPublicCode = z.infer<typeof CampaignPublicCodeSchema>;
@@ -170,11 +182,15 @@ export type InvalidApplicationId400 = z.infer<typeof InvalidApplicationId400Sche
 export type InvalidMedicalInput422 = z.infer<typeof InvalidMedicalInput422Schema>;
 export type InvalidRequest400 = z.infer<typeof InvalidRequest400Schema>;
 export type ListApplicationsOk = z.infer<typeof ListApplicationsOkSchema>;
+export type ManualIdentityOk = z.infer<typeof ManualIdentityOkSchema>;
+export type ManualIdentityRequest = z.infer<typeof ManualIdentityRequestSchema>;
 export type MedicalReviewRequest = z.infer<typeof MedicalReviewRequestSchema>;
 export type MedicalReviewRequest400 = z.infer<typeof MedicalReviewRequest400Schema>;
 export type NoOpenCampaign409 = z.infer<typeof NoOpenCampaign409Schema>;
 export type NoWalkInCampaign409 = z.infer<typeof NoWalkInCampaign409Schema>;
 export type NotFound404 = z.infer<typeof NotFound404Schema>;
+export type OpaqueAdminRead = z.infer<typeof OpaqueAdminReadSchema>;
+export type OperationalReadError = z.infer<typeof OperationalReadErrorSchema>;
 export type PublicCampaign = z.infer<typeof PublicCampaignSchema>;
 export type PublicCampaignDetail200 = z.infer<typeof PublicCampaignDetail200Schema>;
 export type PublicCampaignList200 = z.infer<typeof PublicCampaignList200Schema>;

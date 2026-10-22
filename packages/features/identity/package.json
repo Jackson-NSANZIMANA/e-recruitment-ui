@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "NID verification, OTP challenge, applicant session, consent receipts, and the officer and citizen sign-in screens every app mounts (ADR-FE-007 \u00a75).",
+  "description": "NID verification, OTP challenge, applicant session, consent receipts, and the officer and citizen sign-in screens every app mounts (ADR-FE-007 §5).",
   "license": "UNLICENSED",
   "exports": {
     ".": "./src/index.ts",
     "./officer-login": "./src/routes/officer-login.tsx",
     "./citizen-login": "./src/routes/citizen-otp.tsx",
-    "./locales/*": "./locales/*"
+    "./locales/*": "./locales/*",
+    "./activate": "./src/routes/activate.tsx"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -17,15 +18,21 @@
     "test": "vitest run",
     "test:model": "node --experimental-strip-types --test src/model/*.test.ts"
   },
-  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport; this slice used to declare a phantom SliceTransport with no implementation, which is how three of its four operation ids came to name routes the edge does not serve. @usrp/auth owns officer login and the citizen OTP pair (ADR-016, ADR-018) and returns a session view with NO token \u2014 this slice consumes it and must never reimplement it.",
+  "//dependencies": "@usrp/api-client supplies the ONE contract-asserted transport; this slice used to declare a phantom SliceTransport with no implementation, which is how three of its four operation ids came to name routes the edge does not serve. @usrp/auth owns officer login and the citizen OTP pair (ADR-016, ADR-018) and returns a session view with NO token — this slice consumes it and must never reimplement it.",
   "//peerDependencies": "React, ReactDOM and the router are PEERS, not dependencies. The host app owns the single instance; a second React in the graph throws 'invalid hook call' and resolves context to the wrong provider. The devDependency copies exist only so this slice typechecks and tests standalone.",
   "dependencies": {
     "@atlaskit/button": "^25.0.2",
     "@atlaskit/css": "^1.0.0",
+    "@atlaskit/dynamic-table": "^19.1.5",
     "@atlaskit/form": "^16.1.5",
     "@atlaskit/heading": "^7.0.1",
+    "@atlaskit/lozenge": "^15.0.1",
+    "@atlaskit/modal-dialog": "^16.3.0",
     "@atlaskit/primitives": "^22.2.1",
     "@atlaskit/section-message": "^10.0.0",
+    "@atlaskit/select": "^21.0.0",
+    "@atlaskit/spinner": "^20.1.2",
+    "@atlaskit/tabs": "^21.0.0",
     "@atlaskit/textfield": "^10.0.1",
     "@atlaskit/tokens": "^16.4.0",
     "@compiled/react": "^1.0.0",

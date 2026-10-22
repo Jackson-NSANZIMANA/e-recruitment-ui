@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/biometric-service.yaml                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -19,8 +19,11 @@
 import type { z } from 'zod';
 import type {
   AgencyMismatch403Schema,
+  BiometricAnySchema,
+  BiometricErrorSchema,
   UuidSchema,
   BiometricEvaluatedSchema,
+  BiometricEvidenceEnvelopeSchema,
   Forbidden403Schema,
   BiometricForbidden403Schema,
   BiometricRequest400Schema,
@@ -32,8 +35,11 @@ import type {
 } from './biometric-service.zod.js';
 
 export type AgencyMismatch403 = z.infer<typeof AgencyMismatch403Schema>;
+export type BiometricAny = z.infer<typeof BiometricAnySchema>;
+export type BiometricError = z.infer<typeof BiometricErrorSchema>;
 export type Uuid = z.infer<typeof UuidSchema>;
 export type BiometricEvaluated = z.infer<typeof BiometricEvaluatedSchema>;
+export type BiometricEvidenceEnvelope = z.infer<typeof BiometricEvidenceEnvelopeSchema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
 export type BiometricForbidden403 = z.infer<typeof BiometricForbidden403Schema>;
 export type BiometricRequest400 = z.infer<typeof BiometricRequest400Schema>;

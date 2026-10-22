@@ -27,7 +27,7 @@ info:
     NEITHER TOKEN IS A COOKIE. Both are returned in a JSON body. There is no
     Set-Cookie header anywhere in this document because there is no server in
     the system that sets one.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
   x-usrp-service-port-var: "PORT_IAM_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -170,8 +170,581 @@ paths:
         "503":
           description: "Database unreachable."
 
+  /v1/officers:
+    get:
+      operationId: "officerList"
+      summary: "List the officers of the caller's own agency (officer.read)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICERS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        200:
+          description: "{ officers }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerListOk"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+    post:
+      operationId: "officerCreate"
+      summary: "Create a pending officer; NEVER returns an activation code"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICERS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerCreateRequest"
+      responses:
+        200:
+          description: "{ outcome: CREATED, officer }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerOpened"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        201:
+          description: "{ outcome: CREATED, officer }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerOpened"
+
+  /v1/officers/activation/reissue:
+    post:
+      operationId: "officerReissueActivation"
+      summary: "Reopen the pending activation; NEVER returns a code"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_REISSUE_ACTIVATION_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerTargetRequest"
+      responses:
+        200:
+          description: "{ outcome: REISSUED, officer }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerOpened"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/officers/posts:
+    post:
+      operationId: "officerAssignPosts"
+      summary: "Assign posts with a closed reason code"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_POSTS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerPostsRequest"
+      responses:
+        200:
+          description: "{ outcome, officer, sessionsRevoked }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerChangeOk"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/officers/disable:
+    post:
+      operationId: "officerDisable"
+      summary: "Disable an officer; ends their sessions"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_DISABLE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerReasonRequest"
+      responses:
+        200:
+          description: "{ outcome, officer, sessionsRevoked }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerChangeOk"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/officers/enable:
+    post:
+      operationId: "officerEnable"
+      summary: "Enable an officer"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_ENABLE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerReasonRequest"
+      responses:
+        200:
+          description: "{ outcome, officer, sessionsRevoked }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerChangeOk"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/officers/sessions/revoke:
+    post:
+      operationId: "officerRevokeSessions"
+      summary: "Revoke every browser session of an officer"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_REVOKE_SESSIONS_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerReasonRequest"
+      responses:
+        200:
+          description: "{ outcome, officer, sessionsRevoked }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerChangeOk"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/auth/officer/activate:
+    post:
+      operationId: "officerActivate"
+      summary: "Redeem the one-time activation code and set a password"
+      x-usrp-auth: ["none"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_ACTIVATE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerActivateRequest"
+      responses:
+        204:
+          description: "Activated."
+        400:
+          description: "WEAK_PASSWORD or shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "ACTIVATION_REJECTED (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
 components:
   schemas:
+    OfficerRow:
+      type: "object"
+      additionalProperties: false
+      required: ["officerId", "loginHandle", "posts", "status", "createdAt", "activatedAt", "lastLoginAt", "activationExpiresAt", "activationState", "releasableByYou"]
+      properties:
+        officerId:
+          type: "string"
+          format: "uuid"
+        loginHandle:
+          type: "string"
+        posts:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+          enum: ["active", "disabled", "pending"]
+        createdAt:
+          type: "string"
+          format: "date-time"
+        activatedAt:
+          type: ["string", "null"]
+          format: "date-time"
+        lastLoginAt:
+          type: ["string", "null"]
+          format: "date-time"
+        activationExpiresAt:
+          type: ["string", "null"]
+          format: "date-time"
+        activationState:
+          type: ["string", "null"]
+        releasableByYou:
+          type: "boolean"
+
+    OfficerListOk:
+      type: "object"
+      additionalProperties: false
+      required: ["officers"]
+      properties:
+        officers:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/OfficerRow"
+
+    OfficerCreateRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["loginHandle", "posts"]
+      properties:
+        loginHandle:
+          type: "string"
+        posts:
+          type: "array"
+          items:
+            type: "string"
+
+    OfficerOpened:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome", "officer"]
+      properties:
+        outcome:
+          type: "string"
+          enum: ["CREATED", "REISSUED"]
+        officer:
+          "$ref": "#/components/schemas/OfficerRow"
+
+    OfficerTargetRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["targetOfficerId"]
+      properties:
+        targetOfficerId:
+          type: "string"
+          format: "uuid"
+
+    OfficerPostsRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["targetOfficerId", "posts", "reasonCode"]
+      properties:
+        targetOfficerId:
+          type: "string"
+          format: "uuid"
+        posts:
+          type: "array"
+          items:
+            type: "string"
+        reasonCode:
+          type: "string"
+
+    OfficerReasonRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["targetOfficerId", "reasonCode"]
+      properties:
+        targetOfficerId:
+          type: "string"
+          format: "uuid"
+        reasonCode:
+          type: "string"
+
+    OfficerChangeOk:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome", "officer", "sessionsRevoked"]
+      properties:
+        outcome:
+          type: "string"
+          enum: ["ASSIGNED", "DISABLED", "ENABLED", "REVOKED", "UNCHANGED"]
+        officer:
+          "$ref": "#/components/schemas/OfficerRow"
+        sessionsRevoked:
+          type: "integer"
+          minimum: 0
+
+    OfficerActivateRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["loginHandle", "activationCode", "password"]
+      properties:
+        loginHandle:
+          type: "string"
+        activationCode:
+          type: "string"
+        password:
+          type: "string"
+
+    OfficerAdminError:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["INVALID_REQUEST", "INVALID_HANDLE", "INVALID_POSTS", "UNKNOWN_POST", "INVALID_REASON", "AGENCY_ADMIN_NOT_ASSIGNABLE", "SELF_MODIFICATION", "NOT_FOUND", "HANDLE_TAKEN", "LAST_ACTIVE_ADMIN", "NOT_PENDING_ACTIVATION", "SAME_ADMIN", "ALREADY_RELEASED", "ACTIVATION_EXPIRED", "PERMISSION_DENIED", "UNAUTHENTICATED", "WEAK_PASSWORD", "ACTIVATION_REJECTED"]
+        detail:
+          type: "string"
+
     OfficerLoginRequest:
       type: "object"
       additionalProperties: false

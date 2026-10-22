@@ -6,7 +6,10 @@
     "scheduling": "Gateganya",
     "settings": "Igenamiterere",
     "logout": "Sohoka",
-    "gate": "Irembo ry'ikizamini"
+    "gate": "Irembo ry'ikizamini",
+    "queues": "Imirongo y'akazi",
+    "erasure": "Ibyifuzo byo gusiba",
+    "staff": "Abakozi"
   },
   "auth": {
     "send_code": "Ohereza kode",
@@ -431,6 +434,10 @@
       },
       "INVALID_TICKET": {
         "title": "Kode QR itemewe — ntumwinjize"
+      },
+      "MANUAL_IDENTITY_REQUIRED": {
+        "title": "Umugenzuzi agomba kwemeza indangamuntu",
+        "body": "Ikarita irahura, ariko ibimenyetso bya {{code}} bisaba umugenzuzi wo ku kibuga. Ntumureke yinjire atarabyemeza."
       }
     },
     "invalid_reasons": {
@@ -452,7 +459,8 @@
       "IDENTITY_NOT_VERIFIED": "Igenzura ry'umwirondoro ntirirarangira kuri uyu mukandida. Ongera ukore igenzura ry'umwirondoro.",
       "APPLICANT_NOT_FOUND": "Umwirondoro ntiwabonetse. Ongera ukore igenzura ry'umwirondoro.",
       "UNSUPPORTED_AGENCY": "Kwandika abaje ku kibuga bikorwa gusa ku matangazo ya RDF.",
-      "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga."
+      "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga.",
+      "VALIDATION_FAILED": "Amakuru y'iyandikisha ntiyemewe. Genzura buri gice ugerageze nanone."
     }
   },
   "rehearsal": {
@@ -510,5 +518,74 @@
     "station_unavailable_title": "Iyi sitasiyo ntiboneka kuri konti yawe",
     "station_unavailable_body": "Inshingano zawe cyangwa urwego rwawe ntibirimo iyi sitasiyo. Hitamo imwe muri sitasiyo zawe.",
     "back_to_stations": "Subira kuri sitasiyo zanjye"
+  },
+  "ui": {
+    "state": {
+      "loading": {
+        "title": "Biraza gufungura",
+        "body": "Tegereza mu gihe amakuru arimo kuboneka."
+      },
+      "empty": {
+        "title": "Nta kintu kiriho",
+        "body": "Nta makuru yo kwerekana ahari."
+      },
+      "filtered-empty": {
+        "title": "Nta makuru ahuye",
+        "body": "Nta makuru ahuye n'ishakisha cyangwa ayungurura biriho."
+      },
+      "forbidden": {
+        "title": "Ntibyemewe",
+        "body": "Umwanya wawe ntiguhesha uburenganzira bwo kubibona cyangwa kubikora."
+      },
+      "not-found": {
+        "title": "Ntibyabonetse",
+        "body": "Aya makuru ntabaho mu bubasha bw'ikigo cyawe."
+      },
+      "partial": {
+        "title": "Hari amakuru abura",
+        "body": "Igice cy'iyi nyandiko ntikibashije gufungurwa. Ibigaragara bishobora kuba bituzuye."
+      },
+      "stale": {
+        "title": "Iyi nyandiko ishobora kuba ishaje",
+        "body": "Yafunguwe hashize igihe. Subiramo mbere yo gukora."
+      },
+      "upstream-failure": {
+        "title": "Serivisi ntiboneka",
+        "body": "Icyifuzo nticyashoboye kurangira. Reba umuyoboro ugerageze nanone."
+      },
+      "conflict": {
+        "title": "Amakuru yahindutse",
+        "body": "Ikindi gikorwa cyahinduye aya makuru. Subiramo urebe uko ahagaze ubu."
+      },
+      "retry": "Ongera ugerageze",
+      "clearFilters": "Kuraho ayungurura"
+    },
+    "confirm": {
+      "cancel": "Bireke"
+    },
+    "mask": {
+      "reveal": "Erekana",
+      "hide": "Hisha"
+    },
+    "freshness": {
+      "updated": "Byavuguruwe hashize {{age}}",
+      "stale": "Bishaje",
+      "unknown": "Igihe cyavugururiwe ntikizwi"
+    },
+    "age": {
+      "minute_one": "umunota {{count}}",
+      "minute_other": "iminota {{count}}",
+      "hour_one": "isaha {{count}}",
+      "hour_other": "amasaha {{count}}",
+      "day_one": "umunsi {{count}}",
+      "day_other": "iminsi {{count}}"
+    },
+    "queue": {
+      "item": "Dosiye",
+      "status": "Imimerere",
+      "age": "Igihe imaze",
+      "lastAction": "Igikorwa giheruka",
+      "actions": "Ibikorwa"
+    }
   }
 }

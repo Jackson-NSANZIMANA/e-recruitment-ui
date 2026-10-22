@@ -691,6 +691,9 @@ importers:
       '@atlaskit/dynamic-table':
         specifier: ^19.1.5
         version: 19.3.8(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/heading':
+        specifier: ^7.0.1
+        version: 7.2.3(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/lozenge':
         specifier: ^15.0.1
         version: 15.4.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -703,18 +706,39 @@ importers:
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/select':
+        specifier: ^21.0.0
+        version: 21.12.15(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/spinner':
+        specifier: ^20.1.2
+        version: 20.4.4(react@18.3.1)
+      '@atlaskit/tabs':
+        specifier: ^21.0.0
+        version: 21.3.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/textfield':
+        specifier: ^10.0.1
+        version: 10.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/tokens':
+        specifier: ^16.4.0
+        version: 16.12.0(react@18.3.1)
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
       '@usrp/api-client':
         specifier: workspace:*
         version: link:../../api-client
+      '@usrp/auth':
+        specifier: workspace:*
+        version: link:../../auth
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
       '@usrp/i18n':
         specifier: workspace:*
         version: link:../../i18n
+      '@usrp/ui':
+        specifier: workspace:*
+        version: link:../../ui
     devDependencies:
       '@atlaskit/eslint-plugin-design-system':
         specifier: ^16.10.0
@@ -773,24 +797,39 @@ importers:
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/select':
+        specifier: ^21.0.0
+        version: 21.12.15(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/spinner':
         specifier: ^20.1.2
         version: 20.4.4(react@18.3.1)
+      '@atlaskit/tabs':
+        specifier: ^21.0.0
+        version: 21.3.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/textfield':
         specifier: ^10.0.1
         version: 10.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/tokens':
+        specifier: ^16.4.0
+        version: 16.12.0(react@18.3.1)
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
       '@usrp/api-client':
         specifier: workspace:*
         version: link:../../api-client
+      '@usrp/auth':
+        specifier: workspace:*
+        version: link:../../auth
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
       '@usrp/i18n':
         specifier: workspace:*
         version: link:../../i18n
+      '@usrp/ui':
+        specifier: workspace:*
+        version: link:../../ui
     devDependencies:
       '@atlaskit/eslint-plugin-design-system':
         specifier: ^16.10.0
@@ -892,6 +931,12 @@ importers:
       '@atlaskit/form':
         specifier: ^16.1.5
         version: 16.1.5(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/heading':
+        specifier: ^7.0.1
+        version: 7.2.3(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/lozenge':
+        specifier: ^15.0.1
+        version: 15.4.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/modal-dialog':
         specifier: ^16.3.0
         version: 16.6.7(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -901,21 +946,42 @@ importers:
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/select':
+        specifier: ^21.0.0
+        version: 21.12.15(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/spinner':
+        specifier: ^20.1.2
+        version: 20.4.4(react@18.3.1)
+      '@atlaskit/tabs':
+        specifier: ^21.0.0
+        version: 21.3.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/textarea':
         specifier: '*'
         version: 10.2.7(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/textfield':
+        specifier: ^10.0.1
+        version: 10.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/tokens':
+        specifier: ^16.4.0
+        version: 16.12.0(react@18.3.1)
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)
       '@usrp/api-client':
         specifier: workspace:*
         version: link:../../api-client
+      '@usrp/auth':
+        specifier: workspace:*
+        version: link:../../auth
       '@usrp/contracts':
         specifier: workspace:*
         version: link:../../contracts
       '@usrp/i18n':
         specifier: workspace:*
         version: link:../../i18n
+      '@usrp/ui':
+        specifier: workspace:*
+        version: link:../../ui
     devDependencies:
       '@atlaskit/eslint-plugin-design-system':
         specifier: ^16.10.0
@@ -1047,18 +1113,36 @@ importers:
       '@atlaskit/css':
         specifier: ^1.0.0
         version: 1.1.6(react@18.3.1)
+      '@atlaskit/dynamic-table':
+        specifier: ^19.1.5
+        version: 19.3.8(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/form':
         specifier: ^16.1.5
         version: 16.1.5(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/heading':
         specifier: ^7.0.1
         version: 7.2.3(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/lozenge':
+        specifier: ^15.0.1
+        version: 15.4.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/modal-dialog':
+        specifier: ^16.3.0
+        version: 16.6.7(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/primitives':
         specifier: ^22.2.1
         version: 22.5.4(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/select':
+        specifier: ^21.0.0
+        version: 21.12.15(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/spinner':
+        specifier: ^20.1.2
+        version: 20.4.4(react@18.3.1)
+      '@atlaskit/tabs':
+        specifier: ^21.0.0
+        version: 21.3.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/textfield':
         specifier: ^10.0.1
         version: 10.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

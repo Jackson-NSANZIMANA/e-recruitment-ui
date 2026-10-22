@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/field-sync-service.yaml                   ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║

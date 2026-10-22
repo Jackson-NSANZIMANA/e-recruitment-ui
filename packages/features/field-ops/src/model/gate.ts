@@ -64,6 +64,8 @@ export function gateMessage(result: GateAdmissionResult, selfSuffix: string): Ga
       };
     case "IDENTITY_MISMATCH":
       return { appearance: "error", ...base("IDENTITY_MISMATCH"), values: { code: result.candidate.processingCode }, admit: false };
+    case "MANUAL_IDENTITY_REQUIRED":
+      return { appearance: "warning", ...base("MANUAL_IDENTITY_REQUIRED"), values: { code: result.candidate.processingCode }, admit: false };
     case "NOT_ADMISSIBLE":
       return {
         appearance: "error",

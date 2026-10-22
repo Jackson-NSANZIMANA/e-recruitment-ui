@@ -51,7 +51,7 @@ export function runSelftest(root: string): boolean {
   assert(rulesOf(variant({ readiness: { rung: 'ALMOST-DONE' } })).includes('readiness-rung'), 'off-ladder rung is refused');
   assert(rulesOf(variant({ readiness: { rung: 'DECLARED' } })).includes('blocked-by'), 'DECLARED without blockedBy is refused');
   assert(
-    rulesOf(variant({ operations: ['listErasureRequests'], readiness: { rung: 'EDGE-AVAILABLE', blockedBy: ['B-13'] } })).includes('operation-registered'),
+    rulesOf(variant({ operations: ['listSomethingTheEdgeNeverServed'], readiness: { rung: 'EDGE-AVAILABLE', blockedBy: ['B-13'] } })).includes('operation-registered'),
     'EDGE-AVAILABLE with an operation the edge does not serve is refused',
   );
   assert(

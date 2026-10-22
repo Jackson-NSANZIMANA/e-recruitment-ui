@@ -369,6 +369,7 @@ export type GateAdmissionResult =
     }
   | { readonly outcome: 'NOT_ADMISSIBLE'; readonly candidate: GateCandidate; readonly currentStatus: string }
   | { readonly outcome: 'IDENTITY_MISMATCH'; readonly candidate: GateCandidate }
+  | { readonly outcome: 'MANUAL_IDENTITY_REQUIRED'; readonly candidate: GateCandidate }
   | { readonly outcome: 'WRONG_VENUE'; readonly ticketVenueName: string }
   | { readonly outcome: 'TOO_EARLY' | 'EXPIRED'; readonly examDate: string }
   | { readonly outcome: 'INVALID_TICKET'; readonly reason: InvalidTicketReason };
@@ -481,3 +482,107 @@ export interface CampaignCommandResult<T> {
   readonly result: T;
   readonly replayed: boolean;
 }
+
+// ══════════════════════════════════════════════════════════════════
+// Officer lifecycle (S01, ADR-036 + Addendum A), operational reads (S04,
+// ADR-039) and advisory biometric evidence (B1, ADR-037).
+//
+// Transcribed from services/edge-gateway/openapi/edge-v1.yaml at the pinned
+// EDGE_BACKEND_SHA. Four-eyes (Addendum A): create and reissue answers carry NO
+// activation code; only the release answer does, to a different administrator.
+// ══════════════════════════════════════════════════════════════════
+
+export type OfficerStatus = 'active' | 'disabled' | 'pending';
+export type ActivationState = 'PENDING_RELEASE' | 'RELEASED' | 'EXPIRED';
+
+export interface OfficerRow {
+  readonly officerId: string;
+  readonly loginHandle: string;
+  readonly posts: readonly string[];
+  readonly status: OfficerStatus;
+  readonly createdAt: string;
+  readonly activatedAt: string | null;
+  readonly lastLoginAt: string | null;
+  readonly activationExpiresAt: string | null;
+  readonly activationState: ActivationState | null;
+  /** Relative to the viewing administrator, in every answer. */
+  readonly releasableByYou: boolean;
+}
+
+export interface OfficerListResponse { readonly officers: readonly OfficerRow[] }
+export interface CreateOfficerInput { readonly loginHandle: string; readonly posts: readonly string[] }
+/** createOfficer / reissueOfficerActivation: the officer only, never a code. */
+export interface OfficerOpenedResponse { readonly outcome: 'CREATED' | 'REISSUED'; readonly officer: OfficerRow }
+export interface OfficerTargetInput { readonly targetOfficerId: string }
+export interface OfficerReleasedResponse {
+  readonly outcome: 'RELEASED';
+  readonly officer: OfficerRow;
+  readonly activation: { readonly code: string; readonly expiresAt: string };
+}
+export const ASSIGNABLE_POSTS = ['reviewer', 'screening_officer', 'field_supervisor', 'medical_officer', 'adjudicator', 'decision_authority', 'dpo'] as const;
+export type AssignablePost = (typeof ASSIGNABLE_POSTS)[number];
+export const ASSIGN_POSTS_REASONS = ['POSTING_CHANGE', 'CORRECTION', 'TEMPORARY_COVER', 'OTHER'] as const;
+export const DISABLE_REASONS = ['LEFT_SERVICE', 'SUSPENDED', 'SECURITY_CONCERN', 'EXTENDED_LEAVE', 'OTHER'] as const;
+export const ENABLE_REASONS = ['RETURNED_TO_DUTY', 'SUSPENSION_LIFTED', 'CORRECTION', 'OTHER'] as const;
+export const REVOKE_SESSIONS_REASONS = ['DEVICE_LOST', 'SECURITY_CONCERN', 'OTHER'] as const;
+export interface AssignOfficerPostsInput { readonly targetOfficerId: string; readonly posts: readonly string[]; readonly reasonCode: string }
+export interface OfficerReasonInput { readonly targetOfficerId: string; readonly reasonCode: string }
+export interface OfficerChangeResponse {
+  readonly outcome: 'ASSIGNED' | 'DISABLED' | 'ENABLED' | 'REVOKED' | 'UNCHANGED';
+  readonly officer: OfficerRow;
+  readonly sessionsRevoked: number;
+}
+/** 204 No Content: the transport hands back an empty object. */
+export type ActivateOfficerResponse = Readonly<Record<string, never>>;
+export interface ActivateOfficerInput { readonly loginHandle: string; readonly activationCode: string; readonly password: string }
+
+export interface ApplicationSearchRow {
+  readonly applicationId: string;
+  readonly processingCode: string;
+  readonly category: string;
+  readonly status: string;
+  readonly submittedAt: string | null;
+}
+export interface ApplicationSearchResponse {
+  readonly agency: string;
+  readonly applications: readonly ApplicationSearchRow[];
+  readonly total: number;
+  readonly nextCursor: string | null;
+}
+export interface ApplicationSearchQuery {
+  readonly status?: readonly string[];
+  readonly category?: string;
+  readonly campaign?: string;
+  readonly district?: string;
+  readonly submittedFrom?: string;
+  readonly submittedTo?: string;
+  readonly limit?: number;
+  readonly cursor?: string;
+}
+
+export interface BiometricEvidenceRow {
+  readonly recordId: string;
+  readonly ticketId: string;
+  readonly referenceSource: string;
+  readonly method: string;
+  readonly consentState: string;
+  readonly outcome: string;
+  readonly notAttemptedReason: string | null;
+  readonly livenessScoreBp: number | null;
+  readonly matchScoreBp: number | null;
+  readonly modelId: string | null;
+  readonly modelVersion: string | null;
+  readonly thresholdPolicyVersion: string;
+  readonly mode: 'ADVISORY';
+  readonly capturedAt: string;
+  readonly receivedAt: string;
+  readonly manualIdentity: { readonly reasonCode: string; readonly confirmedAt: string } | null;
+}
+export interface BiometricEvidenceResponse { readonly applicationId: string; readonly evidence: readonly BiometricEvidenceRow[] }
+
+export interface ErasureRequestRow { readonly requestId: string; readonly requestedAt: string }
+export interface ErasureQueueResponse { readonly requests: readonly ErasureRequestRow[] }
+export type ErasureDecisionInput =
+  | { readonly requestId: string; readonly decision: 'DECLINE'; readonly grounds: string }
+  | { readonly requestId: string; readonly decision: 'EXECUTE' };
+export interface ErasureDecisionResponse { readonly requestId: string; readonly decision: 'DECLINED' | 'EXECUTED' }

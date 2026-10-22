@@ -29,7 +29,7 @@ import {
 } from '@tanstack/react-query';
 import type { Agency } from '@usrp/contracts';
 import type { ApiClient } from '../transport.js';
-import { applicationKeys, INVALIDATION_MAP, resolveInvalidation } from '../keys.js';
+import { applicationKeys, INVALIDATION_MAP, resolveInvalidation, searchKeys } from '../keys.js';
 import {
   acceptApplication,
   adjudicateApplication,
@@ -142,9 +142,11 @@ async function invalidate(
   context: { agency?: Agency; applicationId?: string },
 ): Promise<void> {
   const targets = INVALIDATION_MAP[operationId] ?? [];
-  await Promise.all(
-    resolveInvalidation(targets, context).map((key) => qc.invalidateQueries({ queryKey: key })),
-  );
+  await Promise.all([
+    ...resolveInvalidation(targets, context).map((key) => qc.invalidateQueries({ queryKey: key })),
+    // S04 search (the list and the medical/final queues): a transition moves rows between them.
+    qc.invalidateQueries({ queryKey: searchKeys.all }),
+  ]);
 }
 
 /** Medical review (ADR-013). The input union enforces the agency mode. */

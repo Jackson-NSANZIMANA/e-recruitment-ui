@@ -16,6 +16,7 @@ const base: readonly RouteLike[] = [
   { service: 's', operationId: 'requestApplicantOtp', method: 'POST', path: '/v1/applicants/auth/otp/request', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'verifyApplicantOtp', method: 'POST', path: '/v1/applicants/auth/otp/verify', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'getSlotInvitationKey', method: 'GET', path: '/v1/slots/invitation-key', auth: ['none'], reach: 'browser' },
+  { service: 's', operationId: 'officerActivate', method: 'POST', path: '/v1/auth/officer/activate', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'listApplications', method: 'GET', path: '/v1/applications', auth: ['officer'], reach: 'browser' },
   { service: 's', operationId: 'submitApplication', method: 'POST', path: '/v1/applications', auth: ['system'], reach: 'service-internal' },
   { service: 's', operationId: 'listMyApplications', method: 'GET', path: '/v1/applicants/me/applications', auth: ['applicant-session'], reach: 'browser' },
@@ -28,7 +29,7 @@ test('a compliant table produces no problems at all', () => {
   assert.deepEqual([...auditRoutes(base)], []);
 });
 
-test('the anonymous browser allowlist is a reviewed list of exactly seven', () => {
+test('the anonymous browser allowlist is a reviewed list of exactly eight', () => {
   assert.deepEqual([...ANONYMOUS_BROWSER_OPERATIONS], [
     'officerLogin',
     'beginApplicantOnboarding',
@@ -37,6 +38,7 @@ test('the anonymous browser allowlist is a reviewed list of exactly seven', () =
     'requestApplicantOtp',
     'verifyApplicantOtp',
     'getSlotInvitationKey',
+    'officerActivate',
   ]);
 });
 

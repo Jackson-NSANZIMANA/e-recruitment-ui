@@ -158,6 +158,7 @@ const GOOD: readonly RouteLike[] = [
   { service: 's', operationId: 'getPublicCampaign', method: 'GET', path: '/v1/campaigns/detail', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'verifyApplicantOtp', method: 'POST', path: '/v1/applicants/auth/otp/verify', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'getSlotInvitationKey', method: 'GET', path: '/v1/slots/invitation-key', auth: ['none'], reach: 'browser' },
+  { service: 'i', operationId: 'officerActivate', method: 'POST', path: '/v1/auth/officer/activate', auth: ['none'], reach: 'browser' },
   { service: 's', operationId: 'listApplications', method: 'GET', path: '/v1/applications', auth: ['officer'], reach: 'browser' },
   { service: 's', operationId: 'submitApplication', method: 'POST', path: '/v1/applications', auth: ['system'], reach: 'service-internal' },
   { service: 's', operationId: 'listMyApplications', method: 'GET', path: '/v1/applicants/me/applications', auth: ['applicant-session'], reach: 'browser' },

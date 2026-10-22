@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -1728,8 +1728,502 @@ paths:
         "503":
           description: "Database unreachable."
 
+  /v1/applications/search:
+    get:
+      operationId: "searchApplications"
+      summary: "Paginated, filterable officer application list (keyset cursor, total)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/operational-read.controller.ts (SEARCH)"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "status"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+        - name: "category"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "campaign"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "district"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "submittedFrom"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "submittedTo"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "limit"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+        - name: "cursor"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+      responses:
+        200:
+          description: "{ agency, applications, total, nextCursor }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApplicationSearchOk"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
+  /v1/applications/biometric-evidence:
+    get:
+      operationId: "getBiometricEvidence"
+      summary: "ADVISORY biometric evidence for one application (never a verdict)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/biometric-evidence.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "applicationId"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        200:
+          description: "{ applicationId, evidence[] }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BiometricEvidenceOk"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
+  /v1/applications/biometric-evidence/manual-identity:
+    post:
+      operationId: "confirmManualIdentity"
+      summary: "Supervised manual identity confirmation"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/biometric-evidence.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ManualIdentityRequest"
+      responses:
+        201:
+          description: "{ status: CONFIRMED, … }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ManualIdentityOk"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "Bearer."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "One answer."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        409:
+          description: "NOT_REQUIRED | ALREADY_CONFIRMED | SAME_OFFICER"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
+  /v1/campaigns/admin:
+    get:
+      operationId: "adminCampaignList"
+      summary: "The agency's campaigns in every state"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/operational-read.controller.ts"
+      x-usrp-verified: "proxy-derived"
+      parameters:
+        - name: "q"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "status"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+        - name: "limit"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+        - name: "cursor"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+      responses:
+        200:
+          description: "{ agency, campaigns, total, nextCursor }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OpaqueAdminRead"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
+  /v1/campaigns/admin/detail:
+    get:
+      operationId: "adminCampaignDetail"
+      summary: "One campaign with sessions, occupancy, policy and history"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/operational-read.controller.ts"
+      x-usrp-verified: "proxy-derived"
+      parameters:
+        - name: "publicCode"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        200:
+          description: "{ agency, campaign }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OpaqueAdminRead"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
+  /v1/venue-roster:
+    get:
+      operationId: "venueRoster"
+      summary: "Minimum candidate set for one venue day (no names, no National IDs)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/operational-read.controller.ts"
+      x-usrp-verified: "proxy-derived"
+      parameters:
+        - name: "campaign"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+        - name: "district"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+        - name: "examDate"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+      responses:
+        200:
+          description: "{ agency, venue, candidates, truncated }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OpaqueAdminRead"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
 components:
   schemas:
+    ApplicationSearchRow:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "processingCode", "category", "status", "submittedAt"]
+      properties:
+        applicationId:
+          type: "string"
+          format: "uuid"
+        processingCode:
+          type: "string"
+        category:
+          type: "string"
+        status:
+          type: "string"
+        submittedAt:
+          type: ["string", "null"]
+          format: "date-time"
+
+    ApplicationSearchOk:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "applications", "total", "nextCursor"]
+      properties:
+        agency:
+          type: "string"
+        applications:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ApplicationSearchRow"
+        total:
+          type: "integer"
+          minimum: 0
+        nextCursor:
+          type: ["string", "null"]
+
+    BiometricEvidenceRow:
+      type: "object"
+      additionalProperties: false
+      required: ["recordId", "ticketId", "referenceSource", "method", "consentState", "outcome", "notAttemptedReason", "livenessScoreBp", "matchScoreBp", "modelId", "modelVersion", "thresholdPolicyVersion", "mode", "capturedAt", "receivedAt", "manualIdentity"]
+      properties:
+        recordId:
+          type: "string"
+          format: "uuid"
+        ticketId:
+          type: "string"
+        referenceSource:
+          type: "string"
+        method:
+          type: "string"
+        consentState:
+          type: "string"
+        outcome:
+          type: "string"
+        notAttemptedReason:
+          type: ["string", "null"]
+        livenessScoreBp:
+          type: ["integer", "null"]
+        matchScoreBp:
+          type: ["integer", "null"]
+        modelId:
+          type: ["string", "null"]
+        modelVersion:
+          type: ["string", "null"]
+        thresholdPolicyVersion:
+          type: "string"
+        mode:
+          type: "string"
+          const: "ADVISORY"
+        capturedAt:
+          type: "string"
+          format: "date-time"
+        receivedAt:
+          type: "string"
+          format: "date-time"
+        manualIdentity:
+          type: ["object", "null"]
+          additionalProperties: false
+          required: ["reasonCode", "confirmedAt"]
+          properties:
+            reasonCode:
+              type: "string"
+            confirmedAt:
+              type: "string"
+              format: "date-time"
+
+    BiometricEvidenceOk:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "evidence"]
+      properties:
+        applicationId:
+          type: "string"
+          format: "uuid"
+        evidence:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/BiometricEvidenceRow"
+
+    ManualIdentityRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["recordId", "reasonCode"]
+      properties:
+        recordId:
+          type: "string"
+          format: "uuid"
+        reasonCode:
+          type: "string"
+
+    ManualIdentityOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "confirmationId", "recordId", "confirmedAt"]
+      properties:
+        status:
+          type: "string"
+          const: "CONFIRMED"
+        confirmationId:
+          type: "string"
+        recordId:
+          type: "string"
+          format: "uuid"
+        confirmedAt:
+          type: "string"
+          format: "date-time"
+
+    OpaqueAdminRead:
+      description: "Consumed by no S06 screen; shape asserted from edge-v1.yaml, not re-read from the controller."
+      type: "object"
+      additionalProperties: true
+
+    OperationalReadError:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          enum: ["INVALID_REQUEST", "INVALID_PUBLIC_CODE", "NOT_FOUND", "PERMISSION_DENIED", "UNAUTHENTICATED", "NOT_REQUIRED", "ALREADY_CONFIRMED", "SAME_OFFICER"]
+        detail:
+          type: "string"
+
     Uuid:
       type: "string"
       format: "uuid"

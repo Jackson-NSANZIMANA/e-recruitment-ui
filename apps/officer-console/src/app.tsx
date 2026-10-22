@@ -31,10 +31,7 @@ const spinnerStyles = cssMap({
 import OfficerLoginPage from "@usrp/feature-identity/officer-login";
 
 const DashboardPage = lazy(() => import("./routes/dashboard.js"));
-const ApplicationsPage = lazy(() => import("./routes/applications.js"));
-const ApplicationDetailPage = lazy(
-  () => import("./routes/application-detail.js"),
-);
+const ActivatePage = lazy(() => import("./routes/activate.js"));
 // The gate and the walk-in desk moved to the Field Station (ADR-FE-007): the
 // old paths redirect to a notice that says where they went.
 const FieldStationNotice = lazy(() => import("./routes/field-station-notice.js"));
@@ -47,6 +44,8 @@ const FullPageSpinner = (): React.ReactElement => (
 
 const router = createBrowserRouter(gateByReadiness([
   { path: "/login", element: <OfficerLoginPage homePath="/dashboard" /> },
+  // Public: the one-time code released by a second administrator is the credential (ADR-036 Addendum A).
+  { path: "/activate", element: <ActivatePage /> },
   {
     path: "/",
     element: (
@@ -66,8 +65,6 @@ const router = createBrowserRouter(gateByReadiness([
         ),
         children: [
           { path: "dashboard", element: <DashboardPage /> },
-          { path: "applications", element: <ApplicationsPage /> },
-          { path: "applications/:id", element: <ApplicationDetailPage /> },
           { path: "walk-in", element: <Navigate to="/field-station" replace /> },
           { path: "gate", element: <Navigate to="/field-station" replace /> },
           { path: "field-station", element: <FieldStationNotice /> },
