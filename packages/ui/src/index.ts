@@ -38,3 +38,6 @@ export type {
   NotBuiltBannerProps,
 } from "./readiness/index.js";
 export { ConnectionStatus } from "./components/ConnectionStatus/index.js";
+
+// ─── State patterns (S06) ──────────────────────────────────────────────────────
+export * from "./states/index.js";
