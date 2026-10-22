@@ -1,1 +1,7 @@
-import React from 'react';import SectionMessage from '@atlaskit/section-message';import {Stack,Text} from '@atlaskit/primitives/compiled';import {useTranslation} from '@usrp/i18n';export default function DpoQueue():React.ReactElement{const {t}=useTranslation('compliance');return <Stack space="space.200"><Text as="p">{t('compliance.queue.title')}</Text><SectionMessage appearance="warning"><Text as="p">{t('compliance.erasure.authority_gap')}</Text></SectionMessage></Stack>}
+import React from 'react';
+import type { ApiClient } from '@usrp/api-client';
+import { DpoQueuePage } from '../ui/DpoQueuePage.tsx';
+
+export default function DpoQueueRoute({ client }: { readonly client: ApiClient }): React.ReactElement {
+  return <DpoQueuePage client={client} />;
+}
