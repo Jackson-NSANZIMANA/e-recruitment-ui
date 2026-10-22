@@ -32,13 +32,17 @@ export function ConfirmAction({
   onCancel, onConfirm, children, canConfirm = true,
 }: ConfirmActionProps): React.ReactElement {
   const { t } = useTranslation();
+  // While a write is in flight the dialog cannot be dismissed: closing it would hide an outcome that is still coming.
+  const dismiss = (): void => {
+    if (!isPending) onCancel();
+  };
   return (
     <ModalTransition>
       {isOpen && (
-        <ModalDialog onClose={onCancel} width="small" testId="confirm-action">
+        <ModalDialog onClose={dismiss} width="small" testId="confirm-action">
           <ModalHeader>
             <ModalTitle {...(appearance === "primary" ? {} : { appearance })}>{title}</ModalTitle>
-            <CloseButton onClick={onCancel} />
+            <CloseButton onClick={dismiss} />
           </ModalHeader>
           <ModalBody>
             <Stack space="space.150">
@@ -54,7 +58,7 @@ export function ConfirmAction({
           <ModalFooter>
             <Inline space="space.100" alignInline="end">
               <Button appearance="subtle" isDisabled={isPending} onClick={onCancel}>{cancelLabel ?? t("ui.confirm.cancel")}</Button>
-              <Button appearance={appearance} isDisabled={isPending || !canConfirm} onClick={onConfirm} testId="confirm-action-confirm">{confirmLabel}</Button>
+              <Button appearance={appearance} isDisabled={isPending || !canConfirm} onClick={() => onConfirm()} testId="confirm-action-confirm">{confirmLabel}</Button>
             </Inline>
           </ModalFooter>
         </ModalDialog>

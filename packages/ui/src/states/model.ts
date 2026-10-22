@@ -41,8 +41,9 @@ export interface ListStateInput {
 export function listState(input: ListStateInput): UiStateKind {
   if (input.isLoading) return "loading";
   if (input.errorStatus !== null) return stateFromHttpStatus(input.errorStatus);
-  if (input.rowCount === 0) return input.filtersActive ? "filtered-empty" : "empty";
+  // Partial and stale beat empty: a missing piece must never read as "nothing here".
   if (input.isPartial === true) return "partial";
+  if (input.rowCount === 0) return input.filtersActive ? "filtered-empty" : "empty";
   if (input.isStale === true) return "stale";
   return "ready";
 }
@@ -53,6 +54,8 @@ export type AgeBucket = (typeof AGE_BUCKETS)[number];
 export interface Age {
   readonly minutes: number;
   readonly bucket: AgeBucket;
+  /** True when the instant could not be read; the age is then treated as overdue, never fresh. */
+  readonly unknown: boolean;
   /** Largest whole unit: { unit: "day", value: 2 }. */
   readonly unit: "minute" | "hour" | "day";
   readonly value: number;
@@ -64,14 +67,18 @@ export interface AgeThresholds {
 }
 export const DEFAULT_AGE_THRESHOLDS: AgeThresholds = { agingAfterMinutes: 24 * 60, overdueAfterMinutes: 3 * 24 * 60 };
 
-/** PURE. Age of `since` at `now`; an unparsable or future instant is age 0 (never negative). */
+/**
+ * PURE. Age of `since` at `now`. A future instant is age 0 (never negative). An
+ * unparsable one FAILS CLOSED: unknown, overdue, never fresh.
+ */
 export function ageOf(since: string, now: Date, thresholds: AgeThresholds = DEFAULT_AGE_THRESHOLDS): Age {
   const t = Date.parse(since);
-  const minutes = Number.isNaN(t) ? 0 : Math.max(0, Math.floor((now.getTime() - t) / 60_000));
+  if (Number.isNaN(t)) return { minutes: 0, bucket: "overdue", unknown: true, unit: "minute", value: 0 };
+  const minutes = Math.max(0, Math.floor((now.getTime() - t) / 60_000));
   const bucket: AgeBucket = minutes >= thresholds.overdueAfterMinutes ? "overdue" : minutes >= thresholds.agingAfterMinutes ? "aging" : "fresh";
-  if (minutes >= 24 * 60) return { minutes, bucket, unit: "day", value: Math.floor(minutes / (24 * 60)) };
-  if (minutes >= 60) return { minutes, bucket, unit: "hour", value: Math.floor(minutes / 60) };
-  return { minutes, bucket, unit: "minute", value: minutes };
+  if (minutes >= 24 * 60) return { minutes, bucket, unknown: false, unit: "day", value: Math.floor(minutes / (24 * 60)) };
+  if (minutes >= 60) return { minutes, bucket, unknown: false, unit: "hour", value: Math.floor(minutes / 60) };
+  return { minutes, bucket, unknown: false, unit: "minute", value: minutes };
 }
 
 export interface Freshness {
@@ -82,7 +89,7 @@ export interface Freshness {
 /** PURE. A read older than `staleAfterMinutes` is stale. */
 export function freshnessOf(updatedAt: string, now: Date, staleAfterMinutes = 5): Freshness {
   const age = ageOf(updatedAt, now, { agingAfterMinutes: staleAfterMinutes, overdueAfterMinutes: staleAfterMinutes });
-  return { stale: age.minutes >= staleAfterMinutes, age };
+  return { stale: age.unknown || age.minutes >= staleAfterMinutes, age };
 }
 
 /** PURE. Keep the last `keep` characters visible; everything else becomes a bullet. Short values are fully masked. */

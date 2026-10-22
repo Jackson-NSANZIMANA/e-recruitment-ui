@@ -55,6 +55,10 @@ export function QueueTable({ caption, rows, now = new Date(), thresholds, onOpen
       { key: "actions", content: t("ui.queue.actions"), isSortable: false },
     ],
   };
+  const agoLabel = (iso: string): string => {
+    const a = ageOf(iso, now, thresholds);
+    return a.unknown ? "—" : t(`ui.age.${a.unit}`, { count: a.value });
+  };
   const body = rows.map((r) => {
     const age = ageOf(r.since, now, thresholds);
     return {
@@ -72,14 +76,14 @@ export function QueueTable({ caption, rows, now = new Date(), thresholds, onOpen
           ),
         },
         { key: "status", content: <Lozenge>{r.status}</Lozenge> },
-        { key: "age", content: <Lozenge appearance={AGE_APPEARANCE[age.bucket]}>{t(`ui.age.${age.unit}`, { count: age.value })}</Lozenge> },
-        { key: "last", content: r.lastAction ? <Text size="small">{r.lastAction.label}</Text> : <Text size="small" color="color.text.subtle">—</Text> },
+        { key: "age", content: <Lozenge appearance={AGE_APPEARANCE[age.bucket]}>{age.unknown ? "—" : t(`ui.age.${age.unit}`, { count: age.value })}</Lozenge> },
+        { key: "last", content: r.lastAction ? <Text size="small">{`${r.lastAction.label} · ${agoLabel(r.lastAction.at)}`}</Text> : <Text size="small" color="color.text.subtle">—</Text> },
         {
           key: "actions",
           content: (
             <Inline space="space.100" shouldWrap alignBlock="center">
               {r.transitions.map((tr) => (
-                <Button key={tr.id} appearance={tr.appearance ?? "default"} isDisabled={tr.isDisabled === true} onClick={() => onTransition(r.id, tr.id)}>{tr.label}</Button>
+                <Button key={tr.id} aria-label={`${tr.label}: ${r.primary}`} appearance={tr.appearance ?? "default"} isDisabled={tr.isDisabled === true} onClick={() => onTransition(r.id, tr.id)}>{tr.label}</Button>
               ))}
               {r.result !== undefined && <Lozenge appearance={r.result.ok ? "success" : "removed"}>{r.result.text}</Lozenge>}
             </Inline>

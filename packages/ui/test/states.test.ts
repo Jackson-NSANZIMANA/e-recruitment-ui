@@ -16,6 +16,8 @@ test("listState is total: errors beat data, empty depends on filters, partial be
   assert.equal(listState({ ...base, isLoading: true }), "loading");
   assert.equal(listState({ ...base, errorStatus: 403 }), "forbidden");
   assert.equal(listState({ ...base, rowCount: 0 }), "empty");
+  assert.equal(listState({ ...base, rowCount: 0, isPartial: true }), "partial");
+  assert.equal(listState({ ...base, rowCount: 0, isStale: true }), "empty");
   assert.equal(listState({ ...base, rowCount: 0, filtersActive: true }), "filtered-empty");
   assert.equal(listState({ ...base, isPartial: true, isStale: true }), "partial");
   assert.equal(listState({ ...base, isStale: true }), "stale");
@@ -24,12 +26,15 @@ test("listState is total: errors beat data, empty depends on filters, partial be
 });
 
 test("age buckets and units; future and garbage are age 0", () => {
-  assert.deepEqual(ageOf("2026-10-22T11:30:00Z", NOW), { minutes: 30, bucket: "fresh", unit: "minute", value: 30 });
-  assert.deepEqual(ageOf("2026-10-22T09:00:00Z", NOW), { minutes: 180, bucket: "fresh", unit: "hour", value: 3 });
+  assert.deepEqual(ageOf("2026-10-22T11:30:00Z", NOW), { minutes: 30, bucket: "fresh", unknown: false, unit: "minute", value: 30 });
+  assert.deepEqual(ageOf("2026-10-22T09:00:00Z", NOW), { minutes: 180, bucket: "fresh", unknown: false, unit: "hour", value: 3 });
   assert.equal(ageOf("2026-10-21T11:00:00Z", NOW).bucket, "aging");
-  assert.deepEqual(ageOf("2026-10-18T12:00:00Z", NOW), { minutes: 5760, bucket: "overdue", unit: "day", value: 4 });
+  assert.deepEqual(ageOf("2026-10-18T12:00:00Z", NOW), { minutes: 5760, bucket: "overdue", unknown: false, unit: "day", value: 4 });
   assert.equal(ageOf("2027-01-01T00:00:00Z", NOW).minutes, 0);
-  assert.equal(ageOf("not a date", NOW).minutes, 0);
+  const bad = ageOf("not a date", NOW);
+  assert.equal(bad.unknown, true);
+  assert.equal(bad.bucket, "overdue");
+  assert.equal(freshnessOf("", NOW).stale, true);
 });
 
 test("freshness: stale at the threshold", () => {

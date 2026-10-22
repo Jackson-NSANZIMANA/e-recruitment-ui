@@ -47,7 +47,7 @@ export const TimelineStory: Story = {
   render: () => <Timeline emptyLabel="No history" entries={[{ id: "1", at: "2026-10-18T12:00:00Z", title: "Submitted" }, { id: "2", at: "2026-10-19T09:30:00Z", title: "Documents cleared", detail: "System" }]} />,
 };
 
-export const Masked: Story = { render: () => <MaskedValue label="National ID" value="1199880012345678" onReveal={() => undefined} /> };
+export const Masked: Story = { render: () => <MaskedValue label="National ID" value="1199880012345678" onReveal={() => true} /> };
 export const Freshness: Story = { render: () => <Stack space="space.100"><FreshnessStamp updatedAt="2026-10-22T11:58:00Z" now={NOW} /><FreshnessStamp updatedAt="2026-10-22T11:00:00Z" now={NOW} /></Stack> };
 export const Confirm: Story = {
   render: () => (

@@ -15,7 +15,7 @@ export function FreshnessStamp({ updatedAt, now = new Date(), staleAfterMinutes 
   const f = freshnessOf(updatedAt, now, staleAfterMinutes);
   return (
     <Inline space="space.100" alignBlock="center" testId="freshness-stamp">
-      <Text size="small" color="color.text.subtle">{t("ui.freshness.updated", { age: t(`ui.age.${f.age.unit}`, { count: f.age.value }) })}</Text>
+      <Text size="small" color="color.text.subtle">{f.age.unknown ? t("ui.freshness.unknown") : t("ui.freshness.updated", { age: t(`ui.age.${f.age.unit}`, { count: f.age.value }) })}</Text>
       {f.stale && <Lozenge appearance="moved">{t("ui.freshness.stale")}</Lozenge>}
     </Inline>
   );
