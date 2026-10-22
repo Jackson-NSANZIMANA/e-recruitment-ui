@@ -7,3 +7,5 @@ export { APPLICATIONS_NAMESPACE, registerApplicationsLocales } from './locales.t
 export { ApplicationsPage } from './ui/ApplicationsPage.tsx';
 export type { ApplicationsPageProps } from './ui/ApplicationsPage.tsx';
 export { ApplicationDetailPage } from './ui/ApplicationDetailPage.tsx';
+export { createApplicationsRoutes } from './routes/index.tsx';
+export * from './model/workspace.ts';
