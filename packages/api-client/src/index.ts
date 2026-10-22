@@ -30,7 +30,7 @@ export { EDGE_OPERATIONS, EDGE_PATHS, EDGE_BACKEND_SHA, operation, isEdgeOperati
 export type { EdgeOperation, EdgeOperationId, AnonymousEdgeOperationId } from './paths.js';
 
 // ── Errors ──
-export { ApiError, normaliseErrorBody, describeError, G2G_UNAVAILABLE_CODES } from './errors.js';
+export { ApiError, normaliseErrorBody, describeError, httpStatusOf, G2G_UNAVAILABLE_CODES } from './errors.js';
 export type { NormalisedError } from './errors.js';
 
 // ── Retry ──

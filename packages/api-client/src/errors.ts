@@ -180,3 +180,14 @@ export function describeError(normalised: NormalisedError): string {
 function assertNever(value: never): never {
   throw new Error(`Unhandled error kind: ${JSON.stringify(value)}`);
 }
+
+/**
+ * PURE. The HTTP status a thrown error carries, for mapping to a screen state.
+ * No response at all (network, a malformed 2xx) is 0; anything that is not an
+ * ApiError is also 0 so a screen never invents a more specific state.
+ */
+export function httpStatusOf(error: unknown): number {
+  if (!(error instanceof ApiError)) return 0;
+  const n = error.normalised;
+  return 'status' in n ? n.status : 0;
+}
