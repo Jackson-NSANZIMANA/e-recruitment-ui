@@ -431,6 +431,10 @@
       },
       "INVALID_TICKET": {
         "title": "Invalid QR — do not admit"
+      },
+      "MANUAL_IDENTITY_REQUIRED": {
+        "title": "A supervisor must confirm identity",
+        "body": "The card matched, but the evidence for {{code}} needs a field supervisor. Do not admit until the supervisor confirms."
       }
     },
     "invalid_reasons": {
@@ -452,7 +456,8 @@
       "IDENTITY_NOT_VERIFIED": "The identity check has not completed for this candidate. Run the identity check again.",
       "APPLICANT_NOT_FOUND": "The identity record was not found. Run the identity check again.",
       "UNSUPPORTED_AGENCY": "Walk-in registration is only available for RDF campaigns.",
-      "FORBIDDEN": "Your role cannot register walk-in candidates."
+      "FORBIDDEN": "Your role cannot register walk-in candidates.",
+      "VALIDATION_FAILED": "The registration details were not accepted. Check each field and try again."
     }
   },
   "rehearsal": {
