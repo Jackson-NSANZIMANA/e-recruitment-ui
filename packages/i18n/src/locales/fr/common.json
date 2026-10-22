@@ -543,7 +543,7 @@
       },
       "upstream-failure": {
         "title": "Un service est indisponible",
-        "body": "La demande n'a pas pu aboutir. Rien n'a été modifié."
+        "body": "La demande n'a pas pu aboutir. Vérifiez la connexion et réessayez."
       },
       "conflict": {
         "title": "L'enregistrement a changé",
@@ -561,7 +561,8 @@
     },
     "freshness": {
       "updated": "Mis à jour il y a {{age}}",
-      "stale": "Périmé"
+      "stale": "Périmé",
+      "unknown": "Heure de mise à jour inconnue"
     },
     "age": {
       "minute_one": "{{count}} minute",

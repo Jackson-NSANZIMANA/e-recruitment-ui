@@ -543,7 +543,7 @@
       },
       "upstream-failure": {
         "title": "A service is unavailable",
-        "body": "The request could not be completed. Nothing was changed."
+        "body": "The request could not be completed. Check the connection and try again."
       },
       "conflict": {
         "title": "The record has changed",
@@ -561,7 +561,8 @@
     },
     "freshness": {
       "updated": "Updated {{age}} ago",
-      "stale": "Out of date"
+      "stale": "Out of date",
+      "unknown": "Update time unknown"
     },
     "age": {
       "minute_one": "{{count}} minute",

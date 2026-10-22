@@ -543,7 +543,7 @@
       },
       "upstream-failure": {
         "title": "Serivisi ntiboneka",
-        "body": "Icyifuzo nticyashoboye kurangira. Nta cyahinduwe."
+        "body": "Icyifuzo nticyashoboye kurangira. Reba umuyoboro ugerageze nanone."
       },
       "conflict": {
         "title": "Amakuru yahindutse",
@@ -561,7 +561,8 @@
     },
     "freshness": {
       "updated": "Byavuguruwe hashize {{age}}",
-      "stale": "Bishaje"
+      "stale": "Bishaje",
+      "unknown": "Igihe cyavugururiwe ntikizwi"
     },
     "age": {
       "minute_one": "umunota {{count}}",
