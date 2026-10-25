@@ -17,7 +17,7 @@
 # ══════════════════════════════════════════════════════════════════
 
 # ── Build: compile the app and its workspace packages ──────────────
-FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 AS build
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS build
 ENV PNPM_HOME=/pnpm
 ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
@@ -53,7 +53,7 @@ RUN USRP_APP="$APP" USRP_EDGE_URL="$VITE_EDGE_URL" USRP_BUILD_SHA="$USRP_BUILD_S
 # sum.golang.org; versions are pinned here, the rest is resolved by Go's
 # minimal version selection, so the build is deterministic. The binary carries
 # no file capability (the stock one does, and fails under `cap_drop: [ALL]`).
-FROM golang:1.27-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS caddy
+FROM golang:1.27-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS caddy
 ARG CADDY_VERSION=v2.11.7
 ARG XNET_VERSION=v0.60.0
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOFLAGS=-trimpath
@@ -68,7 +68,7 @@ RUN printf '%s\n' 'package main' \
  && /caddy version
 
 # ── Runtime: Caddy on Alpine, non-root, no admin API ───────────────
-FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0 AS runtime
+FROM alpine:3.23@sha256:ff7f0c727dd796aa36787bfcd9a64bf35a6ce72a73451b3359fde849b6703d63 AS runtime
 RUN apk upgrade --no-cache && mkdir -p /tmp/caddy && chown 65532:65532 /tmp/caddy
 COPY --from=caddy /caddy /usr/local/bin/caddy
 COPY infrastructure/images/spa/Caddyfile infrastructure/images/spa/edge-off.caddy infrastructure/images/spa/edge-proxy.caddy /etc/caddy/
