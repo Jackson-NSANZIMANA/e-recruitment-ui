@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ID1, ID2, ID3, POSTS, json, officerRow, signIn } from './support';
-
-// CONTRACT-PENDING: S06 - releaseOfficerActivation is served by backend PR #45 (ADR-036 Addendum A).
+// releaseOfficerActivation (ADR-036 Addendum A, backend #45) is intercepted here;
+// the live staff journey exercises the real operation.
 // These specs intercept it; the live rehearsal journey exercises the real operation.
 
 const CODE = 'BQMX3-BPRPQ-THZGX-A2R59';

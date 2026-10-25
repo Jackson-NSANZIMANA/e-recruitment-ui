@@ -27,7 +27,7 @@ info:
     NEITHER TOKEN IS A COOKIE. Both are returned in a JSON body. There is no
     Set-Cookie header anywhere in this document because there is no server in
     the system that sets one.
-  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
+  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
   x-usrp-service-port-var: "PORT_IAM_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -305,6 +305,64 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/OfficerOpened"
+        400:
+          description: "Shape error."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        403:
+          description: "Permission or policy refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        409:
+          description: "State refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+        422:
+          description: "Input refusal."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerAdminError"
+
+  /v1/officers/activation/release:
+    post:
+      operationId: "officerReleaseActivation"
+      summary: "Release the pending activation to a DIFFERENT administrator; the only answer that carries the code, once (ADR-036 Addendum A)"
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/officer-admin.controller.ts (OFFICER_RELEASE_ACTIVATION_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OfficerTargetRequest"
+      responses:
+        200:
+          description: "{ outcome: RELEASED, officer, activation: { code, expiresAt } }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OfficerReleased"
         400:
           description: "Shape error."
           content:
@@ -672,6 +730,27 @@ components:
           enum: ["CREATED", "REISSUED"]
         officer:
           "$ref": "#/components/schemas/OfficerRow"
+
+    OfficerReleased:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome", "officer", "activation"]
+      properties:
+        outcome:
+          type: "string"
+          enum: ["RELEASED"]
+        officer:
+          "$ref": "#/components/schemas/OfficerRow"
+        activation:
+          type: "object"
+          additionalProperties: false
+          required: ["code", "expiresAt"]
+          properties:
+            code:
+              type: "string"
+            expiresAt:
+              type: "string"
+              format: "date-time"
 
     OfficerTargetRequest:
       type: "object"

@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/field-sync-service.yaml                   ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -20,8 +20,11 @@
 //   POST /v1/field-sync/conflicts/resolve               officer            browser
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
+//   GET  /v1/field-sync/devices/fleet                   officer            browser
+//   POST /v1/field-sync/devices/assign                  officer            browser
+//   POST /v1/field-sync/devices/revoke                  officer            browser
 //
-// `z.strictObject()` on every closed object is intentional: an unexpected key means
+// `.strict()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -30,65 +33,88 @@ import { z } from 'zod';
 
 export const AgencySchema = z.enum(['RDF', 'RNP', 'RCS']);
 
-export const UuidSchema = z.string().guid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+export const AssignDeviceRequestSchema = z
+  .object({
+    "deviceId": z.string().max(64),
+    "campaign": z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/),
+    "district": z.string().regex(/^[A-Z][A-Z_]{1,29}$/),
+    "examDate": z.string(),
+  }).strict();
+
+export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 export const ConflictResolved200Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('RESOLVED'),
     "applicationId": UuidSchema,
     "scoreId": UuidSchema,
-  });
+  }).strict();
 
 export const DeviceAlreadyEnrolled200Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('ALREADY_ENROLLED'),
     "deviceId": z.string(),
     "agency": AgencySchema,
-  });
+  }).strict();
+
+export const DeviceAssigned200Schema = z
+  .object({
+    "status": z.literal('ASSIGNED'),
+  }).strict();
 
 export const DeviceEnrolled201Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('ENROLLED'),
     "deviceId": z.string(),
     "agency": AgencySchema,
-  });
+  }).strict();
+
+export const DeviceRevoked200Schema = z
+  .object({
+    "status": z.enum(['REVOKED', 'ALREADY_REVOKED']),
+  }).strict();
+
+export const DeviceRevoked409Schema = z
+  .object({
+    "error": z.literal('DEVICE_REVOKED'),
+  }).strict();
 
 export const EnrollDeviceRequestSchema = z
-  .strictObject({
+  .object({
     "deviceId": z.string().min(1).max(64),
     "publicKeyPem": z.string().min(1).max(4096),
-  });
+  }).strict();
 
 /**
  * Transcribed from the controller's parseMetrics. Every numeric field is
  * required and must be finite; additionalNotes is the only optional.
  */
 export const PhysicalTestMetricsSchema = z
-  .strictObject({
+  .object({
     "heightCm": z.number(),
     "weightKg": z.number(),
     "run3kmTimeSeconds": z.number(),
     "chestCm": z.number(),
     "medicalFitnessStatus": z.enum(['FIT', 'UNFIT', 'PENDING_REVIEW']),
     "additionalNotes": z.string().optional(),
-  });
+  }).strict();
 
 /**
  * UNTRUSTED INPUT by construction. Shape-checked here; the deviceSignature
  * is what the core actually trusts.
  */
 export const FieldScoreRecordSchema = z
-  .strictObject({
+  .object({
     "applicationId": UuidSchema,
     "qrInvitationCode": z.string().min(1),
     "metrics": PhysicalTestMetricsSchema,
     "capturedAt": z.string().min(1),
     "deviceId": z.string().min(1),
     "capturingOfficerId": z.string().min(1),
-    "vectorClock": z.record(z.string(), z.unknown()),
+    "vectorClock": z.record(z.unknown()),
     "deviceSignature": z.string().min(1),
     "signedPayloadHash": z.string().min(1),
-  });
+  }).strict();
 
 /**
  * Per-record outcome. Modelled permissively on purpose: the controller
@@ -98,74 +124,108 @@ export const FieldScoreRecordSchema = z
  * Transcribing this array element precisely is a REQUEST to the backend
  * agent, recorded in the drift tool's open items.
  */
-export const FieldScoreResultSchema = z.record(z.string(), z.unknown());
+export const FieldScoreResultSchema = z.record(z.unknown());
+
+export const FleetDeviceSchema = z
+  .object({
+    "deviceId": z.string(),
+    "enrolledBy": z.string(),
+    "enrolledAt": z.string(),
+    "lastSeenAt": z.string().nullable(),
+    "lastSeenSource": z.string().nullable(),
+    "lastSyncAt": z.string().nullable(),
+    "revokedAt": z.string().nullable(),
+    "revokeReason": z.string().nullable(),
+    "assignment": z
+    .object({
+      "campaignPublicCode": z.string(),
+      "district": z.string(),
+      "examDate": z.string(),
+    }).strict().nullable(),
+  }).strict();
+
+export const FleetList200Schema = z
+  .object({
+    "devices": z.array(FleetDeviceSchema),
+  }).strict();
+
+export const FleetNotFound404Schema = z
+  .object({
+    "error": z.literal('NOT_FOUND'),
+  }).strict();
 
 export const Forbidden403Schema = z
-  .strictObject({
+  .object({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
-  });
+  }).strict();
 
 export const InternalError500Schema = z
-  .strictObject({
+  .object({
     "error": z.literal('INTERNAL_ERROR'),
-  });
+  }).strict();
 
 export const InvalidField400Schema = z
-  .strictObject({
+  .object({
     "error": z.literal('INVALID_FIELD'),
     "detail": z.string().optional(),
-  });
+  }).strict();
 
 export const NoConflict409Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('NO_CONFLICT'),
-  });
+  }).strict();
 
 export const NotFound404Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('NOT_FOUND'),
-  });
+  }).strict();
 
 export const ResolveConflictRequestSchema = z
-  .strictObject({
+  .object({
     "applicationId": UuidSchema,
     "scoreId": UuidSchema,
     "resolution": z.string().min(1).max(50),
-  });
+  }).strict();
 
 export const ScoreNotFound404Schema = z
-  .strictObject({
+  .object({
     "status": z.literal('SCORE_NOT_FOUND'),
-  });
+  }).strict();
 
 export const ResolveNotFound404Schema = z.discriminatedUnion('status', [
   NotFound404Schema,
   ScoreNotFound404Schema,
 ]);
 
+export const RevokeDeviceRequestSchema = z
+  .object({
+    "deviceId": z.string().max(64),
+    "reason": z.enum(['LOST', 'STOLEN', 'COMPROMISED', 'RETIRED', 'OTHER']),
+  }).strict();
+
 export const SyncScoresOkSchema = z
-  .strictObject({
+  .object({
     "status": z.literal('SYNCED'),
     "results": z.array(FieldScoreResultSchema),
-  });
+  }).strict();
 
 export const SyncScoresRequestSchema = z
-  .strictObject({
+  .object({
     "records": z.array(FieldScoreRecordSchema).min(1),
-  });
+  }).strict();
 
 export const SyncScoresRequest400Schema = z
-  .strictObject({
+  .object({
     "error": z.enum(['INVALID_BATCH', 'INVALID_RECORD']),
     "detail": z.string().optional(),
-  });
+  }).strict();
 
 export const Unauthenticated401Schema = z
-  .strictObject({
+  .object({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  });
+  }).strict();
 
 /**
  * Every operation on this service, with the schema for each documented status.
@@ -248,6 +308,53 @@ export const fieldSyncServiceOperations = {
     responses: {
       "200": null,
       "503": null,
+    },
+  },
+  "fleetList": {
+    method: "GET",
+    path: "/v1/field-sync/devices/fleet",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": FleetList200Schema,
+      "401": Unauthenticated401Schema,
+      "403": Forbidden403Schema,
+    },
+  },
+  "fleetAssign": {
+    method: "POST",
+    path: "/v1/field-sync/devices/assign",
+    auth: ["officer"],
+    reach: "browser",
+    request: AssignDeviceRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": DeviceAssigned200Schema,
+      "400": InvalidField400Schema,
+      "401": Unauthenticated401Schema,
+      "403": Forbidden403Schema,
+      "404": FleetNotFound404Schema,
+      "409": DeviceRevoked409Schema,
+    },
+  },
+  "fleetRevoke": {
+    method: "POST",
+    path: "/v1/field-sync/devices/revoke",
+    auth: ["officer"],
+    reach: "browser",
+    request: RevokeDeviceRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": DeviceRevoked200Schema,
+      "400": InvalidField400Schema,
+      "401": Unauthenticated401Schema,
+      "403": Forbidden403Schema,
+      "404": FleetNotFound404Schema,
     },
   },
 } as const;

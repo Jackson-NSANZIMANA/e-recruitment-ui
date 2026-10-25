@@ -239,6 +239,56 @@
       "value": {
         "error": "SAME_ADMIN"
       }
+    },
+    {
+      "id": "officer-released",
+      "schema": "OfficerReleased",
+      "expect": "accept",
+      "why": "officerReleaseActivation (ADR-036 Addendum A): the ONLY answer that carries the one-time code, to a different administrator.",
+      "value": {
+        "outcome": "RELEASED",
+        "officer": {
+          "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+          "loginHandle": "rdf.medical.one",
+          "posts": [
+            "medical_officer"
+          ],
+          "status": "pending",
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "activatedAt": null,
+          "lastLoginAt": null,
+          "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+          "activationState": "RELEASED",
+          "releasableByYou": false
+        },
+        "activation": {
+          "code": "BQMX3-BPRPQ-THZGX-A2R59",
+          "expiresAt": "2026-10-23T08:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "officer-released-rejects-missing-code",
+      "schema": "OfficerReleased",
+      "expect": "reject",
+      "why": "A release without the code is not a release.",
+      "value": {
+        "outcome": "RELEASED",
+        "officer": {
+          "officerId": "7a010f35-7018-4d7a-9c64-10a91a9e29d9",
+          "loginHandle": "rdf.medical.one",
+          "posts": [
+            "medical_officer"
+          ],
+          "status": "pending",
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "activatedAt": null,
+          "lastLoginAt": null,
+          "activationExpiresAt": "2026-10-23T08:00:00.000Z",
+          "activationState": "RELEASED",
+          "releasableByYou": false
+        }
+      }
     }
   ]
 }

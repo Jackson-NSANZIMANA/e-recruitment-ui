@@ -1,5 +1,4 @@
 import { BROWSER_ROUTES, ROUTE_TABLE, SERVICE_INTERNAL_ROUTES, type RouteFact } from '@usrp/contracts';
-import { PENDING_EDGE_OPERATIONS } from './pending.js';
 
 export interface EdgeOperation {
   readonly id: string;
@@ -18,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = '29f34aa53bc94b3ae246ca82fcad8310404afe98' as const;
+export const EDGE_BACKEND_SHA = 'cd4962842e26177f179eb3c0bd51c214dad3fd61' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -64,6 +63,7 @@ export const EDGE_OPERATIONS = [
   { id: 'resolveFieldSyncConflict', method: 'POST', edgePath: '/edge/v1/field-sync/conflicts/resolve', upstreamOperationId: 'resolveFieldConflict', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'listOfficers', method: 'GET', edgePath: '/edge/v1/officers', upstreamOperationId: 'officerList', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'createOfficer', method: 'POST', edgePath: '/edge/v1/officers', upstreamOperationId: 'officerCreate', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'releaseOfficerActivation', method: 'POST', edgePath: '/edge/v1/officers/activation/release', upstreamOperationId: 'officerReleaseActivation', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'reissueOfficerActivation', method: 'POST', edgePath: '/edge/v1/officers/activation/reissue', upstreamOperationId: 'officerReissueActivation', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'assignOfficerPosts', method: 'POST', edgePath: '/edge/v1/officers/posts', upstreamOperationId: 'officerAssignPosts', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'disableOfficer', method: 'POST', edgePath: '/edge/v1/officers/disable', upstreamOperationId: 'officerDisable', session: 'officer', retryOnG2G: false, composition: 'single' },
@@ -74,6 +74,10 @@ export const EDGE_OPERATIONS = [
   { id: 'getCampaignAdminDetail', method: 'GET', edgePath: '/edge/v1/campaigns/admin/detail', upstreamOperationId: 'adminCampaignDetail', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'searchApplications', method: 'GET', edgePath: '/edge/v1/applications/search', upstreamOperationId: 'searchApplications', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'getVenueRoster', method: 'GET', edgePath: '/edge/v1/gate/roster', upstreamOperationId: 'venueRoster', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'getVenueLiveCounts', method: 'GET', edgePath: '/edge/v1/gate/live-counts', upstreamOperationId: 'venueLiveCounts', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'listFieldDevices', method: 'GET', edgePath: '/edge/v1/field-sync/devices', upstreamOperationId: 'fleetList', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'assignDeviceToVenueDay', method: 'POST', edgePath: '/edge/v1/field-sync/devices/assign', upstreamOperationId: 'fleetAssign', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'revokeFieldDevice', method: 'POST', edgePath: '/edge/v1/field-sync/devices/revoke', upstreamOperationId: 'fleetRevoke', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'listErasureRequests', method: 'GET', edgePath: '/edge/v1/erasure-requests', upstreamOperationId: 'listErasureRequests', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'getBiometricPolicy', method: 'GET', edgePath: '/edge/v1/gate/biometric-policy', upstreamOperationId: 'biometricPolicy', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'recordBiometricEvidence', method: 'POST', edgePath: '/edge/v1/gate/biometric-evidence', upstreamOperationId: 'biometricEvidenceRecord', session: 'officer', retryOnG2G: false, composition: 'single' },
@@ -87,7 +91,7 @@ export const EDGE_OPERATIONS = [
 export type EdgeOperationId = (typeof EDGE_OPERATIONS)[number]['id'];
 export type AnonymousEdgeOperationId = Extract<(typeof EDGE_OPERATIONS)[number], { readonly session: 'anonymous' }>['id'];
 const BY_ID: ReadonlyMap<string, EdgeOperation> = new Map(EDGE_OPERATIONS.map((edgeOperation): readonly [string, EdgeOperation] => [edgeOperation.id, edgeOperation]));
-export function operation(id: string): EdgeOperation { const found = BY_ID.get(id) ?? PENDING_EDGE_OPERATIONS.find((pending) => pending.id === id); if (found === undefined) throw new Error(`Unknown edge operation "${id}". Add it to EDGE_OPERATIONS in paths.ts.`); return found; }
+export function operation(id: string): EdgeOperation { const found = BY_ID.get(id); if (found === undefined) throw new Error(`Unknown edge operation "${id}". Add it to EDGE_OPERATIONS in paths.ts.`); return found; }
 export function isEdgeOperationId(id: string): id is EdgeOperationId { return BY_ID.has(id); }
 export const EDGE_PATHS: readonly string[] = [...new Set(EDGE_OPERATIONS.map((edgeOperation) => edgeOperation.edgePath))];
 export class ContractMismatchError extends Error { readonly problems: readonly string[]; constructor(problems: readonly string[]) { super(`@usrp/api-client disagrees with @usrp/contracts:\n  ${problems.join('\n  ')}`); this.name = 'ContractMismatchError'; this.problems = problems; } }

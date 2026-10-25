@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -102,6 +102,7 @@ import type {
   TransitionRequest400Schema,
   Unauthenticated401Schema,
   UnsupportedAgency501Schema,
+  VenueLiveCountsSchema,
   VerifyAtVenue200Schema,
   VerifyAtVenueRequestSchema,
   WalkInRegisterConflict409Schema,
@@ -206,6 +207,7 @@ export type TransitionOk200 = z.infer<typeof TransitionOk200Schema>;
 export type TransitionRequest400 = z.infer<typeof TransitionRequest400Schema>;
 export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
 export type UnsupportedAgency501 = z.infer<typeof UnsupportedAgency501Schema>;
+export type VenueLiveCounts = z.infer<typeof VenueLiveCountsSchema>;
 export type VerifyAtVenue200 = z.infer<typeof VerifyAtVenue200Schema>;
 export type VerifyAtVenueRequest = z.infer<typeof VerifyAtVenueRequestSchema>;
 export type WalkInRegisterConflict409 = z.infer<typeof WalkInRegisterConflict409Schema>;

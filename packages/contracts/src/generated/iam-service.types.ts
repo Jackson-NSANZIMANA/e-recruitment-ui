@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/iam-service.yaml                          ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -31,6 +31,7 @@ import type {
   OfficerOpenedSchema,
   OfficerPostsRequestSchema,
   OfficerReasonRequestSchema,
+  OfficerReleasedSchema,
   OfficerTargetRequestSchema,
   ServiceTokenRequestSchema,
   TokenIssuedSchema,
@@ -49,6 +50,7 @@ export type OfficerLoginRequest = z.infer<typeof OfficerLoginRequestSchema>;
 export type OfficerOpened = z.infer<typeof OfficerOpenedSchema>;
 export type OfficerPostsRequest = z.infer<typeof OfficerPostsRequestSchema>;
 export type OfficerReasonRequest = z.infer<typeof OfficerReasonRequestSchema>;
+export type OfficerReleased = z.infer<typeof OfficerReleasedSchema>;
 export type OfficerTargetRequest = z.infer<typeof OfficerTargetRequestSchema>;
 export type ServiceTokenRequest = z.infer<typeof ServiceTokenRequestSchema>;
 export type TokenIssued = z.infer<typeof TokenIssuedSchema>;

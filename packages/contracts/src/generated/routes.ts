@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 72 business operations + 22 probes = 94 total.
+// 77 business operations + 22 probes = 99 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -688,6 +688,25 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "application-service",
+    "operationId": "venueLiveCounts",
+    "method": "GET",
+    "path": "/v1/venue-live-counts",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/operational-read.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
     "operationId": "venueRoster",
     "method": "GET",
     "path": "/v1/venue-roster",
@@ -1104,6 +1123,62 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "field-sync-service",
+    "operationId": "fleetAssign",
+    "method": "POST",
+    "path": "/v1/field-sync/devices/assign",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409"
+    ]
+  },
+  {
+    "service": "field-sync-service",
+    "operationId": "fleetList",
+    "method": "GET",
+    "path": "/v1/field-sync/devices/fleet",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "401",
+      "403"
+    ]
+  },
+  {
+    "service": "field-sync-service",
+    "operationId": "fleetRevoke",
+    "method": "POST",
+    "path": "/v1/field-sync/devices/revoke",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "field-sync-service",
     "operationId": "syncFieldScores",
     "method": "POST",
     "path": "/v1/field-sync/scores",
@@ -1257,6 +1332,27 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "reach": "browser",
     "verified": "controller-verbatim",
     "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_REISSUE_ACTIVATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerReleaseActivation",
+    "method": "POST",
+    "path": "/v1/officers/activation/release",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_RELEASE_ACTIVATION_PATH)",
     "statuses": [
       "200",
       "400",

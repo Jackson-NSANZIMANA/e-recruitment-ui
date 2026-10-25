@@ -4,7 +4,6 @@
 import { ApiError } from '../src/errors.js';
 import { createApiClient } from '../src/transport.js';
 import { EDGE_OPERATIONS, operation } from '../src/paths.js';
-import { PENDING_EDGE_OPERATIONS } from '../src/pending.js';
 import { searchQuery } from '../src/operations/ops-reads.js';
 import { activateOfficer, assignOfficerPosts, createOfficer, listOfficers, releaseOfficerActivation } from '../src/operations/staff.js';
 import { decideErasureRequest } from '../src/operations/ops-reads.js';
@@ -27,12 +26,10 @@ const client = createApiClient({
 });
 
 // Registry
-ok('every staff operation is registered except the pending release',
-  ['listOfficers', 'createOfficer', 'reissueOfficerActivation', 'assignOfficerPosts', 'disableOfficer', 'enableOfficer', 'revokeOfficerSessions', 'activateOfficer', 'searchApplications', 'getBiometricEvidence', 'listErasureRequests', 'decideErasureRequest'].every((id) => EDGE_OPERATIONS.some((o) => o.id === id)));
-ok('CONTRACT-PENDING ids are not in EDGE_OPERATIONS (move them when the backend merges)',
-  PENDING_EDGE_OPERATIONS.every((p) => !EDGE_OPERATIONS.some((o) => (o.id as string) === p.id)));
-ok('the pending release resolves through operation() with no retry', operation('releaseOfficerActivation').retryOnG2G === false);
-ok('no staff write is retryable', ['createOfficer', 'reissueOfficerActivation', 'assignOfficerPosts', 'disableOfficer', 'enableOfficer', 'revokeOfficerSessions', 'activateOfficer', 'decideErasureRequest'].every((id) => !operation(id).retryOnG2G));
+ok('every staff operation is registered',
+  ['listOfficers', 'createOfficer', 'reissueOfficerActivation', 'releaseOfficerActivation', 'assignOfficerPosts', 'disableOfficer', 'enableOfficer', 'revokeOfficerSessions', 'activateOfficer', 'searchApplications', 'getBiometricEvidence', 'listErasureRequests', 'decideErasureRequest'].every((id) => EDGE_OPERATIONS.some((o) => o.id === id)));
+ok('the release is a registered, non-retryable edge operation bound to officerReleaseActivation', operation('releaseOfficerActivation').retryOnG2G === false && operation('releaseOfficerActivation').upstreamOperationId === 'officerReleaseActivation');
+ok('no staff write is retryable', ['createOfficer', 'reissueOfficerActivation', 'releaseOfficerActivation', 'assignOfficerPosts', 'disableOfficer', 'enableOfficer', 'revokeOfficerSessions', 'activateOfficer', 'decideErasureRequest'].every((id) => !operation(id).retryOnG2G));
 ok('activateOfficer is the only anonymous staff operation', operation('activateOfficer').session === 'anonymous' && operation('createOfficer').session === 'officer');
 
 // Query building

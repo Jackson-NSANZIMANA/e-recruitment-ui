@@ -205,7 +205,6 @@ export {
   useDisableOfficer, useEnableOfficer, useRevokeSessions,
 } from './queries/staff.js';
 export { useSearchApplications, useBiometricEvidence, useErasureQueue, useDecideErasure } from './queries/ops.js';
-export { PENDING_EDGE_OPERATIONS } from './pending.js';
 export {
   ASSIGNABLE_POSTS, ASSIGN_POSTS_REASONS, DISABLE_REASONS, ENABLE_REASONS, REVOKE_SESSIONS_REASONS,
 } from './wire.js';

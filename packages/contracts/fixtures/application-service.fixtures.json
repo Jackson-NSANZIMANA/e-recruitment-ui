@@ -1271,6 +1271,51 @@
         "total": 0,
         "nextCursor": null
       }
+    },
+    {
+      "id": "venue-live-counts",
+      "schema": "VenueLiveCounts",
+      "expect": "accept",
+      "why": "S09 venue live counts: counts only.",
+      "value": {
+        "agency": "RDF",
+        "venue": {
+          "venueName": "Kigali Venue",
+          "district": "KICUKIRO",
+          "examDate": "2026-11-02"
+        },
+        "counts": {
+          "expected": 120,
+          "admitted": 80,
+          "physicalCaptured": 60,
+          "medicalRecorded": 40,
+          "openConflicts": 1
+        },
+        "asOf": "2026-11-02T09:00:00.000Z"
+      }
+    },
+    {
+      "id": "venue-live-counts-rejects-candidates",
+      "schema": "VenueLiveCounts",
+      "expect": "reject",
+      "why": "Counts only: no candidate row can reach this wire.",
+      "value": {
+        "agency": "RDF",
+        "venue": {
+          "venueName": "V",
+          "district": "KICUKIRO",
+          "examDate": "2026-11-02"
+        },
+        "counts": {
+          "expected": 1,
+          "admitted": 1,
+          "physicalCaptured": 0,
+          "medicalRecorded": 0,
+          "openConflicts": 0
+        },
+        "asOf": "x",
+        "candidates": []
+      }
     }
   ]
 }

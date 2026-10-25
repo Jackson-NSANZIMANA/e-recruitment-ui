@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "29f34aa53bc94b3ae246ca82fcad8310404afe98"
+  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -2080,6 +2080,66 @@ paths:
               schema:
                 "$ref": "#/components/schemas/OperationalReadError"
 
+  /v1/venue-live-counts:
+    get:
+      operationId: "venueLiveCounts"
+      summary: "Counts only for one venue day (no candidate rows)"
+      description: >-
+        Requires field.score.sync OR field.device.manage. Same query as the
+        venue roster; counts only, no candidate can reach this wire.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/operational-read.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      parameters:
+        - name: "campaign"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+        - name: "district"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+        - name: "examDate"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+      responses:
+        200:
+          description: "{ agency, venue, counts, asOf }"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VenueLiveCounts"
+        400:
+          description: "Shape."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        401:
+          description: "No or invalid bearer token."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        403:
+          description: "Permission."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+        404:
+          description: "Absent or another agency (one answer)."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalReadError"
+
 components:
   schemas:
     ApplicationSearchRow:
@@ -2207,6 +2267,43 @@ components:
         confirmedAt:
           type: "string"
           format: "date-time"
+
+    VenueLiveCounts:
+      type: "object"
+      additionalProperties: false
+      required: ["agency", "venue", "counts", "asOf"]
+      properties:
+        agency:
+          type: "string"
+          enum: ["RDF", "RNP", "RCS"]
+        venue:
+          type: "object"
+          additionalProperties: false
+          required: ["venueName", "district", "examDate"]
+          properties:
+            venueName:
+              type: "string"
+            district:
+              type: "string"
+            examDate:
+              type: "string"
+        counts:
+          type: "object"
+          additionalProperties: false
+          required: ["expected", "admitted", "physicalCaptured", "medicalRecorded", "openConflicts"]
+          properties:
+            expected:
+              type: "integer"
+            admitted:
+              type: "integer"
+            physicalCaptured:
+              type: "integer"
+            medicalRecorded:
+              type: "integer"
+            openConflicts:
+              type: "integer"
+        asOf:
+          type: "string"
 
     OpaqueAdminRead:
       description: "Consumed by no S06 screen; shape asserted from edge-v1.yaml, not re-read from the controller."

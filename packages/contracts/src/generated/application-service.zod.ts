@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -49,6 +49,7 @@
 //   GET  /v1/campaigns/admin                            officer            browser
 //   GET  /v1/campaigns/admin/detail                     officer            browser
 //   GET  /v1/venue-roster                               officer            browser
+//   GET  /v1/venue-live-counts                          officer            browser
 //
 // `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
@@ -838,6 +839,26 @@ export const UnsupportedAgency501Schema = z
     "agency": AgencySchema,
   });
 
+export const VenueLiveCountsSchema = z
+  .object({
+    "agency": z.enum(['RDF', 'RNP', 'RCS']),
+    "venue": z
+    .object({
+      "venueName": z.string(),
+      "district": z.string(),
+      "examDate": z.string(),
+    }).strict(),
+    "counts": z
+    .object({
+      "expected": z.number(),
+      "admitted": z.number(),
+      "physicalCaptured": z.number(),
+      "medicalRecorded": z.number(),
+      "openConflicts": z.number(),
+    }).strict(),
+    "asOf": z.string(),
+  }).strict();
+
 export const VerifyAtVenue200Schema = z
   .strictObject({
     "status": z.enum(['RECORDED', 'ALREADY_RECORDED']),
@@ -1536,6 +1557,22 @@ export const applicationServiceOperations = {
     query: ["campaign","district","examDate"],
     responses: {
       "200": OpaqueAdminReadSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "venueLiveCounts": {
+    method: "GET",
+    path: "/v1/venue-live-counts",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["campaign","district","examDate"],
+    responses: {
+      "200": VenueLiveCountsSchema,
       "400": OperationalReadErrorSchema,
       "401": OperationalReadErrorSchema,
       "403": OperationalReadErrorSchema,

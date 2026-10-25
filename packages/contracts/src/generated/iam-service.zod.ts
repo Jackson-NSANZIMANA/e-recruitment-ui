@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/iam-service.yaml                          ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  29f34aa53bc94b3ae246ca82fcad8310404afe98          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -22,6 +22,7 @@
 //   GET  /v1/officers                                   officer            browser
 //   POST /v1/officers                                   officer            browser
 //   POST /v1/officers/activation/reissue                officer            browser
+//   POST /v1/officers/activation/release                officer            browser
 //   POST /v1/officers/posts                             officer            browser
 //   POST /v1/officers/disable                           officer            browser
 //   POST /v1/officers/enable                            officer            browser
@@ -121,6 +122,17 @@ export const OfficerReasonRequestSchema = z
   .object({
     "targetOfficerId": z.string().uuid(),
     "reasonCode": z.string(),
+  }).strict();
+
+export const OfficerReleasedSchema = z
+  .object({
+    "outcome": z.literal('RELEASED'),
+    "officer": OfficerRowSchema,
+    "activation": z
+    .object({
+      "code": z.string(),
+      "expiresAt": z.string(),
+    }).strict(),
   }).strict();
 
 export const OfficerTargetRequestSchema = z
@@ -251,6 +263,24 @@ export const iamServiceOperations = {
     query: [],
     responses: {
       "200": OfficerOpenedSchema,
+      "400": OfficerAdminErrorSchema,
+      "401": OfficerAdminErrorSchema,
+      "403": OfficerAdminErrorSchema,
+      "404": OfficerAdminErrorSchema,
+      "409": OfficerAdminErrorSchema,
+      "422": OfficerAdminErrorSchema,
+    },
+  },
+  "officerReleaseActivation": {
+    method: "POST",
+    path: "/v1/officers/activation/release",
+    auth: ["officer"],
+    reach: "browser",
+    request: OfficerTargetRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": OfficerReleasedSchema,
       "400": OfficerAdminErrorSchema,
       "401": OfficerAdminErrorSchema,
       "403": OfficerAdminErrorSchema,

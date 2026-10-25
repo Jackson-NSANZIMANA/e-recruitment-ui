@@ -1,6 +1,6 @@
 {
   "$comment": "PINNED BACKEND FACTS. Hand-mined by reading every controller under services/*/src/adapters/http/** and every src/main.ts at the SHA below. This file is what makes the drift check runnable with NO backend checkout: it is the middle term between the OpenAPI documents and the backend source. gate A diffs OpenAPI against this; gate B diffs this against a live checkout when one is available. Neither gate can be green while the other is stale, because a change to the backend that is applied here without the OpenAPI fails A, and a change applied to both without the backend fails B.",
-  "backendSha": "29f34aa53bc94b3ae246ca82fcad8310404afe98",
+  "backendSha": "cd4962842e26177f179eb3c0bd51c214dad3fd61",
   "backendRepo": "https://github.com/Jackson-NSANZIMANA/e-recruitment",
   "minedAt": "2026-10-15",
   "services": {
@@ -55,6 +55,16 @@
             "officer"
           ],
           "constant": "OFFICER_REISSUE_ACTIVATION_PATH",
+          "controller": "officer-admin.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "POST",
+          "path": "/v1/officers/activation/release",
+          "auth": [
+            "officer"
+          ],
+          "constant": "OFFICER_RELEASE_ACTIVATION_PATH",
           "controller": "officer-admin.controller.ts",
           "mounted": true
         },
@@ -610,6 +620,16 @@
           "constant": "VENUE_ROSTER_PATH",
           "controller": "operational-read.controller.ts",
           "mounted": true
+        },
+        {
+          "method": "GET",
+          "path": "/v1/venue-live-counts",
+          "auth": [
+            "officer"
+          ],
+          "constant": "VENUE_LIVE_COUNTS_PATH",
+          "controller": "operational-read.controller.ts",
+          "mounted": true
         }
       ]
     },
@@ -698,6 +718,36 @@
           ],
           "constant": "ENROLL_DEVICE_PATH",
           "controller": "enroll-device.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "GET",
+          "path": "/v1/field-sync/devices/fleet",
+          "auth": [
+            "officer"
+          ],
+          "constant": "LIST_FLEET_PATH",
+          "controller": "manage-fleet.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "POST",
+          "path": "/v1/field-sync/devices/assign",
+          "auth": [
+            "officer"
+          ],
+          "constant": "ASSIGN_DEVICE_PATH",
+          "controller": "manage-fleet.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "POST",
+          "path": "/v1/field-sync/devices/revoke",
+          "auth": [
+            "officer"
+          ],
+          "constant": "REVOKE_DEVICE_PATH",
+          "controller": "manage-fleet.controller.ts",
           "mounted": true
         },
         {

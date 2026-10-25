@@ -29,7 +29,7 @@ export const createOfficer = (client: ApiClient, input: CreateOfficerInput): Pro
   client.call<OfficerOpenedResponse>('createOfficer', { body: input });
 export const reissueOfficerActivation = (client: ApiClient, input: OfficerTargetInput): Promise<OfficerOpenedResponse> =>
   client.call<OfficerOpenedResponse>('reissueOfficerActivation', { body: input });
-/** CONTRACT-PENDING: S06 (backend PR #45). See ../pending.ts. */
+/** Four-eyes release (ADR-036 Addendum A): a different administrator, the only answer that carries the code, once. */
 export const releaseOfficerActivation = (client: ApiClient, input: OfficerTargetInput): Promise<OfficerReleasedResponse> =>
   client.call<OfficerReleasedResponse>('releaseOfficerActivation', { body: input });
 export const assignOfficerPosts = (client: ApiClient, input: AssignOfficerPostsInput): Promise<OfficerChangeResponse> =>

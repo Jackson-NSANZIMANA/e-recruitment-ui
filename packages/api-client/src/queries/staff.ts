@@ -40,7 +40,7 @@ function useStaffMutation<I, O>(client: ApiClient, fn: (c: ApiClient, input: I) 
 
 export const useCreateOfficer = (client: ApiClient): UseMutationResult<OfficerOpenedResponse, Error, CreateOfficerInput> => useStaffMutation(client, createOfficer);
 export const useReissueActivation = (client: ApiClient): UseMutationResult<OfficerOpenedResponse, Error, OfficerTargetInput> => useStaffMutation(client, reissueOfficerActivation);
-/** CONTRACT-PENDING: S06. The result carries the one-time code: gcTime 0 so the mutation cache never keeps it once nothing observes it. */
+/** The result carries the one-time code: gcTime 0 so the mutation cache never keeps it once nothing observes it. */
 export const useReleaseActivation = (client: ApiClient): UseMutationResult<OfficerReleasedResponse, Error, OfficerTargetInput> => useStaffMutation(client, releaseOfficerActivation, 0);
 export const useAssignPosts = (client: ApiClient): UseMutationResult<OfficerChangeResponse, Error, AssignOfficerPostsInput> => useStaffMutation(client, assignOfficerPosts);
 export const useDisableOfficer = (client: ApiClient): UseMutationResult<OfficerChangeResponse, Error, OfficerReasonInput> => useStaffMutation(client, disableOfficer);
