@@ -24,6 +24,7 @@
     "@atlaskit/app-provider": "^8.1.0",
     "@atlaskit/badge": "^21.0.1",
     "@atlaskit/button": "^25.0.2",
+    "@atlaskit/code": "^20.0.0",
     "@atlaskit/css": "^1.0.0",
     "@atlaskit/css-reset": "^8.1.2",
     "@atlaskit/drawer": "^14.0.0",

@@ -12,7 +12,7 @@ import "@usrp/design-system/fonts.css";
 import "@usrp/i18n";
 import { assertNamespaceRegistered } from "@usrp/i18n";
 import { AuthProvider } from "@usrp/auth";
-import { RouterLink, ErrorBoundary } from "@usrp/ui";
+import { RouterLink, ErrorBoundary, NATIONAL_THEME } from "@usrp/ui";
 
 import { registerAdjudicationLocales } from "@usrp/feature-adjudication";
 import { registerComplianceLocales } from "@usrp/feature-compliance";
@@ -66,6 +66,7 @@ createRoot(container).render(
       }}
     >
       <AppProvider
+        defaultTheme={NATIONAL_THEME}
         routerLinkComponent={RouterLink}
         defaultColorMode="light"
       >

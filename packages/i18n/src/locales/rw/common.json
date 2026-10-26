@@ -587,5 +587,33 @@
       "lastAction": "Igikorwa giheruka",
       "actions": "Ibikorwa"
     }
+  },
+  "national": {
+    "official_site": "Urubuga rwemewe rwa Leta y'u Rwanda",
+    "how_you_know": "Dore uko wabimenya",
+    "domain_title": "Imbuga zemewe zikoresha .gov.rw",
+    "domain_body": "Aderesi irangirwa na .gov.rw ni iy'urwego rwemewe rwa Leta y'u Rwanda.",
+    "https_title": "Imbuga zizewe zikoresha HTTPS",
+    "https_body": "Ikimenyetso cy'ingufuri cyangwa https:// bisobanura ko uhujwe mu buryo bwizewe. Tanga amakuru yawe bwite ku mbuga zemewe kandi zizewe gusa.",
+    "free_title": "Gusaba akazi ni ubuntu",
+    "free_body": "Gusaba kwinjira muri RDF, RNP cyangwa RCS ni ubuntu. Nta muntu ushobora kukugurisha umwanya cyangwa kwihutisha ubusabe bwawe. Uwo ari we wese ugusabye amafaranga, mumenyeshe RIB kuri {{hotline}}.",
+    "service_name": "Urubuga Rumwe rwo Kwinjiza Abakozi mu Nzego z'Umutekano",
+    "service_short": "Kwinjiza Abakozi mu Nzego z'Umutekano",
+    "language": "Ururimi",
+    "skip_to_content": "Simbukira ku bikubiye ku rupapuro",
+    "law_data_protection": "Itegeko N° 058/2021 ryo ku wa 13/10/2021",
+    "footer_about": "Serivisi yemewe yo kwinjiza abakozi mu Ngabo z'u Rwanda, muri Polisi y'u Rwanda no mu Rwego rw'Igihugu rushinzwe Igorora.",
+    "footer_data_title": "Amakuru yawe bwite",
+    "footer_data_body": "Amakuru yawe bwite akoreshwa kandi arindwa hakurikijwe {{law}} ryerekeye kurengera amakuru bwite n'ubuzima bwite.",
+    "footer_fraud_title": "Tanga amakuru ku buriganya",
+    "footer_fraud_body": "Nihagira ugusaba amafaranga kugira ngo usabe cyangwa utoranywe, hamagara RIB ku buntu kuri {{hotline}}.",
+    "footer_rights": "© {{year}} Guverinoma y'u Rwanda",
+    "coat_of_arms_alt": "Ikirango cya Repubulika y'u Rwanda",
+    "emblem_alt": "Ikirango cya {{agency}}",
+    "restricted": "Bigenewe abemerewe gusa",
+    "restricted_body": "Abakozi babifitiye uburenganzira gusa · Amakuru bwite arinzwe na {{law}} · Ibikorwa birakurikiranwa",
+    "document_serial": "Nimero y'inyandiko",
+    "verification_line": "Umurongo w'igenzura",
+    "verification_hint": "Umubare wa nyuma wa buri tsinda ni umubare w'igenzura ufata amakosa yo kwandika."
   }
 }

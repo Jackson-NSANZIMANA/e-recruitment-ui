@@ -57,22 +57,20 @@ export default defineConfig(({ command, mode }) => {
         manifest: {
           name: "USRP Officer Console",
           short_name: "USRP Officer",
-          description:
-            "Rwanda unified security recruitment — officer and field console",
+          description: "Republic of Rwanda — Unified Security Recruitment Portal, officer console (restricted)",
           // hygiene-allow-hex: see applicant-portal config for rationale.
-          theme_color: "#0052CC",
+          theme_color: "#003F82", // GoR Primary Blue (RISA brand sheet) - ADR-FE-020
           background_color: "#FFFFFF", // hygiene-allow-hex: web manifest, read before any CSS
           display: "standalone",
           orientation: "landscape",
           start_url: "/",
           icons: [
-            { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-            {
-              src: "/icons/icon-512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any maskable",
-            },
+            // The coat of arms of the Republic of Rwanda, whole and unaltered on
+            // white (ADR-FE-020). Separate maskable art keeps the emblem inside
+            // the 80% safe zone so a launcher mask never crops it.
+            { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
         },
       }),

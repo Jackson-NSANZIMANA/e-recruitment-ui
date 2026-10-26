@@ -10,7 +10,7 @@ import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { RouteGuard, OfficerGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { NotFoundPage } from "@usrp/ui";
+import { NationalFrame, NotFoundPage } from "@usrp/ui";
 // Login is deliberately EAGER, as in officer-console: it is the recovery path
 // when the network is degraded, a service worker has just updated, or a lazy
 // chunk is unavailable. On a venue tablet that is not an edge case.
@@ -36,7 +36,13 @@ const FullPageSpinner = (): React.ReactElement => (
 
 function FieldStationLogin(): React.ReactElement | null {
   const { t } = useTranslation();
-  return <OfficerLoginPage homePath="/stations" productName={t("field_station.app_title")} />;
+  // Staff frame (ADR-FE-020): the device opens on the state's identity and the
+  // restriction marking before anyone has signed in.
+  return (
+    <NationalFrame audience="staff" serviceName={t("field_station.app_title")}>
+      <OfficerLoginPage homePath="/stations" productName={t("field_station.app_title")} />
+    </NationalFrame>
+  );
 }
 
 const router = createBrowserRouter(

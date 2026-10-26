@@ -10,7 +10,7 @@ import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { RouteGuard, ApplicantGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { NotFoundPage } from "@usrp/ui";
+import { NationalFrame, NotFoundPage } from "@usrp/ui";
 import { CITIZEN_SLICE_ROUTES } from "./routes/slices.js";
 import { gateByReadiness } from "./routes/readiness.js";
 import { EDGE_BASE_URL } from "./env.js";
@@ -38,7 +38,17 @@ const FullPageSpinner = (): React.ReactElement => (
   </Box>
 );
 
-const router = createBrowserRouter(gateByReadiness([
+// Every citizen page, sign-in included, renders inside the national frame
+// (ADR-FE-020): the official-site banner, the Government of Rwanda lockup, the
+// language switch and the statutory footer. Pathless, so readiness gating and
+// URLs are unchanged.
+const CitizenLayout = (): React.ReactElement => (
+  <NationalFrame audience="public">
+    <Outlet />
+  </NationalFrame>
+);
+
+const router = createBrowserRouter(gateByReadiness([{ element: <CitizenLayout />, children: [
   { path: "/login", element: <LoginPage edgeBaseUrl={EDGE_BASE_URL} /> },
   {
     path: "/",
@@ -74,7 +84,7 @@ const router = createBrowserRouter(gateByReadiness([
       { path: "*", element: <NotFoundPage homePath="/home" /> },
     ],
   },
-]), {
+] }]), {
   // React Router v7 behaviour, opted into now so v6 stops warning and the
   // upgrade is a no-op. No route here uses actions, fetchers or splats, so
   // only v7_startTransition (on RouterProvider) changes anything at runtime.
