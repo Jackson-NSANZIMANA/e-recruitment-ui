@@ -41,3 +41,6 @@ export { ConnectionStatus } from "./components/ConnectionStatus/index.js";
 
 // ─── State patterns (S06) ──────────────────────────────────────────────────────
 export * from "./states/index.js";
+
+// ─── National identity layer (ADR-FE-020) ──────────────────────────────────────
+export * from "./national/index.js";

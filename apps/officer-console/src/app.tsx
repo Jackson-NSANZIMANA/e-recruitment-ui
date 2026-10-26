@@ -10,7 +10,7 @@ import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { RouteGuard, OfficerGuard } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { NotFoundPage } from "@usrp/ui";
+import { NationalFrame, NotFoundPage } from "@usrp/ui";
 import { AppShell } from "./components/AppShell/index.js";
 import { OFFICER_SLICE_ROUTES } from "./routes/slices.js";
 import { gateByReadiness } from "./routes/readiness.js";
@@ -42,10 +42,24 @@ const FullPageSpinner = (): React.ReactElement => (
   </Box>
 );
 
+// Sign-in and activation sit outside the shell, so they get the staff frame
+// (ADR-FE-020): handling marking, national lockup, language switch. No route in
+// the console opens without the state and the restriction identifying it.
+const StaffEntryLayout = (): React.ReactElement => {
+  const { t } = useTranslation();
+  return (
+    <NationalFrame audience="staff" serviceName={t("dashboard.title")}>
+      <Outlet />
+    </NationalFrame>
+  );
+};
+
 const router = createBrowserRouter(gateByReadiness([
-  { path: "/login", element: <OfficerLoginPage homePath="/dashboard" /> },
-  // Public: the one-time code released by a second administrator is the credential (ADR-036 Addendum A).
-  { path: "/activate", element: <ActivatePage /> },
+  { element: <StaffEntryLayout />, children: [
+    { path: "/login", element: <OfficerLoginPage homePath="/dashboard" /> },
+    // Public: the one-time code released by a second administrator is the credential (ADR-036 Addendum A).
+    { path: "/activate", element: <ActivatePage /> },
+  ] },
   {
     path: "/",
     element: (
