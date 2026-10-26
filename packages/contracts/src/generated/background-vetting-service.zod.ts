@@ -18,7 +18,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.

@@ -32,7 +32,7 @@ test('a quote inside an enum value is escaped, not broken', () => {
 });
 
 test('string constraints the backend genuinely enforces are emitted', () => {
-  assert.equal(emit({ type: 'string', format: 'uuid' }), 'z.string().uuid()');
+  assert.equal(emit({ type: 'string', format: 'uuid' }), 'z.string().guid()');
   assert.equal(emit({ type: 'string', minLength: 3, maxLength: 9 }), 'z.string().min(3).max(9)');
   assert.equal(emit({ type: 'string', pattern: '^[A-Z]+$' }), 'z.string().regex(/^[A-Z]+$/)');
 });
@@ -54,17 +54,17 @@ test('an undescribed schema becomes unknown, never any', () => {
 });
 
 test('an object with no described properties becomes a record of unknown', () => {
-  assert.equal(emit({ type: 'object' }), 'z.record(z.unknown())');
+  assert.equal(emit({ type: 'object' }), 'z.record(z.string(), z.unknown())');
 });
 
-test('additionalProperties:false becomes .strict() — an extra key is drift', () => {
+test('additionalProperties:false becomes z.strictObject() — an extra key is drift', () => {
   const emitted = emit({
     type: 'object',
     additionalProperties: false,
     required: ['a'],
     properties: { a: { type: 'string' }, b: { type: 'number' } },
   });
-  assert.ok(emitted.includes('.strict()'), emitted);
+  assert.ok(emitted.includes('.strictObject('), emitted);
   assert.ok(emitted.includes('"a": z.string(),'), emitted);
   assert.ok(emitted.includes('"b": z.number().optional(),'), emitted);
 });
@@ -76,7 +76,7 @@ test('additionalProperties:true stays open', () => {
     required: [],
     properties: { a: { type: 'string' } },
   });
-  assert.ok(!emitted.includes('.strict()'), emitted);
+  assert.ok(!emitted.includes('.strictObject('), emitted);
 });
 
 test('arrays, with and without a minimum', () => {
@@ -84,6 +84,10 @@ test('arrays, with and without a minimum', () => {
   assert.equal(
     emit({ type: 'array', items: { type: 'string' }, minItems: 1 }),
     'z.array(z.string()).min(1)',
+  );
+  assert.equal(
+    emit({ type: 'array', items: { type: 'string' }, maxItems: 10 }),
+    'z.array(z.string()).max(10)',
   );
   assert.equal(emit({ type: 'array' }), 'z.array(z.unknown())');
 });

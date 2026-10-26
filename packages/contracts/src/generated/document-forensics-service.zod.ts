@@ -20,7 +20,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -37,29 +37,29 @@ export const AgencySchema = z.enum(['RDF', 'RNP', 'RCS']);
  */
 export const DocumentTypeSchema = z.enum(['NATIONAL_ID', 'APPLICATION_FORM_WITH_PHOTO', 'ALEVEL_CERTIFICATE', 'OLEVEL_CERTIFICATE', 'DEGREE_DIPLOMA_COPY', 'DEGREE_DIPLOMA_NOTARIZED', 'GOOD_CONDUCT_CERTIFICATE', 'NON_CONVICTION_CERTIFICATE', 'CELIBACY_CERTIFICATE', 'MEDICAL_CERTIFICATE_GOVT', 'BIRTH_CERTIFICATE']);
 
-export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+export const UuidSchema = z.string().guid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 export const AnalyzeDocumentRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "agency": AgencySchema,
     "documentType": DocumentTypeSchema,
     "objectKey": z.string().min(1).max(512),
     "objectBucket": z.string().min(1).max(100).optional(),
-  }).strict();
+  });
 
 export const ApplicationNotFound404Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('APPLICATION_NOT_FOUND'),
-  }).strict();
+  });
 
 /**
  * The record exists; its bytes are missing from the store.
  */
 export const ObjectNotFound404Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('OBJECT_NOT_FOUND'),
-  }).strict();
+  });
 
 export const AnalyzeNotFound404Schema = z.discriminatedUnion('error', [
   ApplicationNotFound404Schema,
@@ -67,16 +67,16 @@ export const AnalyzeNotFound404Schema = z.discriminatedUnion('error', [
 ]);
 
 export const AnalyzeRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_FIELD', 'FIELD_TOO_LONG', 'INVALID_APPLICATION_ID', 'INVALID_AGENCY', 'INVALID_DOCUMENT_TYPE']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const ContentTypeMismatch422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('CONTENT_TYPE_MISMATCH'),
     "declared": z.string(),
-  }).strict();
+  });
 
 /**
  * OFFICER-facing triage lane. Never returned to a document's author.
@@ -84,13 +84,13 @@ export const ContentTypeMismatch422Schema = z
 export const DocumentLaneSchema = z.enum(['GREEN', 'AMBER', 'RED']);
 
 export const DocumentAnalyzed200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('ANALYZED'),
     "documentId": UuidSchema,
     "lane": DocumentLaneSchema,
     "forensicsScore": z.number(),
-    "flags": z.record(z.unknown()),
-  }).strict();
+    "flags": z.record(z.string(), z.unknown()),
+  });
 
 /**
  * THE ONE VERDICT REPORTED PLAINLY TO THE UPLOADER. A binary antivirus
@@ -98,74 +98,74 @@ export const DocumentAnalyzed200Schema = z
  * is unusable for a legal process.
  */
 export const DocumentRejectedMalware422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('DOCUMENT_REJECTED_MALWARE'),
-  }).strict();
+  });
 
 /**
  * THE WHOLE BODY. Three fields. No verdict, by design.
  */
 export const DocumentUploaded201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('UPLOADED'),
     "documentId": UuidSchema,
     "documentType": DocumentTypeSchema,
-  }).strict();
+  });
 
 export const FileTooLarge413Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('FILE_TOO_LARGE'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const Forbidden403Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const ForensicsError500Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['DOCUMENT_ENCRYPTION_ERROR', 'FORENSICS_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
-  }).strict();
+  });
 
 export const NotAcceptingDocuments409Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('NOT_ACCEPTING_DOCUMENTS'),
     "currentStatus": z.string(),
-  }).strict();
+  });
 
 export const ObjectStoreUnavailable503Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('OBJECT_STORE_UNAVAILABLE'),
-  }).strict();
+  });
 
 export const ScannerUnavailable503Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('SCANNER_UNAVAILABLE'),
-  }).strict();
+  });
 
 export const Unauthenticated401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const UnsupportedDocumentType422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNSUPPORTED_DOCUMENT_TYPE'),
-  }).strict();
+  });
 
 export const UnsupportedFileContent422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNSUPPORTED_FILE_CONTENT'),
-  }).strict();
+  });
 
 export const UnsupportedFileType422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNSUPPORTED_FILE_TYPE'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * multipart/form-data. The file part MUST be named exactly "file"; a
@@ -173,18 +173,18 @@ export const UnsupportedFileType422Schema = z
  * parts, max 1 file, max 4 KiB per text field.
  */
 export const UploadDocumentFormSchema = z
-  .object({
+  .strictObject({
     "file": z.string(),
     "applicantId": UuidSchema,
     "applicationId": UuidSchema,
     "documentType": DocumentTypeSchema,
-  }).strict();
+  });
 
 export const UploadRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_FILE', 'INVALID_FILENAME', 'EMPTY_FILE', 'INVALID_DOCUMENT_TYPE', 'INVALID_REQUEST']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const UploadUnavailable503Schema = z.discriminatedUnion('error', [
   ScannerUnavailable503Schema,

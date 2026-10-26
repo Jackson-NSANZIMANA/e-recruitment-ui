@@ -44,7 +44,7 @@ function stringChain(node: SchemaNode): string {
   const min = node['minLength'];
   const max = node['maxLength'];
   const pattern = node['pattern'];
-  if (node['format'] === 'uuid') out += '.uuid()';
+  if (node['format'] === 'uuid') out += '.guid()';
   if (typeof min === 'number' && min > 0) out += `.min(${min})`;
   if (typeof max === 'number') out += `.max(${max})`;
   if (typeof pattern === 'string') out += `.regex(/${pattern}/)`;
@@ -112,7 +112,10 @@ export function emitZod(node: SchemaNode, file: string, indent = 0): string {
           ? 'z.unknown()'
           : emitZod(items as SchemaNode, file, indent);
       const min = node['minItems'];
-      const bound = typeof min === 'number' && min > 0 ? `.min(${min})` : '';
+      const maxItems = node['maxItems'];
+      const bound =
+        (typeof min === 'number' && min > 0 ? `.min(${min})` : '') +
+        (typeof maxItems === 'number' ? `.max(${maxItems})` : '');
       return `z.array(${inner})${bound}${suffix}`;
     }
     case 'object': {
@@ -122,7 +125,7 @@ export function emitZod(node: SchemaNode, file: string, indent = 0): string {
         // ForensicsFlags / vectorClock payloads. Modelled as a record of
         // unknown, NOT as `any` — the values are genuinely not described
         // anywhere and pretending otherwise is the guess this package refuses.
-        return `z.record(z.unknown())${suffix}`;
+        return `z.record(z.string(), z.unknown())${suffix}`;
       }
       const props = properties as Record<string, YamlValue>;
       const required = new Set(
@@ -136,11 +139,11 @@ export function emitZod(node: SchemaNode, file: string, indent = 0): string {
         return `${pad}    ${JSON.stringify(key)}: ${rendered}${optional},`;
       });
       const open = node['additionalProperties'] === true;
-      // additionalProperties:false -> .strict(). An unexpected key is a
+      // additionalProperties:false -> z.strictObject(). An unexpected key is a
       // CONTRACT BREACH, not noise: it means the wire grew a field this
       // package has never read, which is exactly the drift being hunted.
-      const closing = open ? '' : '.strict()';
-      return `z\n${pad}  .object({\n${lines.join('\n')}\n${pad}  })${closing}${suffix}`;
+      const ctor = open ? 'object' : 'strictObject';
+      return `z\n${pad}  .${ctor}({\n${lines.join('\n')}\n${pad}  })${suffix}`;
     }
     default:
       throw new Error(`${file}: unsupported schema type "${primary}"`);

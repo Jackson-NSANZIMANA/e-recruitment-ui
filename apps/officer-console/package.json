@@ -58,7 +58,7 @@
     "react-hook-form": "7.53.0",
     "react-router-dom": "6.30.1",
     "workbox-window": "7.4.1",
-    "zod": "3.23.8"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@atlaskit/eslint-plugin-design-system": "^16.10.0",

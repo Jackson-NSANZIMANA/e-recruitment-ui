@@ -141,6 +141,10 @@ function check(node: SchemaNode, value: unknown, path: string, ctx: Ctx): void {
     if (typeof min === 'number' && list.length < min) {
       ctx.out.push({ path, message: `fewer than minItems ${min}` });
     }
+    const maxItems = node['maxItems'];
+    if (typeof maxItems === 'number' && list.length > maxItems) {
+      ctx.out.push({ path, message: `more than maxItems ${maxItems}` });
+    }
     if (items !== undefined && items !== null && typeof items === 'object' && !Array.isArray(items)) {
       list.forEach((item, i) => check(items as SchemaNode, item, `${path}[${i}]`, ctx));
     }
