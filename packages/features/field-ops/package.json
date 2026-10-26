@@ -34,6 +34,7 @@
     "@usrp/api-client": "workspace:*",
     "@usrp/auth": "workspace:*",
     "@usrp/contracts": "workspace:*",
+    "@usrp/field-ledger": "workspace:*",
     "@usrp/i18n": "workspace:*",
     "@usrp/ui": "workspace:*"
   },

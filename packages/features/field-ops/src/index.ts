@@ -1,4 +1,9 @@
-export * from './model/sync-result.ts';
+export * from './model/field-sync.ts';
+export * from './model/physical.ts';
+export * from './model/medical.ts';
+export * from './model/readiness.ts';
+export * from './model/ticket.ts';
+export * from './model/venue.ts';
 export * from './model/conflict.ts';
 export * from './model/biometric.ts';
 export * from './model/gate.ts';
@@ -7,6 +12,5 @@ export * from './model/stations.ts';
 export * from './api/transport.ts';
 export * from './api/field-ops.ts';
 export { FIELD_OPS_NAMESPACE, registerFieldOpsLocales } from './locales.ts';
-export { SyncOutcome } from './ui/SyncOutcome.tsx';
 export { createFieldOpsRoutes } from './routes/index.tsx';
 export type { FieldOpsRouteOptions } from './routes/index.tsx';
