@@ -36,7 +36,7 @@ export type AckOutcome = 'ACCEPTED' | 'DUPLICATE_REPLAY' | 'REJECTED_VALIDATION'
 export type SyncEvent =
   | { readonly type: 'ENQUEUE' }
   | { readonly type: 'SEND' }
-  | { readonly type: 'ACK'; readonly outcome: AckOutcome; readonly reason?: string }
+  | { readonly type: 'ACK'; readonly outcome: AckOutcome; readonly reason?: string; readonly scoreId?: string }
   | { readonly type: 'SEND_UNCERTAIN' }
   | { readonly type: 'ESCALATE' }
   | { readonly type: 'RESOLVED' };
@@ -47,7 +47,7 @@ export interface SyncPolicy {
 }
 
 export type TransitionResult =
-  | { readonly ok: true; readonly state: SyncState; readonly reason?: string }
+  | { readonly ok: true; readonly state: SyncState; readonly reason?: string; readonly scoreId?: string }
   | { readonly ok: false; readonly state: SyncState; readonly refused: string };
 
 export const TERMINAL_STATES: ReadonlySet<SyncState> = new Set(['ACCEPTED', 'DUPLICATE_REPLAY', 'REJECTED_VALIDATION', 'RESOLVED']);
@@ -66,7 +66,7 @@ export function transition(state: SyncState, event: SyncEvent, policy: SyncPolic
       return state === 'LOCAL_ONLY' || state === 'QUEUED' ? { ok: true, state: 'SENDING' } : refuse(`SEND from ${state}`);
     case 'ACK':
       if (state !== 'SENDING') return refuse(`ACK from ${state}`);
-      return event.reason === undefined ? { ok: true, state: event.outcome } : { ok: true, state: event.outcome, reason: event.reason };
+      return { ok: true, state: event.outcome, ...(event.reason === undefined ? {} : { reason: event.reason }), ...(event.scoreId === undefined ? {} : { scoreId: event.scoreId }) };
     case 'SEND_UNCERTAIN':
       if (state !== 'SENDING') return refuse(`SEND_UNCERTAIN from ${state}`);
       return { ok: true, state: policy.offlineQueue ? 'QUEUED' : 'LOCAL_ONLY' };

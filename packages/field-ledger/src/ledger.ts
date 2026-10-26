@@ -54,7 +54,7 @@ export function createLedger(deps: LedgerDeps): Ledger {
         const record = await deps.storage.get(recordId);
         if (record === null) return { ok: false, state: 'LOCAL_ONLY', refused: `no record ${recordId}` } as const;
         const result = transition(record.state, event, deps.policy);
-        if (result.ok) await deps.storage.setState(recordId, result.state, result.reason, deps.clock.now().toISOString());
+        if (result.ok) await deps.storage.setState(recordId, result.state, result.reason, deps.clock.now().toISOString(), result.scoreId);
         return result;
       });
     },

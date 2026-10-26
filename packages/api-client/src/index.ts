@@ -215,3 +215,13 @@ export type {
   ApplicationSearchQuery, BiometricEvidenceRow, BiometricEvidenceResponse, ErasureRequestRow,
   ErasureQueueResponse, ErasureDecisionInput, ErasureDecisionResponse,
 } from './wire.js';
+
+// ── Field Station (S08) ──
+export {
+  enrollFieldDevice, syncFieldScores, resolveFieldSyncConflict, answerFromError,
+  getVenueRoster, getVenueLiveCounts, getBiometricPolicy,
+} from './operations/field-sync.js';
+export type {
+  EnrollFieldDeviceInput, EnrollFieldDeviceResponse, FieldScoreWireRecord, FieldSyncAnswer, ResolveFieldConflictInput,
+  VenueQuery, VenueRosterCandidate, VenueRosterResponse, VenueLiveCountsResponse, BiometricMode, BiometricPolicyResponse,
+} from './wire.js';

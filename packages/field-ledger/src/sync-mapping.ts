@@ -52,7 +52,7 @@ const OUTCOME: Readonly<Record<RecordStatus, AckOutcome>> = {
 export function ackForResult(result: RecordSyncResult): SyncEvent {
   const outcome = OUTCOME[result.status];
   const reason = result.status === 'REJECTED' ? (result.reason ?? 'REJECTED') : result.status === 'NOT_FOUND' || result.status === 'STALE' || result.status === 'CONFLICT' ? result.status : undefined;
-  return reason === undefined ? { type: 'ACK', outcome } : { type: 'ACK', outcome, reason };
+  return { type: 'ACK', outcome, ...(reason === undefined ? {} : { reason }), ...(result.scoreId === undefined ? {} : { scoreId: result.scoreId }) };
 }
 
 export type SyncResponseReading =

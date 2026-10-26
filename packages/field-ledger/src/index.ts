@@ -16,3 +16,7 @@ export type { Ledger, LedgerDeps, LedgerClock } from './ledger.ts';
 export { toBase64, sha256Hex } from './canonical.ts';
 export { createMemoryIdentityStore, createIndexedDbIdentityStore, publicKeySpkiPem, keyIdOf, newDeviceId, loadOrCreateIdentity, markEnrolled } from './device-identity.ts';
 export type { DeviceIdentity, IdentityStore } from './device-identity.ts';
+export { readSlotClaims, verifySlotToken, anchorFromBase64 } from './slot-token.ts';
+export type { SlotClaims, SlotVerdict, TrustAnchor } from './slot-token.ts';
+export { createMemoryAnchorStore, createLocalAnchorStore } from './trust-anchors.ts';
+export type { AnchorStore } from './trust-anchors.ts';

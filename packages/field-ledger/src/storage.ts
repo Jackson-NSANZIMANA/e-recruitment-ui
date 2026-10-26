@@ -16,6 +16,8 @@ export interface StoredRecord {
   readonly envelope: SignedEnvelope;
   readonly state: SyncState;
   readonly reason?: string;
+  /** The server's score id, when its answer named one (a conflict is resolved by it). */
+  readonly scoreId?: string;
   readonly updatedAt: string;
 }
 
@@ -38,7 +40,7 @@ export interface StoragePort {
    * can be skewed; localSequence is allocated in append order.
    */
   list(): Promise<readonly StoredRecord[]>;
-  setState(recordId: string, state: SyncState, reason: string | undefined, updatedAt: string): Promise<void>;
+  setState(recordId: string, state: SyncState, reason: string | undefined, updatedAt: string, scoreId?: string): Promise<void>;
   /** The highest localSequence stored for a device (0 when none). */
   lastSequence(deviceId: string): Promise<number>;
 }
@@ -67,11 +69,11 @@ export function createMemoryStorage(health: StorageHealth = { persisted: false, 
     },
     get: async (id) => records.get(id) ?? null,
     list: async () => [...records.values()].sort(byCaptureOrder),
-    setState: async (id, state, reason, updatedAt) => {
+    setState: async (id, state, reason, updatedAt, scoreId) => {
       const current = records.get(id);
       if (current === undefined) throw new Error(`no record ${id}`);
-      const { reason: _old, ...rest } = current;
-      records.set(id, reason === undefined ? { ...rest, state, updatedAt } : { ...rest, state, reason, updatedAt });
+      const { reason: _old, scoreId: _oldScore, ...rest } = current;
+      records.set(id, { ...rest, state, updatedAt, ...(reason === undefined ? {} : { reason }), ...(scoreId === undefined ? {} : { scoreId }) });
     },
     lastSequence: async (deviceId) =>
       [...records.values()].filter((r) => r.envelope.deviceId === deviceId).reduce((max, r) => Math.max(max, r.envelope.localSequence), 0),
@@ -134,12 +136,12 @@ export function createIndexedDbStorage(options: IndexedDbOptions = {}): StorageP
     },
     get: async (id) => ((await request((await tx('readonly')).get(id))) as StoredRecord | undefined) ?? null,
     list: async () => [...((await request((await tx('readonly')).getAll())) as StoredRecord[])].sort(byCaptureOrder),
-    setState: async (id, state, reason, updatedAt) => {
+    setState: async (id, state, reason, updatedAt, scoreId) => {
       const store = await tx('readwrite');
       const current = (await request(store.get(id))) as StoredRecord | undefined;
       if (current === undefined) throw new Error(`no record ${id}`);
-      const { reason: _old, ...rest } = current;
-      await request(store.put(reason === undefined ? { ...rest, state, updatedAt } : { ...rest, state, reason, updatedAt }));
+      const { reason: _old, scoreId: _oldScore, ...rest } = current;
+      await request(store.put({ ...rest, state, updatedAt, ...(reason === undefined ? {} : { reason }), ...(scoreId === undefined ? {} : { scoreId }) }));
     },
     lastSequence: async (deviceId) => {
       const all = (await request((await tx('readonly')).index('deviceId').getAll(deviceId))) as StoredRecord[];

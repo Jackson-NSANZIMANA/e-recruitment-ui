@@ -586,3 +586,65 @@ export type ErasureDecisionInput =
   | { readonly requestId: string; readonly decision: 'DECLINE'; readonly grounds: string }
   | { readonly requestId: string; readonly decision: 'EXECUTE' };
 export interface ErasureDecisionResponse { readonly requestId: string; readonly decision: 'DECLINED' | 'EXECUTED' }
+
+// ── Field Station (S08): device enrolment, score sync, venue reads, biometric policy ──
+
+export interface EnrollFieldDeviceInput { readonly deviceId: string; readonly publicKeyPem: string }
+export interface EnrollFieldDeviceResponse { readonly status: 'ENROLLED' | 'ALREADY_ENROLLED'; readonly deviceId: string; readonly agency: string }
+
+/** One signed score record as the field-sync service parses it (sync-scores.controller.ts). */
+export interface FieldScoreWireRecord {
+  readonly applicationId: string;
+  readonly qrInvitationCode: string;
+  readonly metrics: {
+    readonly heightCm: number;
+    readonly weightKg: number;
+    readonly run3kmTimeSeconds: number;
+    readonly chestCm: number;
+    readonly medicalFitnessStatus: 'FIT' | 'UNFIT' | 'PENDING_REVIEW';
+    readonly additionalNotes?: string;
+  };
+  readonly capturedAt: string;
+  readonly deviceId: string;
+  readonly capturingOfficerId: string;
+  readonly vectorClock: Readonly<Record<string, number>>;
+  readonly deviceSignature: string;
+  readonly signedPayloadHash: string;
+}
+
+/** What the transport saw. `httpStatus` is null when no response arrived; the body is whatever the edge sent. */
+export interface FieldSyncAnswer { readonly httpStatus: number | null; readonly body: unknown }
+
+export interface ResolveFieldConflictInput { readonly applicationId: string; readonly scoreId: string; readonly resolution: string }
+
+export interface VenueQuery { readonly campaign: string; readonly district: string; readonly examDate: string }
+export interface VenueRosterCandidate {
+  readonly processingCode: string;
+  readonly category: string;
+  readonly status: string;
+  readonly admission: 'ADMITTED' | 'NOT_ADMITTED';
+  readonly requiredPaperItems: readonly string[];
+}
+export interface VenueRosterResponse {
+  readonly agency: string;
+  readonly venue: { readonly venueName: string; readonly district: string; readonly examDate: string; readonly reportingTimeHour: number; readonly capacityLimit: number | null; readonly registeredCount: number };
+  readonly candidates: readonly VenueRosterCandidate[];
+  readonly truncated: boolean;
+}
+export interface VenueLiveCountsResponse {
+  readonly agency: string;
+  readonly venue: { readonly venueName: string; readonly district: string; readonly examDate: string };
+  readonly counts: { readonly expected: number; readonly admitted: number; readonly physicalCaptured: number; readonly medicalRecorded: number; readonly openConflicts: number };
+  readonly asOf: string | null;
+}
+
+export type BiometricMode = 'OFF' | 'SHADOW' | 'ADVISORY';
+export interface BiometricPolicyResponse {
+  readonly agency: string;
+  readonly mode: BiometricMode;
+  readonly legalBasis: string;
+  readonly evidenceSchema: string;
+  readonly maxBodyBytes: number;
+  readonly thresholdPolicy: { readonly version: string; readonly livenessPassBp: number; readonly matchBp: number; readonly noMatchBelowBp: number };
+  readonly referenceSources: readonly { readonly id: 'CARD_PORTRAIT' | 'NIDA_PORTRAIT' | 'NONE'; readonly status: string }[];
+}

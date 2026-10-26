@@ -36,8 +36,8 @@ describe('syncFieldScores → per-record events', () => {
       { applicationId: A, deviceId: 'tab-014', status: 'CONFLICT', scoreId: C },
     ] };
     const events = eventsForBatch(sent, 200, body);
-    expect(events.get('capture')).toEqual({ type: 'ACK', outcome: 'ACCEPTED' });
-    expect(events.get('correction')).toEqual({ type: 'ACK', outcome: 'STALE_CONFLICT', reason: 'CONFLICT' });
+    expect(events.get('capture')).toEqual({ type: 'ACK', outcome: 'ACCEPTED', scoreId: B });
+    expect(events.get('correction')).toEqual({ type: 'ACK', outcome: 'STALE_CONFLICT', reason: 'CONFLICT', scoreId: C });
   });
 
   it('a short, reordered or mismatched answer makes the whole batch uncertain, never saved', () => {
