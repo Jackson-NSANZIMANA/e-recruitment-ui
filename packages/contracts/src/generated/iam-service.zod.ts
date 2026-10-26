@@ -20,7 +20,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -28,44 +28,44 @@
 import { z } from 'zod';
 
 export const InvalidClient401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_CLIENT'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InvalidCredentials401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_CREDENTIALS'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InvalidRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_REQUEST'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const OfficerLoginRequestSchema = z
-  .object({
+  .strictObject({
     "loginHandle": z.string().min(1).max(128),
     "password": z.string().min(1).max(256),
-  }).strict();
+  });
 
 export const ServiceTokenRequestSchema = z
-  .object({
+  .strictObject({
     "clientId": z.string().min(1).max(128),
     "clientSecret": z.string().min(1).max(256),
-  }).strict();
+  });
 
 /**
  * The whole success body. Two fields. Nothing else is returned by either
  * grant — this is the shape, not an abridgement of it.
  */
 export const TokenIssuedSchema = z
-  .object({
+  .strictObject({
     "token": z.string(),
     "expiresAt": z.string(),
-  }).strict();
+  });
 
 /**
  * Every operation on this service, with the schema for each documented status.

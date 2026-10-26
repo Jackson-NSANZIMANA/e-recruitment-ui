@@ -1892,16 +1892,19 @@ components:
           type: "string"
         targetCategories:
           type: "array"
+          maxItems: 10
           items:
             $ref: "#/components/schemas/ApplicationCategory"
         targetDistricts:
           type: "array"
+          maxItems: 30
           items:
             type: "string"
         allowsWalkIn:
           type: "boolean"
         contactPhoneNumbers:
           type: ["array", "null"]
+          maxItems: 10
           items:
             type: "string"
         contactWebsite:
@@ -1969,11 +1972,13 @@ components:
           maxLength: 50
         targetCategories:
           type: "array"
+          maxItems: 10
           minItems: 1
           items:
             $ref: "#/components/schemas/ApplicationCategory"
         targetDistricts:
           type: "array"
+          maxItems: 30
           minItems: 1
           items:
             type: "string"
@@ -2001,6 +2006,7 @@ components:
           minimum: 1
         contactPhoneNumbers:
           type: "array"
+          maxItems: 10
           items:
             type: "string"
             minLength: 1
@@ -2716,6 +2722,7 @@ components:
         applications:
           description: "Capped at 100. No total, no cursor — nothing here paginates."
           type: "array"
+          maxItems: 100
           items:
             $ref: "#/components/schemas/ApplicationSummary"
 

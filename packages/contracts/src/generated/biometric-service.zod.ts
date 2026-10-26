@@ -19,7 +19,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -31,27 +31,27 @@ import { z } from 'zod';
  * keying a 403 on `status` rather than `error`.
  */
 export const AgencyMismatch403Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('AGENCY_MISMATCH'),
-  }).strict();
+  });
 
-export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+export const UuidSchema = z.string().guid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 export const BiometricEvaluatedSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('EVALUATED'),
     "verified": z.boolean(),
     "sessionId": UuidSchema,
     "applicantId": UuidSchema,
     "livenessPass": z.boolean(),
     "faceMatchPass": z.boolean(),
-  }).strict();
+  });
 
 export const Forbidden403Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * NOT a discriminated union — the two members have no property in common. A
@@ -64,37 +64,37 @@ export const BiometricForbidden403Schema = z.union([
 ]);
 
 export const BiometricRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_QR_TOKEN', 'MISSING_CAPTURE_REF']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InternalError500Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INTERNAL_ERROR'),
-  }).strict();
+  });
 
 export const InvalidInvitation422Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('INVALID_INVITATION'),
-  }).strict();
+  });
 
 export const MatcherUnavailable503Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('BIOMETRIC_MATCH_UNAVAILABLE'),
-  }).strict();
+  });
 
 export const Unauthenticated401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const VerifyBiometricRequestSchema = z
-  .object({
+  .strictObject({
     "qrSignedToken": z.string().min(1),
     "captureRef": z.string().min(1),
-  }).strict();
+  });
 
 /**
  * Every operation on this service, with the schema for each documented status.

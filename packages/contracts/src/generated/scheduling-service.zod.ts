@@ -20,7 +20,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -28,7 +28,7 @@
 import { z } from 'zod';
 
 export const CampaignSessionConfigured200Schema = z
-  .object({
+  .strictObject({
     "status": z.enum(['SESSION_CONFIGURED', 'SESSION_UNCHANGED']),
     "publicCode": z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/),
     "district": z.string(),
@@ -38,14 +38,14 @@ export const CampaignSessionConfigured200Schema = z
     z.literal('UNBOUNDED_CAPACITY'),
     z.null(),
   ]),
-  }).strict();
+  });
 
 /**
  * normalizeCampaignSession: exact keys. The province must own the district.
  * publicCode is trimmed and upper-cased before validation.
  */
 export const CampaignSessionRequestSchema = z
-  .object({
+  .strictObject({
     "publicCode": z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/),
     "district": z.string().min(1),
     "province": z.string().min(1),
@@ -58,14 +58,14 @@ export const CampaignSessionRequestSchema = z
     z.null(),
   ]).optional(),
     "isActive": z.boolean(),
-  }).strict();
+  });
 
 export const InvitationKeyOkSchema = z
-  .object({
+  .strictObject({
     "keyId": z.string(),
     "algorithm": z.literal('Ed25519'),
     "publicKeyPem": z.string(),
-  }).strict();
+  });
 
 /**
  * HttpError body for a 4xx session command. The code set is OPEN (the write
@@ -73,21 +73,21 @@ export const InvitationKeyOkSchema = z
  * present below 500, for codes the UI does not branch on.
  */
 export const SessionCommandRejectionSchema = z
-  .object({
+  .strictObject({
     "error": z.string().regex(/^[A-Z][A-Z0-9_]+$/),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const SessionError500Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['CAMPAIGN_SESSION_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
-  }).strict();
+  });
 
 export const Unauthenticated401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * Every operation on this service, with the schema for each documented status.

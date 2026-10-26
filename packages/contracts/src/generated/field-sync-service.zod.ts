@@ -21,7 +21,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -30,65 +30,65 @@ import { z } from 'zod';
 
 export const AgencySchema = z.enum(['RDF', 'RNP', 'RCS']);
 
-export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+export const UuidSchema = z.string().guid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 export const ConflictResolved200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('RESOLVED'),
     "applicationId": UuidSchema,
     "scoreId": UuidSchema,
-  }).strict();
+  });
 
 export const DeviceAlreadyEnrolled200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('ALREADY_ENROLLED'),
     "deviceId": z.string(),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const DeviceEnrolled201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('ENROLLED'),
     "deviceId": z.string(),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const EnrollDeviceRequestSchema = z
-  .object({
+  .strictObject({
     "deviceId": z.string().min(1).max(64),
     "publicKeyPem": z.string().min(1).max(4096),
-  }).strict();
+  });
 
 /**
  * Transcribed from the controller's parseMetrics. Every numeric field is
  * required and must be finite; additionalNotes is the only optional.
  */
 export const PhysicalTestMetricsSchema = z
-  .object({
+  .strictObject({
     "heightCm": z.number(),
     "weightKg": z.number(),
     "run3kmTimeSeconds": z.number(),
     "chestCm": z.number(),
     "medicalFitnessStatus": z.enum(['FIT', 'UNFIT', 'PENDING_REVIEW']),
     "additionalNotes": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * UNTRUSTED INPUT by construction. Shape-checked here; the deviceSignature
  * is what the core actually trusts.
  */
 export const FieldScoreRecordSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "qrInvitationCode": z.string().min(1),
     "metrics": PhysicalTestMetricsSchema,
     "capturedAt": z.string().min(1),
     "deviceId": z.string().min(1),
     "capturingOfficerId": z.string().min(1),
-    "vectorClock": z.record(z.unknown()),
+    "vectorClock": z.record(z.string(), z.unknown()),
     "deviceSignature": z.string().min(1),
     "signedPayloadHash": z.string().min(1),
-  }).strict();
+  });
 
 /**
  * Per-record outcome. Modelled permissively on purpose: the controller
@@ -98,46 +98,46 @@ export const FieldScoreRecordSchema = z
  * Transcribing this array element precisely is a REQUEST to the backend
  * agent, recorded in the drift tool's open items.
  */
-export const FieldScoreResultSchema = z.record(z.unknown());
+export const FieldScoreResultSchema = z.record(z.string(), z.unknown());
 
 export const Forbidden403Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InternalError500Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INTERNAL_ERROR'),
-  }).strict();
+  });
 
 export const InvalidField400Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_FIELD'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const NoConflict409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NO_CONFLICT'),
-  }).strict();
+  });
 
 export const NotFound404Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NOT_FOUND'),
-  }).strict();
+  });
 
 export const ResolveConflictRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "scoreId": UuidSchema,
     "resolution": z.string().min(1).max(50),
-  }).strict();
+  });
 
 export const ScoreNotFound404Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('SCORE_NOT_FOUND'),
-  }).strict();
+  });
 
 export const ResolveNotFound404Schema = z.discriminatedUnion('status', [
   NotFound404Schema,
@@ -145,27 +145,27 @@ export const ResolveNotFound404Schema = z.discriminatedUnion('status', [
 ]);
 
 export const SyncScoresOkSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('SYNCED'),
     "results": z.array(FieldScoreResultSchema),
-  }).strict();
+  });
 
 export const SyncScoresRequestSchema = z
-  .object({
+  .strictObject({
     "records": z.array(FieldScoreRecordSchema).min(1),
-  }).strict();
+  });
 
 export const SyncScoresRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['INVALID_BATCH', 'INVALID_RECORD']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const Unauthenticated401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * Every operation on this service, with the schema for each documented status.

@@ -44,7 +44,7 @@
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //
-// `.strict()` on every closed object is intentional: an unexpected key means
+// `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
 // whole package exists to catch. It should fail loudly, in development, on the
 // first response that carries it.
@@ -58,10 +58,10 @@ export const AgencySchema = z.enum(['RDF', 'RNP', 'RCS']);
  * OWN agency, via a second application by the same person.
  */
 export const CrossAgencyLocked409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('CROSS_AGENCY_LOCKED'),
     "lockedByAgency": AgencySchema,
-  }).strict();
+  });
 
 /**
  * All 19 states. Per-agency legality is NOT expressible here — rnp_ops and
@@ -71,41 +71,41 @@ export const CrossAgencyLocked409Schema = z
 export const ApplicationStatusSchema = z.enum(['DRAFT', 'SUBMITTED', 'ACADEMIC_VETTING', 'CRIMINAL_CLEARANCE', 'DOCUMENT_REVIEW_GREEN', 'DOCUMENT_REVIEW_AMBER', 'SLOT_ASSIGNED', 'PHYSICAL_TEST_SCHEDULED', 'PHYSICAL_TEST_COMPLETE', 'MEDICAL_REVIEW', 'FINAL_SHORTLIST', 'ACCEPTED', 'ADJUDICATION_REVIEW', 'REJECTED', 'WITHDRAWN', 'WALK_IN_REGISTERED', 'WALK_IN_ON_SITE_VETTING', 'WALK_IN_PHYSICAL_TEST', 'WALK_IN_REJECTED']);
 
 export const NotApplicable409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NOT_APPLICABLE'),
     "currentStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 export const AcceptConflict409Schema = z.discriminatedUnion('status', [
   NotApplicable409Schema,
   CrossAgencyLocked409Schema,
 ]);
 
-export const UuidSchema = z.string().uuid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+export const UuidSchema = z.string().guid().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
 
 /**
  * applicationId ALONE. No decision, no notes.
  */
 export const AcceptRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
-  }).strict();
+  });
 
 export const AdjudicateRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "decision": z.enum(['CLEAR', 'REJECT']),
     "notes": z.string().max(1000).nullable().optional(),
-  }).strict();
+  });
 
 /**
  * THE ONLY RETRYABLE 409 IN THE PLATFORM. Retry in a moment.
  */
 export const AgePending409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('AGE_PENDING'),
     "currentStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 /**
  * One review-queue row: either an amber document hold (document fields
@@ -113,21 +113,21 @@ export const AgePending409Schema = z
  * arrive in the same array.
  */
 export const AmberQueueEntrySchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "status": ApplicationStatusSchema,
     "documentType": z.string().nullable(),
     "forensicsScore": z.number().nullable(),
-    "forensicsFlags": z.record(z.unknown()).nullable(),
+    "forensicsFlags": z.record(z.string(), z.unknown()).nullable(),
     "queuedAt": z.string().nullable(),
-  }).strict();
+  });
 
 export const AmberQueueOkSchema = z
-  .object({
+  .strictObject({
     "agency": AgencySchema,
     "queue": z.array(AmberQueueEntrySchema),
-  }).strict();
+  });
 
 /**
  * Validated against ALL_CATEGORIES, the union across all three agencies.
@@ -142,19 +142,19 @@ export const ApplicationCategorySchema = z.string().min(1);
  * A summary plus the owning agency, for the cross-agency citizen read.
  */
 export const ApplicantApplicationSummarySchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "category": ApplicationCategorySchema,
     "status": ApplicationStatusSchema,
     "submittedAt": z.string().nullable(),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const ApplicantNotFound404Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('APPLICANT_NOT_FOUND'),
-  }).strict();
+  });
 
 export const ApplicationChannelSchema = z.enum(['WEB', 'USSD', 'IREMBO_KIOSK', 'WALK_IN']);
 
@@ -177,7 +177,7 @@ export const ApplicationChannelSchema = z.enum(['WEB', 'USSD', 'IREMBO_KIOSK', '
  * diverge (rcs_ops adds FLAGGED_PROSECUTION to criminal_clearance_status).
  */
 export const ApplicationDetailSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "category": ApplicationCategorySchema,
@@ -188,15 +188,15 @@ export const ApplicationDetailSchema = z
     "hecVerifiedAt": z.string().nullable(),
     "declaredSpecialistField": z.string().nullable(),
     "academicStatus": z.string(),
-    "academicEligibilityDetail": z.record(z.unknown()).nullable(),
+    "academicEligibilityDetail": z.record(z.string(), z.unknown()).nullable(),
     "ageEligibilityStatus": z.string(),
     "ageVerifiedAt": z.string().nullable(),
-    "ageEligibilityDetail": z.record(z.unknown()).nullable(),
+    "ageEligibilityDetail": z.record(z.string(), z.unknown()).nullable(),
     "criminalClearanceStatus": z.string(),
     "criminalClearanceAt": z.string().nullable(),
     "documentLane": z.string().nullable(),
     "documentForensicsScore": z.number().nullable(),
-    "documentForensicsFlags": z.record(z.unknown()).nullable(),
+    "documentForensicsFlags": z.record(z.string(), z.unknown()).nullable(),
     "documentReviewedById": z.string().nullable(),
     "documentReviewedAt": z.string().nullable(),
     "documentReviewDecision": z.string().nullable(),
@@ -212,7 +212,7 @@ export const ApplicationDetailSchema = z
     "submittedAt": z.string().nullable(),
     "createdAt": z.string(),
     "updatedAt": z.string(),
-  }).strict();
+  });
 
 /**
  * Detail withheld. HttpError sets expose = status < 500, so every 5xx detail
@@ -220,38 +220,38 @@ export const ApplicationDetailSchema = z
  * not build UI that reads detail off a 5xx; there is never one there.
  */
 export const ApplicationError500Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['APPLICATION_READ_ERROR', 'APPLICATION_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
-  }).strict();
+  });
 
 export const ApplicationSubmitted201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('SUBMITTED'),
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 /**
  * A non-PII summary row. The anonymous processing code stands in for the
  * applicant — there is no name, no NID and no phone on any officer read.
  */
 export const ApplicationSummarySchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "category": ApplicationCategorySchema,
     "status": ApplicationStatusSchema,
     "submittedAt": z.string().nullable(),
-  }).strict();
+  });
 
 /**
  * NOTE: no `agency` on the envelope — the rows are cross-agency.
  */
 export const ByApplicantOkSchema = z
-  .object({
+  .strictObject({
     "applications": z.array(ApplicantApplicationSummarySchema),
-  }).strict();
+  });
 
 /**
  * HttpError body for a 4xx campaign command. The code set is OPEN: the
@@ -260,10 +260,10 @@ export const ByApplicantOkSchema = z
  * knows and show `detail` (always present below 500) for the rest.
  */
 export const CampaignCommandRejectionSchema = z
-  .object({
+  .strictObject({
     "error": z.string().regex(/^[A-Z][A-Z0-9_]+$/),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * Canonical upper-case public code as stored.
@@ -271,11 +271,11 @@ export const CampaignCommandRejectionSchema = z
 export const CampaignPublicCodeSchema = z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/);
 
 export const CampaignDraftCreated201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('DRAFT_CREATED'),
     "publicCode": CampaignPublicCodeSchema,
     "campaignStatus": z.literal('DRAFT'),
-  }).strict();
+  });
 
 /**
  * Trimmed and upper-cased by the backend before validation, so lower case is
@@ -290,11 +290,11 @@ export const CampaignPublicCodeInputSchema = z.string().regex(/^[A-Za-z0-9][A-Za
  * de-duplicated by rejection, not silently.
  */
 export const CampaignDraftRequestSchema = z
-  .object({
+  .strictObject({
     "publicCode": CampaignPublicCodeInputSchema,
     "campaignLabel": z.string().min(1).max(50),
-    "targetCategories": z.array(ApplicationCategorySchema).min(1),
-    "targetDistricts": z.array(z.string().min(1)).min(1),
+    "targetCategories": z.array(ApplicationCategorySchema).min(1).max(10),
+    "targetDistricts": z.array(z.string().min(1)).min(1).max(30),
     "registrationOpensAt": z.string(),
     "registrationClosesAt": z.string(),
     "examinationStartDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
@@ -302,27 +302,27 @@ export const CampaignDraftRequestSchema = z
     "examinationReportingHour": z.number(),
     "allowsWalkIn": z.boolean(),
     "targetIntakeCount": z.number().nullable().optional(),
-    "contactPhoneNumbers": z.array(z.string().min(1).max(40)).optional(),
+    "contactPhoneNumbers": z.array(z.string().min(1).max(40)).max(10).optional(),
     "contactWebsite": z.string().max(100).nullable().optional(),
-  }).strict();
+  });
 
 /**
  * Detail withheld above 499, as for ApplicationError500.
  */
 export const CampaignError500Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['CAMPAIGN_READ_ERROR', 'CAMPAIGN_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
-  }).strict();
+  });
 
 /**
  * status and campaignStatus always carry the same value.
  */
 export const CampaignLifecycle200Schema = z
-  .object({
+  .strictObject({
     "status": z.enum(['REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED']),
     "publicCode": CampaignPublicCodeSchema,
     "campaignStatus": z.enum(['REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED']),
-  }).strict();
+  });
 
 /**
  * normalizeCampaignPolicy. policyDocument is keyed by ApplicationCategory
@@ -334,79 +334,79 @@ export const CampaignLifecycle200Schema = z
  * every entry field by field.
  */
 export const CampaignPolicyRequestSchema = z
-  .object({
+  .strictObject({
     "publicCode": CampaignPublicCodeInputSchema,
-    "policyDocument": z.record(z.unknown()),
+    "policyDocument": z.record(z.string(), z.unknown()),
     "legalBasisCode": z.string().min(1).max(64),
     "legalBasisReference": z.string().min(1).max(256),
-  }).strict();
+  });
 
 export const Sha256HexSchema = z.string().regex(/^[0-9a-f]{64}$/);
 
 export const CampaignPolicyVersionCreated201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('POLICY_VERSION_CREATED'),
     "publicCode": CampaignPublicCodeSchema,
     "policyVersion": z.number(),
     "policyHash": Sha256HexSchema,
-  }).strict();
+  });
 
 /**
  * Exactly one key. Used by publish, close, complete and cancel.
  */
 export const CampaignPublicCodeCommandSchema = z
-  .object({
+  .strictObject({
     "publicCode": CampaignPublicCodeInputSchema,
-  }).strict();
+  });
 
 export const CampaignPublished200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('CAMPAIGN_PUBLISHED'),
     "publicCode": CampaignPublicCodeSchema,
     "campaignStatus": z.literal('REGISTRATION_OPEN'),
     "policyVersion": z.number(),
     "coverageVersion": z.number(),
     "coverageHash": Sha256HexSchema,
-  }).strict();
+  });
 
 export const DocumentChecklistItemSchema = z
-  .object({
+  .strictObject({
     "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
     "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
     "registry": z.string().nullable(),
-  }).strict();
+  });
 
 /**
  * ADVISORY (ADR-032): never a gate. Types, states and the verifying registry
  * only — no forensic score, flag, object key or officer id.
  */
 export const DocumentChecklist200Schema = z
-  .object({
+  .strictObject({
     "agency": AgencySchema,
     "source": z.enum(['POLICY_VERSION', 'GROUND_TRUTH_TABLE']),
     "complete": z.boolean(),
     "items": z.array(DocumentChecklistItemSchema),
-  }).strict();
+  });
 
 /**
  * ADR-034. Present only in state ADMITTED: where and when the single-use QR
  * was spent.
  */
 export const ExamInvitationAdmissionSchema = z
-  .object({
+  .strictObject({
     "venueName": z.string(),
     "admittedAt": z.string(),
-  }).strict();
+  });
 
 export const ExamInvitationPayloadSchema = z
-  .object({
+  .strictObject({
     "qrPayload": z.string().max(4096).regex(/^USRP-SLOT\.v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
     "ticketId": z.string(),
     "venueName": z.string(),
     "examDate": z.string(),
     "reportingTimeHour": z.number(),
     "validUntil": z.string(),
-  }).strict();
+  });
 
 /**
  * ADR-033. The invitation travels ONLY in the READY state. qrPayload is the
@@ -414,7 +414,7 @@ export const ExamInvitationPayloadSchema = z
  * (ADR-009), verified offline at the venue.
  */
 export const ExamInvitationViewSchema = z
-  .object({
+  .strictObject({
     "state": z.enum(['READY', 'ADMITTED', 'PENDING', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'EXPIRED', 'UNAVAILABLE', 'WALK_IN']),
     "agency": AgencySchema,
     "processingCode": z.string(),
@@ -422,20 +422,20 @@ export const ExamInvitationViewSchema = z
     "currentStatus": z.string(),
     "invitation": ExamInvitationPayloadSchema.optional(),
     "admission": ExamInvitationAdmissionSchema.optional(),
-  }).strict();
+  });
 
 export const FinalDecisionRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "decision": z.enum(['SHORTLIST', 'REJECT']),
     "notes": z.string().max(1000).nullable().optional(),
-  }).strict();
+  });
 
 export const FindApplicationOkSchema = z
-  .object({
+  .strictObject({
     "agency": AgencySchema,
     "application": ApplicationDetailSchema,
-  }).strict();
+  });
 
 /**
  * Authenticated, wrong principal kind. NOT a discriminated union with the
@@ -445,23 +445,23 @@ export const FindApplicationOkSchema = z
  * live platform inconsistency, recorded rather than smoothed over.
  */
 export const Forbidden403Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('FORBIDDEN'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * The candidate as the gate officer needs them: public identifiers only.
  */
 export const GateDecisionCandidateSchema = z
-  .object({
-    "applicationId": z.string().uuid(),
+  .strictObject({
+    "applicationId": z.string().guid(),
     "processingCode": z.string().min(1).max(32),
     "category": z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
-  }).strict();
+  });
 
 export const GateDecisionAdmitted200Schema = z
-  .object({
+  .strictObject({
     "outcome": z.literal('ADMITTED'),
     "candidate": GateDecisionCandidateSchema,
     "venueName": z.string().min(1).max(200),
@@ -469,51 +469,51 @@ export const GateDecisionAdmitted200Schema = z
     "reportingTimeHour": z.number(),
     "admittedAt": z.string(),
     "statusAdvanced": z.boolean(),
-  }).strict();
+  });
 
 /**
  * The QR was already spent. Checked before venue and day, so a copied
  * screenshot is a duplicate at any gate.
  */
 export const GateDecisionAlreadyAdmitted409Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('ALREADY_ADMITTED'),
     "candidate": GateDecisionCandidateSchema,
     "admittedAt": z.string(),
     "venueName": z.string(),
     "admittedBySelf": z.boolean(),
-  }).strict();
+  });
 
 /**
  * The national ID on the card is not this applicant's. Audited.
  */
 export const GateDecisionIdentityMismatch409Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('IDENTITY_MISMATCH'),
     "candidate": GateDecisionCandidateSchema,
-  }).strict();
+  });
 
 export const GateDecisionNotAdmissible409Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('NOT_ADMISSIBLE'),
     "candidate": GateDecisionCandidateSchema,
     "currentStatus": z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
-  }).strict();
+  });
 
 /**
  * TOO_EARLY or EXPIRED: today in Africa/Kigali is not the exam day.
  */
 export const GateDecisionWrongDay409Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['TOO_EARLY', 'EXPIRED']),
     "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
-  }).strict();
+  });
 
 export const GateDecisionWrongVenue409Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('WRONG_VENUE'),
     "ticketVenueName": z.string(),
-  }).strict();
+  });
 
 export const GateDecisionConflict409Schema = z.union([
   GateDecisionAlreadyAdmitted409Schema,
@@ -528,51 +528,51 @@ export const GateDecisionConflict409Schema = z.union([
  * unknown, or not the stored (signed) token.
  */
 export const GateDecisionInvalidTicket422Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_TICKET'),
     "reason": z.enum(['MALFORMED_TICKET', 'WRONG_AGENCY', 'UNKNOWN_TICKET', 'TICKET_NOT_ISSUED']),
-  }).strict();
+  });
 
 export const IdentityNotVerified409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('IDENTITY_NOT_VERIFIED'),
-  }).strict();
+  });
 
 export const InvalidAcademicInput422Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('INVALID_ACADEMIC_INPUT'),
     "reason": z.string(),
-  }).strict();
+  });
 
 export const InvalidApplicantId400Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_APPLICANT_ID'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InvalidApplicationId400Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_APPLICATION_ID'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const InvalidMedicalInput422Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('INVALID_MEDICAL_INPUT'),
     "reason": z.string(),
-  }).strict();
+  });
 
 export const InvalidRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('INVALID_REQUEST'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const ListApplicationsOkSchema = z
-  .object({
+  .strictObject({
     "agency": AgencySchema,
-    "applications": z.array(ApplicationSummarySchema),
-  }).strict();
+    "applications": z.array(ApplicationSummarySchema).max(100),
+  });
 
 /**
  * THE TWO MODES ARE MUTUALLY EXCLUSIVE IN PRACTICE but the wire accepts
@@ -581,30 +581,30 @@ export const ListApplicationsOkSchema = z
  * one for your agency is 422.
  */
 export const MedicalReviewRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "fitnessStatus": z.enum(['FIT', 'UNFIT']).optional(),
     "certVerdict": z.enum(['CERT_VERIFIED', 'CERT_REJECTED']).optional(),
     "physicianName": z.string().optional(),
-  }).strict();
+  });
 
 export const MedicalReviewRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_APPLICATION_ID', 'INVALID_APPLICATION_ID', 'INVALID_FITNESS_STATUS', 'INVALID_CERT_VERDICT', 'INVALID_PHYSICIAN_NAME', 'MISSING_MEDICAL_VERDICT']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const NoOpenCampaign409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NO_OPEN_CAMPAIGN'),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const NoWalkInCampaign409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NO_WALK_IN_CAMPAIGN'),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 /**
  * THE READ ROUTES' 404, KEYED ON `error` — not `status` like the write
@@ -612,15 +612,15 @@ export const NoWalkInCampaign409Schema = z
  * use one guard for both.
  */
 export const NotFound404Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('NOT_FOUND'),
-  }).strict();
+  });
 
 /**
  * The approved public projection. Nothing internal.
  */
 export const PublicCampaignSchema = z
-  .object({
+  .strictObject({
     "publicCode": z.string(),
     "campaignLabel": z.string(),
     "agency": AgencySchema,
@@ -629,22 +629,22 @@ export const PublicCampaignSchema = z
     "registrationClosesAt": z.string(),
     "examinationStartDate": z.string(),
     "examinationEndDate": z.string(),
-    "targetCategories": z.array(ApplicationCategorySchema),
-    "targetDistricts": z.array(z.string()),
+    "targetCategories": z.array(ApplicationCategorySchema).max(10),
+    "targetDistricts": z.array(z.string()).max(30),
     "allowsWalkIn": z.boolean(),
-    "contactPhoneNumbers": z.array(z.string()).nullable(),
+    "contactPhoneNumbers": z.array(z.string()).max(10).nullable(),
     "contactWebsite": z.string().nullable(),
-  }).strict();
+  });
 
 export const PublicCampaignDetail200Schema = z
-  .object({
+  .strictObject({
     "campaign": PublicCampaignSchema,
-  }).strict();
+  });
 
 export const PublicCampaignList200Schema = z
-  .object({
+  .strictObject({
     "campaigns": z.array(PublicCampaignSchema),
-  }).strict();
+  });
 
 /**
  * One entry of the immutable trail. This is the record a rejected applicant
@@ -654,7 +654,7 @@ export const PublicCampaignList200Schema = z
  * 'SYSTEM' in three components.
  */
 export const StatusHistoryEntrySchema = z
-  .object({
+  .strictObject({
     "entryId": UuidSchema,
     "fromStatus": z.union([
     ApplicationStatusSchema,
@@ -666,23 +666,23 @@ export const StatusHistoryEntrySchema = z
     "actorKind": z.enum(['SYSTEM', 'OFFICER']),
     "at": z.string(),
     "correlationId": z.string().nullable(),
-  }).strict();
+  });
 
 export const StatusHistoryOkSchema = z
-  .object({
+  .strictObject({
     "agency": AgencySchema,
     "applicationId": UuidSchema,
     "history": z.array(StatusHistoryEntrySchema),
-  }).strict();
+  });
 
 export const SubmitApplicationRequestSchema = z
-  .object({
+  .strictObject({
     "applicantId": UuidSchema,
     "category": ApplicationCategorySchema,
     "channel": ApplicationChannelSchema,
     "nesaIndexNumber": z.string().nullable().optional(),
     "hecRegistrationNumber": z.string().nullable().optional(),
-  }).strict();
+  });
 
 export const SubmitConflict409Schema = z.discriminatedUnion('status', [
   IdentityNotVerified409Schema,
@@ -690,10 +690,10 @@ export const SubmitConflict409Schema = z.discriminatedUnion('status', [
 ]);
 
 export const SubmitRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_APPLICANT_ID', 'INVALID_APPLICANT_ID', 'INVALID_CATEGORY', 'INVALID_CHANNEL', 'INVALID_FIELD']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * The shared APPLIED body for medical-review, final-decision, accept and
@@ -701,28 +701,28 @@ export const SubmitRequest400Schema = z
  * no way to write and read back in one call — refetch by-id afterwards.
  */
 export const TransitionAppliedSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('APPLIED'),
     "fromStatus": ApplicationStatusSchema,
     "toStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 /**
  * Idempotent success. The demanded end-state already held.
  */
 export const TransitionNoChangeSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('NO_CHANGE'),
     "currentStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 /**
  * Bare. Identical for another agency's real application.
  */
 export const TransitionNotFound404Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NOT_FOUND'),
-  }).strict();
+  });
 
 /**
  * Two bodies on one status code, discriminated on `status`.
@@ -733,10 +733,10 @@ export const TransitionOk200Schema = z.discriminatedUnion('status', [
 ]);
 
 export const TransitionRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_APPLICATION_ID', 'INVALID_APPLICATION_ID', 'INVALID_DECISION', 'INVALID_NOTES']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * The Ed25519 bearer kinds fail with this. identity-service's
@@ -744,32 +744,32 @@ export const TransitionRequest400Schema = z
  * different code, different service.
  */
 export const Unauthenticated401Schema = z
-  .object({
+  .strictObject({
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * RDF-only lane. An honest 501 rather than a raw DB enum error, because
  * rdf_ops is the only schema modelling WALK_IN_*.
  */
 export const UnsupportedAgency501Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('UNSUPPORTED_AGENCY'),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const VerifyAtVenue200Schema = z
-  .object({
+  .strictObject({
     "status": z.enum(['RECORDED', 'ALREADY_RECORDED']),
     "checklist": DocumentChecklist200Schema,
-  }).strict();
+  });
 
 export const VerifyAtVenueRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
     "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
-  }).strict();
+  });
 
 export const WalkInRegisterConflict409Schema = z.discriminatedUnion('status', [
   IdentityNotVerified409Schema,
@@ -782,12 +782,12 @@ export const WalkInRegisterConflict409Schema = z.discriminatedUnion('status', [
  * cross-service key.
  */
 export const WalkInRegisterRequestSchema = z
-  .object({
+  .strictObject({
     "applicantId": UuidSchema,
     "category": ApplicationCategorySchema,
     "nesaIndexNumber": z.string().nullable().optional(),
     "hecRegistrationNumber": z.string().nullable().optional(),
-  }).strict();
+  });
 
 /**
  * THE UN-UNDERSCORED SPELLINGS ARE NOT A TYPO IN THIS DOCUMENT. The
@@ -795,16 +795,16 @@ export const WalkInRegisterRequestSchema = z
  * applicantId becomes APPLICANTID. Recorded verbatim.
  */
 export const WalkInRegisterRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_APPLICANTID', 'INVALID_APPLICANTID', 'INVALID_CATEGORY', 'INVALID_NESAINDEXNUMBER', 'INVALID_HECREGISTRATIONNUMBER']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const WrongAgencyCategory422Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('WRONG_AGENCY_CATEGORY'),
     "categoryAgency": AgencySchema,
-  }).strict();
+  });
 
 export const WalkInRegisterUnprocessable422Schema = z.discriminatedUnion('status', [
   WrongAgencyCategory422Schema,
@@ -812,23 +812,23 @@ export const WalkInRegisterUnprocessable422Schema = z.discriminatedUnion('status
 ]);
 
 export const WalkInRegistered201Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('REGISTERED'),
     "applicationId": UuidSchema,
     "processingCode": z.string(),
     "qrInvitationCode": z.string(),
-  }).strict();
+  });
 
 /**
  * Carries an extra ageStatus the other three transitions do not.
  */
 export const WalkInVetAppliedSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('APPLIED'),
     "fromStatus": ApplicationStatusSchema,
     "toStatus": ApplicationStatusSchema,
     "ageStatus": z.string(),
-  }).strict();
+  });
 
 export const WalkInVetConflict409Schema = z.discriminatedUnion('status', [
   AgePending409Schema,
@@ -841,35 +841,35 @@ export const WalkInVetOk200Schema = z.discriminatedUnion('status', [
 ]);
 
 export const WalkInVetRequestSchema = z
-  .object({
+  .strictObject({
     "applicationId": UuidSchema,
-  }).strict();
+  });
 
 export const WalkInVetRequest400Schema = z
-  .object({
+  .strictObject({
     "error": z.enum(['MISSING_APPLICATIONID', 'INVALID_APPLICATIONID']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const WithdrawOwnNoChange200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NO_CHANGE'),
     "agency": AgencySchema,
-  }).strict();
+  });
 
 export const WithdrawOwnNotApplicable409Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('NOT_APPLICABLE'),
     "agency": AgencySchema,
     "currentStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 export const WithdrawnOwn200Schema = z
-  .object({
+  .strictObject({
     "status": z.literal('WITHDRAWN'),
     "agency": AgencySchema,
     "fromStatus": ApplicationStatusSchema,
-  }).strict();
+  });
 
 export const WithdrawOwnOk200Schema = z.discriminatedUnion('status', [
   WithdrawnOwn200Schema,
@@ -880,10 +880,10 @@ export const WithdrawOwnOk200Schema = z.discriminatedUnion('status', [
  * BOTH ids. Ownership is the row lookup; either mismatch is one 404.
  */
 export const WithdrawOwnRequestSchema = z
-  .object({
+  .strictObject({
     "applicantId": UuidSchema,
     "applicationId": UuidSchema,
-  }).strict();
+  });
 
 /**
  * Every operation on this service, with the schema for each documented status.

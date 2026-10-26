@@ -65,7 +65,8 @@
       "playwright": "1.62.1",
       "playwright-core": "1.62.1",
       "puppeteer>tar-fs": "^2.1.4",
-      "puppeteer>ws": "^8.21.0"
+      "puppeteer>ws": "^8.21.0",
+      "zod@3.23.8": "4.6.7"
     },
     "auditConfig": {
       "ignoreGhsas": [
