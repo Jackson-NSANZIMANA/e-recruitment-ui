@@ -9,7 +9,7 @@
     "verify": "node --experimental-strip-types src/cli.ts",
     "typecheck": "tsc --noEmit",
     "lint": "node --experimental-strip-types src/cli.ts",
-    "test": "node --experimental-strip-types src/cli.ts"
+    "test": "node scripts/test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

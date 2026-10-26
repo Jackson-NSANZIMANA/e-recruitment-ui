@@ -36,7 +36,7 @@ const HANDLE = process.env['USRP_LIVE_HANDLE'] ?? `reh.rdf.med.${Date.now().toSt
 const NEW_PW = 'Live-Journey-Pw#2026';
 
 test.describe.configure({ mode: 'serial' });
-test.skip(!LIVE, 'live journey: set USRP_LIVE=1 with the backend (four-eyes branch) running and `pnpm rehearse` staged');
+test.skip(!LIVE, 'live journey: set USRP_LIVE=1 with the backend running and `pnpm rehearse` staged');
 
 /** The edge hands out the CSRF echo on the first session read; a write sent before it lands is (correctly) refused. */
 async function csrfReady(page: Page): Promise<void> {
