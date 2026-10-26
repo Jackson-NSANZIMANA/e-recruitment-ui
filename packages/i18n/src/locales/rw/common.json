@@ -6,7 +6,10 @@
     "scheduling": "Gateganya",
     "settings": "Igenamiterere",
     "logout": "Sohoka",
-    "gate": "Irembo ry'ikizamini"
+    "gate": "Irembo ry'ikizamini",
+    "queues": "Imirongo y'akazi",
+    "erasure": "Ibyifuzo byo gusiba",
+    "staff": "Abakozi"
   },
   "auth": {
     "send_code": "Ohereza kode",
@@ -431,6 +434,10 @@
       },
       "INVALID_TICKET": {
         "title": "Kode QR itemewe — ntumwinjize"
+      },
+      "MANUAL_IDENTITY_REQUIRED": {
+        "title": "Umugenzuzi agomba kwemeza indangamuntu",
+        "body": "Ikarita irahura, ariko ibimenyetso bya {{code}} bisaba umugenzuzi wo ku kibuga. Ntumureke yinjire atarabyemeza."
       }
     },
     "invalid_reasons": {
@@ -452,7 +459,8 @@
       "IDENTITY_NOT_VERIFIED": "Igenzura ry'umwirondoro ntirirarangira kuri uyu mukandida. Ongera ukore igenzura ry'umwirondoro.",
       "APPLICANT_NOT_FOUND": "Umwirondoro ntiwabonetse. Ongera ukore igenzura ry'umwirondoro.",
       "UNSUPPORTED_AGENCY": "Kwandika abaje ku kibuga bikorwa gusa ku matangazo ya RDF.",
-      "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga."
+      "FORBIDDEN": "Inshingano zawe ntizikwemerera kwandika abaje ku kibuga.",
+      "VALIDATION_FAILED": "Amakuru y'iyandikisha ntiyemewe. Genzura buri gice ugerageze nanone."
     }
   },
   "rehearsal": {

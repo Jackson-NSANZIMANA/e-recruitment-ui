@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/document-forensics-service.yaml           ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║

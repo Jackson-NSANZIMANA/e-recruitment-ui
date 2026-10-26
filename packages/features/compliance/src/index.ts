@@ -4,4 +4,4 @@ export * from './api/transport.ts';
 export * from './api/compliance.ts';
 export { COMPLIANCE_NAMESPACE, registerComplianceLocales } from './locales.ts';
 export { DeclineGroundsDialog } from './ui/DeclineGroundsDialog.tsx';
-export { ComplianceOfficerRoutes, ComplianceCitizenRoutes } from './routes/index.tsx';
+export { createComplianceOfficerRoutes, ComplianceCitizenRoutes } from './routes/index.tsx';

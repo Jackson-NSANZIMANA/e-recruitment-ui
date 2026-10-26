@@ -2,7 +2,7 @@
 
 **Status:** Authoritative engineering baseline, 2026-10-04; refreshed 2026-10-16 (S00) against frontend `c5bda85`
 **Repository:** `Jackson-NSANZIMANA/e-recruitment-ui`
-**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `df80f6517247a00ffd99518fd31bd7c68dd70d65` (`BACKEND_SHA` in `ci.yml`, `EDGE_BACKEND_SHA` in `packages/api-client/src/paths.ts`)
+**Backend contract baseline:** `Jackson-NSANZIMANA/e-recruitment` at `cd4962842e26177f179eb3c0bd51c214dad3fd61` (`BACKEND_SHA` in `ci.yml`, `EDGE_BACKEND_SHA` in `packages/api-client/src/paths.ts`)
 **Counts and SHAs:** not restated by hand. Every CI run publishes an `evidence-<sha>` artefact (*Evidence bundle* job, `tooling/ci/evidence-bundle.mjs`) holding `evidence-<sha>.json`: the edge operation inventory with typed and untyped IDs, the pinned backend SHA (and whether `ci.yml`, `paths.ts` and the OpenAPI documents agree), proof assertion counts, unit and E2E counts with every skipped test named, and the lockfile hash.
 **Detailed reconciliation:** [`cross-repo-contract-reconciliation-2026-10-04.md`](./cross-repo-contract-reconciliation-2026-10-04.md)
 

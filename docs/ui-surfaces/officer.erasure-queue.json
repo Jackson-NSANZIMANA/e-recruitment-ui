@@ -5,8 +5,14 @@
   "title": "DPO erasure queue",
   "audience": "officer",
   "owner": "packages/features/compliance",
-  "purpose": "The data-protection officer's erasure queue and decline-with-grounds. Its operations are not browser-edge operations yet.",
+  "purpose": "The data-protection officer's queue of pending erasure requests: decline with mandatory written grounds, or erase with its consequences stated. The applicant is never identified.",
   "routes": [
+    {
+      "path": "/compliance",
+      "app": "officer-console",
+      "source": "packages/features/compliance/src/routes/index.tsx",
+      "role": "redirect"
+    },
     {
       "path": "/compliance/erasure-queue",
       "app": "officer-console",
@@ -14,12 +20,76 @@
       "role": "queue"
     }
   ],
-  "operations": [],
-  "ads": [],
-  "states": [],
-  "accessibility": [],
+  "operations": [
+    "listErasureRequests",
+    "decideErasureRequest"
+  ],
+  "ads": [
+    {
+      "name": "Heading",
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "import": "@atlaskit/heading"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "QueueTable",
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "import": "@usrp/ui"
+    },
+    {
+      "name": "ConfirmAction",
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "import": "@usrp/ui"
+    }
+  ],
+  "states": [
+    {
+      "surface": "queue",
+      "required": [
+        "loading",
+        "populated",
+        "empty",
+        "forbidden",
+        "error"
+      ],
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "evidence": [
+        "listState",
+        "StateBoundary",
+        "ERASURE_PERMISSIONS",
+        "compliance.queue.anonymous_by_design"
+      ]
+    },
+    {
+      "surface": "decision",
+      "required": [
+        "idle",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
+      "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
+      "evidence": [
+        "useDecideErasure",
+        "ConfirmAction",
+        "dpo-error",
+        "compliance.execute.irreversible"
+      ]
+    }
+  ],
+  "accessibility": [
+    "erasure consequences are stated in words before confirmation",
+    "decline cannot be submitted without grounds",
+    "all user-facing text is translated"
+  ],
   "tests": [
-    "apps/officer-console/e2e/production-readiness.spec.ts"
+    "apps/officer-console/e2e/dpo-erasure-queue.spec.ts",
+    "packages/features/compliance/src/model/erasure.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -29,11 +99,12 @@
     "positivePolarityOnly": true
   },
   "readiness": {
-    "rung": "DECLARED",
-    "blockedBy": [
-      "B-13",
-      "S04",
-      "S06"
-    ]
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/dpo-erasure-queue.spec.ts"
+      ],
+      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+    }
   }
 }

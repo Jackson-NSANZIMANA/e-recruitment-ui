@@ -25,7 +25,7 @@ info:
 
     On every route the officer's agency and subject id come from the verified
     token, never the body.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
   x-usrp-service-port-var: "PORT_FIELD_SYNC_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -272,6 +272,138 @@ paths:
         "503":
           description: "Database unreachable after 3 attempts."
 
+  /v1/field-sync/devices/fleet:
+    get:
+      operationId: "fleetList"
+      summary: "List the agency's enrolled devices (newest enrolment first)"
+      description: >-
+        Requires field.device.manage. Agency from the token only; a sibling agency's devices are filtered by the engine.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/manage-fleet.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "{ devices }"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetList200"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal or lacks field.device.manage."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+
+  /v1/field-sync/devices/assign:
+    post:
+      operationId: "fleetAssign"
+      summary: "Bind a device to a venue day"
+      description: >-
+        Requires field.device.manage. A revoked device is 409 DEVICE_REVOKED; an unknown device or venue is a bare 404.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/manage-fleet.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignDeviceRequest"
+      responses:
+        "200":
+          description: "{ status: ASSIGNED }"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceAssigned200"
+        "400":
+          description: "INVALID_FIELD."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidField400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal or lacks field.device.manage."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "Device or venue absent, or another agency (one answer)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetNotFound404"
+        "409":
+          description: "DEVICE_REVOKED."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceRevoked409"
+
+  /v1/field-sync/devices/revoke:
+    post:
+      operationId: "fleetRevoke"
+      summary: "Revoke a device (final; reason code required)"
+      description: >-
+        Requires field.device.manage. Revocation is final: enrol a NEW device id. Re-revoking answers ALREADY_REVOKED.
+      x-usrp-auth: ["officer"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/manage-fleet.controller.ts"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevokeDeviceRequest"
+      responses:
+        "200":
+          description: "{ status: REVOKED | ALREADY_REVOKED }"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceRevoked200"
+        "400":
+          description: "INVALID_FIELD."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidField400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not an officer principal or lacks field.device.manage."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "Device absent or another agency (one answer)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetNotFound404"
+
 components:
   schemas:
     Uuid:
@@ -469,6 +601,115 @@ components:
           $ref: "#/components/schemas/Uuid"
         scoreId:
           $ref: "#/components/schemas/Uuid"
+
+    FleetDevice:
+      type: "object"
+      additionalProperties: false
+      required: ["deviceId", "enrolledBy", "enrolledAt", "lastSeenAt", "lastSeenSource", "lastSyncAt", "revokedAt", "revokeReason", "assignment"]
+      properties:
+        deviceId:
+          type: "string"
+        enrolledBy:
+          type: "string"
+        enrolledAt:
+          type: "string"
+        lastSeenAt:
+          type: ["string", "null"]
+        lastSeenSource:
+          type: ["string", "null"]
+        lastSyncAt:
+          type: ["string", "null"]
+        revokedAt:
+          type: ["string", "null"]
+        revokeReason:
+          type: ["string", "null"]
+        assignment:
+          type: ["object", "null"]
+          additionalProperties: false
+          required: ["campaignPublicCode", "district", "examDate"]
+          properties:
+            campaignPublicCode:
+              type: "string"
+            district:
+              type: "string"
+            examDate:
+              type: "string"
+
+    FleetList200:
+      type: "object"
+      additionalProperties: false
+      required: ["devices"]
+      properties:
+        devices:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/FleetDevice"
+
+    AssignDeviceRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["deviceId", "campaign", "district", "examDate"]
+      properties:
+        deviceId:
+          type: "string"
+          maxLength: 64
+        campaign:
+          type: "string"
+          pattern: "^[A-Z0-9][A-Z0-9-]{2,63}$"
+        district:
+          type: "string"
+          pattern: "^[A-Z][A-Z_]{1,29}$"
+        examDate:
+          type: "string"
+          format: "date"
+
+    RevokeDeviceRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["deviceId", "reason"]
+      properties:
+        deviceId:
+          type: "string"
+          maxLength: 64
+        reason:
+          type: "string"
+          enum: ["LOST", "STOLEN", "COMPROMISED", "RETIRED", "OTHER"]
+
+    DeviceAssigned200:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "ASSIGNED"
+
+    DeviceRevoked200:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          enum: ["REVOKED", "ALREADY_REVOKED"]
+
+    DeviceRevoked409:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "DEVICE_REVOKED"
+
+    FleetNotFound404:
+      type: "object"
+      additionalProperties: false
+      required: ["error"]
+      properties:
+        error:
+          type: "string"
+          const: "NOT_FOUND"
 
     NotFound404:
       type: "object"

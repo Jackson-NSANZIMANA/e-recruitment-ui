@@ -2,27 +2,102 @@
   "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
   "schemaVersion": 2,
   "id": "officer.amber-queue",
-  "title": "Amber adjudication queue",
+  "title": "Officer queues (amber, holds, medical, final)",
   "audience": "officer",
   "owner": "packages/features/adjudication",
-  "purpose": "The amber queue and its officer transitions. Placeholder until S06 builds it.",
+  "purpose": "One workspace for the four officer queues: amber document holds, post-clearance holds, medical review and final decision/acceptance, each offering only the transitions the status and the officer's post allow.",
   "routes": [
+    {
+      "path": "/adjudication",
+      "app": "officer-console",
+      "source": "packages/features/adjudication/src/routes/queues.tsx",
+      "role": "queue"
+    },
     {
       "path": "/adjudication/amber-queue",
       "app": "officer-console",
-      "source": "packages/features/adjudication/src/routes/amber-queue.tsx",
+      "source": "packages/features/adjudication/src/routes/queues.tsx",
       "role": "queue"
     }
   ],
   "operations": [
     "listAmberQueue",
-    "adjudicateApplication"
+    "searchApplications",
+    "adjudicateApplication",
+    "recordFinalDecision",
+    "acceptApplication"
   ],
-  "ads": [],
-  "states": [],
-  "accessibility": [],
+  "ads": [
+    {
+      "name": "Tabs",
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "import": "@atlaskit/tabs"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "Heading",
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "import": "@atlaskit/heading"
+    },
+    {
+      "name": "QueueTable",
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "import": "@usrp/ui"
+    },
+    {
+      "name": "ConfirmAction",
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "import": "@usrp/ui"
+    }
+  ],
+  "states": [
+    {
+      "surface": "queue",
+      "required": [
+        "loading",
+        "populated",
+        "empty",
+        "forbidden",
+        "error"
+      ],
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "evidence": [
+        "listState",
+        "StateBoundary",
+        "visibleQueues",
+        "queue-truncated"
+      ]
+    },
+    {
+      "surface": "bulk",
+      "required": [
+        "idle",
+        "pending",
+        "success",
+        "failure"
+      ],
+      "source": "packages/features/adjudication/src/ui/QueuesPage.tsx",
+      "evidence": [
+        "runBulk",
+        "bulk-results",
+        "adjudication.bulk.refused"
+      ]
+    }
+  ],
+  "accessibility": [
+    "each row action names its record",
+    "forensic signal is words, never colour alone",
+    "a hold with no score reads 'not analysed'",
+    "bulk results are listed per record",
+    "all user-facing text is translated"
+  ],
   "tests": [
-    "apps/officer-console/e2e/production-readiness.spec.ts"
+    "apps/officer-console/e2e/officer-queues.spec.ts",
+    "packages/features/adjudication/src/model/queues.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -32,9 +107,12 @@
     "positivePolarityOnly": true
   },
   "readiness": {
-    "rung": "CLIENT-WIRED",
-    "blockedBy": [
-      "S06"
-    ]
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/officer-queues.spec.ts"
+      ],
+      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+    }
   }
 }

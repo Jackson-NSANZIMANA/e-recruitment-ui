@@ -15,64 +15,10 @@ info:
     Written to be handed to the backend team as-is. Each operation states WHAT
     BREAKS WITHOUT IT, because a proposal that only describes a shape invites a
     shape argument instead of a priority decision.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
   x-usrp-status: "PROPOSAL — not implemented, not routed, not generated"
 
 paths:
-  /v1/applications/search:
-    get:
-      operationId: "proposedSearchApplications"
-      summary: "Find an application by its processing code"
-      description: >-
-        WHAT BREAKS WITHOUT IT: GET /v1/applications takes no parameters and caps
-        at 100 rows. Past roughly a hundred applications an officer CANNOT LOCATE
-        A SPECIFIC ONE — and the processing code is the only handle the citizen
-        was ever given, so "quote your reference number" is advice the console
-        cannot act on. This is the highest-value officer gap.
-
-
-        DESIGN NOTES FOR THE IMPLEMENTER. Scope it to the caller's own agency
-        under the officer DB role, exactly like the list read, so RLS does the
-        isolation. Return the SAME ApplicationSummary shape as the list read
-        rather than a new one. An EXACT-match lookup on processing_code is
-        enough and is the safe choice: a prefix or fuzzy search over a
-        cross-agency-unique code is an enumeration primitive, and a 404 must be
-        as bare as by-id's for the same reason.
-      x-usrp-auth: ["officer"]
-      x-usrp-reach: "browser"
-      x-usrp-source: "PROPOSAL"
-      x-usrp-verified: "proposal"
-      parameters:
-        - name: "processingCode"
-          in: "query"
-          required: true
-          description: "Exact match. e.g. RDF-90823."
-          schema:
-            type: "string"
-            minLength: 3
-            maxLength: 32
-      responses:
-        "200":
-          description: "The matching application from the caller's own agency."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProposedSearchOk"
-        "400":
-          description: "processingCode absent or malformed."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProposedError"
-        "404":
-          description: >-
-            BARE, like by-id. A sibling agency's real code and a nonexistent one
-            must be byte-identical or this becomes a cross-agency oracle.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProposedError"
-
   /v1/applications/documents:
     get:
       operationId: "proposedListApplicationDocuments"
@@ -244,18 +190,6 @@ components:
       description: "Placeholder. Real proposals inherit the existing discriminated shapes."
       type: "object"
       additionalProperties: true
-
-    ProposedSearchOk:
-      description: "Reuses the LANDED ApplicationSummary shape rather than inventing one."
-      type: "object"
-      additionalProperties: false
-      required: ["agency", "application"]
-      properties:
-        agency:
-          $ref: "#/components/schemas/ProposedAgency"
-        application:
-          type: "object"
-          additionalProperties: true
 
     ProposedDocumentRecord:
       type: "object"

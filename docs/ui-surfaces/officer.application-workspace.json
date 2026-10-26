@@ -4,25 +4,29 @@
   "id": "officer.application-workspace",
   "title": "Officer application workspace",
   "audience": "officer",
-  "owner": "apps/officer-console",
-  "purpose": "Let an agency officer find, inspect, and take an authorized action on applications without losing status, history, or error context.",
+  "owner": "packages/features/applications",
+  "purpose": "Let an agency officer find, inspect (Applicant 360) and take an authorised action on applications without losing status, history, or error context.",
   "routes": [
     {
       "path": "/applications",
       "app": "officer-console",
-      "source": "apps/officer-console/src/routes/applications.tsx",
+      "source": "packages/features/applications/src/routes/list.tsx",
       "role": "list"
     },
     {
       "path": "/applications/:id",
       "app": "officer-console",
-      "source": "apps/officer-console/src/routes/application-detail.tsx",
+      "source": "packages/features/applications/src/routes/detail.tsx",
       "role": "detail"
     }
   ],
   "operations": [
-    "listApplications",
+    "searchApplications",
     "getApplicationDetail",
+    "getDocumentChecklist",
+    "getBiometricEvidence",
+    "recordMedicalReview",
+    "recordFinalDecision",
     "acceptApplication",
     "adjudicateApplication"
   ],
@@ -33,9 +37,9 @@
       "import": "@atlaskit/heading"
     },
     {
-      "name": "DynamicTable",
+      "name": "Select",
       "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
-      "import": "@atlaskit/dynamic-table"
+      "import": "@atlaskit/select"
     },
     {
       "name": "Textfield",
@@ -43,17 +47,22 @@
       "import": "@atlaskit/textfield"
     },
     {
+      "name": "Tabs",
+      "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
+      "import": "@atlaskit/tabs"
+    },
+    {
       "name": "SectionMessage",
       "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
       "import": "@atlaskit/section-message"
     },
     {
-      "name": "ApplicationActions",
-      "source": "apps/officer-console/src/components/ApplicationActions/index.tsx",
-      "import": "@atlaskit/modal-dialog"
+      "name": "ConfirmAction",
+      "source": "packages/features/applications/src/ui/ActionPanels.tsx",
+      "import": "@usrp/ui"
     },
     {
-      "name": "ApplicationStatusBadge",
+      "name": "StatusLozenge",
       "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
       "import": "./StatusLozenge.js"
     }
@@ -70,9 +79,10 @@
       ],
       "source": "packages/features/applications/src/ui/ApplicationsPage.tsx",
       "evidence": [
-        "isLoading",
-        "isError",
-        "applications.empty"
+        "listState",
+        "StateBoundary",
+        "onClearFilters",
+        "applications.list.total"
       ]
     },
     {
@@ -86,9 +96,10 @@
       ],
       "source": "packages/features/applications/src/ui/ApplicationDetailPage.tsx",
       "evidence": [
-        "isLoading",
-        "ApiError",
-        "isPending"
+        "StateBoundary",
+        "stateFromHttpStatus",
+        "blocked-by-post",
+        "useOfficerSession"
       ]
     },
     {
@@ -100,26 +111,25 @@
         "failure",
         "conflict"
       ],
-      "source": "apps/officer-console/src/components/ApplicationActions/index.tsx",
+      "source": "packages/features/applications/src/ui/ActionPanels.tsx",
       "evidence": [
         "isPending",
-        "aria-live",
-        "conflict",
-        "onActionComplete"
+        "ConfirmAction",
+        "CROSS_AGENCY_LOCKED",
+        "RefusalMessage"
       ]
     }
   ],
   "accessibility": [
-    "search has a programmatic label and description",
-    "status is not communicated by color alone",
-    "action feedback is announced without moving focus unexpectedly",
-    "modal destructive action has a clear accessible title",
+    "search filters have programmatic labels",
+    "status is not communicated by colour alone",
+    "every transition goes through a confirmation that states its consequence",
+    "biometric evidence is labelled advisory and never rendered as a verdict",
     "all user-facing text is translated"
   ],
   "tests": [
-    "apps/officer-console/e2e/application-flow.spec.ts",
-    "packages/features/applications/src/model/draft.test.ts",
-    "packages/testing/proofs/03-platform-invariants.mjs"
+    "apps/officer-console/e2e/application-workspace.spec.ts",
+    "packages/features/applications/src/model/workspace.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -132,9 +142,9 @@
     "rung": "E2E-PROVEN",
     "evidence": {
       "e2e": [
-        "apps/officer-console/e2e/application-flow.spec.ts"
+        "apps/officer-console/e2e/application-workspace.spec.ts"
       ],
-      "contract": "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
     }
   }
 }

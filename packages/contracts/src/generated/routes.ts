@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 56 business operations + 22 probes = 78 total.
+// 77 business operations + 22 probes = 99 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -186,6 +186,45 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "application-service",
+    "operationId": "getBiometricEvidence",
+    "method": "GET",
+    "path": "/v1/applications/biometric-evidence",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/biometric-evidence.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "confirmManualIdentity",
+    "method": "POST",
+    "path": "/v1/applications/biometric-evidence/manual-identity",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/biometric-evidence.controller.ts",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409"
+    ]
+  },
+  {
+    "service": "application-service",
     "operationId": "listApplicationsByApplicant",
     "method": "GET",
     "path": "/v1/applications/by-applicant",
@@ -344,6 +383,25 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "application-service",
+    "operationId": "searchApplications",
+    "method": "GET",
+    "path": "/v1/applications/search",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/operational-read.controller.ts (SEARCH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
     "operationId": "getApplicationStatusHistory",
     "method": "GET",
     "path": "/v1/applications/status-history",
@@ -463,6 +521,44 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "409",
       "422",
       "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "adminCampaignList",
+    "method": "GET",
+    "path": "/v1/campaigns/admin",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "proxy-derived",
+    "source": "src/adapters/http/operational-read.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "adminCampaignDetail",
+    "method": "GET",
+    "path": "/v1/campaigns/admin/detail",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "proxy-derived",
+    "source": "src/adapters/http/operational-read.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
     ]
   },
   {
@@ -591,6 +687,44 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     ]
   },
   {
+    "service": "application-service",
+    "operationId": "venueLiveCounts",
+    "method": "GET",
+    "path": "/v1/venue-live-counts",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/operational-read.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "venueRoster",
+    "method": "GET",
+    "path": "/v1/venue-roster",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "proxy-derived",
+    "source": "src/adapters/http/operational-read.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
     "service": "audit-service",
     "operationId": "auditHealth",
     "method": "GET",
@@ -680,6 +814,42 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     "source": "src/main.ts (NO readiness callback passed)",
     "statuses": [
       "200"
+    ]
+  },
+  {
+    "service": "biometric-service",
+    "operationId": "biometricEvidenceRecord",
+    "method": "POST",
+    "path": "/v1/biometric/evidence",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "proxy-derived",
+    "source": "src/adapters/http/biometric-evidence.controller.ts",
+    "statuses": [
+      "200",
+      "201",
+      "400",
+      "403",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "biometric-service",
+    "operationId": "biometricPolicy",
+    "method": "GET",
+    "path": "/v1/biometric/policy",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "proxy-derived",
+    "source": "src/adapters/http/biometric-evidence.controller.ts",
+    "statuses": [
+      "200",
+      "403"
     ]
   },
   {
@@ -953,6 +1123,62 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "field-sync-service",
+    "operationId": "fleetAssign",
+    "method": "POST",
+    "path": "/v1/field-sync/devices/assign",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409"
+    ]
+  },
+  {
+    "service": "field-sync-service",
+    "operationId": "fleetList",
+    "method": "GET",
+    "path": "/v1/field-sync/devices/fleet",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "401",
+      "403"
+    ]
+  },
+  {
+    "service": "field-sync-service",
+    "operationId": "fleetRevoke",
+    "method": "POST",
+    "path": "/v1/field-sync/devices/revoke",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/manage-fleet.controller.ts",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404"
+    ]
+  },
+  {
+    "service": "field-sync-service",
     "operationId": "syncFieldScores",
     "method": "POST",
     "path": "/v1/field-sync/scores",
@@ -1003,6 +1229,23 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
   },
   {
     "service": "iam-service",
+    "operationId": "officerActivate",
+    "method": "POST",
+    "path": "/v1/auth/officer/activate",
+    "auth": [
+      "none"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_ACTIVATE_PATH)",
+    "statuses": [
+      "204",
+      "400",
+      "401"
+    ]
+  },
+  {
+    "service": "iam-service",
     "operationId": "officerLogin",
     "method": "POST",
     "path": "/v1/auth/officer/login",
@@ -1033,6 +1276,175 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "200",
       "400",
       "401"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerList",
+    "method": "GET",
+    "path": "/v1/officers",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICERS_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerCreate",
+    "method": "POST",
+    "path": "/v1/officers",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICERS_PATH)",
+    "statuses": [
+      "200",
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerReissueActivation",
+    "method": "POST",
+    "path": "/v1/officers/activation/reissue",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_REISSUE_ACTIVATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerReleaseActivation",
+    "method": "POST",
+    "path": "/v1/officers/activation/release",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_RELEASE_ACTIVATION_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerDisable",
+    "method": "POST",
+    "path": "/v1/officers/disable",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_DISABLE_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerEnable",
+    "method": "POST",
+    "path": "/v1/officers/enable",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_ENABLE_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerAssignPosts",
+    "method": "POST",
+    "path": "/v1/officers/posts",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_POSTS_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
+    ]
+  },
+  {
+    "service": "iam-service",
+    "operationId": "officerRevokeSessions",
+    "method": "POST",
+    "path": "/v1/officers/sessions/revoke",
+    "auth": [
+      "officer"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/officer-admin.controller.ts (OFFICER_REVOKE_SESSIONS_PATH)",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422"
     ]
   },
   {

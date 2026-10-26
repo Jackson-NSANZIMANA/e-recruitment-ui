@@ -10,6 +10,7 @@ import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
 import { useAuth } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
+import { rememberOfficerHandle } from "../model/staff.ts";
 
 const containerStyles = cssMap({
   base: {
@@ -71,6 +72,7 @@ export default function OfficerLoginPage({ homePath, productName }: OfficerLogin
     setServerError(null);
     const message = await signInOfficer(values.loginHandle, values.password);
     if (message !== null) setServerError(message);
+    else rememberOfficerHandle(values.loginHandle);
   };
 
   if (state.status === "authenticated" && state.session.kind === "officer") {

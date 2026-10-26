@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  df80f6517247a00ffd99518fd31bd7c68dd70d65          ║
+// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -43,6 +43,13 @@
 //   POST /v1/applications/withdraw-own                  system             service-internal
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
+//   GET  /v1/applications/search                        officer            browser
+//   GET  /v1/applications/biometric-evidence            officer            browser
+//   POST /v1/applications/biometric-evidence/manual-identity officer            browser
+//   GET  /v1/campaigns/admin                            officer            browser
+//   GET  /v1/campaigns/admin/detail                     officer            browser
+//   GET  /v1/venue-roster                               officer            browser
+//   GET  /v1/venue-live-counts                          officer            browser
 //
 // `z.strictObject()` on every closed object is intentional: an unexpected key means
 // the wire grew a field this package has never read, and that is the drift this
@@ -224,6 +231,23 @@ export const ApplicationError500Schema = z
     "error": z.enum(['APPLICATION_READ_ERROR', 'APPLICATION_PERSISTENCE_ERROR', 'INTERNAL_ERROR']),
   });
 
+export const ApplicationSearchRowSchema = z
+  .strictObject({
+    "applicationId": z.string().guid(),
+    "processingCode": z.string(),
+    "category": z.string(),
+    "status": z.string(),
+    "submittedAt": z.string().nullable(),
+  });
+
+export const ApplicationSearchOkSchema = z
+  .strictObject({
+    "agency": z.string(),
+    "applications": z.array(ApplicationSearchRowSchema),
+    "total": z.number(),
+    "nextCursor": z.string().nullable(),
+  });
+
 export const ApplicationSubmitted201Schema = z
   .strictObject({
     "status": z.literal('SUBMITTED'),
@@ -243,6 +267,36 @@ export const ApplicationSummarySchema = z
     "category": ApplicationCategorySchema,
     "status": ApplicationStatusSchema,
     "submittedAt": z.string().nullable(),
+  });
+
+export const BiometricEvidenceRowSchema = z
+  .strictObject({
+    "recordId": z.string().guid(),
+    "ticketId": z.string(),
+    "referenceSource": z.string(),
+    "method": z.string(),
+    "consentState": z.string(),
+    "outcome": z.string(),
+    "notAttemptedReason": z.string().nullable(),
+    "livenessScoreBp": z.number().nullable(),
+    "matchScoreBp": z.number().nullable(),
+    "modelId": z.string().nullable(),
+    "modelVersion": z.string().nullable(),
+    "thresholdPolicyVersion": z.string(),
+    "mode": z.literal('ADVISORY'),
+    "capturedAt": z.string(),
+    "receivedAt": z.string(),
+    "manualIdentity": z
+    .strictObject({
+      "reasonCode": z.string(),
+      "confirmedAt": z.string(),
+    }).nullable(),
+  });
+
+export const BiometricEvidenceOkSchema = z
+  .strictObject({
+    "applicationId": z.string().guid(),
+    "evidence": z.array(BiometricEvidenceRowSchema),
   });
 
 /**
@@ -574,6 +628,20 @@ export const ListApplicationsOkSchema = z
     "applications": z.array(ApplicationSummarySchema).max(100),
   });
 
+export const ManualIdentityOkSchema = z
+  .strictObject({
+    "status": z.literal('CONFIRMED'),
+    "confirmationId": z.string(),
+    "recordId": z.string().guid(),
+    "confirmedAt": z.string(),
+  });
+
+export const ManualIdentityRequestSchema = z
+  .strictObject({
+    "recordId": z.string().guid(),
+    "reasonCode": z.string(),
+  });
+
 /**
  * THE TWO MODES ARE MUTUALLY EXCLUSIVE IN PRACTICE but the wire accepts
  * either, and OpenAPI cannot express "whichever your agency uses" because
@@ -614,6 +682,18 @@ export const NoWalkInCampaign409Schema = z
 export const NotFound404Schema = z
   .strictObject({
     "error": z.literal('NOT_FOUND'),
+  });
+
+/**
+ * Consumed by no S06 screen; shape asserted from edge-v1.yaml, not re-read
+ * from the controller.
+ */
+export const OpaqueAdminReadSchema = z.record(z.string(), z.unknown());
+
+export const OperationalReadErrorSchema = z
+  .strictObject({
+    "error": z.enum(['INVALID_REQUEST', 'INVALID_PUBLIC_CODE', 'NOT_FOUND', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_REQUIRED', 'ALREADY_CONFIRMED', 'SAME_OFFICER']),
+    "detail": z.string().optional(),
   });
 
 /**
@@ -757,6 +837,26 @@ export const UnsupportedAgency501Schema = z
   .strictObject({
     "status": z.literal('UNSUPPORTED_AGENCY'),
     "agency": AgencySchema,
+  });
+
+export const VenueLiveCountsSchema = z
+  .strictObject({
+    "agency": z.enum(['RDF', 'RNP', 'RCS']),
+    "venue": z
+    .strictObject({
+      "venueName": z.string(),
+      "district": z.string(),
+      "examDate": z.string(),
+    }),
+    "counts": z
+    .strictObject({
+      "expected": z.number(),
+      "admitted": z.number(),
+      "physicalCaptured": z.number(),
+      "medicalRecorded": z.number(),
+      "openConflicts": z.number(),
+    }),
+    "asOf": z.string(),
   });
 
 export const VerifyAtVenue200Schema = z
@@ -1364,6 +1464,119 @@ export const applicationServiceOperations = {
     responses: {
       "200": null,
       "503": null,
+    },
+  },
+  "searchApplications": {
+    method: "GET",
+    path: "/v1/applications/search",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["status","category","campaign","district","submittedFrom","submittedTo","limit","cursor"],
+    responses: {
+      "200": ApplicationSearchOkSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "getBiometricEvidence": {
+    method: "GET",
+    path: "/v1/applications/biometric-evidence",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["applicationId"],
+    responses: {
+      "200": BiometricEvidenceOkSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "confirmManualIdentity": {
+    method: "POST",
+    path: "/v1/applications/biometric-evidence/manual-identity",
+    auth: ["officer"],
+    reach: "browser",
+    request: ManualIdentityRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "201": ManualIdentityOkSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+      "409": OperationalReadErrorSchema,
+    },
+  },
+  "adminCampaignList": {
+    method: "GET",
+    path: "/v1/campaigns/admin",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["q","status","limit","cursor"],
+    responses: {
+      "200": OpaqueAdminReadSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "adminCampaignDetail": {
+    method: "GET",
+    path: "/v1/campaigns/admin/detail",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["publicCode"],
+    responses: {
+      "200": OpaqueAdminReadSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "venueRoster": {
+    method: "GET",
+    path: "/v1/venue-roster",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["campaign","district","examDate"],
+    responses: {
+      "200": OpaqueAdminReadSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
+    },
+  },
+  "venueLiveCounts": {
+    method: "GET",
+    path: "/v1/venue-live-counts",
+    auth: ["officer"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: ["campaign","district","examDate"],
+    responses: {
+      "200": VenueLiveCountsSchema,
+      "400": OperationalReadErrorSchema,
+      "401": OperationalReadErrorSchema,
+      "403": OperationalReadErrorSchema,
+      "404": OperationalReadErrorSchema,
     },
   },
 } as const;

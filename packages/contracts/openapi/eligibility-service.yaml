@@ -27,7 +27,7 @@ info:
     LIKEWISE the school, the raw NESA index and the G2G subject hash are
     request-only. Responses carry the verdict and the levels, never the source
     record.
-  x-usrp-backend-sha: "df80f6517247a00ffd99518fd31bd7c68dd70d65"
+  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
   x-usrp-service-port-var: "PORT_ELIGIBILITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405

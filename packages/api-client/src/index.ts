@@ -30,7 +30,7 @@ export { EDGE_OPERATIONS, EDGE_PATHS, EDGE_BACKEND_SHA, operation, isEdgeOperati
 export type { EdgeOperation, EdgeOperationId, AnonymousEdgeOperationId } from './paths.js';
 
 // ── Errors ──
-export { ApiError, normaliseErrorBody, describeError, G2G_UNAVAILABLE_CODES } from './errors.js';
+export { ApiError, normaliseErrorBody, describeError, httpStatusOf, G2G_UNAVAILABLE_CODES } from './errors.js';
 export type { NormalisedError } from './errors.js';
 
 // ── Retry ──
@@ -82,7 +82,7 @@ export type {
 } from './wire.js';
 
 // ── Query keys and the invalidation map ──
-export { applicationKeys, applicantKeys, campaignKeys, documentKeys, examInvitationKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
+export { staffKeys, searchKeys, evidenceKeys, erasureKeys, applicationKeys, applicantKeys, campaignKeys, documentKeys, examInvitationKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
 export type { InvalidationTarget } from './keys.js';
 
 // ── Operations (framework-free; usable outside React) ──
@@ -192,4 +192,26 @@ export type {
   CampaignLifecycleState,
   CampaignLifecycleChanged,
   CampaignCommandResult,
+} from './wire.js';
+
+// ── Staff administration (S01), operational reads (S04), biometric evidence (B1) ──
+export {
+  listOfficers, createOfficer, reissueOfficerActivation, releaseOfficerActivation,
+  assignOfficerPosts, disableOfficer, enableOfficer, revokeOfficerSessions, activateOfficer,
+} from './operations/staff.js';
+export { searchApplications, searchQuery, getBiometricEvidence, listErasureRequests, decideErasureRequest } from './operations/ops-reads.js';
+export {
+  useOfficers, useCreateOfficer, useReissueActivation, useReleaseActivation, useAssignPosts,
+  useDisableOfficer, useEnableOfficer, useRevokeSessions,
+} from './queries/staff.js';
+export { useSearchApplications, useBiometricEvidence, useErasureQueue, useDecideErasure } from './queries/ops.js';
+export {
+  ASSIGNABLE_POSTS, ASSIGN_POSTS_REASONS, DISABLE_REASONS, ENABLE_REASONS, REVOKE_SESSIONS_REASONS,
+} from './wire.js';
+export type {
+  OfficerRow, OfficerStatus, ActivationState, OfficerListResponse, CreateOfficerInput, OfficerOpenedResponse,
+  OfficerTargetInput, OfficerReleasedResponse, AssignablePost, AssignOfficerPostsInput, OfficerReasonInput,
+  OfficerChangeResponse, ActivateOfficerInput, ActivateOfficerResponse, ApplicationSearchRow, ApplicationSearchResponse,
+  ApplicationSearchQuery, BiometricEvidenceRow, BiometricEvidenceResponse, ErasureRequestRow,
+  ErasureQueueResponse, ErasureDecisionInput, ErasureDecisionResponse,
 } from './wire.js';

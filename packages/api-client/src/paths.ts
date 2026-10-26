@@ -17,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = 'df80f6517247a00ffd99518fd31bd7c68dd70d65' as const;
+export const EDGE_BACKEND_SHA = 'cd4962842e26177f179eb3c0bd51c214dad3fd61' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -61,6 +61,29 @@ export const EDGE_OPERATIONS = [
   { id: 'enrollFieldDevice', method: 'POST', edgePath: '/edge/v1/field-sync/devices', upstreamOperationId: 'enrollFieldDevice', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'syncFieldScores', method: 'POST', edgePath: '/edge/v1/field-sync/scores', upstreamOperationId: 'syncFieldScores', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'resolveFieldSyncConflict', method: 'POST', edgePath: '/edge/v1/field-sync/conflicts/resolve', upstreamOperationId: 'resolveFieldConflict', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'listOfficers', method: 'GET', edgePath: '/edge/v1/officers', upstreamOperationId: 'officerList', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'createOfficer', method: 'POST', edgePath: '/edge/v1/officers', upstreamOperationId: 'officerCreate', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'releaseOfficerActivation', method: 'POST', edgePath: '/edge/v1/officers/activation/release', upstreamOperationId: 'officerReleaseActivation', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'reissueOfficerActivation', method: 'POST', edgePath: '/edge/v1/officers/activation/reissue', upstreamOperationId: 'officerReissueActivation', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'assignOfficerPosts', method: 'POST', edgePath: '/edge/v1/officers/posts', upstreamOperationId: 'officerAssignPosts', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'disableOfficer', method: 'POST', edgePath: '/edge/v1/officers/disable', upstreamOperationId: 'officerDisable', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'enableOfficer', method: 'POST', edgePath: '/edge/v1/officers/enable', upstreamOperationId: 'officerEnable', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'revokeOfficerSessions', method: 'POST', edgePath: '/edge/v1/officers/sessions/revoke', upstreamOperationId: 'officerRevokeSessions', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'activateOfficer', method: 'POST', edgePath: '/edge/v1/auth/officer/activate', upstreamOperationId: 'officerActivate', session: 'anonymous', retryOnG2G: false, composition: 'single' },
+  { id: 'listAgencyCampaigns', method: 'GET', edgePath: '/edge/v1/campaigns/admin', upstreamOperationId: 'adminCampaignList', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'getCampaignAdminDetail', method: 'GET', edgePath: '/edge/v1/campaigns/admin/detail', upstreamOperationId: 'adminCampaignDetail', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'searchApplications', method: 'GET', edgePath: '/edge/v1/applications/search', upstreamOperationId: 'searchApplications', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'getVenueRoster', method: 'GET', edgePath: '/edge/v1/gate/roster', upstreamOperationId: 'venueRoster', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'getVenueLiveCounts', method: 'GET', edgePath: '/edge/v1/gate/live-counts', upstreamOperationId: 'venueLiveCounts', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'listFieldDevices', method: 'GET', edgePath: '/edge/v1/field-sync/devices', upstreamOperationId: 'fleetList', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'assignDeviceToVenueDay', method: 'POST', edgePath: '/edge/v1/field-sync/devices/assign', upstreamOperationId: 'fleetAssign', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'revokeFieldDevice', method: 'POST', edgePath: '/edge/v1/field-sync/devices/revoke', upstreamOperationId: 'fleetRevoke', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'listErasureRequests', method: 'GET', edgePath: '/edge/v1/erasure-requests', upstreamOperationId: 'listErasureRequests', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'getBiometricPolicy', method: 'GET', edgePath: '/edge/v1/gate/biometric-policy', upstreamOperationId: 'biometricPolicy', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'recordBiometricEvidence', method: 'POST', edgePath: '/edge/v1/gate/biometric-evidence', upstreamOperationId: 'biometricEvidenceRecord', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'getBiometricEvidence', method: 'GET', edgePath: '/edge/v1/applications/biometric-evidence', upstreamOperationId: 'getBiometricEvidence', session: 'officer', retryOnG2G: true, composition: 'single' },
+  { id: 'confirmManualIdentity', method: 'POST', edgePath: '/edge/v1/gate/manual-identity', upstreamOperationId: 'confirmManualIdentity', session: 'officer', retryOnG2G: false, composition: 'single' },
+  { id: 'decideErasureRequest', method: 'POST', edgePath: '/edge/v1/erasure-requests/decision', upstreamOperationId: 'declineErasureRequest', session: 'officer', retryOnG2G: false, composition: 'composed', composedOf: ['declineErasureRequest', 'listErasureRequests', 'eraseIdentity'], compositionReason: 'EXECUTE must name the applicant to the gated erasure road without ever showing the browser an applicant id.' },
   { id: 'readSession', method: 'GET', edgePath: '/edge/v1/session', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
   { id: 'refreshSession', method: 'POST', edgePath: '/edge/v1/session/refresh', upstreamOperationId: null, session: 'anonymous', retryOnG2G: false, composition: 'local' },
 ] as const satisfies readonly EdgeOperation[];
