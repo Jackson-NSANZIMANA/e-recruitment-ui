@@ -4,10 +4,18 @@
  */
 export { token } from "@atlaskit/tokens";
 
+/**
+ * Agency accents, for the rare place an agency needs a colour of its own (a
+ * badge where no emblem fits). Non-semantic ADS accent tokens only, picked
+ * from each agency's own emblem: RDF's green field, RNP's blue roundel, RCS's
+ * charcoal. They were previously brand/discovery/SUCCESS - which made every
+ * RCS badge read as "approved". Semantic tokens mean a status, never an
+ * institution (ADR-FE-020).
+ */
 export const agencyTokens = {
-  RDF: { background: "color.background.brand.bold", text: "color.text.inverse", borderColor: "color.border.brand" },
-  RNP: { background: "color.background.discovery.bold", text: "color.text.inverse", borderColor: "color.border.discovery" },
-  RCS: { background: "color.background.success.bold", text: "color.text.inverse", borderColor: "color.border.success" },
+  RDF: { background: "color.background.accent.green.bolder", text: "color.text.inverse", borderColor: "color.border.accent.green" },
+  RNP: { background: "color.background.accent.blue.bolder", text: "color.text.inverse", borderColor: "color.border.accent.blue" },
+  RCS: { background: "color.background.accent.gray.bolder", text: "color.text.inverse", borderColor: "color.border.accent.gray" },
 } as const;
 
 export type AgencyTokenSet = (typeof agencyTokens)[keyof typeof agencyTokens];

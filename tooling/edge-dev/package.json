@@ -12,7 +12,7 @@
     "selfcheck": "node --experimental-strip-types selfcheck/verify-edge.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src mocks selfcheck --ext .ts",
-    "test": "node --experimental-strip-types selfcheck/verify-edge.ts",
+    "test": "node scripts/test.mjs",
     "check:contracts": "tsx scripts/check-against-contracts.ts",
     "ports": "node --experimental-strip-types -e \"import('./src/ports.ts').then(m=>{m.assertNoPortCollisions();console.log(m.renderPortTable());})\"",
     "verify": "node --experimental-strip-types selfcheck/verify-edge.ts"

@@ -34,3 +34,21 @@ export { ADS_ENABLED_FEATURE_FLAGS, resolveAdsFeatureFlag } from './runtime/feat
 export { ErrorBoundary } from './components/ErrorBoundary/index.js';
 export { RouterLink } from './components/RouterLink/index.js';
 export { TouchTarget } from './components/TouchTarget/index.js';
+export { SecurityPattern } from './components/SecurityPattern/index.js';
+export type { SecurityPatternVariant, SecurityPatternTone } from './components/SecurityPattern/index.js';
+export { Microtext } from './components/Microtext/index.js';
+
+// --- Security print (ICAO 9303 check digits, seeded guilloche) --------------
+export {
+  seedFrom,
+  prng,
+  rosettePaths,
+  bandPaths,
+  mrzValue,
+  checkDigit,
+  toMrz,
+  withCheckDigit,
+  verifyCheckDigit,
+  composeMachineLine,
+} from './security-print/index.js';
+export type { RosetteOptions, BandOptions } from './security-print/index.js';

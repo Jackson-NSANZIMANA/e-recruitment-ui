@@ -1,5 +1,6 @@
 import React from "react";
 import { Root } from "@atlaskit/navigation-system/layout/root";
+import { Banner } from "@atlaskit/navigation-system/layout/banner";
 import {
   TopNav,
   TopNavStart,
@@ -12,10 +13,9 @@ import {
 } from "@atlaskit/navigation-system/layout/side-nav";
 import { Main } from "@atlaskit/navigation-system/layout/main";
 import {
-  AppLogo,
+  CustomLogo,
   Profile,
 } from "@atlaskit/navigation-system/top-nav-items";
-import { AdminIcon } from "@atlaskit/logo";
 import { LinkMenuItem } from "@atlaskit/side-nav-items/link-menu-item";
 import { MenuList } from "@atlaskit/side-nav-items/menu-list";
 import DashboardIcon from "@atlaskit/icon/core/dashboard";
@@ -26,7 +26,7 @@ import LockIcon from "@atlaskit/icon/core/lock-locked";
 import { useTranslation } from "@usrp/i18n";
 
 import { useOfficerSession } from "@usrp/auth";
-import { ConnectionStatus } from "@usrp/ui";
+import { CoatOfArms, ConnectionStatus, HandlingMarking, LanguageSwitcher, NationalLockup, SessionWatermark } from "@usrp/ui";
 import { navItemsFor, type NavItem } from "../../nav.js";
 
 const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
@@ -36,6 +36,17 @@ const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
   erasure: <DeleteIcon label="" color="currentColor" />,
   staff: <LockIcon label="" color="currentColor" />,
 };
+
+// The top bar's logo slot takes a logo and an icon component (ADS CustomLogo).
+// The lockup replaces the Atlassian product mark this console shipped with: a
+// Government of Rwanda tool identifies the Republic of Rwanda, not its UI kit.
+function ConsoleLogo(): React.ReactElement {
+  const session = useOfficerSession();
+  return <NationalLockup compact agency={session?.agency ?? null} />;
+}
+function ConsoleIcon(): React.ReactElement {
+  return <CoatOfArms height={28} alt="" />;
+}
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -60,7 +71,7 @@ export interface AppShellProps {
  * was a wiring gap, not a translation gap.
  */
 export function AppShell({ children }: AppShellProps): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const session = useOfficerSession();
   const items = navItemsFor(session?.permissions ?? []);
   // The venue gate and the walk-in desk left this menu in S02: they run on the
@@ -68,6 +79,10 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
 
   return (
     <Root>
+      {/* Handling marking: every staff screen states its restriction (ADR-FE-020). */}
+      <Banner height={32}>
+        <HandlingMarking />
+      </Banner>
       <TopNav>
         <TopNavStart
           sideNavToggleButton={
@@ -77,14 +92,15 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
             />
           }
         >
-          <AppLogo
+          <CustomLogo
             href="/dashboard"
-            name={t("dashboard.title")}
             label={t("nav.dashboard")}
-            icon={AdminIcon}
+            logo={ConsoleLogo}
+            icon={ConsoleIcon}
           />
         </TopNavStart>
         <TopNavEnd>
+          <LanguageSwitcher />
           <Profile label={t("nav.settings")} />
         </TopNavEnd>
       </TopNav>
@@ -104,6 +120,9 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
       <Main>
         <ConnectionStatus />
         {children}
+        {session !== null && (
+          <SessionWatermark marking={t("national.restricted").toLocaleUpperCase(i18n.language)} agency={session.agency} />
+        )}
       </Main>
     </Root>
   );

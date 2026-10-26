@@ -587,5 +587,33 @@
       "lastAction": "Dernière action",
       "actions": "Actions"
     }
+  },
+  "national": {
+    "official_site": "Site officiel du Gouvernement du Rwanda",
+    "how_you_know": "Comment le vérifier",
+    "domain_title": "Les sites officiels utilisent .gov.rw",
+    "domain_body": "Une adresse en .gov.rw appartient à une institution officielle du Gouvernement du Rwanda.",
+    "https_title": "Les sites sécurisés utilisent HTTPS",
+    "https_body": "Un cadenas ou https:// signifie que la connexion est sécurisée. Ne communiquez vos informations personnelles que sur des sites officiels et sécurisés.",
+    "free_title": "Le recrutement est gratuit",
+    "free_body": "Postuler aux RDF, à la RNP ou au RCS ne coûte rien. Personne ne peut vous vendre une place ni accélérer votre candidature. Signalez toute demande d'argent au RIB au {{hotline}}.",
+    "service_name": "Portail unifié de recrutement des services de sécurité",
+    "service_short": "Recrutement des services de sécurité",
+    "language": "Langue",
+    "skip_to_content": "Aller au contenu principal",
+    "law_data_protection": "la Loi N° 058/2021 du 13/10/2021",
+    "footer_about": "Le service officiel de recrutement des Forces rwandaises de défense, de la Police nationale du Rwanda et du Service correctionnel du Rwanda.",
+    "footer_data_title": "Vos données personnelles",
+    "footer_data_body": "Vos données personnelles sont traitées et protégées conformément à {{law}} relative à la protection des données à caractère personnel et de la vie privée.",
+    "footer_fraud_title": "Signaler une fraude",
+    "footer_fraud_body": "Si quelqu'un vous demande de l'argent pour postuler ou être sélectionné, appelez gratuitement le RIB au {{hotline}}.",
+    "footer_rights": "© {{year}} Gouvernement du Rwanda",
+    "coat_of_arms_alt": "Armoiries de la République du Rwanda",
+    "emblem_alt": "Emblème : {{agency}}",
+    "restricted": "Accès restreint",
+    "restricted_body": "Agents autorisés uniquement · Données personnelles protégées par {{law}} · Les actions sont auditées",
+    "document_serial": "Numéro de série",
+    "verification_line": "Ligne de vérification",
+    "verification_hint": "Le dernier chiffre de chaque groupe est un chiffre de contrôle qui détecte les erreurs de saisie."
   }
 }

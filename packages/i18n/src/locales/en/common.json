@@ -587,5 +587,33 @@
       "lastAction": "Last action",
       "actions": "Actions"
     }
+  },
+  "national": {
+    "official_site": "An official website of the Government of Rwanda",
+    "how_you_know": "Here's how you know",
+    "domain_title": "Official websites use .gov.rw",
+    "domain_body": "A .gov.rw address belongs to an official institution of the Government of Rwanda.",
+    "https_title": "Secure websites use HTTPS",
+    "https_body": "A padlock or https:// means you are connected securely. Share personal information only on official, secure websites.",
+    "free_title": "Recruitment is free of charge",
+    "free_body": "Applying to RDF, RNP or RCS costs nothing. No one can sell you a place or speed up your application. Report anyone who asks you for money to RIB on {{hotline}}.",
+    "service_name": "Unified Security Recruitment Portal",
+    "service_short": "Security Recruitment Portal",
+    "language": "Language",
+    "skip_to_content": "Skip to main content",
+    "law_data_protection": "Law N° 058/2021 of 13/10/2021",
+    "footer_about": "The official recruitment service of the Rwanda Defence Force, the Rwanda National Police and the Rwanda Correctional Service.",
+    "footer_data_title": "Your personal data",
+    "footer_data_body": "Your personal data is processed and protected under {{law}} relating to the protection of personal data and privacy.",
+    "footer_fraud_title": "Report fraud",
+    "footer_fraud_body": "If anyone asks you for money to apply or to be selected, call RIB free of charge on {{hotline}}.",
+    "footer_rights": "© {{year}} Government of Rwanda",
+    "coat_of_arms_alt": "Coat of arms of the Republic of Rwanda",
+    "emblem_alt": "Emblem of the {{agency}}",
+    "restricted": "Restricted",
+    "restricted_body": "Authorised officers only · Personal data protected under {{law}} · Actions are audited",
+    "document_serial": "Serial number",
+    "verification_line": "Verification line",
+    "verification_hint": "The last digit of each group is a check digit that catches typing errors."
   }
 }

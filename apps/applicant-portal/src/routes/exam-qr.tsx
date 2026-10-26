@@ -25,6 +25,7 @@ import { cssMap } from "@atlaskit/css";
 import { ApiError, createApiClient, useMyExamInvitation, type ExamInvitationView } from "@usrp/api-client";
 import { isRehearsalCampaign } from "@usrp/contracts";
 import { useTranslation } from "@usrp/i18n";
+import { OfficialDocument } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
 import { QR_DARK, QR_LIGHT, QUIET_ZONE, downloadBlob, qrMatrix, qrSvgPath, renderTicketPng, ticketFilename } from "../qr/exam-qr.js";
 
@@ -44,6 +45,11 @@ const styles = cssMap({
 
 function hour(h: number): string {
   return `${String(h).padStart(2, "0")}:00`;
+}
+
+/** "2026-11-14" -> "261114", the ICAO 9303 date form for the verification line. */
+function yymmdd(isoDate: string): string {
+  return isoDate.slice(2, 10).replace(/-/g, "");
 }
 
 function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.ReactElement {
@@ -93,26 +99,35 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
       <SectionMessage appearance="success" title={t("exam_qr.ready_title")} headingLevel="h2">
         <Text>{t("exam_qr.ready_body")}</Text>
       </SectionMessage>
-      <Box xcss={styles.qrFrame}>
-        {/* eslint-disable-next-line @atlaskit/design-system/no-html-image -- generated QR vector, not an image asset; must render pixel-exact */}
-        <svg
-          role="img"
-          aria-label={t("exam_qr.qr_alt", { code: view.processingCode })}
-          viewBox={`0 0 ${String(modules)} ${String(modules)}`}
-          width="100%"
-          shapeRendering="crispEdges"
-        >
-          <rect width={modules} height={modules} fill={QR_LIGHT} />
-          <path d={qrSvgPath(matrix)} fill={QR_DARK} />
-        </svg>
-      </Box>
-      <Stack space="space.100">
-        {view.campaignLabel !== null && <Text weight="bold">{view.campaignLabel}</Text>}
-        {details.map((line) => <Text key={line}>{line}</Text>)}
-        <Text size="small" color="color.text.subtle">
-          {t("exam_qr.valid_until")}: {new Date(invitation.validUntil).toLocaleString()}
-        </Text>
-      </Stack>
+      {/* The pass is an official document (ADR-FE-020): national header, seeded
+          guilloche, watermark, serial and a check-digit verification line.
+          The QR inside it is unchanged - still the signed payload, byte for byte. */}
+      <OfficialDocument
+        title={view.campaignLabel ?? t("exam_qr.title")}
+        agency={view.agency}
+        serial={view.processingCode}
+        verificationFields={[yymmdd(invitation.examDate)]}
+      >
+        <Box xcss={styles.qrFrame}>
+          {/* eslint-disable-next-line @atlaskit/design-system/no-html-image -- generated QR vector, not an image asset; must render pixel-exact */}
+          <svg
+            role="img"
+            aria-label={t("exam_qr.qr_alt", { code: view.processingCode })}
+            viewBox={`0 0 ${String(modules)} ${String(modules)}`}
+            width="100%"
+            shapeRendering="crispEdges"
+          >
+            <rect width={modules} height={modules} fill={QR_LIGHT} />
+            <path d={qrSvgPath(matrix)} fill={QR_DARK} />
+          </svg>
+        </Box>
+        <Stack space="space.100">
+          {details.map((line) => <Text key={line}>{line}</Text>)}
+          <Text size="small" color="color.text.subtle">
+            {t("exam_qr.valid_until")}: {new Date(invitation.validUntil).toLocaleString()}
+          </Text>
+        </Stack>
+      </OfficialDocument>
       {failed && <SectionMessage appearance="warning"><Text>{t("exam_qr.download_failed")}</Text></SectionMessage>}
       <Inline space="space.200">
         <Button appearance="primary" isDisabled={downloading} onClick={() => { void download(); }}>

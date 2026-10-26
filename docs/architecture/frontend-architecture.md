@@ -19,7 +19,7 @@ The authoritative layers are:
 - **Service schemas:** `packages/contracts/openapi`, regenerated into `packages/contracts/src/generated`.
 - **UI ownership:** `docs/ui-surfaces/*.json`, verified by `tooling/surface-contract`.
 
-Cross-repository drift is a failing condition. The frontend edge registry (43 operations at the pinned SHA) is compared with the backend registry on exact method/path plus session, composition, and retry policy. Registry membership is not the same as a typed client: the seven campaign control-plane operations and the three field-sync operations are registry IDs with no `operations/` function or `wire.ts` type yet. The evidence bundle lists them as `untypedIds`. The service manifest is compared with the OpenAPI route set and security metadata.
+Cross-repository drift is a failing condition. The frontend edge registry (every operation at the pinned SHA) is compared with the backend registry on exact method/path plus session, composition, and retry policy. Registry membership is not the same as a typed client: operations whose screens are not built yet (campaign control plane and admin reads for S05; fleet, venue and field-sync for S08; biometric evidence for B2) are registry IDs with no `operations/` function or `wire.ts` type. The evidence bundle lists them as `untypedIds` and is the only source for the count. The service manifest is compared with the OpenAPI route set and security metadata.
 
 ## 2. Credential, agency, and data boundary
 

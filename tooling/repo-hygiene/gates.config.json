@@ -60,11 +60,19 @@
       "browser-storage check carries, and for the same reason.",
       "",
       "pnpm-lock.yaml is not scanned: .json/.ts/.css/.svg only, and a lockfile is",
-      "generated output that must never be hand-edited anyway."
+      "generated output that must never be hand-edited anyway.",
+      "",
+      "allowPaths, 2026-10-26 (ADR-FE-020): the ONE file below is the official",
+      "coat of arms of the Republic of Rwanda as published on gov.rw. Its colours",
+      "are the drawing of a state emblem protected by Law 34/2008 as amended by",
+      "Law 42/2018; re-colouring it to tokens would be a counterfeit emblem, not",
+      "a fix. Listed by exact path, never by directory or glob, so a new SVG",
+      "dropped next to it is still scanned. Provenance and hash:",
+      "packages/ui/src/national/assets/PROVENANCE.md."
     ],
     "roots": ["apps", "packages", "tooling/repo-hygiene"],
     "extensions": [".ts", ".tsx", ".css", ".json", ".svg"],
-    "allowPaths": []
+    "allowPaths": ["packages/ui/src/national/assets/coat-of-arms.svg"]
   },
 
   "touchTargets": {
