@@ -2,8 +2,8 @@
 // zod bump that changes any of them fails here rather than at an edge response.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as application from '../src/generated/application-service.zod.ts';
-import * as iam from '../src/generated/iam-service.zod.ts';
+import * as application from '../src/generated/application-service.zod.js';
+import * as iam from '../src/generated/iam-service.zod.js';
 
 test('closed objects still refuse unknown keys', () => {
   assert.equal(iam.InvalidClient401Schema.safeParse({ error: 'INVALID_CLIENT' }).success, true);
