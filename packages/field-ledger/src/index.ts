@@ -13,3 +13,6 @@ export { RECORD_STATUSES, ackForResult, readSyncResponse, eventsForBatch, readRe
 export type { RecordStatus, RecordSyncResult, SentRecord, SyncResponseReading, ResolveReading } from './sync-mapping.ts';
 export { createLedger } from './ledger.ts';
 export type { Ledger, LedgerDeps, LedgerClock } from './ledger.ts';
+export { toBase64, sha256Hex } from './canonical.ts';
+export { createMemoryIdentityStore, createIndexedDbIdentityStore, publicKeySpkiPem, keyIdOf, newDeviceId, loadOrCreateIdentity, markEnrolled } from './device-identity.ts';
+export type { DeviceIdentity, IdentityStore } from './device-identity.ts';

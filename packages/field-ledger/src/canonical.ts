@@ -44,3 +44,16 @@ export async function digestOf(value: unknown, subtle: SubtleCrypto = crypto.sub
   const bytes = new TextEncoder().encode(canonicalJson(value));
   return toBase64Url(new Uint8Array(await subtle.digest('SHA-256', bytes)));
 }
+
+/** Standard base64 (with padding), as the backend's device-signature field expects. */
+export function toBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+/** Lower-case hex SHA-256 of a UTF-8 string. */
+export async function sha256Hex(text: string, subtle: SubtleCrypto = crypto.subtle): Promise<string> {
+  const digest = new Uint8Array(await subtle.digest('SHA-256', new TextEncoder().encode(text)));
+  return [...digest].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
