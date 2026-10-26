@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
-const result = spawnSync('pnpm', ['exec', 'tsx', 'selfcheck/verify-auth.ts'], { stdio: 'inherit' });
-process.exit(result.status ?? 1);
+import { runSelfchecks } from '../../../tooling/ci/selfcheck-junit.mjs';
+
+process.exit(runSelfchecks('@usrp/auth', [{ name: 'selfcheck/verify-auth.ts', command: 'pnpm', args: ['exec', 'tsx', 'selfcheck/verify-auth.ts'] }]));
