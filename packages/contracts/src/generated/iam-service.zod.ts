@@ -55,21 +55,21 @@ export const InvalidRequest400Schema = z
   });
 
 export const OfficerActivateRequestSchema = z
-  .object({
+  .strictObject({
     "loginHandle": z.string(),
     "activationCode": z.string(),
     "password": z.string(),
-  }).strict();
+  });
 
 export const OfficerAdminErrorSchema = z
-  .object({
+  .strictObject({
     "error": z.enum(['INVALID_REQUEST', 'INVALID_HANDLE', 'INVALID_POSTS', 'UNKNOWN_POST', 'INVALID_REASON', 'AGENCY_ADMIN_NOT_ASSIGNABLE', 'SELF_MODIFICATION', 'NOT_FOUND', 'HANDLE_TAKEN', 'LAST_ACTIVE_ADMIN', 'NOT_PENDING_ACTIVATION', 'SAME_ADMIN', 'ALREADY_RELEASED', 'ACTIVATION_EXPIRED', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'WEAK_PASSWORD', 'ACTIVATION_REJECTED']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 export const OfficerRowSchema = z
-  .object({
-    "officerId": z.string().uuid(),
+  .strictObject({
+    "officerId": z.string().guid(),
     "loginHandle": z.string(),
     "posts": z.array(z.string()),
     "status": z.enum(['active', 'disabled', 'pending']),
@@ -79,25 +79,25 @@ export const OfficerRowSchema = z
     "activationExpiresAt": z.string().nullable(),
     "activationState": z.string().nullable(),
     "releasableByYou": z.boolean(),
-  }).strict();
+  });
 
 export const OfficerChangeOkSchema = z
-  .object({
+  .strictObject({
     "outcome": z.enum(['ASSIGNED', 'DISABLED', 'ENABLED', 'REVOKED', 'UNCHANGED']),
     "officer": OfficerRowSchema,
     "sessionsRevoked": z.number(),
-  }).strict();
+  });
 
 export const OfficerCreateRequestSchema = z
-  .object({
+  .strictObject({
     "loginHandle": z.string(),
     "posts": z.array(z.string()),
-  }).strict();
+  });
 
 export const OfficerListOkSchema = z
-  .object({
+  .strictObject({
     "officers": z.array(OfficerRowSchema),
-  }).strict();
+  });
 
 export const OfficerLoginRequestSchema = z
   .strictObject({
@@ -106,39 +106,39 @@ export const OfficerLoginRequestSchema = z
   });
 
 export const OfficerOpenedSchema = z
-  .object({
+  .strictObject({
     "outcome": z.enum(['CREATED', 'REISSUED']),
     "officer": OfficerRowSchema,
-  }).strict();
+  });
 
 export const OfficerPostsRequestSchema = z
-  .object({
-    "targetOfficerId": z.string().uuid(),
+  .strictObject({
+    "targetOfficerId": z.string().guid(),
     "posts": z.array(z.string()),
     "reasonCode": z.string(),
-  }).strict();
+  });
 
 export const OfficerReasonRequestSchema = z
-  .object({
-    "targetOfficerId": z.string().uuid(),
+  .strictObject({
+    "targetOfficerId": z.string().guid(),
     "reasonCode": z.string(),
-  }).strict();
+  });
 
 export const OfficerReleasedSchema = z
-  .object({
+  .strictObject({
     "outcome": z.literal('RELEASED'),
     "officer": OfficerRowSchema,
     "activation": z
-    .object({
+    .strictObject({
       "code": z.string(),
       "expiresAt": z.string(),
-    }).strict(),
-  }).strict();
+    }),
+  });
 
 export const OfficerTargetRequestSchema = z
-  .object({
-    "targetOfficerId": z.string().uuid(),
-  }).strict();
+  .strictObject({
+    "targetOfficerId": z.string().guid(),
+  });
 
 export const ServiceTokenRequestSchema = z
   .strictObject({

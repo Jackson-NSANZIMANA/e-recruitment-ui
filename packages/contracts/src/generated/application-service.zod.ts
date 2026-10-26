@@ -232,21 +232,21 @@ export const ApplicationError500Schema = z
   });
 
 export const ApplicationSearchRowSchema = z
-  .object({
-    "applicationId": z.string().uuid(),
+  .strictObject({
+    "applicationId": z.string().guid(),
     "processingCode": z.string(),
     "category": z.string(),
     "status": z.string(),
     "submittedAt": z.string().nullable(),
-  }).strict();
+  });
 
 export const ApplicationSearchOkSchema = z
-  .object({
+  .strictObject({
     "agency": z.string(),
     "applications": z.array(ApplicationSearchRowSchema),
     "total": z.number(),
     "nextCursor": z.string().nullable(),
-  }).strict();
+  });
 
 export const ApplicationSubmitted201Schema = z
   .strictObject({
@@ -270,8 +270,8 @@ export const ApplicationSummarySchema = z
   });
 
 export const BiometricEvidenceRowSchema = z
-  .object({
-    "recordId": z.string().uuid(),
+  .strictObject({
+    "recordId": z.string().guid(),
     "ticketId": z.string(),
     "referenceSource": z.string(),
     "method": z.string(),
@@ -287,17 +287,17 @@ export const BiometricEvidenceRowSchema = z
     "capturedAt": z.string(),
     "receivedAt": z.string(),
     "manualIdentity": z
-    .object({
+    .strictObject({
       "reasonCode": z.string(),
       "confirmedAt": z.string(),
-    }).strict().nullable(),
-  }).strict();
+    }).nullable(),
+  });
 
 export const BiometricEvidenceOkSchema = z
-  .object({
-    "applicationId": z.string().uuid(),
+  .strictObject({
+    "applicationId": z.string().guid(),
     "evidence": z.array(BiometricEvidenceRowSchema),
-  }).strict();
+  });
 
 /**
  * NOTE: no `agency` on the envelope — the rows are cross-agency.
@@ -629,18 +629,18 @@ export const ListApplicationsOkSchema = z
   });
 
 export const ManualIdentityOkSchema = z
-  .object({
+  .strictObject({
     "status": z.literal('CONFIRMED'),
     "confirmationId": z.string(),
-    "recordId": z.string().uuid(),
+    "recordId": z.string().guid(),
     "confirmedAt": z.string(),
-  }).strict();
+  });
 
 export const ManualIdentityRequestSchema = z
-  .object({
-    "recordId": z.string().uuid(),
+  .strictObject({
+    "recordId": z.string().guid(),
     "reasonCode": z.string(),
-  }).strict();
+  });
 
 /**
  * THE TWO MODES ARE MUTUALLY EXCLUSIVE IN PRACTICE but the wire accepts
@@ -688,13 +688,13 @@ export const NotFound404Schema = z
  * Consumed by no S06 screen; shape asserted from edge-v1.yaml, not re-read
  * from the controller.
  */
-export const OpaqueAdminReadSchema = z.record(z.unknown());
+export const OpaqueAdminReadSchema = z.record(z.string(), z.unknown());
 
 export const OperationalReadErrorSchema = z
-  .object({
+  .strictObject({
     "error": z.enum(['INVALID_REQUEST', 'INVALID_PUBLIC_CODE', 'NOT_FOUND', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_REQUIRED', 'ALREADY_CONFIRMED', 'SAME_OFFICER']),
     "detail": z.string().optional(),
-  }).strict();
+  });
 
 /**
  * The approved public projection. Nothing internal.
@@ -840,24 +840,24 @@ export const UnsupportedAgency501Schema = z
   });
 
 export const VenueLiveCountsSchema = z
-  .object({
+  .strictObject({
     "agency": z.enum(['RDF', 'RNP', 'RCS']),
     "venue": z
-    .object({
+    .strictObject({
       "venueName": z.string(),
       "district": z.string(),
       "examDate": z.string(),
-    }).strict(),
+    }),
     "counts": z
-    .object({
+    .strictObject({
       "expected": z.number(),
       "admitted": z.number(),
       "physicalCaptured": z.number(),
       "medicalRecorded": z.number(),
       "openConflicts": z.number(),
-    }).strict(),
+    }),
     "asOf": z.string(),
-  }).strict();
+  });
 
 export const VerifyAtVenue200Schema = z
   .strictObject({
