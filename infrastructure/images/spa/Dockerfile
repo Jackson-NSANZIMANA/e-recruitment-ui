@@ -49,20 +49,22 @@ RUN USRP_APP="$APP" USRP_EDGE_URL="$VITE_EDGE_URL" USRP_BUILD_SHA="$USRP_BUILD_S
 # The official caddy:2.11.7 image is built with Go 1.26.8 and
 # golang.org/x/net 0.59.0, both with fixable HIGH CVEs. This stage builds the
 # same Caddy release the way xcaddy does (standard modules only), on a current
-# Go toolchain and with x/net raised. Module downloads are verified against
+# Go toolchain and with x/net and go-jose raised (go-jose v4.1.5:
+# CVE-2026-116587, HIGH, fixed in v4.1.6). Module downloads are verified against
 # sum.golang.org; versions are pinned here, the rest is resolved by Go's
 # minimal version selection, so the build is deterministic. The binary carries
 # no file capability (the stock one does, and fails under `cap_drop: [ALL]`).
 FROM golang:1.27-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS caddy
 ARG CADDY_VERSION=v2.11.7
 ARG XNET_VERSION=v0.60.0
+ARG GO_JOSE_VERSION=v4.1.6
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOFLAGS=-trimpath
 WORKDIR /src
 RUN printf '%s\n' 'package main' \
       'import (' '  caddycmd "github.com/caddyserver/caddy/v2/cmd"' '  _ "github.com/caddyserver/caddy/v2/modules/standard"' ')' \
       'func main() { caddycmd.Main() }' > main.go \
  && go mod init usrp/caddy \
- && go get "github.com/caddyserver/caddy/v2@${CADDY_VERSION}" "golang.org/x/net@${XNET_VERSION}" \
+ && go get "github.com/caddyserver/caddy/v2@${CADDY_VERSION}" "golang.org/x/net@${XNET_VERSION}" "github.com/go-jose/go-jose/v4@${GO_JOSE_VERSION}" \
  && go mod tidy \
  && go build -ldflags "-s -w" -o /caddy . \
  && /caddy version
