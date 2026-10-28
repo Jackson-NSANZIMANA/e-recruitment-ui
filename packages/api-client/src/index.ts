@@ -225,3 +225,12 @@ export type {
   EnrollFieldDeviceInput, EnrollFieldDeviceResponse, FieldScoreWireRecord, FieldSyncAnswer, ResolveFieldConflictInput,
   VenueQuery, VenueRosterCandidate, VenueRosterResponse, VenueLiveCountsResponse, BiometricMode, BiometricPolicyResponse,
 } from './wire.js';
+
+// ── Administration reads (admin dashboard) ──
+export { agencyCampaignQuery, listAgencyCampaigns, getCampaignAdminDetail, listFieldDevices } from './operations/admin-reads.js';
+export { useAgencyCampaigns, useCampaignAdminDetail, useFieldDevices } from './queries/admin.js';
+export { adminKeys } from './keys.js';
+export type {
+  CampaignStatus, CampaignOccupancy, CampaignAdminSummary, AgencyCampaignListResponse, AgencyCampaignQuery,
+  CampaignSessionOccupancy, CampaignAdminDetail, CampaignAdminDetailResponse, DeviceRevokeReason, FleetDevice, FieldDeviceListResponse,
+} from './wire.js';

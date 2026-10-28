@@ -648,3 +648,80 @@ export interface BiometricPolicyResponse {
   readonly thresholdPolicy: { readonly version: string; readonly livenessPassBp: number; readonly matchBp: number; readonly noMatchBelowBp: number };
   readonly referenceSources: readonly { readonly id: 'CARD_PORTRAIT' | 'NIDA_PORTRAIT' | 'NONE'; readonly status: string }[];
 }
+
+// ── Administration reads (S04 read models, ADR-039; S09 fleet): the admin dashboard ──
+export type CampaignStatus = 'DRAFT' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'EXAMINATION_ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export interface CampaignOccupancy {
+  readonly sessionCount: number;
+  /** Sum of bounded session capacities; null when no session is bounded. */
+  readonly capacityTotal: number | null;
+  readonly hasUnboundedSession: boolean;
+  readonly registeredTotal: number;
+}
+export interface CampaignAdminSummary {
+  readonly publicCode: string;
+  readonly campaignLabel: string;
+  readonly status: CampaignStatus;
+  readonly targetCategories: readonly string[];
+  readonly targetDistricts: readonly string[];
+  readonly registrationOpensAt: string;
+  readonly registrationClosesAt: string;
+  readonly examinationStartDate: string;
+  readonly examinationEndDate: string;
+  readonly allowsWalkIn: boolean;
+  readonly targetIntakeCount: number | null;
+  readonly publishedAt: string | null;
+  readonly createdAt: string;
+  readonly occupancy: CampaignOccupancy;
+}
+export interface AgencyCampaignListResponse {
+  readonly agency: string;
+  readonly campaigns: readonly CampaignAdminSummary[];
+  readonly total: number;
+  readonly nextCursor: string | null;
+}
+export interface AgencyCampaignQuery {
+  readonly q?: string;
+  readonly status?: readonly CampaignStatus[];
+  readonly limit?: number;
+  readonly cursor?: string;
+}
+export interface CampaignSessionOccupancy {
+  readonly district: string;
+  readonly province: string;
+  readonly venueName: string;
+  readonly examDate: string;
+  readonly reportingTimeHour: number;
+  readonly capacityLimit: number | null;
+  readonly capacityDecisionCode: string | null;
+  readonly registeredCount: number;
+  readonly remaining: number | null;
+  readonly isActive: boolean;
+}
+export interface CampaignAdminDetail {
+  readonly summary: CampaignAdminSummary;
+  readonly contactPhoneNumbers: readonly string[] | null;
+  readonly contactWebsite: string | null;
+  readonly announcementReference: string | null;
+  readonly registrationClosedAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly policy: { readonly versionNumber: number; readonly policyHash: string; readonly hashVersion: number; readonly legalBasisCode: string; readonly createdAt: string } | null;
+  readonly coverage: { readonly version: number; readonly hash: string } | null;
+  readonly sessions: readonly CampaignSessionOccupancy[];
+  readonly history: readonly { readonly fromStatus: CampaignStatus | null; readonly toStatus: CampaignStatus; readonly reasonCode: string | null; readonly occurredAt: string }[];
+}
+export interface CampaignAdminDetailResponse { readonly agency: string; readonly campaign: CampaignAdminDetail }
+export type DeviceRevokeReason = 'LOST' | 'STOLEN' | 'COMPROMISED' | 'RETIRED' | 'OTHER';
+/** One row of the agency's tablet fleet. Never carries the device key. */
+export interface FleetDevice {
+  readonly deviceId: string;
+  readonly enrolledBy: string;
+  readonly enrolledAt: string;
+  readonly lastSeenAt: string | null;
+  readonly lastSeenSource: 'FIELD_SYNC' | 'BIOMETRIC' | null;
+  readonly lastSyncAt: string | null;
+  readonly revokedAt: string | null;
+  readonly revokeReason: DeviceRevokeReason | null;
+  readonly assignment: { readonly campaignPublicCode: string; readonly district: string; readonly examDate: string } | null;
+}
+export interface FieldDeviceListResponse { readonly devices: readonly FleetDevice[] }

@@ -2,10 +2,10 @@
   "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
   "schemaVersion": 2,
   "id": "officer.dashboard",
-  "title": "Officer dashboard",
+  "title": "Officer dashboard and administration",
   "audience": "officer",
   "owner": "apps/officer-console",
-  "purpose": "Exception-first counts for the officer's agency: what requires action and what is pending review.",
+  "purpose": "Exception-first landing page. Case-working posts see the counts they act on; posts that run the agency (campaigns, staff, fleet) see what requires attention, then campaigns with occupancy, applications by stage, staff and field tablets.",
   "routes": [
     {
       "path": "/dashboard",
@@ -16,7 +16,11 @@
   ],
   "operations": [
     "listApplications",
-    "listAmberQueue"
+    "listAmberQueue",
+    "listAgencyCampaigns",
+    "searchApplications",
+    "listOfficers",
+    "listFieldDevices"
   ],
   "ads": [
     {
@@ -28,6 +32,16 @@
       "name": "SectionMessage",
       "source": "apps/officer-console/src/routes/dashboard.tsx",
       "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "DynamicTable",
+      "source": "apps/officer-console/src/dashboard/panels.tsx",
+      "import": "@atlaskit/dynamic-table"
+    },
+    {
+      "name": "Lozenge",
+      "source": "apps/officer-console/src/dashboard/panels.tsx",
+      "import": "@atlaskit/lozenge"
     }
   ],
   "states": [
@@ -45,14 +59,33 @@
         "isError",
         "requiresAction"
       ]
+    },
+    {
+      "surface": "administration",
+      "required": [
+        "loading",
+        "populated",
+        "no-exceptions",
+        "partial",
+        "error"
+      ],
+      "source": "apps/officer-console/src/routes/dashboard.tsx",
+      "evidence": [
+        "isLoading",
+        "isError",
+        "requiresAction",
+        "dashboard-partial"
+      ]
     }
   ],
   "accessibility": [
     "all user-facing text is translated",
-    "status is not communicated by color alone"
+    "status is not communicated by color alone",
+    "each panel is a labelled region; meters expose value, maximum and a spoken label"
   ],
   "tests": [
-    "apps/officer-console/e2e/application-flow.spec.ts"
+    "apps/officer-console/e2e/application-flow.spec.ts",
+    "apps/officer-console/e2e/admin-dashboard.spec.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -65,7 +98,8 @@
     "rung": "E2E-PROVEN",
     "evidence": {
       "e2e": [
-        "apps/officer-console/e2e/application-flow.spec.ts"
+        "apps/officer-console/e2e/application-flow.spec.ts",
+        "apps/officer-console/e2e/admin-dashboard.spec.ts"
       ]
     }
   }

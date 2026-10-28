@@ -62,7 +62,105 @@
     "requires_action": "Bisaba igikorwa",
     "scheduled_today": "Bigenewe uyu munsi",
     "accepted_this_week": "Byemejwe iki cyumweru",
-    "no_exceptions": "Nta bitagenda neza — byose ni byiza"
+    "no_exceptions": "Nta bitagenda neza — byose ni byiza",
+    "admin_title": "Ubuyobozi",
+    "admin_lead": "Incamake y'amatangazo yo kwinjiza abakozi, ubusabe, abakozi na tablet zo ku kibuga by'urwego rwawe.",
+    "attention": {
+      "title": "Bikeneye kwitabwaho",
+      "none": "Nta kintu gikeneye kwitabwaho.",
+      "amber": "Ubusabe butegereje gucibwaho iteka: {{count}}",
+      "closing": "Kwiyandikisha birangira mu minsi 3: {{campaign}}",
+      "near_capacity": "Ahakorerwa ibizamini hafi kuzura (90% cyangwa birenga): {{campaign}}",
+      "pending_release": "Kode zo gutangiza konti zitegereje ko uzitanga: {{count}}",
+      "stale_devices": "Tablet zahawe umurimo zitagaragaye mu masaha 24: {{count}}",
+      "open": "Fungura"
+    },
+    "metrics": {
+      "open_campaigns": "Amatangazo afunguye",
+      "applications_total": "Ubusabe",
+      "awaiting_adjudication": "Bitegereje gucibwaho iteka",
+      "active_officers": "Abakozi bakora",
+      "active_devices": "Tablet zikora"
+    },
+    "campaigns": {
+      "title": "Amatangazo yo kwinjiza abakozi",
+      "empty": "Nta tangazo rirashyirwaho. Amatangazo ashyirwaho muri Campaign Studio.",
+      "cols": {
+        "campaign": "Itangazo",
+        "status": "Uko rihagaze",
+        "registration": "Kwiyandikisha",
+        "examination": "Ibizamini",
+        "occupancy": "Abiyandikishije",
+        "sessions": "Ahakorerwa"
+      },
+      "occupancy_value": "{{registered}} kuri {{capacity}}",
+      "occupancy_unbounded": "{{registered}} biyandikishije (nta mupaka w'umubare)",
+      "range": "{{from}} – {{to}}",
+      "status": {
+        "DRAFT": "Umushinga",
+        "REGISTRATION_OPEN": "Kwiyandikisha birafunguye",
+        "REGISTRATION_CLOSED": "Kwiyandikisha byafunzwe",
+        "EXAMINATION_ACTIVE": "Ibizamini birakomeje",
+        "COMPLETED": "Byarangiye",
+        "CANCELLED": "Byahagaritswe"
+      }
+    },
+    "pipeline": {
+      "title": "Ubusabe hakurikijwe icyiciro",
+      "lead": "Imibare igezweho yo mu gitabo cy'ubusabe.",
+      "stages": {
+        "vetting": "Bwatanzwe kandi buri gusuzumwa",
+        "documents": "Isuzuma ry'inyandiko no guca iteka",
+        "exam": "Icyiciro cy'ibizamini",
+        "medical": "Isuzuma ry'ubuzima n'icyemezo cya nyuma",
+        "accepted": "Bwemewe",
+        "closed": "Bwanzwe cyangwa bwakuweho"
+      }
+    },
+    "staff": {
+      "title": "Abakozi",
+      "active": "Barakora",
+      "pending": "Ntibaratangiza konti",
+      "disabled": "Bahagaritswe",
+      "manage": "Gucunga abakozi",
+      "by_post": "Abakozi hakurikijwe imyanya",
+      "posts": {
+        "reviewer": "Usuzuma",
+        "screening_officer": "Umukozi w'irembo",
+        "field_supervisor": "Umugenzuzi wo ku kibuga",
+        "medical_officer": "Muganga",
+        "adjudicator": "Uciraho iteka",
+        "decision_authority": "Ufite ububasha bwo gufata icyemezo",
+        "dpo": "Ushinzwe kurinda amakuru",
+        "agency_admin": "Umuyobozi"
+      }
+    },
+    "fleet": {
+      "title": "Tablet zo ku kibuga",
+      "enrolled": "Zanditswe",
+      "active": "Zikora",
+      "revoked": "Zakuweho",
+      "seen_today": "Zagaragaye mu masaha 24 ashize",
+      "assigned": "Zahawe umunsi w'ahakorerwa ibizamini",
+      "empty": "Nta tablet irandikwa."
+    },
+    "panel_error": "Iki gice nticyabashije gufunguka. Ibindi bice ntibyagizweho ingaruka.",
+    "retry": "Ongera ugerageze",
+    "months": {
+      "1": "Mutarama",
+      "2": "Gashyantare",
+      "3": "Werurwe",
+      "4": "Mata",
+      "5": "Gicurasi",
+      "6": "Kamena",
+      "7": "Nyakanga",
+      "8": "Kanama",
+      "9": "Nzeri",
+      "10": "Ukwakira",
+      "11": "Ugushyingo",
+      "12": "Ukuboza"
+    },
+    "day": "{{day}} {{month}} {{year}}"
   },
   "application": {
     "id": "Nimero y'ubusabe",
