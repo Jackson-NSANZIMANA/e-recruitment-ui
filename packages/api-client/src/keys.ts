@@ -192,3 +192,10 @@ export function resolveInvalidation(
 function assertNever(value: never): never {
   throw new Error(`Unhandled invalidation target: ${JSON.stringify(value)}`);
 }
+
+export const adminKeys = {
+  all: ['admin'] as const,
+  campaigns: (q: unknown) => ['admin', 'campaigns', q] as const,
+  campaign: (publicCode: string) => ['admin', 'campaign', publicCode] as const,
+  fleet: () => ['admin', 'fleet'] as const,
+};

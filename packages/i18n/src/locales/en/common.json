@@ -62,7 +62,105 @@
     "requires_action": "Requires action",
     "scheduled_today": "Scheduled today",
     "accepted_this_week": "Accepted this week",
-    "no_exceptions": "No exceptions — all clear"
+    "no_exceptions": "No exceptions — all clear",
+    "admin_title": "Administration",
+    "admin_lead": "Your agency's campaigns, applications, staff and field tablets at a glance.",
+    "attention": {
+      "title": "Requires attention",
+      "none": "Nothing requires attention.",
+      "amber": "Applications awaiting adjudication: {{count}}",
+      "closing": "Registration closes within 3 days: {{campaign}}",
+      "near_capacity": "Sessions almost full (90% or more): {{campaign}}",
+      "pending_release": "Activation codes waiting for your release: {{count}}",
+      "stale_devices": "Assigned tablets not seen in 24 hours: {{count}}",
+      "open": "Open"
+    },
+    "metrics": {
+      "open_campaigns": "Open campaigns",
+      "applications_total": "Applications",
+      "awaiting_adjudication": "Awaiting adjudication",
+      "active_officers": "Active officers",
+      "active_devices": "Active tablets"
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "empty": "No campaigns yet. Campaigns are created in Campaign Studio.",
+      "cols": {
+        "campaign": "Campaign",
+        "status": "Status",
+        "registration": "Registration",
+        "examination": "Examination",
+        "occupancy": "Registered",
+        "sessions": "Sessions"
+      },
+      "occupancy_value": "{{registered}} of {{capacity}}",
+      "occupancy_unbounded": "{{registered}} registered (no capacity limit)",
+      "range": "{{from}} – {{to}}",
+      "status": {
+        "DRAFT": "Draft",
+        "REGISTRATION_OPEN": "Registration open",
+        "REGISTRATION_CLOSED": "Registration closed",
+        "EXAMINATION_ACTIVE": "Examinations in progress",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "pipeline": {
+      "title": "Applications by stage",
+      "lead": "Live totals from the application register.",
+      "stages": {
+        "vetting": "Submitted and in vetting",
+        "documents": "Document review and adjudication",
+        "exam": "Exam stage",
+        "medical": "Medical review and final decision",
+        "accepted": "Accepted",
+        "closed": "Rejected or withdrawn"
+      }
+    },
+    "staff": {
+      "title": "Staff",
+      "active": "Active",
+      "pending": "Awaiting activation",
+      "disabled": "Disabled",
+      "manage": "Manage staff",
+      "by_post": "Officers by post",
+      "posts": {
+        "reviewer": "Reviewer",
+        "screening_officer": "Screening officer",
+        "field_supervisor": "Field supervisor",
+        "medical_officer": "Medical officer",
+        "adjudicator": "Adjudicator",
+        "decision_authority": "Decision authority",
+        "dpo": "Data protection officer",
+        "agency_admin": "Administrator"
+      }
+    },
+    "fleet": {
+      "title": "Field tablets",
+      "enrolled": "Enrolled",
+      "active": "Active",
+      "revoked": "Revoked",
+      "seen_today": "Seen in the last 24 hours",
+      "assigned": "Assigned to a venue day",
+      "empty": "No tablets enrolled yet."
+    },
+    "panel_error": "This panel could not load. The rest of the dashboard is unaffected.",
+    "retry": "Try again",
+    "months": {
+      "1": "Jan",
+      "2": "Feb",
+      "3": "Mar",
+      "4": "Apr",
+      "5": "May",
+      "6": "Jun",
+      "7": "Jul",
+      "8": "Aug",
+      "9": "Sep",
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dec"
+    },
+    "day": "{{day}} {{month}} {{year}}"
   },
   "application": {
     "id": "Application ID",

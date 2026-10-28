@@ -62,7 +62,105 @@
     "requires_action": "Action requise",
     "scheduled_today": "Planifié aujourd'hui",
     "accepted_this_week": "Acceptés cette semaine",
-    "no_exceptions": "Aucune exception — tout est en ordre"
+    "no_exceptions": "Aucune exception — tout est en ordre",
+    "admin_title": "Administration",
+    "admin_lead": "Les campagnes, candidatures, agents et tablettes de terrain de votre organe, en un coup d'œil.",
+    "attention": {
+      "title": "À traiter",
+      "none": "Rien à traiter.",
+      "amber": "Candidatures en attente d'arbitrage : {{count}}",
+      "closing": "Inscriptions closes dans 3 jours : {{campaign}}",
+      "near_capacity": "Sessions presque complètes (90 % ou plus) : {{campaign}}",
+      "pending_release": "Codes d'activation en attente de votre remise : {{count}}",
+      "stale_devices": "Tablettes affectées non vues depuis 24 heures : {{count}}",
+      "open": "Ouvrir"
+    },
+    "metrics": {
+      "open_campaigns": "Campagnes ouvertes",
+      "applications_total": "Candidatures",
+      "awaiting_adjudication": "En attente d'arbitrage",
+      "active_officers": "Agents actifs",
+      "active_devices": "Tablettes actives"
+    },
+    "campaigns": {
+      "title": "Campagnes",
+      "empty": "Aucune campagne pour le moment. Les campagnes se créent dans Campaign Studio.",
+      "cols": {
+        "campaign": "Campagne",
+        "status": "Statut",
+        "registration": "Inscriptions",
+        "examination": "Examens",
+        "occupancy": "Inscrits",
+        "sessions": "Sessions"
+      },
+      "occupancy_value": "{{registered}} sur {{capacity}}",
+      "occupancy_unbounded": "{{registered}} inscrits (sans limite de capacité)",
+      "range": "{{from}} – {{to}}",
+      "status": {
+        "DRAFT": "Brouillon",
+        "REGISTRATION_OPEN": "Inscriptions ouvertes",
+        "REGISTRATION_CLOSED": "Inscriptions closes",
+        "EXAMINATION_ACTIVE": "Examens en cours",
+        "COMPLETED": "Terminée",
+        "CANCELLED": "Annulée"
+      }
+    },
+    "pipeline": {
+      "title": "Candidatures par étape",
+      "lead": "Totaux en direct du registre des candidatures.",
+      "stages": {
+        "vetting": "Soumises et en vérification",
+        "documents": "Examen des documents et arbitrage",
+        "exam": "Étape des examens",
+        "medical": "Examen médical et décision finale",
+        "accepted": "Acceptées",
+        "closed": "Rejetées ou retirées"
+      }
+    },
+    "staff": {
+      "title": "Agents",
+      "active": "Actifs",
+      "pending": "En attente d'activation",
+      "disabled": "Désactivés",
+      "manage": "Gérer les agents",
+      "by_post": "Agents par poste",
+      "posts": {
+        "reviewer": "Réviseur",
+        "screening_officer": "Agent d'accueil",
+        "field_supervisor": "Superviseur de terrain",
+        "medical_officer": "Médecin",
+        "adjudicator": "Arbitre",
+        "decision_authority": "Autorité de décision",
+        "dpo": "Délégué à la protection des données",
+        "agency_admin": "Administrateur"
+      }
+    },
+    "fleet": {
+      "title": "Tablettes de terrain",
+      "enrolled": "Enrôlées",
+      "active": "Actives",
+      "revoked": "Révoquées",
+      "seen_today": "Vues au cours des dernières 24 heures",
+      "assigned": "Affectées à une journée de site",
+      "empty": "Aucune tablette enrôlée pour le moment."
+    },
+    "panel_error": "Ce panneau n'a pas pu se charger. Le reste du tableau de bord n'est pas affecté.",
+    "retry": "Réessayer",
+    "months": {
+      "1": "janv.",
+      "2": "févr.",
+      "3": "mars",
+      "4": "avr.",
+      "5": "mai",
+      "6": "juin",
+      "7": "juil.",
+      "8": "août",
+      "9": "sept.",
+      "10": "oct.",
+      "11": "nov.",
+      "12": "déc."
+    },
+    "day": "{{day}} {{month}} {{year}}"
   },
   "application": {
     "id": "Numéro de candidature",

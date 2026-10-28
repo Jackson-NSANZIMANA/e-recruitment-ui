@@ -348,6 +348,9 @@ importers:
       '@atlaskit/logo':
         specifier: ^21.4.3
         version: 21.6.1(react@18.3.1)
+      '@atlaskit/lozenge':
+        specifier: ^15.0.1
+        version: 15.4.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@atlaskit/modal-dialog':
         specifier: ^16.3.0
         version: 16.6.7(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
