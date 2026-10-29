@@ -23,7 +23,6 @@ export function useEdgeRead<T>(read: (() => Promise<T>) | null, key: string): { 
       },
     );
     return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` stands for the read's inputs
   }, [key, tick]);
   const reload = useCallback(() => { setTick((n) => n + 1); }, []);
   return { load, reload };

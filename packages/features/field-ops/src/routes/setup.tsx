@@ -28,6 +28,7 @@ import { useTranslation } from '@usrp/i18n';
 import { useDeviceRuntime } from '../runtime/context.tsx';
 import { venueDayProblems, writeVenueDay, readVenueDay, type VenueDay, type VenueDayProblem } from '../model/venue.ts';
 import type { Readiness, CheckStatus } from '../model/readiness.ts';
+import { storeVenue } from '../model/gate.ts';
 import { StationPage } from '../ui/Page.tsx';
 
 const tile = cssMap({
@@ -90,6 +91,7 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
       const roster = await getVenueRoster(client, { campaign: draft.campaign.trim(), district: draft.district.trim(), examDate: draft.examDate.trim() });
       const next: VenueDay = { campaign: draft.campaign.trim(), district: draft.district.trim(), examDate: draft.examDate.trim(), venueName: roster.venue.venueName };
       writeVenueDay(next);
+      storeVenue(next.venueName);
       setDay(next);
       window.dispatchEvent(new Event('usrp-venue-day'));
     } catch (error) {
@@ -187,7 +189,7 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
           </Stack>
           <Stack space="space.100">
             <Label htmlFor={ids.date}>{t('field_ops.setup.exam_date')}</Label>
-            <TextField id={ids.date} value={draft.examDate} autoComplete="off" placeholder="2026-06-06" isInvalid={problems.includes('examDate')} onChange={(e) => { setDraft({ ...draft, examDate: e.currentTarget.value }); }} />
+            <TextField id={ids.date} value={draft.examDate} autoComplete="off" isInvalid={problems.includes('examDate')} onChange={(e) => { setDraft({ ...draft, examDate: e.currentTarget.value }); }} />
             {problems.includes('examDate') ? <ErrorMessage>{t('field_ops.setup.exam_date_invalid')}</ErrorMessage> : <HelperMessage>{t('field_ops.setup.exam_date_help')}</HelperMessage>}
           </Stack>
           {venueFailure !== 'none' && (

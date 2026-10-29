@@ -53,6 +53,10 @@ export default function StationPicker(): React.ReactElement {
           {t("field_station.stations_intro")}
         </Text>
 
+        <Inline space="space.200" shouldWrap>
+          <LinkButton href="/setup" testId="station-setup">{t("field_ops.setup.open")}</LinkButton>
+        </Inline>
+
         {stations.length === 0 ? (
           <SectionMessage appearance="warning" title={t("field_station.no_stations_title")} headingLevel="h2">
             <Text as="p">{t("field_station.no_stations_body")}</Text>
