@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '@atlaskit/button/new';
+import Button, { LinkButton } from '@atlaskit/button/new';
 import Heading from '@atlaskit/heading';
 import Select from '@atlaskit/select';
 import Textfield from '@atlaskit/textfield';
@@ -11,7 +11,7 @@ import { useTranslation } from '@usrp/i18n';
 import { StateBoundary } from '@usrp/ui';
 import { EMPTY_DRAFT, categoriesOfAgency, fieldOfServerError, normalisePublicCode, toCreateCommand, validateDraft, type DraftField, type DraftForm } from '../model/draft.ts';
 import { DISTRICTS, districtLabel, walkInOffered } from '../model/geography.ts';
-import { Field, Refusal, refusalCode, styles, useCampaignPermissions, useIntentKey, type Opt } from './shared.tsx';
+import { Field, Refusal, refusalCode, useCampaignPermissions, useIntentKey, type Opt, Page, Panel } from './shared.tsx';
 
 export function NewCampaignPage({ client }: { readonly client: ApiClient }): React.ReactElement {
   const { t } = useTranslation('campaigns');
@@ -61,13 +61,13 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
   };
 
   return (
-    <Box xcss={styles.root}>
+    <Page>
       <Stack space="space.250">
-        <Inline><Button appearance="subtle" href="/campaigns">{t('campaigns.new.back')}</Button></Inline>
+        <Inline><LinkButton appearance="subtle" href="/campaigns">{t('campaigns.new.back')}</LinkButton></Inline>
         <Heading size="xlarge" as="h1">{t('campaigns.new.title')}</Heading>
         <Text as="p">{t('campaigns.new.lead')}</Text>
         <SectionMessage appearance="information" testId="kigali-notice"><Text as="p">{t('campaigns.new.kigaliTime')}</Text></SectionMessage>
-        <Box xcss={styles.panel}>
+        <Panel>
           <Stack space="space.200">
             <Inline space="space.200" shouldWrap>
               <Field label={t('campaigns.fields.publicCode')} hint={t('campaigns.hints.publicCode')} error={err('publicCode')} testId="field-publicCode">{text('publicCode')}</Field>
@@ -114,8 +114,8 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
               <Text size="small" color="color.text.subtle">{t('campaigns.new.next')}</Text>
             </Inline>
           </Stack>
-        </Box>
+        </Panel>
       </Stack>
-    </Box>
+    </Page>
   );
 }

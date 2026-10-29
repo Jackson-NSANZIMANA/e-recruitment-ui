@@ -13,16 +13,30 @@ import { campaignRefusal } from '../api/campaigns.ts';
 import { keyForIntent, type IntentKey } from '../model/intent.ts';
 import { stepOfRefusal, type StudioStep } from '../model/preflight.ts';
 
-export const styles = cssMap({
+const styles = cssMap({
   root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: { padding: token('space.200'), borderWidth: token('border.width'), borderStyle: 'solid', borderColor: token('color.border'), borderRadius: token('radius.medium') },
   field: { minWidth: '240px', flexGrow: 1 },
   narrow: { minWidth: '120px', maxWidth: '160px' },
   hash: { overflowWrap: 'anywhere' },
-  barTrack: { height: token('space.150'), backgroundColor: token('color.background.neutral'), borderRadius: token('radius.small'), overflow: 'hidden' },
-  barFill: { height: token('space.150'), backgroundColor: token('color.background.success.bold') },
-  barFillPartial: { height: token('space.150'), backgroundColor: token('color.background.warning.bold') },
 });
+
+/** Page container. */
+export function Page({ children }: { readonly children: React.ReactNode }): React.ReactElement {
+  return <Box xcss={styles.root}>{children}</Box>;
+}
+/** A bordered group of related fields. */
+export function Panel({ children, testId }: { readonly children: React.ReactNode; readonly testId?: string }): React.ReactElement {
+  return <Box xcss={styles.panel} {...(testId === undefined ? {} : { testId })}>{children}</Box>;
+}
+/** Text that may be a long unbroken value (a SHA-256). */
+export function Wrap({ children }: { readonly children: React.ReactNode }): React.ReactElement {
+  return <Box xcss={styles.hash}>{children}</Box>;
+}
+/** A grow-to-fit cell in a wrapping row. */
+export function Cell({ children }: { readonly children: React.ReactNode }): React.ReactElement {
+  return <Box xcss={styles.field}>{children}</Box>;
+}
 
 export type T = ReturnType<typeof useTranslation>['t'];
 
@@ -33,12 +47,12 @@ export function Field({ label, hint, error, children, testId, grow = true }: {
   readonly label: string; readonly hint?: string | undefined; readonly error?: string | undefined; readonly children: React.ReactNode; readonly testId?: string; readonly grow?: boolean;
 }): React.ReactElement {
   return (
-    <Box xcss={grow ? styles.field : styles.narrow} {...(testId === undefined ? {} : { testId })}>
+    <Box xcss={grow ? styles['field'] : styles['narrow']} {...(testId === undefined ? {} : { testId })}>
       <Stack space="space.050">
         <Text size="small" weight="medium" as="span">{label}</Text>
         {children}
         {hint !== undefined && error === undefined && <Text size="small" color="color.text.subtle">{hint}</Text>}
-        {error !== undefined && <Text size="small" color="color.text.danger" testId={testId === undefined ? undefined : `${testId}-error`}>{error}</Text>}
+        {error !== undefined && <Text size="small" color="color.text.danger" {...(testId === undefined ? {} : { testId: `${testId}-error` })}>{error}</Text>}
       </Stack>
     </Box>
   );

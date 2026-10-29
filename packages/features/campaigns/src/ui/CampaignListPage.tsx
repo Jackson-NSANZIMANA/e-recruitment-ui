@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '@atlaskit/button/new';
+import Button, { LinkButton } from '@atlaskit/button/new';
 import DynamicTable from '@atlaskit/dynamic-table';
 import Heading from '@atlaskit/heading';
 import Select from '@atlaskit/select';
@@ -11,7 +11,7 @@ import { FreshnessStamp, StateBoundary, listState } from '@usrp/ui';
 import { CAMPAIGN_STATES } from '../model/lifecycle.ts';
 import { formatKigali } from '../model/kigali.ts';
 import { CampaignStatusLozenge } from './CampaignStatusLozenge.tsx';
-import { Field, styles, useCampaignPermissions, type Opt } from './shared.tsx';
+import { Field, useCampaignPermissions, type Opt, Page } from './shared.tsx';
 
 export function CampaignListPage({ client }: { readonly client: ApiClient }): React.ReactElement {
   const { t } = useTranslation('campaigns');
@@ -31,7 +31,7 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
     { key: 'exam', content: t('campaigns.list.cols.exam') },
     { key: 'sessions', content: t('campaigns.list.cols.sessions') },
     { key: 'registered', content: t('campaigns.list.cols.registered') },
-    { key: 'open', content: <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden' }}>{t('campaigns.list.cols.open')}</span> },
+    { key: 'open', content: t('campaigns.list.cols.open') },
   ] };
   const tableRows = rows.map((c) => ({
     key: c.publicCode,
@@ -42,18 +42,18 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
       { key: 'exam', content: <Text size="small">{c.examinationStartDate} → {c.examinationEndDate}</Text> },
       { key: 'sessions', content: <Text size="small">{t('campaigns.list.sessionsOf', { sessions: c.occupancy.sessionCount, districts: c.targetDistricts.length })}</Text> },
       { key: 'registered', content: <Text size="small">{c.occupancy.registeredTotal}</Text> },
-      { key: 'open', content: <Button href={`/campaigns/${encodeURIComponent(c.publicCode)}`} aria-label={`${t('campaigns.list.open')}: ${c.publicCode}`}>{t('campaigns.list.open')}</Button> },
+      { key: 'open', content: <LinkButton href={`/campaigns/${encodeURIComponent(c.publicCode)}`} aria-label={`${t('campaigns.list.open')}: ${c.publicCode}`}>{t('campaigns.list.open')}</LinkButton> },
     ],
   }));
 
   return (
-    <Box xcss={styles.root}>
+    <Page>
       <Stack space="space.250">
         <Inline spread="space-between" alignBlock="center" shouldWrap>
           <Heading size="xlarge" as="h1">{t('campaigns.list.title')}</Heading>
           <Inline space="space.200" alignBlock="center" shouldWrap>
             {q.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} />}
-            {perms.create && <Button appearance="primary" href="/campaigns/new" testId="new-campaign">{t('campaigns.list.new')}</Button>}
+            {perms.create && <LinkButton appearance="primary" href="/campaigns/new" testId="new-campaign">{t('campaigns.list.new')}</LinkButton>}
           </Inline>
         </Inline>
         <Text as="p">{t('campaigns.list.lead', { agency: perms.agency })}</Text>
@@ -80,6 +80,6 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
           {q.data !== undefined && q.data.nextCursor !== null && <Text size="small" color="color.text.subtle" testId="campaign-more">{t('campaigns.list.more', { shown: rows.length, total: q.data.total })}</Text>}
         </StateBoundary>
       </Stack>
-    </Box>
+    </Page>
   );
 }
