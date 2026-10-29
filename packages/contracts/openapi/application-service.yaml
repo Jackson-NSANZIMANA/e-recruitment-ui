@@ -2500,6 +2500,45 @@ components:
             type: "string"
         contactWebsite:
           type: ["string", "null"]
+        eligibility:
+          description: >-
+            ADR-049, detail reads only: per category the rules a citizen may read before
+            applying. Empty for a v1 campaign. CONTRACT-PENDING: S12c.
+          type: "object"
+          additionalProperties:
+            $ref: "#/components/schemas/PublicCategoryEligibility"
+
+    PublicCategoryEligibility:
+      type: "object"
+      additionalProperties: false
+      required: ["ageBands", "educationAlternatives", "minimumSciencePercent"]
+      properties:
+        ageBands:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: false
+            required: ["qualifications", "minimumAge", "maximumAge"]
+            properties:
+              qualifications:
+                type: "array"
+                items:
+                  type: "string"
+              minimumAge:
+                type: "integer"
+              maximumAge:
+                type: "integer"
+        educationAlternatives:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: false
+            required: ["level"]
+            properties:
+              level:
+                type: "string"
+        minimumSciencePercent:
+          type: ["integer", "null"]
 
     PublicCampaignList200:
       type: "object"

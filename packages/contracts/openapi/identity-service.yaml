@@ -648,6 +648,54 @@ paths:
         "503":
           description: "The identity record could not be read."
 
+  /v1/applicants/me/applications/clearance-certificate:
+    post:
+      operationId: "attachMyClearanceCertificate"
+      summary: "The citizen gives the application number of their Irembo criminal-record certificate (ADR-048 section 2.3)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session; another citizen's
+        application and a nonexistent one are the same 404. Verification is
+        asynchronous: 202 means accepted, and the state appears on the document
+        checklist. The number is never echoed. CONTRACT-PENDING: S12c (backend
+        PR #52 operation; the pinned SHA predates it).
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_CLEARANCE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachClearanceRequest"
+      responses:
+        "202":
+          description: "Accepted; verification is under way."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk"
+        "200":
+          description: "Already verified."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk"
+        "400":
+          description: "INVALID_REQUEST."
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "Not this citizen's application."
+        "409":
+          description: "NOT_APPLICABLE: the application is closed."
+        "422":
+          description: "INVALID_NUMBER: not a letter, 12 digits and 4 letters."
+
   /v1/applicants/me/applications/document-checklist:
     get:
       operationId: "getMyDocumentChecklist"
@@ -1869,6 +1917,47 @@ components:
         validUntil:
           type: "string"
 
+    AttachClearanceRequest:
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "clearanceCertificateNumber"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        clearanceCertificateNumber:
+          type: "string"
+          minLength: 1
+          maxLength: 64
+
+    AttachClearanceOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency"]
+      properties:
+        status:
+          type: "string"
+          enum: ["ACCEPTED", "ALREADY_VERIFIED"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    ClearanceItem:
+      description: "The clearance state of the RIB item. A citizen path carries no reasons."
+      type: "object"
+      additionalProperties: false
+      required: ["state", "code"]
+      properties:
+        state:
+          type: "string"
+          enum: ["NUMBER_REQUIRED", "VERIFYING", "CORRECTION_NEEDED", "UNDER_OFFICER_REVIEW", "VERIFIED"]
+        code:
+          type: ["string", "null"]
+          pattern: "^[A-Z][A-Z0-9_]{2,47}$"
+        reasons:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["CLEARANCE_CONTENT_REVIEW", "IDENTITY_NAME_PARTIAL", "IDENTITY_HOLDER_UNREADABLE"]
+
     DocumentChecklistItem:
       type: "object"
       additionalProperties: false
@@ -1883,6 +1972,8 @@ components:
         registry:
           description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
           type: ["string", "null"]
+        clearance:
+          $ref: "#/components/schemas/ClearanceItem"
 
     MyIdentity200:
       description: >-

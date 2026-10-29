@@ -140,6 +140,9 @@ export const INVALIDATION_MAP: Readonly<Record<string, readonly InvalidationTarg
 
   withdrawMyApplication: ['applicant:applications'],
 
+  /** The number is verified asynchronously; the checklist is re-read by the page, which polls while VERIFYING. */
+  attachMyClearanceCertificate: [],
+
   fileMyErasureRequest: ['applicant:erasure-request'],
 
   /**

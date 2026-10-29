@@ -25,6 +25,7 @@
 //   POST /v1/applicants/me/applications                 applicant-session  browser
 //   GET  /v1/applicants/me/applications/exam-invitation applicant-session  browser
 //   GET  /v1/applicants/me/identity                     applicant-session  browser
+//   POST /v1/applicants/me/applications/clearance-certificate applicant-session  browser
 //   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
 //   POST /v1/applicants/me/applications/documents       applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
@@ -98,6 +99,28 @@ export const ApplicantSessionIssued200Schema = z
  */
 export const ApplicationChannelSchema = z.enum(['WEB', 'USSD', 'IREMBO_KIOSK', 'WALK_IN']);
 
+export const AttachClearanceOkSchema = z
+  .strictObject({
+    "status": z.enum(['ACCEPTED', 'ALREADY_VERIFIED']),
+    "agency": AgencySchema,
+  });
+
+export const AttachClearanceRequestSchema = z
+  .strictObject({
+    "applicationId": UuidSchema,
+    "clearanceCertificateNumber": z.string().min(1).max(64),
+  });
+
+/**
+ * The clearance state of the RIB item. A citizen path carries no reasons.
+ */
+export const ClearanceItemSchema = z
+  .strictObject({
+    "state": z.enum(['NUMBER_REQUIRED', 'VERIFYING', 'CORRECTION_NEEDED', 'UNDER_OFFICER_REVIEW', 'VERIFIED']),
+    "code": z.string().regex(/^[A-Z][A-Z0-9_]{2,47}$/).nullable(),
+    "reasons": z.array(z.enum(['CLEARANCE_CONTENT_REVIEW', 'IDENTITY_NAME_PARTIAL', 'IDENTITY_HOLDER_UNREADABLE'])).optional(),
+  });
+
 export const DeclineErasureRequestSchema = z
   .strictObject({
     "requestId": UuidSchema,
@@ -109,6 +132,7 @@ export const DocumentChecklistItemSchema = z
     "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
     "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
     "registry": z.string().nullable(),
+    "clearance": ClearanceItemSchema.optional(),
   });
 
 /**
@@ -746,6 +770,24 @@ export const identityServiceOperations = {
       "401": InvalidSession401Schema,
       "404": null,
       "503": null,
+    },
+  },
+  "attachMyClearanceCertificate": {
+    method: "POST",
+    path: "/v1/applicants/me/applications/clearance-certificate",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: AttachClearanceRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": AttachClearanceOkSchema,
+      "202": AttachClearanceOkSchema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "409": null,
+      "422": null,
     },
   },
   "getMyDocumentChecklist": {

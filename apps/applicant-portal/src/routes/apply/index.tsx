@@ -11,6 +11,7 @@ import {
   ApiError,
   createApiClient,
   useMyIdentity,
+  usePublicCampaign,
   usePublicCampaigns,
   useSubmitMyApplication,
   useUploadMyDocument,
@@ -21,6 +22,7 @@ import { useTranslation } from "@usrp/i18n";
 import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
 import { nidaRows, sexKey } from "./nida-identity.js";
+import { CategoryRules } from "./CategoryRules.js";
 
 const STORAGE_KEY = "usrp_apply_draft";
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -196,6 +198,8 @@ function StepCategory({ data, onNext, onBack }: {
   const offered = APPLICATION_CATEGORIES.filter(
     (c) => data.campaignCategories === undefined || data.campaignCategories.includes(c),
   );
+  // ADR-049: the rules per qualification come from the campaign's public detail; absent for a v1 campaign.
+  const detail = usePublicCampaign(client, data.campaignCode ?? null);
   return (
     <Form<{ category: string }> onSubmit={(values) => {
       const category = categoryOrUndefined(values.category);
@@ -204,6 +208,11 @@ function StepCategory({ data, onNext, onBack }: {
       {({ formProps }) => (
         <form {...formProps}>
           <Stack space="space.400">
+            <CategoryRules
+              categories={offered}
+              eligibility={detail.data?.campaign.eligibility}
+              labelFor={(category) => t(`apply.categories.${category}`)}
+            />
             <Field
               name="category"
               label={t("apply.category_label")}

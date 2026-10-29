@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 78 business operations + 22 probes = 100 total.
+// 79 business operations + 22 probes = 101 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -1593,6 +1593,27 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "422",
       "429",
       "503"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "attachMyClearanceCertificate",
+    "method": "POST",
+    "path": "/v1/applicants/me/applications/clearance-certificate",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_CLEARANCE_PATH)",
+    "statuses": [
+      "200",
+      "202",
+      "400",
+      "401",
+      "404",
+      "409",
+      "422"
     ]
   },
   {

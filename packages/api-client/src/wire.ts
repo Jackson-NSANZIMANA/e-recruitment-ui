@@ -235,6 +235,14 @@ export interface PublicCampaign {
   readonly allowsWalkIn: boolean;
   readonly contactPhoneNumbers: readonly string[] | null;
   readonly contactWebsite: string | null;
+  /** ADR-049: detail reads only; per category the rules a citizen may read before applying. Empty for a v1 campaign. */
+  readonly eligibility?: Readonly<Record<string, PublicCategoryEligibility>>;
+}
+
+export interface PublicCategoryEligibility {
+  readonly ageBands: readonly { readonly qualifications: readonly string[]; readonly minimumAge: number; readonly maximumAge: number }[];
+  readonly educationAlternatives: readonly { readonly level: string }[];
+  readonly minimumSciencePercent: number | null;
 }
 
 export interface PublicCampaignListResponse {
@@ -286,6 +294,23 @@ export interface MyIdentity {
   readonly nationality: string | null;
 }
 
+/** The clearance state of the RIB item (ADR-048 section 2.3). A citizen is never given the reasons. */
+export type ClearanceState = 'NUMBER_REQUIRED' | 'VERIFYING' | 'CORRECTION_NEEDED' | 'UNDER_OFFICER_REVIEW' | 'VERIFIED';
+
+export interface ClearanceItem {
+  readonly state: ClearanceState;
+  /** A closed code for CORRECTION_NEEDED (CERTIFICATE_NOT_FOUND, _WRONG_TYPE, _EXPIRED, _NOT_BOUND, ...), else null. */
+  readonly code: string | null;
+  /** Officer audience only: the amber-queue reasons (CLEARANCE_CONTENT_REVIEW, IDENTITY_NAME_PARTIAL, ...). */
+  readonly reasons?: readonly string[];
+}
+
+/** `POST /edge/v1/me/applications/clearance-certificate`. The number is never echoed. */
+export interface AttachClearanceResponse {
+  readonly applicationId: string;
+  readonly outcome: 'ACCEPTED' | 'ALREADY_VERIFIED';
+}
+
 export interface DocumentChecklist {
   readonly agency: Agency;
   readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';
@@ -295,6 +320,8 @@ export interface DocumentChecklist {
     readonly satisfaction: DocumentSatisfaction;
     /** NIDA | NESA | HEC | RIB, or null when it can only be uploaded/presented. */
     readonly registry: string | null;
+    /** Present on the RIB-verified item when the Irembo certificate flow is on (S12b). */
+    readonly clearance?: ClearanceItem;
   }[];
 }
 

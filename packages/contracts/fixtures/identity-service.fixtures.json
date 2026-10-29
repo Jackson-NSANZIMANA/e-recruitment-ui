@@ -715,6 +715,27 @@
       "expect": "reject",
       "why": "INVARIANT: a photo, signature, parents' names or the National ID never reach the browser (ADR-049). additionalProperties is false.",
       "value": { "fullName": "TEST Person", "sex": "FEMALE", "dateOfBirth": "2005-03-04", "homeDistrict": "GASABO", "homeProvince": "KIGALI_CITY", "photo": "AAAA" }
+    },
+    {
+      "id": "checklist-clearance-verifying",
+      "schema": "DocumentChecklistItem",
+      "expect": "accept",
+      "why": "S12b: the RIB item carries the clearance state; a citizen is given a closed code, never reasons.",
+      "value": { "documentType": "NON_CONVICTION_CERTIFICATE", "satisfaction": "AWAITING_REGISTRY", "registry": "RIB", "clearance": { "state": "CORRECTION_NEEDED", "code": "CERTIFICATE_WRONG_TYPE" } }
+    },
+    {
+      "id": "checklist-clearance-rejects-free-text-reason",
+      "schema": "DocumentChecklistItem",
+      "expect": "reject",
+      "why": "INVARIANT: a reason outside the closed amber vocabulary (for example a name from the certificate) is never accepted.",
+      "value": { "documentType": "NON_CONVICTION_CERTIFICATE", "satisfaction": "UNDER_REVIEW", "registry": "RIB", "clearance": { "state": "UNDER_OFFICER_REVIEW", "code": null, "reasons": ["Name on certificate differs"] } }
+    },
+    {
+      "id": "attach-clearance-accepted",
+      "schema": "AttachClearanceOk",
+      "expect": "accept",
+      "why": "attachMyClearanceCertificate 202.",
+      "value": { "status": "ACCEPTED", "agency": "RDF" }
     }
 ]
 }
