@@ -75,3 +75,16 @@ test('a data protection officer has no queues: the forbidden state', async ({ pa
   await page.goto('/adjudication');
   await expect(page.getByTestId('state-forbidden')).toBeVisible({ timeout: 15_000 });
 });
+
+test('S12b: records waiting for a reading are listed apart, with the closed reason in words and no decision button', async ({ page }) => {
+  await signIn(page, ['reviewer'], POSTS.reviewer);
+  const record = { applicationId: ID2, processingCode: 'RDF-9', status: 'CRIMINAL_CLEARANCE', documentType: null, forensicsScore: null, forensicsFlags: null, queuedAt: '2026-10-18T08:00:00.000Z', reasons: ['CLEARANCE_CONTENT_REVIEW', 'IDENTITY_NAME_PARTIAL'], agency: 'RDF' };
+  await page.route('**/edge/v1/applications/amber-queue', (route) => json(route, 200, [amber(ID1, 'RDF-1', 'DOCUMENT_REVIEW_AMBER', 0.95), record]));
+  await page.goto('/adjudication');
+  await expect(page.getByTestId('queue-amber')).toContainText('RDF-1', { timeout: 15_000 });
+  const records = page.getByTestId('queue-records');
+  await expect(records).toContainText('RDF-9');
+  await expect(page.getByTestId('reasons-RDF-9')).toContainText(/Read the criminal-record certificate against the agency.s rule/);
+  await expect(page.getByTestId('reasons-RDF-9')).toContainText(/only partly matches the applicant/);
+  await expect(records.getByRole('button', { name: /clear|reject/i })).toHaveCount(0);
+});
