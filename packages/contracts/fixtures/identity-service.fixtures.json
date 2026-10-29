@@ -701,6 +701,20 @@
     {"id": "identity-gate-invalid-ticket", "schema": "GateInvalidTicket422", "expect": "accept", "why": "Forged or altered QR.", "value": {"error": "INVALID_TICKET", "reason": "TICKET_NOT_ISSUED"}},
     {"id": "identity-gate-invalid-ticket-rejects-reason", "schema": "GateInvalidTicket422", "expect": "reject", "why": "Only the four ticket refusals exist.", "value": {"error": "INVALID_TICKET", "reason": "EXPIRED"}},
     {"id": "identity-exam-invitation-admitted", "schema": "ExamInvitationView", "expect": "accept", "why": "ADR-034: once spent, only where and when; never the QR.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z"}}},
-    {"id": "identity-exam-invitation-admitted-rejects-extra", "schema": "ExamInvitationView", "expect": "reject", "why": "The admission carries no officer identity.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z", "officerId": "x"}}}
-  ]
+    {"id": "identity-exam-invitation-admitted-rejects-extra", "schema": "ExamInvitationView", "expect": "reject", "why": "The admission carries no officer identity.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z", "officerId": "x"}}},
+    {
+      "id": "my-identity",
+      "schema": "MyIdentity200",
+      "expect": "accept",
+      "why": "getMyIdentity (ADR-049): the allowlisted identity, synthetic values.",
+      "value": { "fullName": "TEST Person", "sex": "FEMALE", "dateOfBirth": "2005-03-04", "homeDistrict": "GASABO", "homeProvince": "KIGALI_CITY" }
+    },
+    {
+      "id": "my-identity-rejects-photo",
+      "schema": "MyIdentity200",
+      "expect": "reject",
+      "why": "INVARIANT: a photo, signature, parents' names or the National ID never reach the browser (ADR-049). additionalProperties is false.",
+      "value": { "fullName": "TEST Person", "sex": "FEMALE", "dateOfBirth": "2005-03-04", "homeDistrict": "GASABO", "homeProvince": "KIGALI_CITY", "photo": "AAAA" }
+    }
+]
 }
