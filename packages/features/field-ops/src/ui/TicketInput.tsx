@@ -1,6 +1,6 @@
 // The pass a station reads: camera scan or a hand-held scanner / typed text.
 // The credential is held in state only to extract the ticket; it is never shown.
-import React, { useId, useRef, useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Inline, Stack, Text } from '@atlaskit/primitives/compiled';
 import Button from '@atlaskit/button';
 import TextField from '@atlaskit/textfield';
@@ -17,7 +17,6 @@ export function TicketInput({ onTicket, onClear, ticket, testId }: {
 }): React.ReactElement {
   const { t } = useTranslation('field_ops');
   const id = useId();
-  const field = useRef<HTMLInputElement | null>(null);
   const [unreadable, setUnreadable] = useState(false);
   const take = (value: string): void => {
     const parsed = ticketFromToken(value.trim());
@@ -37,7 +36,6 @@ export function TicketInput({ onTicket, onClear, ticket, testId }: {
       <Label htmlFor={id}>{t('field_ops.ticket.label')}</Label>
       <TextField
         id={id}
-        ref={field}
         type="password"
         autoComplete="off"
         isInvalid={unreadable}

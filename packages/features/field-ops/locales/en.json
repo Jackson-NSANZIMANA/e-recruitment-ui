@@ -201,7 +201,9 @@
       "recent": "This tablet",
       "summary": "{{acknowledged}} with the server, {{waiting}} not sent",
       "none_yet": "No records yet.",
-      "record_line": "Record {{n}} at {{time}}"
+      "record_line": "Record {{n}} at {{time}}",
+      "device_failed_title": "This tablet could not save the record",
+      "device_failed_body": "Nothing was recorded or sent. Write the results on the paper sheet."
     },
     "medical": {
       "title": "Medical station",
@@ -233,7 +235,8 @@
       "refused_invalid": "The server did not accept this entry.",
       "refused_other": "The server did not record it. Try again.",
       "offline_title": "No connection",
-      "offline_body": "Nothing was recorded. Use the paper sheet and enter it when connected."
+      "offline_body": "Nothing was recorded. Use the paper sheet and enter it when connected.",
+      "physician_too_long": "The name is too long (120 characters at most)."
     },
     "supervisor": {
       "title": "Supervisor",

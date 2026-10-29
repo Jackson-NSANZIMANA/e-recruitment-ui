@@ -23,7 +23,7 @@ export function useEdgeRead<T>(read: (() => Promise<T>) | null, key: string): { 
       },
     );
     return () => { live = false; };
-  }, [key, tick]);
+  }, [key, tick, read === null]);
   const reload = useCallback(() => { setTick((n) => n + 1); }, []);
   return { load, reload };
 }

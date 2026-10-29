@@ -53,6 +53,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
   const [form, setForm] = useState<PhysicalForm>(EMPTY);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [current, setCurrent] = useState<StoredRecord | null>(null);
   const [records, setRecords] = useState<readonly StoredRecord[]>([]);
   const runtime = state.status === 'ready' ? state.runtime : null;
@@ -88,17 +89,22 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
   const save = async (): Promise<void> => {
     setTouched(true);
     if (runtime === null || session === null || ticket === null || day === null || reading.metrics === null) return;
+    if (ticketFit(ticket, day, agency) !== 'MATCHES') return;
     setBusy(true);
+    setFailed(false);
     try {
       const record = await capturePhysical(runtime.ledger, { ticket, metrics: reading.metrics, day, officerSubject: stationActorId() });
       setCurrent(record);
       await send([record]);
+    } catch {
+      // The device could not write or send (storage full or aborted): nothing may be claimed. Paper.
+      setFailed(true);
     } finally {
       setBusy(false);
     }
   };
 
-  const next = (): void => { setTicket(null); setForm(EMPTY); setTouched(false); setCurrent(null); };
+  const next = (): void => { setTicket(null); setForm(EMPTY); setTouched(false); setCurrent(null); setFailed(false); };
 
   if (state.status === 'failed') {
     return (
@@ -142,6 +148,12 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
         </SectionMessage>
       )}
 
+      {failed && (
+        <SectionMessage appearance="error" title={t('field_ops.physical.device_failed_title')} headingLevel="h2" testId="physical-device-failed">
+          <Text as="p">{t('field_ops.physical.device_failed_body')}</Text>
+        </SectionMessage>
+      )}
+
       {current !== null && fate !== null ? (
         <SectionMessage
           appearance={fate === 'ACKNOWLEDGED' || fate === 'DUPLICATE' || fate === 'RESOLVED' ? 'success' : fate === 'WAITING' || fate === 'SENDING' ? 'warning' : 'error'}
@@ -163,7 +175,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
             {fate === 'CONFLICT' || fate === 'WITH_SUPERVISOR' ? <Text as="p">{t('field_ops.physical.conflict_body')}</Text> : null}
             <Inline space="space.200" shouldWrap>
               {(fate === 'WAITING') && (
-                <LoadingButton appearance="primary" isLoading={busy} onClick={() => { setBusy(true); void send([current]).finally(() => { setBusy(false); }); }} testId="physical-send-again">{t('field_ops.physical.send_again')}</LoadingButton>
+                <LoadingButton appearance="primary" isLoading={busy} onClick={() => { setBusy(true); void send([current]).catch(() => { setFailed(true); }).finally(() => { setBusy(false); }); }} testId="physical-send-again">{t('field_ops.physical.send_again')}</LoadingButton>
               )}
               <Button appearance={fate === 'WAITING' ? 'default' : 'primary'} onClick={next} testId="physical-next">{t('field_ops.physical.next')}</Button>
             </Inline>
@@ -201,7 +213,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
                 </Stack>
               )}
               <Inline>
-                <LoadingButton appearance="primary" isLoading={busy} isDisabled={runtime === null || day === null} onClick={() => { void save(); }} testId="physical-save">{t('field_ops.physical.save')}</LoadingButton>
+                <LoadingButton appearance="primary" isLoading={busy} isDisabled={runtime === null || day === null || (fit !== null && fit !== 'MATCHES')} onClick={() => { void save(); }} testId="physical-save">{t('field_ops.physical.save')}</LoadingButton>
               </Inline>
             </Stack>
           )}

@@ -58,17 +58,23 @@ export default function ConflictsPage({ client }: { readonly client: ApiClient }
 
   const resolve = async (record: StoredRecord): Promise<void> => {
     const id = record.envelope.recordId;
-    setTouched({ ...touched, [id]: true });
+    setTouched((prev) => ({ ...prev, [id]: true }));
     const resolution = (reasons[id] ?? '').trim();
     const applicationId = record.envelope.subject.applicationId;
     if (!validateResolution(resolution).ok || runtime === null || applicationId === undefined || record.scoreId === undefined) return;
     setBusy(id);
     try {
       const verdict = readResolveAnswer(await resolveFieldSyncConflict(client, { applicationId, scoreId: record.scoreId, resolution }));
-      setVerdicts({ ...verdicts, [id]: verdict });
+      setVerdicts((prev) => ({ ...prev, [id]: verdict }));
       if (verdict === 'RESOLVED') {
-        if (record.state === 'STALE_CONFLICT') await runtime.ledger.apply(id, { type: 'ESCALATE' });
-        await runtime.ledger.apply(id, { type: 'RESOLVED' });
+        // The server has the resolution; the local events only follow it. If they fail the held list
+        // is stale until reload, and a second press answers NO_CONFLICT, which is correct.
+        try {
+          if (record.state === 'STALE_CONFLICT') await runtime.ledger.apply(id, { type: 'ESCALATE' });
+          await runtime.ledger.apply(id, { type: 'RESOLVED' });
+        } catch {
+          setVerdicts((prev) => ({ ...prev, [id]: 'OTHER' }));
+        }
         await reload();
       }
     } finally {
@@ -103,7 +109,7 @@ export default function ConflictsPage({ client }: { readonly client: ApiClient }
               ) : (
                 <Stack space="space.100">
                   <Label htmlFor={`res-${id}`}>{t('field_ops.conflicts.reason_label')}</Label>
-                  <TextField id={`res-${id}`} value={resolution} autoComplete="off" isInvalid={problem} onChange={(e) => { setReasons({ ...reasons, [id]: e.currentTarget.value }); }} />
+                  <TextField id={`res-${id}`} value={resolution} autoComplete="off" isInvalid={problem} onChange={(e) => { const value = e.currentTarget.value; setReasons((prev) => ({ ...prev, [id]: value })); }} />
                   {problem ? <ErrorMessage>{t('field_ops.conflicts.reason_required', { max: RESOLUTION_MAX_LENGTH })}</ErrorMessage> : <HelperMessage>{t('field_ops.conflicts.reason_help', { max: RESOLUTION_MAX_LENGTH })}</HelperMessage>}
                   {verdict !== undefined && verdict !== 'RESOLVED' && (
                     <SectionMessage appearance="error" title={t('field_ops.conflicts.failed_title')} headingLevel="h3" testId={`conflict-failed-${id}`}><Text as="p">{t(`field_ops.conflicts.verdict.${verdict}`)}</Text></SectionMessage>

@@ -201,7 +201,9 @@
       "recent": "Cette tablette",
       "summary": "{{acknowledged}} chez le serveur, {{waiting}} non envoyés",
       "none_yet": "Aucun enregistrement.",
-      "record_line": "Enregistrement {{n}} à {{time}}"
+      "record_line": "Enregistrement {{n}} à {{time}}",
+      "device_failed_title": "Cette tablette n'a pas pu enregistrer",
+      "device_failed_body": "Rien n'a été enregistré ni envoyé. Notez les résultats sur la fiche papier."
     },
     "medical": {
       "title": "Poste médical",
@@ -233,7 +235,8 @@
       "refused_invalid": "Le serveur n'a pas accepté cette saisie.",
       "refused_other": "Le serveur ne l'a pas enregistré. Réessayez.",
       "offline_title": "Pas de connexion",
-      "offline_body": "Rien n'a été enregistré. Utilisez la fiche papier et saisissez une fois connecté."
+      "offline_body": "Rien n'a été enregistré. Utilisez la fiche papier et saisissez une fois connecté.",
+      "physician_too_long": "Le nom est trop long (120 caractères au plus)."
     },
     "supervisor": {
       "title": "Superviseur",

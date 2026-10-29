@@ -187,6 +187,22 @@ test.describe('physical test', () => {
     await expect(page.getByText('Give the reason.')).toBeVisible();
   });
 
+  test('a pass for another venue day is named and cannot be captured', async ({ page }) => {
+    await signIn(page, ['field.device.enroll', 'field.score.sync']);
+    await page.addInitScript(() => {
+      window.localStorage.setItem('usrp_field_venue_day', JSON.stringify({ campaign: 'rdf-2026', district: 'Nyagatare', examDate: '2026-06-07', venueName: 'Nyagatare Stadium' }));
+    });
+    await enrolDevice(page);
+    let sends = 0;
+    await page.route('**/edge/v1/field-sync/scores', (route) => { sends += 1; return route.abort(); });
+    await page.goto('/physical');
+    await scanPass(page, 'physical-scanner');
+    await expect(page.getByTestId('ticket-misfit')).toContainText(/another exam day/i);
+    await fillMetrics(page, metrics);
+    await expect(page.getByTestId('physical-save')).toBeDisabled();
+    expect(sends).toBe(0);
+  });
+
   test('an unenrolled tablet is stopped and pointed to setup', async ({ page }) => {
     await signIn(page, ['field.score.sync']);
     await confirmVenueDay(page);
@@ -233,6 +249,19 @@ test.describe('medical station', () => {
     await page.getByTestId('medical-record').click();
     await expect(page.getByTestId('medical-outcome')).toContainText(/certificate verified/i);
     expect(body).toEqual({ applicationId: APP_ID, certVerdict: 'CERT_VERIFIED', physicianName: 'Dr A. Mukamana' });
+  });
+
+  test('a physician name that is too long is told so, never silently ignored', async ({ page }) => {
+    await signIn(page, ['medical.review'], 'RNP');
+    await page.addInitScript(([venue, day]) => {
+      window.localStorage.setItem('usrp_field_venue_day', JSON.stringify({ campaign: 'rnp-2026', district: 'Kigali', examDate: day, venueName: venue }));
+    }, [VENUE, DAY]);
+    await page.goto('/medical');
+    await scanPass(page, 'medical-scanner', 'RNP');
+    await page.getByTestId('medical-choice-CERT_VERIFIED').click();
+    await page.getByLabel('Physician name').fill('x'.repeat(130));
+    await page.getByTestId('medical-record').click();
+    await expect(page.getByText(/too long/i)).toBeVisible();
   });
 
   test('an application not at the medical step is refused by name, a dropped link records nothing', async ({ page }) => {

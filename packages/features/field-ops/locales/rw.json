@@ -201,7 +201,9 @@
       "recent": "Iyi tableti",
       "summary": "{{acknowledged}} kuri seriveri, {{waiting}} bitoherejwe",
       "none_yet": "Nta nyandiko.",
-      "record_line": "Inyandiko {{n}} saa {{time}}"
+      "record_line": "Inyandiko {{n}} saa {{time}}",
+      "device_failed_title": "Iyi tableti ntiyashoboye kubika inyandiko",
+      "device_failed_body": "Nta cyanditswe cyangwa cyoherejwe. Andika ibisubizo ku rupapuro."
     },
     "medical": {
       "title": "Sitasiyo y'ubuvuzi",
@@ -233,7 +235,8 @@
       "refused_invalid": "Seriveri ntiyemeye ibi byanditswe.",
       "refused_other": "Seriveri ntiyabyanditse. Ongera ugerageze.",
       "offline_title": "Nta murongo",
-      "offline_body": "Nta cyanditswe. Koresha urupapuro, uzabyandike hari umurongo."
+      "offline_body": "Nta cyanditswe. Koresha urupapuro, uzabyandike hari umurongo.",
+      "physician_too_long": "Izina riraruta (inyuguti 120 ntarengwa)."
     },
     "supervisor": {
       "title": "Umugenzuzi",

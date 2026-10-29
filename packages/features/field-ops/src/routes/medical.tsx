@@ -55,6 +55,7 @@ export default function MedicalPage({ client }: { readonly client: ApiClient }):
   const record = async (): Promise<void> => {
     setTouched(true);
     if (built === null || !('input' in built)) return;
+    if (fit !== null && fit !== 'MATCHES') return;
     setBusy(true);
     try {
       await recordMedicalReview(client, built.input);
@@ -109,12 +110,12 @@ export default function MedicalPage({ client }: { readonly client: ApiClient }):
               {needsPhysician && (
                 <Stack space="space.050">
                   <Label htmlFor={nameId}>{t('field_ops.medical.physician')}</Label>
-                  <TextField id={nameId} value={physician} autoComplete="off" isInvalid={touched && physician.trim().length === 0} onChange={(e) => { setPhysician(e.currentTarget.value); }} />
-                  {touched && physician.trim().length === 0 && <ErrorMessage>{t('field_ops.medical.physician_required')}</ErrorMessage>}
+                  <TextField id={nameId} value={physician} autoComplete="off" isInvalid={touched && built !== null && 'problem' in built} onChange={(e) => { setPhysician(e.currentTarget.value); }} />
+                  {touched && built !== null && 'problem' in built && <ErrorMessage>{physician.trim().length === 0 ? t('field_ops.medical.physician_required') : t('field_ops.medical.physician_too_long')}</ErrorMessage>}
                 </Stack>
               )}
               <Box>
-                <LoadingButton appearance="primary" isLoading={busy} isDisabled={choice === null} onClick={() => { void record(); }} testId="medical-record">{t('field_ops.medical.record')}</LoadingButton>
+                <LoadingButton appearance="primary" isLoading={busy} isDisabled={choice === null || (fit !== null && fit !== 'MATCHES')} onClick={() => { void record(); }} testId="medical-record">{t('field_ops.medical.record')}</LoadingButton>
               </Box>
             </Stack>
           )}
