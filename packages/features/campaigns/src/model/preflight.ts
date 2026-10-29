@@ -15,7 +15,7 @@ export type PreflightCheckId = (typeof PREFLIGHT_CHECKS)[number];
 export interface PreflightItem { readonly id: PreflightCheckId; readonly ok: boolean; readonly count: number }
 
 export function preflight(detail: CampaignAdminDetail): readonly PreflightItem[] {
-  const s = detail.summary;
+  const s = detail;
   const active = detail.sessions.filter((x) => x.isActive);
   const coverage = coverageOf(s.targetDistricts, detail.sessions);
   const badCapacity = active.filter((x) => x.capacityLimit === null ? x.capacityDecisionCode !== 'UNBOUNDED_CAPACITY' : x.capacityLimit < 1);
@@ -53,7 +53,7 @@ export function stepOfRefusal(code: string): StudioStep | null {
 export interface Consequences { readonly registered: number | null; readonly sessions: number | null }
 
 export function consequencesOf(detail: CampaignAdminDetail): Consequences {
-  const o = detail.summary.occupancy as { readonly registeredTotal?: unknown; readonly sessionCount?: unknown } | undefined;
+  const o = detail.occupancy as { readonly registeredTotal?: unknown; readonly sessionCount?: unknown } | undefined;
   return {
     registered: typeof o?.registeredTotal === 'number' ? o.registeredTotal : null,
     sessions: typeof o?.sessionCount === 'number' ? o.sessionCount : null,

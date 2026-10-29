@@ -6,7 +6,7 @@ import { POSTS, json, signIn } from './support';
 // control plane. The live spec (live-campaign-studio.spec.ts) drives the real one.
 
 interface Fake {
-  campaign: Record<string, unknown> & { summary: Record<string, unknown>; sessions: Record<string, unknown>[]; policy: Record<string, unknown> | null };
+  campaign: Record<string, unknown> & { sessions: Record<string, unknown>[]; policy: Record<string, unknown> | null };
   keys: Record<string, string[]>;
   bodies: Record<string, unknown[]>;
   /** Refusals queued per path: the next write to that path answers with this. */
@@ -14,7 +14,7 @@ interface Fake {
 }
 
 const base = (status = 'DRAFT', over: Record<string, unknown> = {}): Fake['campaign'] => ({
-  summary: {
+  ...{
     publicCode: 'RDF-2026-A', campaignLabel: 'RDF 2026 general enlistment', status, targetCategories: ['GENERAL_ENLISTMENT'], targetDistricts: ['NYAGATARE', 'GASABO'],
     registrationOpensAt: '2026-11-01T06:00:00.000Z', registrationClosesAt: '2026-11-10T15:00:00.000Z', examinationStartDate: '2026-11-15', examinationEndDate: '2026-11-16',
     allowsWalkIn: true, targetIntakeCount: 400, publishedAt: null, createdAt: '2026-10-28T06:00:00.000Z',
@@ -42,7 +42,7 @@ async function fakeControlPlane(page: Page, fake: Fake, list: Record<string, unk
     const r = apply(body);
     return json(route, r.status, r.body);
   };
-  const setStatus = (s: string, extra: Record<string, unknown> = {}): void => { fake.campaign.summary = { ...fake.campaign.summary, status: s, ...extra }; };
+  const setStatus = (s: string, extra: Record<string, unknown> = {}): void => { fake.campaign = { ...fake.campaign, status: s, ...extra }; };
   await page.route('**/edge/v1/campaigns/admin**', (route) => json(route, 200, { agency: 'RDF', total: list.length, nextCursor: null, campaigns: list }));
   await page.route('**/edge/v1/campaigns/admin/detail**', (route) => json(route, 200, { agency: 'RDF', campaign: fake.campaign }));
   await page.route('**/edge/v1/campaigns', (route) => (route.request().method() !== 'POST' ? route.fallback() : write(route, 'create', (b) => {
@@ -75,7 +75,7 @@ async function fakeControlPlane(page: Page, fake: Fake, list: Record<string, unk
 }
 
 const newFake = (c = base()): Fake => ({ campaign: c, keys: {}, bodies: {}, refuse: {} });
-const summaryRow = (code: string, status: string): Record<string, unknown> => ({ ...base(status).summary, publicCode: code, campaignLabel: `Campaign ${code}` });
+const summaryRow = (code: string, status: string): Record<string, unknown> => ({ ...base(status), publicCode: code, campaignLabel: `Campaign ${code}` });
 
 async function confirmWithCode(page: Page, code: string): Promise<void> {
   await page.getByTestId('confirm-code').fill(code);

@@ -13,7 +13,7 @@ import { Panel } from './shared.tsx';
 
 export function CitizenPreview({ detail, agency }: { readonly detail: CampaignAdminDetail; readonly agency: string }): React.ReactElement {
   const { t } = useTranslation('campaigns');
-  const s = detail.summary;
+  const s = detail;
   return (
     <Panel testId="citizen-preview">
       <Stack space="space.100">

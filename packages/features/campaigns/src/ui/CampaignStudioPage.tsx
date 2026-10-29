@@ -22,7 +22,7 @@ const STEPS = ['basics', 'policy', 'sessions', 'publish', 'lifecycle'] as const;
 
 function Basics({ detail }: { readonly detail: CampaignAdminDetail }): React.ReactElement {
   const { t } = useTranslation('campaigns');
-  const s = detail.summary;
+  const s = detail;
   const rows: readonly (readonly [string, string])[] = [
     [t('campaigns.fields.publicCode'), s.publicCode],
     [t('campaigns.fields.campaignLabel'), s.campaignLabel],
@@ -71,11 +71,11 @@ export function CampaignStudioPage({ client }: { readonly client: ApiClient }): 
             <Stack space="space.200">
               <Inline spread="space-between" alignBlock="center" shouldWrap>
                 <Stack space="space.0">
-                  <Heading size="xlarge" as="h1">{detail.summary.campaignLabel}</Heading>
-                  <Text color="color.text.subtle">{detail.summary.publicCode}</Text>
+                  <Heading size="xlarge" as="h1">{detail.campaignLabel}</Heading>
+                  <Text color="color.text.subtle">{detail.publicCode}</Text>
                 </Stack>
                 <Inline space="space.200" alignBlock="center">
-                  <CampaignStatusLozenge state={detail.summary.status as CampaignState} />
+                  <CampaignStatusLozenge state={detail.status as CampaignState} />
                   {q.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} />}
                 </Inline>
               </Inline>

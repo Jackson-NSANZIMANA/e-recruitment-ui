@@ -50,7 +50,7 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
   const [keyFor, settle] = useIntentKey();
   const [form, setForm] = React.useState<SessionForm>(() => (existing === undefined ? EMPTY_SESSION : sessionFormOf(existing)));
   const [tried, setTried] = React.useState(false);
-  const s = detail.summary;
+  const s = detail;
   const days = daysBetween(s.examinationStartDate, s.examinationEndDate);
   const errors = validateSession(form, { start: s.examinationStartDate, end: s.examinationEndDate });
   const err = (f: keyof typeof errors): string | undefined => (tried && errors[f] !== undefined ? t(`campaigns.errors.${errors[f]}`) : undefined);
@@ -126,14 +126,14 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
 
 export function SessionsStep({ client, detail, canWrite, onStep }: { readonly client: ApiClient; readonly detail: CampaignAdminDetail; readonly canWrite: boolean; readonly onStep: (s: StudioStep) => void }): React.ReactElement {
   const { t } = useTranslation('campaigns');
-  const cov = coverageOf(detail.summary.targetDistricts, detail.sessions);
+  const cov = coverageOf(detail.targetDistricts, detail.sessions);
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.sessions.title')}</Heading>
       <Text as="p">{t('campaigns.sessions.lead')}</Text>
       <Meter covered={cov.covered.length} total={cov.total} label={t('campaigns.sessions.coverage', { covered: cov.covered.length, total: cov.total })} />
       {cov.missing.length > 0 && <Text size="small" color="color.text.warning" testId="coverage-missing">{t('campaigns.sessions.missing', { districts: cov.missing.map(districtLabel).join(', ') })}</Text>}
-      {detail.summary.targetDistricts.map((d) => (
+      {detail.targetDistricts.map((d) => (
         <DistrictRow key={d} client={client} detail={detail} district={d} existing={detail.sessions.find((s) => s.district === d)} canWrite={canWrite} onStep={onStep} />
       ))}
     </Stack>

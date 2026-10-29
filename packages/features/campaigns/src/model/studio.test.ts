@@ -113,7 +113,7 @@ describe('sessions and coverage', () => {
 
 describe('preflight', () => {
   const detail = (over: Partial<CampaignAdminDetail> = {}): CampaignAdminDetail => ({
-    summary: { publicCode: 'C-1', campaignLabel: 'L', status: 'DRAFT', targetCategories: ['GENERAL_ENLISTMENT'], targetDistricts: ['GASABO'], registrationOpensAt: '2026-11-01T00:00:00Z', registrationClosesAt: '2026-11-10T00:00:00Z', examinationStartDate: '2026-11-15', examinationEndDate: '2026-11-16', allowsWalkIn: false, targetIntakeCount: null, publishedAt: null, createdAt: '2026-10-01T00:00:00Z', occupancy: { sessionCount: 1, capacityTotal: 5, hasUnboundedSession: false, registeredTotal: 0 } },
+    ...{ publicCode: 'C-1', campaignLabel: 'L', status: 'DRAFT', targetCategories: ['GENERAL_ENLISTMENT'], targetDistricts: ['GASABO'], registrationOpensAt: '2026-11-01T00:00:00Z', registrationClosesAt: '2026-11-10T00:00:00Z', examinationStartDate: '2026-11-15', examinationEndDate: '2026-11-16', allowsWalkIn: false, targetIntakeCount: null, publishedAt: null, createdAt: '2026-10-01T00:00:00Z', occupancy: { sessionCount: 1, capacityTotal: 5, hasUnboundedSession: false, registeredTotal: 0 } },
     contactPhoneNumbers: null, contactWebsite: null, announcementReference: null, registrationClosedAt: null, cancelledAt: null,
     policy: { versionNumber: 1, policyHash: 'h', hashVersion: 1, legalBasisCode: 'X', createdAt: '2026-10-01T00:00:00Z' }, coverage: { version: 1, hash: 'c' },
     sessions: [{ district: 'GASABO', province: 'KIGALI_CITY', venueName: 'V', examDate: '2026-11-15', reportingTimeHour: 7, capacityLimit: 5, capacityDecisionCode: null, registeredCount: 0, remaining: 5, isActive: true }],
@@ -131,6 +131,6 @@ describe('preflight', () => {
     expect(stepOfRefusal('INCOMPLETE_COVERAGE')).toBe('sessions');
     expect(stepOfRefusal('POLICY_NOT_SET')).toBe('policy');
     expect(consequencesOf(detail())).toEqual({ registered: 0, sessions: 1 });
-    expect(consequencesOf({ ...detail(), summary: { ...detail().summary, occupancy: undefined as never } })).toEqual({ registered: null, sessions: null });
+    expect(consequencesOf({ ...detail(), occupancy: undefined as never })).toEqual({ registered: null, sessions: null });
   });
 });

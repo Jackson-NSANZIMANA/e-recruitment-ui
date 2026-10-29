@@ -21,8 +21,8 @@ export function PublishStep({ client, detail, agency, canPublish: allowed, onSte
   const [open, setOpen] = React.useState(false);
   const items = preflight(detail);
   const ready = canPublish(items);
-  const code = detail.summary.publicCode;
-  const isDraft = detail.summary.status === 'DRAFT';
+  const code = detail.publicCode;
+  const isDraft = detail.status === 'DRAFT';
 
   const confirm = async (): Promise<void> => {
     const input = { publicCode: code };

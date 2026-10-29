@@ -80,9 +80,9 @@ function CategoryCard({ category, value, onChange, t }: { readonly category: str
 
 export function PolicyStep({ client, detail, canWrite, onStep }: { readonly client: ApiClient; readonly detail: CampaignAdminDetail; readonly canWrite: boolean; readonly onStep: (s: StudioStep) => void }): React.ReactElement {
   const { t } = useTranslation('campaigns');
-  const code = detail.summary.publicCode;
-  const categories = detail.summary.targetCategories;
-  const editable = canWrite && detail.summary.status === 'DRAFT';
+  const code = detail.publicCode;
+  const categories = detail.targetCategories;
+  const editable = canWrite && detail.status === 'DRAFT';
   const create = useCreateCampaignPolicy(client);
   const [keyFor, settle] = useIntentKey();
   const [form, setForm] = React.useState<PolicyForm>(() => suggestPolicy(categories, kigaliToday(new Date())));
@@ -119,7 +119,7 @@ export function PolicyStep({ client, detail, canWrite, onStep }: { readonly clie
           </Stack>
         </SectionMessage>
       ) : <SectionMessage appearance="warning" testId="policy-none"><Text as="p">{t('campaigns.policy.none')}</Text></SectionMessage>}
-      {!editable && <Text as="p" color="color.text.subtle">{t(detail.summary.status === 'DRAFT' ? 'campaigns.noPermission' : 'campaigns.frozen')}</Text>}
+      {!editable && <Text as="p" color="color.text.subtle">{t(detail.status === 'DRAFT' ? 'campaigns.noPermission' : 'campaigns.frozen')}</Text>}
       {editable && (
         <>
           <SectionMessage appearance="warning" testId="policy-suggestion-notice"><Text as="p">{t('campaigns.policy.suggestionNotice')}</Text></SectionMessage>

@@ -34,8 +34,8 @@ export function LifecycleStep({ client, detail, allowed }: {
   const cancel = useCancelCampaign(client);
   const [keyFor, settle] = useIntentKey();
   const [open, setOpen] = React.useState<Action | null>(null);
-  const status = detail.summary.status as CampaignState;
-  const code = detail.summary.publicCode;
+  const status = detail.status as CampaignState;
+  const code = detail.publicCode;
   const actions = availableCommands(status).filter((c): c is Action => c !== 'publishCampaign');
   const mutation = open === 'closeCampaignRegistration' ? close : open === 'completeCampaign' ? complete : cancel;
 
