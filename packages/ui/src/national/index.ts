@@ -23,6 +23,7 @@ export { LanguageSwitcher } from "./LanguageSwitcher.js";
 export { NationalHeader } from "./NationalHeader.js";
 export { NationalFooter } from "./NationalFooter.js";
 export { HandlingMarking } from "./HandlingMarking.js";
+export { SandboxBanner, isSandboxBuild } from "./SandboxBanner.js";
 export { SessionWatermark } from "./SessionWatermark.js";
 export { OfficialDocument, verificationLineFor } from "./OfficialDocument.js";
 export { NationalFrame } from "./NationalFrame.js";

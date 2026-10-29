@@ -26,7 +26,7 @@ import LockIcon from "@atlaskit/icon/core/lock-locked";
 import { useTranslation } from "@usrp/i18n";
 
 import { useOfficerSession } from "@usrp/auth";
-import { CoatOfArms, ConnectionStatus, HandlingMarking, LanguageSwitcher, NationalLockup, SessionWatermark } from "@usrp/ui";
+import { CoatOfArms, ConnectionStatus, HandlingMarking, LanguageSwitcher, NationalLockup, SandboxBanner, SessionWatermark, isSandboxBuild } from "@usrp/ui";
 import { navItemsFor, type NavItem } from "../../nav.js";
 
 const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
@@ -80,7 +80,9 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
   return (
     <Root>
       {/* Handling marking: every staff screen states its restriction (ADR-FE-020). */}
-      <Banner height={32}>
+      <Banner height={isSandboxBuild() ? 64 : 32}>
+        {/* ADR-FE-019: a sandbox build says so above everything else. */}
+        {isSandboxBuild() ? <SandboxBanner /> : null}
         <HandlingMarking />
       </Banner>
       <TopNav>

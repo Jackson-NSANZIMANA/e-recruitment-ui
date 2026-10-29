@@ -52,6 +52,8 @@ export const EDGE_OPERATIONS = [
   { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getMyExamInvitation', method: 'GET', edgePath: '/edge/v1/me/applications/exam-invitation', upstreamOperationId: 'getMyExamInvitation', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getMyDocumentChecklist', method: 'GET', edgePath: '/edge/v1/me/applications/document-checklist', upstreamOperationId: 'getMyDocumentChecklist', session: 'applicant', retryOnG2G: true, composition: 'single' },
+  // CONTRACT-PENDING: S12c (backend PR feat/s12c-policy-v2). Re-pin EDGE_BACKEND_SHA when it merges.
+  { id: 'getMyIdentity', method: 'GET', edgePath: '/edge/v1/me/identity', upstreamOperationId: 'getMyIdentity', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getDocumentChecklist', method: 'GET', edgePath: '/edge/v1/applications/document-checklist', upstreamOperationId: 'getDocumentChecklist', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'verifyDocumentAtVenue', method: 'POST', edgePath: '/edge/v1/applications/documents/verify-at-venue', upstreamOperationId: 'verifyDocumentAtVenue', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'uploadMyDocument', method: 'POST', edgePath: '/edge/v1/me/applications/documents', upstreamOperationId: 'uploadMyDocument', session: 'applicant', retryOnG2G: false, composition: 'single' },

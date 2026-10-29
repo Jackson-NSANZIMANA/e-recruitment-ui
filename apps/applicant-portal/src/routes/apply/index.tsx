@@ -10,6 +10,7 @@ import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPE
 import {
   ApiError,
   createApiClient,
+  useMyIdentity,
   usePublicCampaigns,
   useSubmitMyApplication,
   useUploadMyDocument,
@@ -19,6 +20,7 @@ import {
 import { useTranslation } from "@usrp/i18n";
 import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
+import { nidaRows, sexKey } from "./nida-identity.js";
 
 const STORAGE_KEY = "usrp_apply_draft";
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -310,6 +312,39 @@ function StepEducation({ data, onNext, onBack }: {
   );
 }
 
+/**
+ * Identity as recorded by NIDA, read-only (ADR-FE-019). Nothing here is editable: a wrong
+ * value is corrected with NIDA, never in this form. A failed read never blocks the wizard.
+ */
+function NidaIdentityBlock(): React.ReactElement | null {
+  const { t } = useTranslation();
+  const identity = useMyIdentity(client);
+  if (identity.isPending) return null;
+  if (identity.isError) {
+    return <SectionMessage appearance="information"><Text>{t("apply.nida_unavailable")}</Text></SectionMessage>;
+  }
+  const label = (key: string, value: string | null): string => {
+    if (value === null) return t("apply.nida_not_held");
+    if (key === "sex") return t(`apply.nida_${sexKey(value === "FEMALE" ? "FEMALE" : "MALE")}`);
+    return value;
+  };
+  return (
+    <SectionMessage title={t("apply.nida_title")} headingLevel="h3" appearance="information">
+      <Stack space="space.100">
+        <Text>{t("apply.nida_body")}</Text>
+        <Stack space="space.050" testId="nida-identity">
+          {nidaRows(identity.data).map((row) => (
+            <Inline key={row.key} space="space.100">
+              <Text weight="bold">{t(`apply.nida_${row.key}`)}</Text>
+              <Text>{label(row.key, row.value)}{row.value === null ? ` (${t("apply.nida_asked")})` : ""}</Text>
+            </Inline>
+          ))}
+        </Stack>
+      </Stack>
+    </SectionMessage>
+  );
+}
+
 function StepDeclaration({ onNext, onBack }: {
   readonly onNext: (patch: Partial<WizardData>) => void;
   readonly onBack: () => void;
@@ -317,6 +352,7 @@ function StepDeclaration({ onNext, onBack }: {
   const { t } = useTranslation();
   return (
     <Stack space="space.400">
+      <NidaIdentityBlock />
       <SectionMessage title={t("apply.declaration_title")} headingLevel="h3">
         <Text>{t("apply.declaration_copy")}</Text>
       </SectionMessage>

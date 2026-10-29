@@ -71,6 +71,7 @@ export type {
   UploadDocumentInput,
   UploadDocumentResponse,
   DocumentChecklist,
+  MyIdentity,
   DocumentSatisfaction,
   VerifyAtVenueResponse,
   ExamInvitationState,
@@ -134,6 +135,8 @@ export {
   fileMyErasureRequest,
 } from './operations/applicant.js';
 export { listPublicCampaigns, getPublicCampaign } from './operations/campaigns.js';
+export { getMyIdentity } from './operations/identity.js';
+export { useMyIdentity } from './queries/identity.js';
 export { getMyDocumentChecklist, getDocumentChecklist, verifyDocumentAtVenue } from './operations/documents.js';
 export { getMyExamInvitation } from './operations/exam-invitation.js';
 export { admitAtGate, gateResultFromRefusal } from './operations/gate.js';

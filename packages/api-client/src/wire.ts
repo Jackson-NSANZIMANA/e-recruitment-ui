@@ -270,6 +270,22 @@ export type DocumentSatisfaction =
   | 'MISSING';
 
 /** ADVISORY: never a gate. No score, flag, object key or officer id. */
+/**
+ * The citizen's own verified identity, allowlisted by the edge (ADR-049, ADR-FE-019).
+ * placeOfBirth and nationality are always null today: the platform does not retain them,
+ * so the wizard asks for them. There is no photo, signature, parents' names or National ID.
+ * CONTRACT-PENDING: S12c.
+ */
+export interface MyIdentity {
+  readonly fullName: string;
+  readonly sex: 'MALE' | 'FEMALE';
+  readonly dateOfBirth: string;
+  readonly homeDistrict: string;
+  readonly homeProvince: string;
+  readonly placeOfBirth: string | null;
+  readonly nationality: string | null;
+}
+
 export interface DocumentChecklist {
   readonly agency: Agency;
   readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';

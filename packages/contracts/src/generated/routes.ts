@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 77 business operations + 22 probes = 99 total.
+// 78 business operations + 22 probes = 100 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -1709,6 +1709,24 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "202",
       "401",
       "500"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyIdentity",
+    "method": "GET",
+    "path": "/v1/applicants/me/identity",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/own-identity.controller.ts (ME_IDENTITY_PATH)",
+    "statuses": [
+      "200",
+      "401",
+      "404",
+      "503"
     ]
   },
   {

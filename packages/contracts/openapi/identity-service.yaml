@@ -617,6 +617,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/UpstreamUnavailable502"
 
+  /v1/applicants/me/identity:
+    get:
+      operationId: "getMyIdentity"
+      summary: "The citizen's own verified identity, allowlisted (ADR-049, ADR-FE-019)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session. ALLOWLISTED: names, sex,
+        date of birth, district and province of residence; never a photo, signature,
+        parents' names or the National ID. CONTRACT-PENDING: S12c (backend branch
+        feat/s12c-policy-v2); re-pin and run drift when it merges.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/own-identity.controller.ts (ME_IDENTITY_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The allowlisted identity."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyIdentity200"
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "No verified identity for this session."
+        "503":
+          description: "The identity record could not be read."
+
   /v1/applicants/me/applications/document-checklist:
     get:
       operationId: "getMyDocumentChecklist"
@@ -1852,6 +1883,27 @@ components:
         registry:
           description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
           type: ["string", "null"]
+
+    MyIdentity200:
+      description: >-
+        The citizen's own identity, allowlisted (ADR-049). The edge adds
+        placeOfBirth and nationality as null: the platform does not retain them.
+      type: "object"
+      additionalProperties: false
+      required: ["fullName", "sex", "dateOfBirth", "homeDistrict", "homeProvince"]
+      properties:
+        fullName:
+          type: "string"
+        sex:
+          type: "string"
+          enum: ["MALE", "FEMALE"]
+        dateOfBirth:
+          type: "string"
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        homeDistrict:
+          type: "string"
+        homeProvince:
+          type: "string"
 
     DocumentChecklist200:
       description: >-

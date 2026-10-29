@@ -67,6 +67,7 @@ import type {
   InvalidSession401Schema,
   MyApplicationsOkSchema,
   MyErasureRequestOkSchema,
+  MyIdentity200Schema,
   NidaUnavailable503Schema,
   NotACitizen422Schema,
   NotFoundInNida404Schema,
@@ -141,6 +142,7 @@ export type InvalidOtp401 = z.infer<typeof InvalidOtp401Schema>;
 export type InvalidSession401 = z.infer<typeof InvalidSession401Schema>;
 export type MyApplicationsOk = z.infer<typeof MyApplicationsOkSchema>;
 export type MyErasureRequestOk = z.infer<typeof MyErasureRequestOkSchema>;
+export type MyIdentity200 = z.infer<typeof MyIdentity200Schema>;
 export type NidaUnavailable503 = z.infer<typeof NidaUnavailable503Schema>;
 export type NotACitizen422 = z.infer<typeof NotACitizen422Schema>;
 export type NotFoundInNida404 = z.infer<typeof NotFoundInNida404Schema>;
