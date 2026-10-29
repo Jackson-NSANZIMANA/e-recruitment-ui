@@ -17,7 +17,7 @@ export function PublishStep({ client, detail, agency, canPublish: allowed, onSte
 }): React.ReactElement {
   const { t } = useTranslation('campaigns');
   const publish = usePublishCampaign(client);
-  const keyFor = useIntentKey();
+  const [keyFor, settle] = useIntentKey();
   const [open, setOpen] = React.useState(false);
   const items = preflight(detail);
   const ready = canPublish(items);
@@ -26,7 +26,7 @@ export function PublishStep({ client, detail, agency, canPublish: allowed, onSte
 
   const confirm = async (): Promise<void> => {
     const input = { publicCode: code };
-    try { await publish.mutateAsync({ input, idempotencyKey: keyFor(input) }); setOpen(false); } catch { /* shown in the dialog */ }
+    try { await publish.mutateAsync({ input, idempotencyKey: keyFor(input) }); settle(); setOpen(false); } catch (e) { settle(e); /* shown in the dialog */ }
   };
   return (
     <Stack space="space.200">

@@ -97,7 +97,9 @@
    "empty": {
     "title": "Nta bukangurambaga buraboneka",
     "body": "Tangira ubukangurambaga bwa mbere bw’urwego rwawe. Butangira ari umushinga kandi abaturage ntibabubona kugeza ubutangaje."
-   }
+   },
+   "next": "Urupapuro rukurikira",
+   "previous": "Urupapuro rwabanje"
   },
   "new": {
    "title": "Ubukangurambaga bushya: ibanze",
@@ -233,7 +235,11 @@
    "unboundedHint": "Yohereza icyemezo UNBOUNDED_CAPACITY, gikurikiranwa.",
    "save": "Bika icyiciro",
    "saved": "Icyiciro cyabitswe.",
-   "unchanged": "Cyari cyabitswe: nta cyahindutse."
+   "unchanged": "Cyari cyabitswe: nta cyahindutse.",
+   "active": "Gikora",
+   "inactive": "Ntigikora (ntigibarwa mu bwuzuzanye)",
+   "status": "Imimerere",
+   "statusHint": "Icyiciro gikora gusa ni cyo gitwikira akarere."
   },
   "publish": {
    "title": "Igenzura n’itangazwa",

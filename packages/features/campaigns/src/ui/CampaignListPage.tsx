@@ -18,9 +18,15 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
   const perms = useCampaignPermissions();
   const [text, setText] = React.useState('');
   const [statuses, setStatuses] = React.useState<readonly CampaignStatus[]>([]);
-  const q = useAgencyCampaigns(client, { ...(text.trim() === '' ? {} : { q: text.trim() }), ...(statuses.length === 0 ? {} : { status: statuses }), limit: 50 }, perms.read);
+  // Wait for a pause in typing before asking the server; page through with the cursor trail.
+  const [term, setTerm] = React.useState('');
+  React.useEffect(() => { const id = setTimeout(() => setTerm(text.trim()), 300); return () => clearTimeout(id); }, [text]);
+  const [trail, setTrail] = React.useState<readonly string[]>([]);
+  React.useEffect(() => setTrail([]), [term, statuses]);
+  const cursor = trail.at(-1);
+  const q = useAgencyCampaigns(client, { ...(term === '' ? {} : { q: term }), ...(statuses.length === 0 ? {} : { status: statuses }), limit: 50, ...(cursor === undefined ? {} : { cursor }) }, perms.read);
   const rows = q.data?.campaigns ?? [];
-  const filtersActive = text.trim() !== '' || statuses.length > 0;
+  const filtersActive = term !== '' || statuses.length > 0;
   const state = !perms.read ? 'forbidden' : listState({ isLoading: q.isLoading, errorStatus: q.isError ? httpStatusOf(q.error) : null, rowCount: rows.length, filtersActive });
   const options: Opt[] = CAMPAIGN_STATES.map((s) => ({ value: s, label: t(`campaigns.states.${s}`) }));
 
@@ -77,7 +83,13 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
           copy={{ empty: { title: t('campaigns.list.empty.title'), body: t('campaigns.list.empty.body') } }}
         >
           <div data-testid="campaign-table"><DynamicTable caption={t('campaigns.list.title')} head={head} rows={tableRows} /></div>
-          {q.data !== undefined && q.data.nextCursor !== null && <Text size="small" color="color.text.subtle" testId="campaign-more">{t('campaigns.list.more', { shown: rows.length, total: q.data.total })}</Text>}
+          {q.data !== undefined && (q.data.nextCursor !== null || trail.length > 0) && (
+            <Inline space="space.150" alignBlock="center" testId="campaign-more">
+              <Text size="small" color="color.text.subtle">{t('campaigns.list.more', { shown: rows.length, total: q.data.total })}</Text>
+              {trail.length > 0 && <Button onClick={() => setTrail(trail.slice(0, -1))}>{t('campaigns.list.previous')}</Button>}
+              {q.data.nextCursor !== null && <Button onClick={() => setTrail([...trail, q.data.nextCursor as string])}>{t('campaigns.list.next')}</Button>}
+            </Inline>
+          )}
         </StateBoundary>
       </Stack>
     </Page>

@@ -9,10 +9,17 @@ export const KIGALI_OFFSET = '+02:00';
 
 const LOCAL = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/;
 
+/** True only for a calendar date that exists ("2026-02-31" is not one; Date.parse would roll it over). */
+export function isRealDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
 /** "2026-11-01T08:00" (Kigali wall clock, as a datetime-local input gives it) → "2026-11-01T08:00:00+02:00", or null. */
 export function kigaliLocalToInstant(local: string): string | null {
   const m = LOCAL.exec(local);
-  if (m === null) return null;
+  if (m === null || !isRealDate(m[1] as string) || Number(m[2]) > 23 || Number(m[3]) > 59) return null;
   const instant = `${m[1]}T${m[2]}:${m[3]}:00${KIGALI_OFFSET}`;
   return Number.isNaN(Date.parse(instant)) ? null : instant;
 }
@@ -30,13 +37,13 @@ export function formatKigali(instant: string): string {
   return local === '' ? instant : `${local.replace('T', ' ')} (Kigali, UTC+2)`;
 }
 
-/** Every calendar day from `start` to `end` inclusive (YYYY-MM-DD), capped at 62 days. */
+/** Every calendar day from `start` to `end` inclusive (YYYY-MM-DD), capped at 366 days. */
 export function daysBetween(start: string, end: string): readonly string[] {
   const out: string[] = [];
   const first = Date.parse(`${start}T00:00:00Z`);
   const last = Date.parse(`${end}T00:00:00Z`);
   if (Number.isNaN(first) || Number.isNaN(last) || first > last) return out;
-  for (let ms = first; ms <= last && out.length < 62; ms += 86_400_000) out.push(new Date(ms).toISOString().slice(0, 10));
+  for (let ms = first; ms <= last && out.length < 366; ms += 86_400_000) out.push(new Date(ms).toISOString().slice(0, 10));
   return out;
 }
 

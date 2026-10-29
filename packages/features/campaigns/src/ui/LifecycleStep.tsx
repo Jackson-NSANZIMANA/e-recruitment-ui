@@ -32,7 +32,7 @@ export function LifecycleStep({ client, detail, allowed }: {
   const close = useCloseCampaignRegistration(client);
   const complete = useCompleteCampaign(client);
   const cancel = useCancelCampaign(client);
-  const keyFor = useIntentKey();
+  const [keyFor, settle] = useIntentKey();
   const [open, setOpen] = React.useState<Action | null>(null);
   const status = detail.summary.status as CampaignState;
   const code = detail.summary.publicCode;
@@ -42,7 +42,7 @@ export function LifecycleStep({ client, detail, allowed }: {
   const run = async (): Promise<void> => {
     if (open === null) return;
     const input = { publicCode: code };
-    try { await mutation.mutateAsync({ input, idempotencyKey: keyFor({ action: open, ...input }) }); setOpen(null); } catch { /* in dialog */ }
+    try { await mutation.mutateAsync({ input, idempotencyKey: keyFor({ action: open, ...input }) }); settle(); setOpen(null); } catch (e) { settle(e); /* in dialog */ }
   };
   return (
     <Stack space="space.200">

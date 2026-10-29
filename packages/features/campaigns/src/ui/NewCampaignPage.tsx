@@ -18,10 +18,10 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
   const perms = useCampaignPermissions();
   const navigate = useNavigate();
   const create = useCreateCampaign(client);
-  const keyFor = useIntentKey();
+  const [keyFor, settle] = useIntentKey();
   const [form, setForm] = React.useState<DraftForm>(EMPTY_DRAFT);
   const [submitted, setSubmitted] = React.useState(false);
-  const set = <K extends DraftField>(k: K, v: DraftForm[K]): void => setForm((f) => ({ ...f, [k]: v }));
+  const set = <K extends DraftField>(k: K, v: DraftForm[K]): void => { setForm((f) => ({ ...f, [k]: v })); if (create.isError) create.reset(); };
 
   if (!perms.create) return <StateBoundary state="forbidden" />;
 
@@ -30,7 +30,12 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
   const err = (f: DraftField): string | undefined => {
     const key = errors[f];
     if (submitted && key !== undefined) return t(`campaigns.errors.${key}`);
-    if (serverField === f) return t(create.error instanceof ApiError && create.error.normalised.kind === 'conflict' ? `campaigns.refusals.${refusalCode(create.error) ?? 'GENERIC'}` : 'campaigns.errors.serverRejected');
+    if (serverField === f && create.error instanceof ApiError) {
+      const n = create.error.normalised;
+      if (n.kind === 'conflict') return t(`campaigns.refusals.${refusalCode(create.error) ?? 'GENERIC'}`);
+      if (n.kind === 'badRequest' && n.detail !== null) return t('campaigns.refusals.REJECTED', { detail: n.detail });
+      return t('campaigns.errors.serverRejected');
+    }
     return undefined;
   };
 
@@ -56,8 +61,9 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
     const input = toCreateCommand(form, perms.agency);
     try {
       await create.mutateAsync({ input, idempotencyKey: keyFor(input) });
+      settle();
       void navigate(`/campaigns/${encodeURIComponent(input.publicCode)}`);
-    } catch { /* rendered below, per field where the server named one */ }
+    } catch (e) { settle(e); /* rendered below, per field where the server named one */ }
   };
 
   return (
@@ -103,8 +109,8 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
             </Inline>
             <Inline space="space.200" shouldWrap>
               <Field label={t('campaigns.fields.contactPhoneNumbers')} hint={t('campaigns.hints.phones')} error={err('contactPhoneNumbers')} testId="field-contactPhoneNumbers">
-                <Textfield name="contactPhoneNumbers" aria-label={t('campaigns.fields.contactPhoneNumbers')} value={form.contactPhoneNumbers.split('\n').join(', ')}
-                  onChange={(e) => set('contactPhoneNumbers', (e.target as HTMLInputElement).value.split(',').map((s) => s.trim()).join('\n'))} />
+                <Textfield name="contactPhoneNumbers" aria-label={t('campaigns.fields.contactPhoneNumbers')} value={form.contactPhoneNumbers}
+                  onChange={(e) => set('contactPhoneNumbers', (e.target as HTMLInputElement).value)} />
               </Field>
               <Field label={t('campaigns.fields.contactWebsite')} hint={t('campaigns.hints.optional')} error={err('contactWebsite')} testId="field-contactWebsite">{text('contactWebsite', { type: 'url' })}</Field>
             </Inline>

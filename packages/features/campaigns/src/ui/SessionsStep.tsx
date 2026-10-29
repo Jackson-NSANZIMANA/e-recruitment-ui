@@ -47,7 +47,7 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
 }): React.ReactElement {
   const { t } = useTranslation('campaigns');
   const save = useConfigureCampaignSession(client);
-  const keyFor = useIntentKey();
+  const [keyFor, settle] = useIntentKey();
   const [form, setForm] = React.useState<SessionForm>(() => (existing === undefined ? EMPTY_SESSION : sessionFormOf(existing)));
   const [tried, setTried] = React.useState(false);
   const s = detail.summary;
@@ -56,7 +56,9 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
   const err = (f: keyof typeof errors): string | undefined => (tried && errors[f] !== undefined ? t(`campaigns.errors.${errors[f]}`) : undefined);
   const set = (patch: Partial<SessionForm>): void => { setForm({ ...form, ...patch }); save.reset(); };
   const editable = canWrite && s.status === 'DRAFT';
-  const dayOptions: Opt[] = days.map((d) => ({ value: d, label: d }));
+  // A stored date outside the generated list (it can only come from the server) is still shown, never blanked.
+  const dayOptions: Opt[] = (form.examDate !== '' && !days.includes(form.examDate) ? [...days, form.examDate] : days).map((d) => ({ value: d, label: d }));
+  const activeOptions: Opt[] = [{ value: 'yes', label: t('campaigns.sessions.active') }, { value: 'no', label: t('campaigns.sessions.inactive') }];
   const modeOptions: Opt[] = [{ value: 'BOUNDED', label: t('campaigns.sessions.bounded') }, { value: 'UNBOUNDED', label: t('campaigns.sessions.unbounded') }];
   const name = districtLabel(district);
 
@@ -64,7 +66,7 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
     setTried(true);
     if (Object.keys(errors).length > 0) return;
     const input = toSessionCommand(s.publicCode, district, form);
-    try { await save.mutateAsync({ input, idempotencyKey: keyFor(input) }); } catch { /* below */ }
+    try { await save.mutateAsync({ input, idempotencyKey: keyFor(input) }); settle(); } catch (e) { settle(e); }
   };
   if (!editable) {
     return (
@@ -110,6 +112,10 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
             </Field>
           )}
         </Inline>
+        <Field label={t('campaigns.sessions.status')} hint={t('campaigns.sessions.statusHint')}>
+          <Select<Opt> inputId={`${district}-active`} aria-label={`${t('campaigns.sessions.status')} (${name})`} options={activeOptions}
+            value={activeOptions.find((o) => o.value === (form.isActive ? 'yes' : 'no')) ?? null} onChange={(o) => { if (o !== null) set({ isActive: o.value === 'yes' }); }} />
+        </Field>
         {save.isError && <Refusal error={save.error} onStep={onStep} testId={`session-refusal-${district}`} />}
         {save.isSuccess && <Text size="small" color="color.text.success" testId={`session-saved-${district}`}>{t(save.data.replayed ? 'campaigns.replayed' : save.data.result.status === 'SESSION_UNCHANGED' ? 'campaigns.sessions.unchanged' : 'campaigns.sessions.saved')}</Text>}
         {<Inline><Button appearance="primary" isDisabled={save.isPending} aria-label={`${t('campaigns.sessions.save')}: ${name}`} onClick={() => void submit()}>{t('campaigns.sessions.save')}</Button></Inline>}

@@ -84,23 +84,26 @@ export function PolicyStep({ client, detail, canWrite, onStep }: { readonly clie
   const categories = detail.summary.targetCategories;
   const editable = canWrite && detail.summary.status === 'DRAFT';
   const create = useCreateCampaignPolicy(client);
-  const keyFor = useIntentKey();
+  const [keyFor, settle] = useIntentKey();
   const [form, setForm] = React.useState<PolicyForm>(() => suggestPolicy(categories, kigaliToday(new Date())));
-  const [local, setLocal] = React.useState<string | null | undefined>(undefined);
-  const issues = validatePolicy(form, categories);
-  const cmd = issues.length === 0 ? toPolicyCommand(code, form, categories) : null;
-  const previous = lastSubmitted(code);
-  const changes = cmd === null ? [] : diffPolicy(previous, cmd);
+  // The on-device digest is tied to the version it was computed for, so a later submit can never be compared with an earlier digest.
+  const [checked, setChecked] = React.useState<{ readonly version: number; readonly digest: string | null } | null>(null);
+  const [savedTick, setSavedTick] = React.useState(0);
+  const issues = React.useMemo(() => validatePolicy(form, categories), [form, categories]);
+  const cmd = React.useMemo(() => (issues.length === 0 ? toPolicyCommand(code, form, categories) : null), [issues, code, form, categories]);
+  const previous = React.useMemo(() => lastSubmitted(code), [code, savedTick]);
+  const changes = React.useMemo(() => (cmd === null ? [] : diffPolicy(previous, cmd)), [previous, cmd]);
   const done = create.data?.result;
 
   const submit = async (): Promise<void> => {
     if (cmd === null) return;
     try {
       const r = await create.mutateAsync({ input: cmd, idempotencyKey: keyFor(cmd) });
+      settle();
       remember(code, cmd);
-      setLocal(await policyDigest(cmd));
-      void r;
-    } catch { /* rendered below */ }
+      setSavedTick((n) => n + 1);
+      setChecked({ version: r.result.policyVersion, digest: await policyDigest(cmd) });
+    } catch (e) { settle(e); /* rendered below */ }
   };
   const p = detail.policy;
   return (
@@ -152,7 +155,7 @@ export function PolicyStep({ client, detail, canWrite, onStep }: { readonly clie
               <Stack space="space.050">
                 <Wrap><Text size="small" testId="policy-created-hash">{done.policyHash}</Text></Wrap>
                 {create.data?.replayed === true && <Text size="small">{t('campaigns.replayed')}</Text>}
-                {local !== undefined && <Text size="small" testId="policy-local-check">{local === null ? t('campaigns.policy.localUnavailable') : local === done.policyHash ? t('campaigns.policy.localMatch') : t('campaigns.policy.localMismatch')}</Text>}
+                {checked !== null && checked.version === done.policyVersion && <Text size="small" testId="policy-local-check">{checked.digest === null ? t('campaigns.policy.localUnavailable') : checked.digest === done.policyHash ? t('campaigns.policy.localMatch') : t('campaigns.policy.localMismatch')}</Text>}
               </Stack>
             </SectionMessage>
           )}

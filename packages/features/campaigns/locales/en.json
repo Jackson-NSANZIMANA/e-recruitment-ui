@@ -97,7 +97,9 @@
    "empty": {
     "title": "No campaigns yet",
     "body": "Create the first campaign of your agency. It starts as a draft and is not visible to citizens until you publish it."
-   }
+   },
+   "next": "Next page",
+   "previous": "Previous page"
   },
   "new": {
    "title": "New campaign: the basics",
@@ -233,7 +235,11 @@
    "unboundedHint": "Sends the explicit decision UNBOUNDED_CAPACITY, which is audited.",
    "save": "Save session",
    "saved": "Session saved.",
-   "unchanged": "Already saved: nothing changed."
+   "unchanged": "Already saved: nothing changed.",
+   "active": "Active",
+   "inactive": "Inactive (does not count for coverage)",
+   "status": "Status",
+   "statusHint": "Only an active session covers its district."
   },
   "publish": {
    "title": "Preflight and publish",

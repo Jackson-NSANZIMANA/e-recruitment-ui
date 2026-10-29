@@ -18,6 +18,7 @@
 // ══════════════════════════════════════════════════════════════════
 
 import type { CampaignCategoryPolicy, CreateCampaignPolicyInput } from '@usrp/api-client';
+import { isRealDate } from './kigali.ts';
 import { AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, type Agency, type ApplicationCategory } from '@usrp/contracts';
 
 export const POLICY_CONTRACT_VERSION = 1;
@@ -132,7 +133,7 @@ export function validatePolicy(form: PolicyForm, categories: readonly string[]):
     if (c.minimumAge.trim() === '' || !Number.isInteger(min) || min < 0 || min > 130) issues.push({ category, field: 'minimumAge', key: 'age' });
     if (c.maximumAge.trim() === '' || !Number.isInteger(max) || max < 0 || max > 130) issues.push({ category, field: 'maximumAge', key: 'age' });
     else if (Number.isInteger(min) && min > max) issues.push({ category, field: 'maximumAge', key: 'ageOrder' });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(c.referenceDate) || Number.isNaN(Date.parse(`${c.referenceDate}T00:00:00Z`))) issues.push({ category, field: 'referenceDate', key: 'date' });
+    if (!isRealDate(c.referenceDate)) issues.push({ category, field: 'referenceDate', key: 'date' });
     if (!(EDUCATION_MODES as readonly string[]).includes(c.educationMode)) issues.push({ category, field: 'educationMode', key: 'required' });
     if (c.educationThreshold.trim() === '') issues.push({ category, field: 'educationThreshold', key: 'required' });
     if (!(CRIMINAL_THRESHOLDS as readonly string[]).includes(c.criminalThreshold)) issues.push({ category, field: 'criminalThreshold', key: 'required' });

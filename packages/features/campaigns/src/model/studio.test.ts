@@ -40,6 +40,14 @@ describe('draft form', () => {
     expect(fieldOfServerError('INVALID_REGISTRATION_WINDOW')).toBe('registrationClosesAt');
     expect(fieldOfServerError('SOMETHING_ELSE')).toBeNull();
   });
+  it('rejects dates that do not exist and the reserved code NEW', () => {
+    expect(validateDraft({ ...good, examinationStartDate: '2026-02-31' }, 'RDF')).toHaveProperty('examinationStartDate');
+    expect(kigaliLocalToInstant('2026-02-31T08:00')).toBeNull();
+    expect(validateDraft({ ...good, publicCode: 'new' }, 'RDF')).toHaveProperty('publicCode');
+  });
+  it('keeps spaces inside phone numbers', () => {
+    expect(toCreateCommand({ ...good, contactPhoneNumbers: '+250 788 000 000, +250 722 111 222' }, 'RDF').contactPhoneNumbers).toEqual(['+250 788 000 000', '+250 722 111 222']);
+  });
   it('offers walk-in only where the policy allows it', () => {
     expect([walkInOffered('RDF'), walkInOffered('RNP'), walkInOffered('RCS')]).toEqual([true, false, false]);
   });

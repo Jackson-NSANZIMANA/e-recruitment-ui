@@ -8,6 +8,7 @@
 
 import type { CampaignSessionOccupancy, ConfigureCampaignSessionInput } from '@usrp/api-client';
 import { provinceOf } from './geography.ts';
+import { isRealDate } from './kigali.ts';
 
 export interface SessionForm {
   readonly venueName: string;
@@ -38,7 +39,7 @@ export function validateSession(form: SessionForm, window: { readonly start: str
   const e: Partial<Record<SessionField, string>> = {};
   const venue = form.venueName.trim();
   if (venue === '' || venue.length > 200) e.venueName = 'venue';
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(form.examDate)) e.examDate = 'dateRequired';
+  if (!isRealDate(form.examDate)) e.examDate = 'dateRequired';
   else if (form.examDate < window.start || form.examDate > window.end) e.examDate = 'sessionOutsideWindow';
   const hour = Number(form.reportingTimeHour);
   if (form.reportingTimeHour.trim() === '' || !Number.isInteger(hour) || hour < 0 || hour > 23) e.reportingTimeHour = 'reportingHour';

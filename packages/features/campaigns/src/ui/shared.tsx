@@ -83,12 +83,25 @@ function newUuid(): string {
  * retries (so a lost response replays instead of duplicating), a changed body
  * mints a new one. The returned function is stable across renders.
  */
-export function useIntentKey(): (body: unknown) => string {
+export function useIntentKey(): readonly [keyFor: (body: unknown) => string, settle: (error?: unknown) => void] {
   const ref = React.useRef<IntentKey | null>(null);
-  return React.useCallback((body: unknown) => {
+  const keyFor = React.useCallback((body: unknown) => {
     ref.current = keyForIntent(ref.current, body, newUuid);
     return ref.current.key;
   }, []);
+  // The intent is over once it succeeded or the server gave a business answer (the edge may
+  // store that answer under the key and replay it, which would hide a later fix). Only an
+  // unknown outcome (network loss, 5xx) keeps the key, so the retry replays instead of duplicating.
+  const settle = React.useCallback((error?: unknown) => {
+    if (error === undefined || isBusinessAnswer(error)) ref.current = null;
+  }, []);
+  return [keyFor, settle] as const;
+}
+
+function isBusinessAnswer(error: unknown): boolean {
+  if (!(error instanceof ApiError)) return false;
+  const k = error.normalised.kind;
+  return k === 'conflict' || k === 'unprocessable' || k === 'badRequest' || k === 'notFound' || k === 'forbidden';
 }
 
 /** The server's refusal code for an error, or null for an infrastructure fault. */

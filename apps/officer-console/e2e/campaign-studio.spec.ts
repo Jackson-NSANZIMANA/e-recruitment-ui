@@ -169,7 +169,7 @@ test.describe('draft', () => {
     expect(fake.keys['create']?.[0]).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  test('a duplicate code is a 409 shown on the code field; retrying the same intent reuses the key, changing it renews it', async ({ page }) => {
+  test('a duplicate code is a 409 shown on the code field and the next attempt is a new intent with a new key', async ({ page }) => {
     await signIn(page, ['agency_admin'], POSTS.admin);
     const fake = newFake();
     fake.refuse['create'] = { status: 409, body: { status: 'PUBLIC_CODE_ALREADY_EXISTS' } };
@@ -178,6 +178,26 @@ test.describe('draft', () => {
     await fill(page);
     await page.getByTestId('create-draft').click();
     await expect(page.getByTestId('field-publicCode-error')).toContainText('already used', { timeout: 15_000 });
+    await page.getByTestId('create-draft').click();
+    await expect(page).toHaveURL(/\/campaigns\/RDF-2026-A$/, { timeout: 15_000 });
+    expect(fake.keys['create']).toHaveLength(2);
+    expect(fake.keys['create']?.[1]).not.toBe(fake.keys['create']?.[0]);
+  });
+
+  test('a response lost on the wire is retried under the SAME key, so the edge replays instead of duplicating', async ({ page }) => {
+    await signIn(page, ['agency_admin'], POSTS.admin);
+    const fake = newFake();
+    await fakeControlPlane(page, fake);
+    let first = true;
+    await page.route('**/edge/v1/campaigns', (route) => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      if (first) { first = false; fake.keys['create'] = [route.request().headers()['idempotency-key'] ?? '']; return route.abort('connectionreset'); }
+      return route.fallback();
+    });
+    await page.goto('/campaigns/new');
+    await fill(page);
+    await page.getByTestId('create-draft').click();
+    await expect(page.getByTestId('campaign-refusal')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('create-draft').click();
     await expect(page).toHaveURL(/\/campaigns\/RDF-2026-A$/, { timeout: 15_000 });
     expect(fake.keys['create']).toHaveLength(2);

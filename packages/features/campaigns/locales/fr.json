@@ -97,7 +97,9 @@
    "empty": {
     "title": "Aucune campagne pour le moment",
     "body": "Créez la première campagne de votre agence. Elle commence comme brouillon et reste invisible aux citoyens jusqu’à sa publication."
-   }
+   },
+   "next": "Page suivante",
+   "previous": "Page précédente"
   },
   "new": {
    "title": "Nouvelle campagne : les informations de base",
@@ -233,7 +235,11 @@
    "unboundedHint": "Envoie la décision explicite UNBOUNDED_CAPACITY, qui est auditée.",
    "save": "Enregistrer la session",
    "saved": "Session enregistrée.",
-   "unchanged": "Déjà enregistrée : rien n’a changé."
+   "unchanged": "Déjà enregistrée : rien n’a changé.",
+   "active": "Active",
+   "inactive": "Inactive (ne compte pas dans la couverture)",
+   "status": "Statut",
+   "statusHint": "Seule une session active couvre son district."
   },
   "publish": {
    "title": "Contrôle préalable et publication",

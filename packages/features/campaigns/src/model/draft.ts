@@ -10,7 +10,7 @@
 import type { CreateCampaignInput } from '@usrp/api-client';
 import { CATEGORY_AGENCY, type Agency, type ApplicationCategory } from '@usrp/contracts';
 import { isDistrict, walkInOffered } from './geography.ts';
-import { kigaliLocalToInstant } from './kigali.ts';
+import { isRealDate, kigaliLocalToInstant } from './kigali.ts';
 
 export const PUBLIC_CODE_RE = /^[A-Z0-9][A-Z0-9-]{2,63}$/;
 export const LABEL_MAX = 50;
@@ -29,7 +29,7 @@ export interface DraftForm {
   readonly examinationReportingHour: string;
   readonly allowsWalkIn: boolean;
   readonly targetIntakeCount: string;
-  /** One number per line. */
+  /** Numbers separated by commas (or new lines). */
   readonly contactPhoneNumbers: string;
   readonly contactWebsite: string;
 }
@@ -53,14 +53,15 @@ export function normalisePublicCode(value: string): string {
 }
 
 export function parsePhones(raw: string): readonly string[] {
-  return raw.split('\n').map((s) => s.trim()).filter((s) => s !== '');
+  return raw.split(/[,\n]/).map((s) => s.trim()).filter((s) => s !== '');
 }
 
 /** PURE. The per-field problems with `form` for an officer of `agency`; empty when it can be sent. */
 export function validateDraft(form: DraftForm, agency: string): DraftErrors {
   const e: Record<string, string> = {};
   const code = normalisePublicCode(form.publicCode);
-  if (!PUBLIC_CODE_RE.test(code) || code.startsWith('LEGACY-')) e['publicCode'] = 'publicCode';
+  // NEW is reserved: /campaigns/new is the create screen, so a campaign of that code could never be opened.
+  if (!PUBLIC_CODE_RE.test(code) || code.startsWith('LEGACY-') || code === 'NEW') e['publicCode'] = 'publicCode';
   const label = form.campaignLabel.trim();
   if (label === '') e['campaignLabel'] = 'labelRequired';
   else if (Array.from(label.normalize('NFC')).length > LABEL_MAX) e['campaignLabel'] = 'labelTooLong';
@@ -77,7 +78,7 @@ export function validateDraft(form: DraftForm, agency: string): DraftErrors {
   if (closes === null) e['registrationClosesAt'] = 'dateRequired';
   if (opens !== null && closes !== null && Date.parse(opens) >= Date.parse(closes)) e['registrationClosesAt'] = 'registrationWindow';
 
-  const dateOk = (s: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
+  const dateOk = isRealDate;
   if (!dateOk(form.examinationStartDate)) e['examinationStartDate'] = 'dateRequired';
   if (!dateOk(form.examinationEndDate)) e['examinationEndDate'] = 'dateRequired';
   if (dateOk(form.examinationStartDate) && dateOk(form.examinationEndDate) && form.examinationStartDate > form.examinationEndDate) e['examinationEndDate'] = 'examinationWindow';
