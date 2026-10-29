@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 77 business operations + 22 probes = 99 total.
+// 79 business operations + 22 probes = 101 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -260,6 +260,30 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "403",
       "404",
       "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "attachClearanceCertificateOwn",
+    "method": "POST",
+    "path": "/v1/applications/clearance-certificate-own",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/attach-clearance.controller.ts (ATTACH_CLEARANCE_OWN_PATH)",
+    "statuses": [
+      "200",
+      "202",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500",
+      "501"
     ]
   },
   {
@@ -1593,6 +1617,28 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "422",
       "429",
       "503"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "attachMyClearanceCertificate",
+    "method": "POST",
+    "path": "/v1/applicants/me/applications/clearance-certificate",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/applicant-auth.controller.ts (ME_CLEARANCE_PATH)",
+    "statuses": [
+      "200",
+      "202",
+      "400",
+      "401",
+      "404",
+      "409",
+      "422",
+      "502"
     ]
   },
   {

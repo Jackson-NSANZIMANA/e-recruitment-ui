@@ -3,8 +3,8 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 import type { ApiClient } from '../transport.js';
 import { documentKeys } from '../keys.js';
-import { getDocumentChecklist, getMyDocumentChecklist, verifyDocumentAtVenue } from '../operations/documents.js';
-import type { DocumentChecklist, VerifyAtVenueResponse } from '../wire.js';
+import { attachMyClearanceCertificate, getDocumentChecklist, getMyDocumentChecklist, verifyDocumentAtVenue } from '../operations/documents.js';
+import type { AttachClearanceResponse, DocumentChecklist, VerifyAtVenueResponse } from '../wire.js';
 
 export function useMyDocumentChecklist(client: ApiClient, applicationId: string | null): UseQueryResult<DocumentChecklist> {
   return useQuery({
@@ -32,6 +32,23 @@ export function useVerifyDocumentAtVenue(
     mutationFn: (input: { applicationId: string; documentType: string }) => verifyDocumentAtVenue(client, input),
     onSuccess: (_data, input) => {
       void qc.invalidateQueries({ queryKey: documentKeys.officer(input.applicationId) });
+    },
+  });
+}
+
+/**
+ * ADR-048 §2.3. Invalidates the CITIZEN checklist, not the officer one: the
+ * clearance block is read on the citizen's own documents screen, and the write
+ * changes nothing an officer list shows until the registry answers.
+ */
+export function useAttachMyClearanceCertificate(
+  client: ApiClient,
+): UseMutationResult<AttachClearanceResponse, Error, { applicationId: string; clearanceCertificateNumber: string }> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { applicationId: string; clearanceCertificateNumber: string }) => attachMyClearanceCertificate(client, input),
+    onSuccess: (_data, input) => {
+      void qc.invalidateQueries({ queryKey: documentKeys.mine(input.applicationId) });
     },
   });
 }

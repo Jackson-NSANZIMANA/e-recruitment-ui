@@ -17,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = 'cd4962842e26177f179eb3c0bd51c214dad3fd61' as const;
+export const EDGE_BACKEND_SHA = 'd0ef603ebec9fa6155d321cbeef1aff72ac3be48' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -52,6 +52,10 @@ export const EDGE_OPERATIONS = [
   { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getMyExamInvitation', method: 'GET', edgePath: '/edge/v1/me/applications/exam-invitation', upstreamOperationId: 'getMyExamInvitation', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getMyDocumentChecklist', method: 'GET', edgePath: '/edge/v1/me/applications/document-checklist', upstreamOperationId: 'getMyDocumentChecklist', session: 'applicant', retryOnG2G: true, composition: 'single' },
+  // ADR-048 §2.3 (S12b). A write: the edge never retries it. The citizen's own
+  // retry is safe because the staged verification record is idempotent, and
+  // that is the caller's decision to make, not the transport's.
+  { id: 'attachMyClearanceCertificate', method: 'POST', edgePath: '/edge/v1/me/applications/clearance-certificate', upstreamOperationId: 'attachMyClearanceCertificate', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getDocumentChecklist', method: 'GET', edgePath: '/edge/v1/applications/document-checklist', upstreamOperationId: 'getDocumentChecklist', session: 'officer', retryOnG2G: true, composition: 'single' },
   { id: 'verifyDocumentAtVenue', method: 'POST', edgePath: '/edge/v1/applications/documents/verify-at-venue', upstreamOperationId: 'verifyDocumentAtVenue', session: 'officer', retryOnG2G: false, composition: 'single' },
   { id: 'uploadMyDocument', method: 'POST', edgePath: '/edge/v1/me/applications/documents', upstreamOperationId: 'uploadMyDocument', session: 'applicant', retryOnG2G: false, composition: 'single' },

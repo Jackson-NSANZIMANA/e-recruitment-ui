@@ -1316,6 +1316,56 @@
         "asOf": "x",
         "candidates": []
       }
+    },
+    {
+      "id": "attach-clearance-own-accepted",
+      "schema": "AttachClearanceOk200",
+      "expect": "accept",
+      "why": "The system-token mirror of the citizen's route: ACCEPTED, agency only, number never echoed.",
+      "value": {
+        "status": "ACCEPTED",
+        "agency": "RDF"
+      }
+    },
+    {
+      "id": "attach-clearance-own-rejects-number-echo",
+      "schema": "AttachClearanceOk200",
+      "expect": "reject",
+      "why": "The number is a registry credential; no response on this service may carry it.",
+      "value": {
+        "status": "ACCEPTED",
+        "agency": "RDF",
+        "clearanceCertificateNumber": "AB1234567890CDEF"
+      }
+    },
+    {
+      "id": "attach-clearance-own-not-enabled",
+      "schema": "AttachClearanceNotEnabled501",
+      "expect": "accept",
+      "why": "501 NOT_ENABLED is a real answer, not a transport failure: this agency does not use the Irembo certificate yet, and retrying will not change that.",
+      "value": {
+        "status": "NOT_ENABLED"
+      }
+    },
+    {
+      "id": "attach-clearance-own-invalid-number",
+      "schema": "AttachClearanceInvalidNumber422",
+      "expect": "accept",
+      "why": "Well-formed request, unusable certificate number: the citizen may correct it.",
+      "value": {
+        "status": "INVALID_NUMBER"
+      }
+    },
+    {
+      "id": "attach-clearance-own-not-applicable",
+      "schema": "AttachClearanceNotApplicable409",
+      "expect": "accept",
+      "why": "A closed application cannot take a certificate. currentStatus is what the citizen screen explains.",
+      "value": {
+        "status": "NOT_APPLICABLE",
+        "agency": "RDF",
+        "currentStatus": "ACCEPTED"
+      }
     }
   ]
 }

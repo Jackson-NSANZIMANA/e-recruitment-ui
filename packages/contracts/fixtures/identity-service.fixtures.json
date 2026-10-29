@@ -690,17 +690,260 @@
         }
       }
     },
-    {"id": "identity-gate-admitted", "schema": "GateAdmitted200", "expect": "accept", "why": "gate-admission.controller.ts 200 body: the candidate's public identifiers and the admission.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true}},
-    {"id": "identity-gate-admitted-rejects-nid", "schema": "GateAdmitted200", "expect": "reject", "why": "The national ID (or its hash) never reaches the gate tablet.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true, "nationalIdHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
-    {"id": "identity-gate-candidate-rejects-applicant-id", "schema": "GateAdmitted200", "expect": "reject", "why": "The candidate carries public identifiers only; the internal applicant id stays inside.", "value": {"outcome": "ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT", "applicantId": "33333333-3333-4333-8333-333333333333"}, "venueName": "IPRC Kicukiro Stadium", "examDate": "2026-12-01", "reportingTimeHour": 8, "admittedAt": "2026-12-01T06:01:00.000Z", "statusAdvanced": true}},
-    {"id": "identity-gate-already-admitted", "schema": "GateConflict409", "expect": "accept", "why": "A spent QR: where and when, and whether it was this officer.", "value": {"error": "ALREADY_ADMITTED", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}, "admittedAt": "2026-12-01T06:01:00.000Z", "venueName": "IPRC Kicukiro Stadium", "admittedBySelf": false}},
-    {"id": "identity-gate-wrong-venue", "schema": "GateConflict409", "expect": "accept", "why": "Names the ticket's venue so the officer can redirect the candidate.", "value": {"error": "WRONG_VENUE", "ticketVenueName": "Amahoro Stadium"}},
-    {"id": "identity-gate-too-early", "schema": "GateConflict409", "expect": "accept", "why": "Kigali calendar day before the exam.", "value": {"error": "TOO_EARLY", "examDate": "2026-12-01"}},
-    {"id": "identity-gate-mismatch", "schema": "GateConflict409", "expect": "accept", "why": "Impostor: card does not match the ticket's applicant.", "value": {"error": "IDENTITY_MISMATCH", "candidate": {"applicationId": "22222222-2222-4222-8222-222222222222", "processingCode": "RDF-90001", "category": "GENERAL_ENLISTMENT"}}},
-    {"id": "identity-gate-conflict-rejects-unknown-code", "schema": "GateConflict409", "expect": "reject", "why": "The 409 vocabulary is closed; a new code is a contract change.", "value": {"error": "SOMETHING_NEW"}},
-    {"id": "identity-gate-invalid-ticket", "schema": "GateInvalidTicket422", "expect": "accept", "why": "Forged or altered QR.", "value": {"error": "INVALID_TICKET", "reason": "TICKET_NOT_ISSUED"}},
-    {"id": "identity-gate-invalid-ticket-rejects-reason", "schema": "GateInvalidTicket422", "expect": "reject", "why": "Only the four ticket refusals exist.", "value": {"error": "INVALID_TICKET", "reason": "EXPIRED"}},
-    {"id": "identity-exam-invitation-admitted", "schema": "ExamInvitationView", "expect": "accept", "why": "ADR-034: once spent, only where and when; never the QR.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z"}}},
-    {"id": "identity-exam-invitation-admitted-rejects-extra", "schema": "ExamInvitationView", "expect": "reject", "why": "The admission carries no officer identity.", "value": {"state": "ADMITTED", "agency": "RDF", "processingCode": "RDF-90001", "campaignLabel": "RDF 2026", "currentStatus": "PHYSICAL_TEST_SCHEDULED", "admission": {"venueName": "IPRC Kicukiro Stadium", "admittedAt": "2026-12-01T06:01:00.000Z", "officerId": "x"}}}
+    {
+      "id": "identity-gate-admitted",
+      "schema": "GateAdmitted200",
+      "expect": "accept",
+      "why": "gate-admission.controller.ts 200 body: the candidate's public identifiers and the admission.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true
+      }
+    },
+    {
+      "id": "identity-gate-admitted-rejects-nid",
+      "schema": "GateAdmitted200",
+      "expect": "reject",
+      "why": "The national ID (or its hash) never reaches the gate tablet.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true,
+        "nationalIdHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "identity-gate-candidate-rejects-applicant-id",
+      "schema": "GateAdmitted200",
+      "expect": "reject",
+      "why": "The candidate carries public identifiers only; the internal applicant id stays inside.",
+      "value": {
+        "outcome": "ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT",
+          "applicantId": "33333333-3333-4333-8333-333333333333"
+        },
+        "venueName": "IPRC Kicukiro Stadium",
+        "examDate": "2026-12-01",
+        "reportingTimeHour": 8,
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "statusAdvanced": true
+      }
+    },
+    {
+      "id": "identity-gate-already-admitted",
+      "schema": "GateConflict409",
+      "expect": "accept",
+      "why": "A spent QR: where and when, and whether it was this officer.",
+      "value": {
+        "error": "ALREADY_ADMITTED",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        },
+        "admittedAt": "2026-12-01T06:01:00.000Z",
+        "venueName": "IPRC Kicukiro Stadium",
+        "admittedBySelf": false
+      }
+    },
+    {
+      "id": "identity-gate-wrong-venue",
+      "schema": "GateConflict409",
+      "expect": "accept",
+      "why": "Names the ticket's venue so the officer can redirect the candidate.",
+      "value": {
+        "error": "WRONG_VENUE",
+        "ticketVenueName": "Amahoro Stadium"
+      }
+    },
+    {
+      "id": "identity-gate-too-early",
+      "schema": "GateConflict409",
+      "expect": "accept",
+      "why": "Kigali calendar day before the exam.",
+      "value": {
+        "error": "TOO_EARLY",
+        "examDate": "2026-12-01"
+      }
+    },
+    {
+      "id": "identity-gate-mismatch",
+      "schema": "GateConflict409",
+      "expect": "accept",
+      "why": "Impostor: card does not match the ticket's applicant.",
+      "value": {
+        "error": "IDENTITY_MISMATCH",
+        "candidate": {
+          "applicationId": "22222222-2222-4222-8222-222222222222",
+          "processingCode": "RDF-90001",
+          "category": "GENERAL_ENLISTMENT"
+        }
+      }
+    },
+    {
+      "id": "identity-gate-conflict-rejects-unknown-code",
+      "schema": "GateConflict409",
+      "expect": "reject",
+      "why": "The 409 vocabulary is closed; a new code is a contract change.",
+      "value": {
+        "error": "SOMETHING_NEW"
+      }
+    },
+    {
+      "id": "identity-gate-invalid-ticket",
+      "schema": "GateInvalidTicket422",
+      "expect": "accept",
+      "why": "Forged or altered QR.",
+      "value": {
+        "error": "INVALID_TICKET",
+        "reason": "TICKET_NOT_ISSUED"
+      }
+    },
+    {
+      "id": "identity-gate-invalid-ticket-rejects-reason",
+      "schema": "GateInvalidTicket422",
+      "expect": "reject",
+      "why": "Only the four ticket refusals exist.",
+      "value": {
+        "error": "INVALID_TICKET",
+        "reason": "EXPIRED"
+      }
+    },
+    {
+      "id": "identity-exam-invitation-admitted",
+      "schema": "ExamInvitationView",
+      "expect": "accept",
+      "why": "ADR-034: once spent, only where and when; never the QR.",
+      "value": {
+        "state": "ADMITTED",
+        "agency": "RDF",
+        "processingCode": "RDF-90001",
+        "campaignLabel": "RDF 2026",
+        "currentStatus": "PHYSICAL_TEST_SCHEDULED",
+        "admission": {
+          "venueName": "IPRC Kicukiro Stadium",
+          "admittedAt": "2026-12-01T06:01:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "identity-exam-invitation-admitted-rejects-extra",
+      "schema": "ExamInvitationView",
+      "expect": "reject",
+      "why": "The admission carries no officer identity.",
+      "value": {
+        "state": "ADMITTED",
+        "agency": "RDF",
+        "processingCode": "RDF-90001",
+        "campaignLabel": "RDF 2026",
+        "currentStatus": "PHYSICAL_TEST_SCHEDULED",
+        "admission": {
+          "venueName": "IPRC Kicukiro Stadium",
+          "admittedAt": "2026-12-01T06:01:00.000Z",
+          "officerId": "x"
+        }
+      }
+    },
+    {
+      "id": "attach-clearance-accepted",
+      "schema": "AttachClearanceOk",
+      "expect": "accept",
+      "why": "ADR-048 §2.3 ACCEPTED branch: the number was taken and verification is under way. Status and agency only — the number is never echoed.",
+      "value": {
+        "status": "ACCEPTED",
+        "agency": "RNP"
+      }
+    },
+    {
+      "id": "attach-clearance-rejects-number-echo",
+      "schema": "AttachClearanceOk",
+      "expect": "reject",
+      "why": "The certificate number must never come back. A response echoing it would put a registry credential into browser memory, the console, and any screenshot of this screen.",
+      "value": {
+        "status": "ACCEPTED",
+        "agency": "RNP",
+        "clearanceCertificateNumber": "AB1234567890CDEF"
+      }
+    },
+    {
+      "id": "clearance-verified",
+      "schema": "ClearanceItem",
+      "expect": "accept",
+      "why": "The RIB item's clearance block on a cleared gate: state and a null code, nothing more.",
+      "value": {
+        "state": "VERIFIED",
+        "code": null
+      }
+    },
+    {
+      "id": "clearance-correction-needed",
+      "schema": "ClearanceItem",
+      "expect": "accept",
+      "why": "CORRECTION_NEEDED carries a closed failure code. It is about the NUMBER, never an eligibility verdict.",
+      "value": {
+        "state": "CORRECTION_NEEDED",
+        "code": "NUMBER_NOT_FOUND"
+      }
+    },
+    {
+      "id": "clearance-rejects-officer-reasons",
+      "schema": "ClearanceItem",
+      "expect": "reject",
+      "why": "THE LANE FIXTURE. Officer review reasons are dropped by the identity layer; a citizen reading 'name partial' is reading a forgery-tuning signal.",
+      "value": {
+        "state": "UNDER_OFFICER_REVIEW",
+        "code": null,
+        "reasons": [
+          "CLEARANCE_CONTENT_REVIEW"
+        ]
+      }
+    },
+    {
+      "id": "document-checklist-with-clearance",
+      "schema": "DocumentChecklist200",
+      "expect": "accept",
+      "why": "S12b: the RIB item carries the clearance block; every other item does not.",
+      "value": {
+        "agency": "RNP",
+        "source": "POLICY_VERSION",
+        "complete": false,
+        "items": [
+          {
+            "documentType": "GOOD_CONDUCT_CERTIFICATE",
+            "satisfaction": "AWAITING_REGISTRY",
+            "registry": "RIB",
+            "clearance": {
+              "state": "VERIFYING",
+              "code": null
+            }
+          },
+          {
+            "documentType": "ACADEMIC_CERTIFICATE",
+            "satisfaction": "API_VERIFIED",
+            "registry": "NESA"
+          }
+        ]
+      }
+    }
   ]
 }

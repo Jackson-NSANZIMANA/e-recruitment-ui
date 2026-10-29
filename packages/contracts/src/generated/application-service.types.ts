@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -39,6 +39,11 @@ import type {
   ApplicationSearchOkSchema,
   ApplicationSubmitted201Schema,
   ApplicationSummarySchema,
+  AttachClearanceInvalidNumber422Schema,
+  AttachClearanceNotApplicable409Schema,
+  AttachClearanceNotEnabled501Schema,
+  AttachClearanceOk200Schema,
+  AttachClearanceOwnRequestSchema,
   BiometricEvidenceRowSchema,
   BiometricEvidenceOkSchema,
   ByApplicantOkSchema,
@@ -144,6 +149,11 @@ export type ApplicationSearchRow = z.infer<typeof ApplicationSearchRowSchema>;
 export type ApplicationSearchOk = z.infer<typeof ApplicationSearchOkSchema>;
 export type ApplicationSubmitted201 = z.infer<typeof ApplicationSubmitted201Schema>;
 export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
+export type AttachClearanceInvalidNumber422 = z.infer<typeof AttachClearanceInvalidNumber422Schema>;
+export type AttachClearanceNotApplicable409 = z.infer<typeof AttachClearanceNotApplicable409Schema>;
+export type AttachClearanceNotEnabled501 = z.infer<typeof AttachClearanceNotEnabled501Schema>;
+export type AttachClearanceOk200 = z.infer<typeof AttachClearanceOk200Schema>;
+export type AttachClearanceOwnRequest = z.infer<typeof AttachClearanceOwnRequestSchema>;
 export type BiometricEvidenceRow = z.infer<typeof BiometricEvidenceRowSchema>;
 export type BiometricEvidenceOk = z.infer<typeof BiometricEvidenceOkSchema>;
 export type ByApplicantOk = z.infer<typeof ByApplicantOkSchema>;

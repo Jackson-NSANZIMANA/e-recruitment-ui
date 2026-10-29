@@ -25,7 +25,7 @@ info:
     reporting hour once SLOT_ASSIGNED has been projected. This service owns the
     per-district exam sessions an agency admin configures before a campaign is
     published (configureCampaignSession).
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
   x-usrp-service-port-var: "PORT_SCHEDULING_SERVICE"
   x-usrp-transport-faults:
     - status: 405
