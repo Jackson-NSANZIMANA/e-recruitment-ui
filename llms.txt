@@ -17,8 +17,10 @@ points at the canonical upstream instead of mirroring it.
 2. `docs/architecture/cross-repo-contract-reconciliation-2026-10-04.md` — pinned backend/frontend evidence and change protocol.
 3. `docs/ui-surfaces/officer.application-workspace.json` — executable contract for the first flagship officer surface.
 4. `docs/architecture/edge-contract.md` — browser boundary and security invariants.
-5. `docs/architecture/handover-audit-2026-09-13.md` — historical findings of record; use current baseline files above for implementation.
-6. `docs/architecture/adrs-fe/` — ADR-FE-001 through 006.
+5. `docs/architecture/phase-0-assessment-2026-10-29.md` — where Phase 0 (the owner's 2026-10-29 evaluation) meets this
+   repository: what is true of each defect here, the ordered path to closing it, and the traps that cost a session.
+6. `docs/architecture/handover-audit-2026-09-13.md` — historical findings of record; use current baseline files above for implementation.
+7. `docs/architecture/adrs-fe/` — ADR-FE-001 through 006.
 
 ## The one rule this repository is built on
 
@@ -89,7 +91,7 @@ pnpm security:scan:selftest  # proves the scanner in both directions
 
 ## Current state, honestly
 
-- The browser edge registry and backend edge registry are reconciled at backend SHA `cd4962842e26177f179eb3c0bd51c214dad3fd61`.
+- The browser edge registry and backend edge registry are reconciled at backend SHA `d0ef603ebec9fa6155d321cbeef1aff72ac3be48`.
 - The first flagship surface is `/applications` and `/applications/:id`; its state contract is executable and currently passes 42 assertions.
 - Contract drift is green at 877 assertions with 0 findings against backend `df80f65`; edge-dev real-socket proof is green at 143 assertions.
 - `OFFLINE_CAPTURE_CAN_SYNC` remains false: field-sync reachability does not yet establish durable encrypted capture/replay/conflict support.
