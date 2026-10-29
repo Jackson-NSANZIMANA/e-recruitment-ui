@@ -79,40 +79,41 @@ async function scanAndMeasure(page: Page, p: Passes['passes'][number]): Promise<
   await page.getByLabel('3 km run (seconds)').fill('780');
 }
 
-let gate: Page;
+let gateTablet: Page | null = null;
+const gate = (): Page => { if (gateTablet === null) throw new Error('the setup test must run first'); return gateTablet; };
 
 test('setup: the tablet is ready, enrolled with its own key, and the venue day is confirmed', async ({ browser }) => {
-  gate = await signIn(browser, FIELD, GATE, /\/stations/);
-  await gate.goto('/setup');
-  await expect(gate.getByTestId('check-ed25519')).toContainText('OK', { timeout: 20_000 });
-  await gate.getByTestId('setup-enrol').click();
-  await expect(gate.getByTestId('setup-enrolled')).toBeVisible({ timeout: 20_000 });
-  await confirmVenueDay(gate);
-  await expect(gate.getByTestId('setup-ready')).toBeVisible({ timeout: 20_000 });
+  gateTablet = await signIn(browser, FIELD, GATE, /\/stations/);
+  await gate().goto('/setup');
+  await expect(gate().getByTestId('check-ed25519')).toContainText('OK', { timeout: 20_000 });
+  await gate().getByTestId('setup-enrol').click();
+  await expect(gate().getByTestId('setup-enrolled')).toBeVisible({ timeout: 20_000 });
+  await confirmVenueDay(gate());
+  await expect(gate().getByTestId('setup-ready')).toBeVisible({ timeout: 20_000 });
 });
 
 test('persona 1: gate admits, the physical test is signed and acknowledged by the server', async () => {
   const p = passes!.passes[0]!;
-  await admitAtGate(gate, p);
-  await scanAndMeasure(gate, p);
-  await gate.getByTestId('physical-save').click();
+  await admitAtGate(gate(), p);
+  await scanAndMeasure(gate(), p);
+  await gate().getByTestId('physical-save').click();
   // A re-run of the same day sends the identical signed payload again: the server answers DUPLICATE, never a second row.
-  await expect(gate.getByTestId('physical-outcome')).toContainText(process.env['USRP_LIVE_RERUN'] === '1' ? /server has it|server already had it/i : /server has it/i, { timeout: 30_000 });
-  await expect(gate.getByTestId(/fate-(ACKNOWLEDGED|DUPLICATE)/).first()).toBeVisible();
+  await expect(gate().getByTestId('physical-outcome')).toContainText(process.env['USRP_LIVE_RERUN'] === '1' ? /server has it|server already had it/i : /server has it/i, { timeout: 30_000 });
+  await expect(gate().getByTestId(/fate-(ACKNOWLEDGED|DUPLICATE)/).first()).toBeVisible();
 });
 
 test('persona 2: a network drop mid-capture leaves the record NOT sent, with the paper prompt', async () => {
   const p = passes!.passes[1]!;
-  await admitAtGate(gate, p);
-  await scanAndMeasure(gate, p);
-  await gate.context().setOffline(true);
-  await gate.getByTestId('physical-save').click();
-  await expect(gate.getByTestId('physical-paper-prompt')).toBeVisible({ timeout: 20_000 });
-  await expect(gate.getByTestId('physical-outcome')).toContainText(/not sent/i);
-  await expect(gate.getByTestId('fate-WAITING').first()).toBeVisible();
-  await gate.context().setOffline(false);
-  await gate.getByTestId('physical-send-again').click();
-  await expect(gate.getByTestId('physical-outcome')).toContainText(process.env['USRP_LIVE_RERUN'] === '1' ? /server has it|server already had it/i : /server has it/i, { timeout: 30_000 });
+  await admitAtGate(gate(), p);
+  await scanAndMeasure(gate(), p);
+  await gate().context().setOffline(true);
+  await gate().getByTestId('physical-save').click();
+  await expect(gate().getByTestId('physical-paper-prompt')).toBeVisible({ timeout: 20_000 });
+  await expect(gate().getByTestId('physical-outcome')).toContainText(/not sent/i);
+  await expect(gate().getByTestId('fate-WAITING').first()).toBeVisible();
+  await gate().context().setOffline(false);
+  await gate().getByTestId('physical-send-again').click();
+  await expect(gate().getByTestId('physical-outcome')).toContainText(process.env['USRP_LIVE_RERUN'] === '1' ? /server has it|server already had it/i : /server has it/i, { timeout: 30_000 });
 });
 
 test('the medical board records the verdict for persona 1', async ({ browser }) => {
@@ -141,11 +142,12 @@ test('the supervisor station shows the venue counts, this fleet and an empty con
 test('the officer console shows the physical test and the medical verdict on the application', async ({ browser }) => {
   const reviewer = await signIn(browser, CONSOLE, REVIEWER, /\/dashboard|\/applications|\/$/);
   await reviewer.goto(`/applications/${passes!.passes[0]!.applicationId}`);
-  await reviewer.getByRole('tab', { name: 'Timeline' }).click();
-  await expect(reviewer.getByText(/physical test completed/i).first()).toBeVisible({ timeout: 30_000 });
-  await reviewer.getByRole('tab', { name: /field|physical/i }).first().click();
+  await reviewer.getByRole('tab', { name: 'Status timeline' }).click();
+  await expect(reviewer.getByText('Physical-test score captured')).toBeVisible({ timeout: 30_000 });
+  await expect(reviewer.getByText('Medical review: FIT')).toBeVisible();
+  await reviewer.getByRole('tab', { name: 'Field records' }).click();
   await expect(reviewer.getByText(/20\d\d/).first()).toBeVisible();
   await reviewer.screenshot({ path: process.env['USRP_LIVE_SHOT'] ?? 'live-console.png' });
   await reviewer.context().close();
-  await gate.context().close();
+  await gateTablet?.context().close();
 });

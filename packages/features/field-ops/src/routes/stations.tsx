@@ -40,6 +40,7 @@ const styles = cssMap({
 
 export default function StationPicker(): React.ReactElement {
   const { t } = useTranslation();
+  const { t: tf } = useTranslation("field_ops");
   const session = useOfficerSession();
   const stations = stationsFor(session);
 
@@ -54,7 +55,7 @@ export default function StationPicker(): React.ReactElement {
         </Text>
 
         <Inline space="space.200" shouldWrap>
-          <LinkButton href="/setup" testId="station-setup">{t("field_ops.setup.open")}</LinkButton>
+          <LinkButton href="/setup" testId="station-setup">{tf("field_ops.setup.open")}</LinkButton>
         </Inline>
 
         {stations.length === 0 ? (

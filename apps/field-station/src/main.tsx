@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@atlaskit/app-provider/app-provider";
 import { FlagsProvider } from "@atlaskit/flag/flags-provider";
 import "@atlaskit/css-reset";
+import "./station-touch.css";
 // eslint-disable-next-line @atlaskit/ui-styling-standard/no-global-styles -- self-hosted @font-face declarations only (no selectors); fonts cannot be registered through compiled styles
 import "@usrp/design-system/fonts.css";
 

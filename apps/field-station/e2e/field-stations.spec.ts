@@ -331,3 +331,50 @@ test.describe('biometric check-in notice', () => {
     await expect(page.getByText(/never a refusal/i)).toBeVisible();
   });
 });
+
+test.describe('tablet ergonomics (Galaxy Tab A7 budget)', () => {
+  /**
+   * Every visible interactive control of the STATION (inside <main>) is at least 48 x 48 CSS px: gloves,
+   * sunlight, a moving queue. The shell header (language switcher, Stations, Sign out; StationShell and
+   * packages/ui, owned by the identity-layer/S12c work) measures 32 px high: recorded in the hand-off.
+   */
+  async function smallTargets(page: Page): Promise<string[]> {
+    return page.evaluate(() =>
+      [...(document.querySelector('main') ?? document).querySelectorAll<HTMLElement>('button, a[href], input:not([type="hidden"]), select, textarea, [role="tab"]')]
+        .filter((el) => el.offsetParent !== null || getComputedStyle(el).position === 'fixed')
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter(({ r }) => r.width > 0 && r.height > 0 && (r.height < 47.5 || r.width < 47.5))
+        .map(({ el, r }) => `${el.tagName.toLowerCase()} "${(el.textContent ?? el.getAttribute('aria-label') ?? '').trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`),
+    );
+  }
+
+  for (const [name, route, permissions] of [
+    ['setup', '/setup', ['field.device.enroll']],
+    ['physical', '/physical', ['field.score.sync']],
+    ['medical', '/medical', ['medical.review']],
+    ['supervisor', '/supervisor', ['field.conflict.resolve', 'field.device.manage']],
+    ['stations', '/stations', ['admission.gate', 'field.score.sync']],
+  ] as const) {
+    test(`${name}: every station control is at least 48 px`, async ({ page }) => {
+      await signIn(page, [...permissions]);
+      await confirmVenueDay(page);
+      await page.route('**/edge/v1/field-sync/devices', (route) => route.fulfill(json({ devices: [] })));
+      await page.route('**/edge/v1/gate/live-counts**', (route) => route.fulfill(json({ agency: 'RDF', venue: { venueName: VENUE, district: 'Nyagatare', examDate: DAY }, counts: { expected: 1, admitted: 1, physicalCaptured: 0, medicalRecorded: 0, openConflicts: 0 }, asOf: null })));
+      await page.goto(route);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      expect(await smallTargets(page)).toEqual([]);
+    });
+  }
+
+  test('physical capture form (a pass scanned, a value out of range): every control is at least 48 px', async ({ page }) => {
+    await signIn(page, ['field.device.enroll', 'field.score.sync']);
+    await confirmVenueDay(page);
+    await enrolDevice(page);
+    await page.goto('/physical');
+    await scanPass(page, 'physical-scanner');
+    await fillMetrics(page, { height: '260', weight: '72', chest: '96', run: '780' });
+    await expect(page.getByLabel(/why this value stands/i)).toBeVisible();
+    expect(await smallTargets(page)).toEqual([]);
+  });
+});

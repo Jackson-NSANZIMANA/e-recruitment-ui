@@ -1,0 +1,22 @@
+/*
+ * Station controls meet the 48 px touch floor (AGENTS.md section 5; Galaxy Tab A7, gloves, sunlight).
+ * Scoped to <main>: the shell header (language switcher, Stations, Sign out) lives in StationShell and
+ * packages/ui and is tracked separately. Only sizes here: no colour, no font (those stay ADS tokens).
+ */
+main button,
+main a[href],
+main [role="tab"],
+main select,
+main textarea,
+main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+  min-height: 48px;
+}
+main button,
+main a[href] {
+  min-width: 48px;
+}
+/* An inline anchor ignores min-height; station links are buttons, never prose. */
+main a[href] {
+  display: inline-flex;
+  align-items: center;
+}
