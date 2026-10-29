@@ -1,1 +1,299 @@
-{"campaigns": {"states": {"DRAFT": "Draft", "REGISTRATION_OPEN": "Registration open", "REGISTRATION_CLOSED": "Registration closed", "COMPLETED": "Completed", "CANCELLED": "Cancelled"}, "refusals": {"CAMPAIGN_NOT_FOUND": "No such campaign in your agency.", "PUBLIC_CODE_ALREADY_EXISTS": "That public code is already used by another campaign.", "CAMPAIGN_LABEL_ALREADY_EXISTS": "That campaign name is already used.", "INVALID_STATE": "The campaign's current state does not allow this action.", "POLICY_NOT_SET": "Set the selection policy before publishing.", "POLICY_VERSION_CONFLICT": "The policy changed while you were editing. Reload it and try again.", "POLICY_HASH_MISMATCH": "The policy you reviewed is not the current one. Reload it and try again.", "POLICY_CATEGORY_COVERAGE_MISMATCH": "The policy must cover every target category, and only those.", "INCOMPLETE_COVERAGE": "Every target district needs an active session before publishing.", "STALE_COVERAGE": "The session list changed since you reviewed it. Reload and try again.", "INVALID_CAPACITY": "The session capacity is not valid.", "CAPACITY_DECISION_REQUIRED": "An unlimited session needs an explicit unbounded-capacity decision.", "SESSION_ALREADY_RESERVED": "That session already has reservations and cannot be changed this way.", "SESSION_CONFLICT": "That session conflicts with an existing one.", "INVALID_SESSION_DATE": "The session date is outside the examination window.", "INVALID_REPORTING_HOUR": "The reporting hour is not valid.", "DISTRICT_PROVINCE_MISMATCH": "That district is not in the chosen province.", "CAMPAIGN_WRITE_CONFLICT": "Someone else changed this campaign at the same time. Reload and try again.", "UNKNOWN": "The campaign service refused this action."}}}
+{
+ "campaigns": {
+  "states": {
+   "DRAFT": "Draft",
+   "REGISTRATION_OPEN": "Registration open",
+   "REGISTRATION_CLOSED": "Registration closed",
+   "COMPLETED": "Completed",
+   "CANCELLED": "Cancelled",
+   "EXAMINATION_ACTIVE": "Examination in progress (legacy)"
+  },
+  "refusals": {
+   "CAMPAIGN_NOT_FOUND": "No such campaign in your agency.",
+   "PUBLIC_CODE_ALREADY_EXISTS": "That public code is already used by another campaign.",
+   "CAMPAIGN_LABEL_ALREADY_EXISTS": "That campaign name is already used.",
+   "INVALID_STATE": "The campaign's current state does not allow this action.",
+   "POLICY_NOT_SET": "Set the selection policy before publishing.",
+   "POLICY_VERSION_CONFLICT": "The policy changed while you were editing. Reload it and try again.",
+   "POLICY_HASH_MISMATCH": "The policy you reviewed is not the current one. Reload it and try again.",
+   "POLICY_CATEGORY_COVERAGE_MISMATCH": "The policy must cover every target category, and only those.",
+   "INCOMPLETE_COVERAGE": "Every target district needs an active session before publishing.",
+   "STALE_COVERAGE": "The session list changed since you reviewed it. Reload and try again.",
+   "INVALID_CAPACITY": "The session capacity is not valid.",
+   "CAPACITY_DECISION_REQUIRED": "An unlimited session needs an explicit unbounded-capacity decision.",
+   "SESSION_ALREADY_RESERVED": "That session already has reservations and cannot be changed this way.",
+   "SESSION_CONFLICT": "That session conflicts with an existing one.",
+   "INVALID_SESSION_DATE": "The session date is outside the examination window.",
+   "INVALID_REPORTING_HOUR": "The reporting hour is not valid.",
+   "DISTRICT_PROVINCE_MISMATCH": "That district is not in the chosen province.",
+   "CAMPAIGN_WRITE_CONFLICT": "Someone else changed this campaign at the same time. Reload and try again.",
+   "UNKNOWN": "The campaign service refused this action.",
+   "FORBIDDEN": "Your post is not allowed to do this.",
+   "REJECTED": "The server rejected the request: {{detail}}",
+   "GENERIC": "The request could not be completed. Nothing was changed; try again.",
+   "goToStep": "Go to: {{step}}"
+  },
+  "categories": {
+   "GENERAL_ENLISTMENT": "RDF general enlistment",
+   "RESERVE_FORCE_ALEVEL": "RDF reserve force — A-Level",
+   "RESERVE_FORCE_UNIVERSITY": "RDF reserve force — university",
+   "RESERVE_FORCE_SPECIALIST": "RDF reserve force — specialist",
+   "CADET_OFFICER": "RNP cadet officer",
+   "BASIC_POLICE_COURSE": "RNP basic police course",
+   "GENERAL_ENLISTEE": "RCS general enlistee",
+   "OFFICER_ONE_YEAR": "RCS officer — one year",
+   "OFFICER_ONE_YEAR_SPECIALIST": "RCS officer — one-year specialist",
+   "OFFICER_FOUR_YEAR_UR": "RCS officer — four-year UR"
+  },
+  "documents": {
+   "NATIONAL_ID": "National ID",
+   "APPLICATION_FORM_WITH_PHOTO": "Application form with photo",
+   "BIRTH_CERTIFICATE": "Birth certificate",
+   "OLEVEL_CERTIFICATE": "O-Level certificate",
+   "ALEVEL_CERTIFICATE": "A-Level certificate",
+   "DEGREE_DIPLOMA_COPY": "Degree / diploma (copy)",
+   "DEGREE_DIPLOMA_NOTARIZED": "Degree / diploma (notarized)",
+   "GOOD_CONDUCT_CERTIFICATE": "Good conduct certificate",
+   "NON_CONVICTION_CERTIFICATE": "Non-conviction certificate",
+   "CELIBACY_CERTIFICATE": "Celibacy certificate",
+   "MEDICAL_CERTIFICATE_GOVT": "Medical certificate (government)"
+  },
+  "yes": "Yes",
+  "no": "No",
+  "choose": "Choose…",
+  "replayed": "This was already done: the original result is shown.",
+  "noPermission": "Your post does not allow this action.",
+  "frozen": "The campaign is published: its structure is frozen and can no longer be changed.",
+  "steps": {
+   "basics": "Basics",
+   "policy": "Policy",
+   "sessions": "Sessions",
+   "publish": "Publish",
+   "lifecycle": "Lifecycle"
+  },
+  "studio": {
+   "notFoundTitle": "Campaign not found",
+   "notFoundBody": "No campaign with this code exists in your agency."
+  },
+  "list": {
+   "title": "Recruitment campaigns",
+   "lead": "All campaigns of {{agency}}, in every state.",
+   "new": "New campaign",
+   "search": "Search by name or code",
+   "statusFilter": "State",
+   "allStates": "All states",
+   "cols": {
+    "label": "Campaign",
+    "status": "State",
+    "registration": "Registration (Kigali time)",
+    "exam": "Examination",
+    "sessions": "Sessions",
+    "registered": "Registered",
+    "open": "Open"
+   },
+   "open": "Open",
+   "sessionsOf": "{{sessions}} of {{districts}} districts",
+   "more": "Showing {{shown}} of {{total}} campaigns.",
+   "empty": {
+    "title": "No campaigns yet",
+    "body": "Create the first campaign of your agency. It starts as a draft and is not visible to citizens until you publish it."
+   }
+  },
+  "new": {
+   "title": "New campaign: the basics",
+   "lead": "Step 1 of 4. This creates a draft. Then you set the selection policy, the district sessions, and publish.",
+   "kigaliTime": "All times on this screen are Kigali time (UTC+2).",
+   "submit": "Create draft",
+   "next": "Next: the selection policy.",
+   "back": "Back to campaigns"
+  },
+  "fields": {
+   "publicCode": "Public code",
+   "campaignLabel": "Campaign name",
+   "targetCategories": "Categories",
+   "targetDistricts": "Districts",
+   "registrationOpensAt": "Registration opens (Kigali time)",
+   "registrationClosesAt": "Registration closes (Kigali time)",
+   "examinationStartDate": "Examination starts",
+   "examinationEndDate": "Examination ends",
+   "examinationReportingHour": "Reporting hour (0–23)",
+   "allowsWalkIn": "Walk-in on exam day",
+   "targetIntakeCount": "Target intake",
+   "contactPhoneNumbers": "Contact phone numbers",
+   "contactWebsite": "Contact website"
+  },
+  "hints": {
+   "publicCode": "Capital letters, digits and hyphens, 3 to 64 characters. Citizens see it; it cannot change.",
+   "campaignLabel": "At most 50 characters ({{count}} used).",
+   "targetCategories": "Only categories of {{agency}} are offered.",
+   "targetDistricts": "Each district needs one session before you can publish.",
+   "reportingHour": "Whole hour, Kigali time.",
+   "optional": "Optional.",
+   "walkIn": "Only where the agency’s walk-in policy allows it.",
+   "phones": "Separate several numbers with commas (at most 10)."
+  },
+  "errors": {
+   "publicCode": "Use 3 to 64 capital letters, digits or hyphens, starting with a letter or digit.",
+   "labelRequired": "Enter a campaign name.",
+   "labelTooLong": "The name is longer than 50 characters.",
+   "categoriesRequired": "Choose at least one category.",
+   "categoryAgency": "A category does not belong to your agency.",
+   "districtsRequired": "Choose at least one district.",
+   "dateRequired": "Enter a valid date.",
+   "registrationWindow": "Registration must close after it opens.",
+   "examinationWindow": "The examination cannot end before it starts.",
+   "examBeforeRegistrationCloses": "The examination cannot start before registration closes.",
+   "reportingHour": "Enter a whole hour from 0 to 23.",
+   "intake": "Enter a whole number of at least 1.",
+   "phones": "At most 10 numbers of 40 characters.",
+   "website": "Enter a full http or https address.",
+   "walkIn": "Your agency’s policy does not allow walk-in.",
+   "serverRejected": "The server rejected this value.",
+   "venue": "Enter the venue name (at most 200 characters).",
+   "sessionOutsideWindow": "Choose a day inside the examination window.",
+   "capacity": "Enter a capacity of at least 1."
+  },
+  "basics": {
+   "title": "Basics",
+   "lead": "The basics are fixed when the draft is created. To change them, cancel the draft and create a new one.",
+   "history": "Lifecycle history"
+  },
+  "policy": {
+   "title": "Selection policy",
+   "lead": "Step 2 of 4. Each save creates a new immutable version with its own SHA-256 hash. The platform supplies no official thresholds: confirm every value against the official announcement.",
+   "current": "Current version {{version}}",
+   "none": "No policy version yet. Publishing needs one.",
+   "legalBasis": "Legal basis",
+   "hash": "SHA-256",
+   "suggestionNotice": "Values shown as “suggestion” are copied from the eligibility engine. They are a starting point, not the official policy: confirm each category against the official announcement.",
+   "suggestion": "Suggestion: confirm against the official announcement",
+   "confirmed": "Confirmed by you",
+   "confirm": "Confirm values for {{category}}",
+   "unconfirm": "Edit again",
+   "minimumAge": "Minimum age",
+   "maximumAge": "Maximum age",
+   "referenceDate": "Age reference date",
+   "educationMode": "Education check",
+   "educationThreshold": "Minimum education level",
+   "criminalThreshold": "Criminal record threshold",
+   "medicalMode": "Medical check",
+   "documents": "Required documents",
+   "documentsHint": "Only document types your agency accepts are offered.",
+   "legalBasisCode": "Legal basis code",
+   "legalBasisCodeHint": "A code such as the instrument’s number. The rehearsal uses {{example}}.",
+   "legalBasisReference": "Legal basis reference",
+   "legalBasisReferenceHint": "The announcement or instrument this policy follows (at most 256 characters).",
+   "diffTitle": "Changes before saving",
+   "diffFirst": "No earlier version was saved from this device: every field is new.",
+   "diffBasis": "Compared with the last version you saved from this device.",
+   "incomplete": "{{count}} items still to complete or confirm.",
+   "noChanges": "No change from the last saved version.",
+   "submit": "Save policy version",
+   "created": "Policy version {{version}} saved",
+   "localMatch": "Verified on this device: the hash matches the policy you sent.",
+   "localMismatch": "Warning: the hash does not match the policy computed on this device.",
+   "localUnavailable": "This browser cannot compute the hash for a local check.",
+   "educationModes": {
+    "NESA_RESULTS": "NESA results",
+    "HEC_DEGREE": "HEC-verified degree"
+   },
+   "educationLevels": {
+    "O_LEVEL_S3": "O-Level (S3)",
+    "O_LEVEL_S6_EQUIV": "O-Level (S6 equivalent)",
+    "A_LEVEL_A2": "A-Level (A2)",
+    "A1_IPRC": "Advanced diploma (A1, IPRC)",
+    "BACHELOR_A0": "Bachelor’s degree (A0)",
+    "MASTERS": "Master’s degree",
+    "PHD": "Doctorate"
+   },
+   "criminal": {
+    "ANY_CONVICTION": "Any conviction disqualifies",
+    "IMPRISONMENT_GT_6MO": "Imprisonment of more than 6 months",
+    "IMPRISONMENT_GTE_6MO": "Imprisonment of 6 months or more"
+   },
+   "medical": {
+    "BOARD": "In-house medical board",
+    "CERTIFICATE": "Government physician certificate"
+   }
+  },
+  "sessions": {
+   "title": "District sessions",
+   "lead": "Step 3 of 4. One session per target district: venue, examination day, reporting hour and capacity. An unlimited capacity is an explicit, recorded decision.",
+   "coverage": "Coverage: {{covered}} of {{total}} districts have an active session",
+   "missing": "Still without a session: {{districts}}",
+   "none": "No session yet",
+   "registered": "{{count}} registered",
+   "capacityOf": "{{registered}} of {{capacity}} registered",
+   "venue": "Venue",
+   "examDate": "Examination day",
+   "hour": "Reporting hour",
+   "capacityMode": "Capacity",
+   "capacity": "Seats",
+   "bounded": "Limited number of seats",
+   "unbounded": "Unlimited (recorded decision)",
+   "unboundedHint": "Sends the explicit decision UNBOUNDED_CAPACITY, which is audited.",
+   "save": "Save session",
+   "saved": "Session saved.",
+   "unchanged": "Already saved: nothing changed."
+  },
+  "publish": {
+   "title": "Preflight and publish",
+   "lead": "Step 4 of 4. Check that everything is ready, review what citizens will see, then publish by typing the public code.",
+   "ok": "Ready",
+   "todo": "To do",
+   "checks": {
+    "draft": "The campaign is still a draft",
+    "policy": "A selection policy version exists",
+    "coverage": "Every target district has an active session ({{count}} missing)",
+    "capacity": "Every session has a valid capacity ({{count}} invalid)",
+    "windows": "The dates are coherent ({{count}} sessions outside the examination window)"
+   },
+   "action": "Publish campaign",
+   "confirmTitle": "Publish {{code}}?",
+   "confirmBody": "Publishing makes the campaign visible to citizens and opens registration.",
+   "consequenceFrozen": "The policy and the sessions are frozen: they can no longer be changed.",
+   "consequenceVisible": "Citizens can apply immediately.",
+   "done": "Campaign {{code}} is published and open for registration."
+  },
+  "preview": {
+   "badge": "Preview: what citizens will see",
+   "registration": "Registration",
+   "exam": "Examination",
+   "categories": "Categories",
+   "districts": "Districts",
+   "walkIn": "Walk-in registration is possible on exam day.",
+   "contact": "Contact"
+  },
+  "confirm": {
+   "typeCode": "To confirm, type the public code {{code}}.",
+   "codeLabel": "Public code"
+  },
+  "lifecycle": {
+   "title": "Close, complete or cancel",
+   "lead": "Each action changes the campaign’s state for everyone and cannot be undone. Counts come from the live administration read.",
+   "terminal": "This campaign is {{state}}: no further action is possible.",
+   "done": "The campaign state was changed.",
+   "unavailable": "unavailable",
+   "registeredCount": "Applicants registered so far: {{registered}}",
+   "close": {
+    "action": "Close registration",
+    "title": "Close registration for {{code}}?",
+    "body": "Citizens will no longer be able to register.",
+    "effect": "Registration closes now, ahead of the planned date if it has not passed."
+   },
+   "complete": {
+    "action": "Complete campaign",
+    "title": "Complete {{code}}?",
+    "body": "Use this once the recruitment exercise is over.",
+    "effect": "The campaign becomes read-only history."
+   },
+   "cancel": {
+    "action": "Cancel campaign",
+    "title": "Cancel {{code}}?",
+    "body": "A draft, or an open campaign without applications, can be cancelled.",
+    "effect": "The campaign is withdrawn for good.",
+    "applications": "The server refuses the cancellation of an open campaign that already has applications."
+   }
+  }
+ }
+}

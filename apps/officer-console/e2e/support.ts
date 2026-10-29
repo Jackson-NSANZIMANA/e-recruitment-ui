@@ -4,7 +4,7 @@ export type Perms = readonly string[];
 
 /** Posts → permissions, as the backend's session view reports them (provisional role table, ADR-031). */
 export const POSTS = {
-  admin: ['application.read', 'adjudication.read', 'campaign.read.admin', 'officer.read', 'officer.create', 'officer.posts.assign', 'officer.disable', 'officer.sessions.revoke'],
+  admin: ['application.read', 'adjudication.read', 'campaign.read.admin', 'campaign.create', 'campaign.policy.create', 'campaign.session.configure', 'campaign.publish', 'campaign.registration.close', 'campaign.complete', 'campaign.cancel', 'officer.read', 'officer.create', 'officer.posts.assign', 'officer.disable', 'officer.sessions.revoke'],
   medical: ['medical.review', 'application.read', 'adjudication.read'],
   director: ['decision.final', 'application.accept', 'biometric.evidence.read', 'application.read', 'adjudication.read'],
   adjudicator: ['adjudication.decide', 'biometric.evidence.read', 'application.read', 'adjudication.read'],

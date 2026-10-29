@@ -1,1 +1,299 @@
-{"campaigns": {"states": {"DRAFT": "Brouillon", "REGISTRATION_OPEN": "Inscriptions ouvertes", "REGISTRATION_CLOSED": "Inscriptions closes", "COMPLETED": "Terminée", "CANCELLED": "Annulée"}, "refusals": {"CAMPAIGN_NOT_FOUND": "Aucune campagne de ce type dans votre agence.", "PUBLIC_CODE_ALREADY_EXISTS": "Ce code public est déjà utilisé par une autre campagne.", "CAMPAIGN_LABEL_ALREADY_EXISTS": "Ce nom de campagne est déjà utilisé.", "INVALID_STATE": "L'état actuel de la campagne ne permet pas cette action.", "POLICY_NOT_SET": "Définissez la politique de sélection avant de publier.", "POLICY_VERSION_CONFLICT": "La politique a changé pendant votre modification. Rechargez-la et réessayez.", "POLICY_HASH_MISMATCH": "La politique examinée n'est pas la version actuelle. Rechargez-la et réessayez.", "POLICY_CATEGORY_COVERAGE_MISMATCH": "La politique doit couvrir chaque catégorie cible, et seulement celles-ci.", "INCOMPLETE_COVERAGE": "Chaque district cible doit avoir une session active avant la publication.", "STALE_COVERAGE": "La liste des sessions a changé depuis votre examen. Rechargez et réessayez.", "INVALID_CAPACITY": "La capacité de la session n'est pas valide.", "CAPACITY_DECISION_REQUIRED": "Une session illimitée exige une décision explicite de capacité illimitée.", "SESSION_ALREADY_RESERVED": "Cette session a déjà des réservations et ne peut pas être modifiée ainsi.", "SESSION_CONFLICT": "Cette session entre en conflit avec une session existante.", "INVALID_SESSION_DATE": "La date de la session est hors de la période d'examen.", "INVALID_REPORTING_HOUR": "L'heure de présentation n'est pas valide.", "DISTRICT_PROVINCE_MISMATCH": "Ce district n'appartient pas à la province choisie.", "CAMPAIGN_WRITE_CONFLICT": "Quelqu'un d'autre a modifié cette campagne en même temps. Rechargez et réessayez.", "UNKNOWN": "Le service des campagnes a refusé cette action."}}}
+{
+ "campaigns": {
+  "states": {
+   "DRAFT": "Brouillon",
+   "REGISTRATION_OPEN": "Inscriptions ouvertes",
+   "REGISTRATION_CLOSED": "Inscriptions closes",
+   "COMPLETED": "Terminée",
+   "CANCELLED": "Annulée",
+   "EXAMINATION_ACTIVE": "Examen en cours (ancien état)"
+  },
+  "refusals": {
+   "CAMPAIGN_NOT_FOUND": "Aucune campagne de ce type dans votre agence.",
+   "PUBLIC_CODE_ALREADY_EXISTS": "Ce code public est déjà utilisé par une autre campagne.",
+   "CAMPAIGN_LABEL_ALREADY_EXISTS": "Ce nom de campagne est déjà utilisé.",
+   "INVALID_STATE": "L'état actuel de la campagne ne permet pas cette action.",
+   "POLICY_NOT_SET": "Définissez la politique de sélection avant de publier.",
+   "POLICY_VERSION_CONFLICT": "La politique a changé pendant votre modification. Rechargez-la et réessayez.",
+   "POLICY_HASH_MISMATCH": "La politique examinée n'est pas la version actuelle. Rechargez-la et réessayez.",
+   "POLICY_CATEGORY_COVERAGE_MISMATCH": "La politique doit couvrir chaque catégorie cible, et seulement celles-ci.",
+   "INCOMPLETE_COVERAGE": "Chaque district cible doit avoir une session active avant la publication.",
+   "STALE_COVERAGE": "La liste des sessions a changé depuis votre examen. Rechargez et réessayez.",
+   "INVALID_CAPACITY": "La capacité de la session n'est pas valide.",
+   "CAPACITY_DECISION_REQUIRED": "Une session illimitée exige une décision explicite de capacité illimitée.",
+   "SESSION_ALREADY_RESERVED": "Cette session a déjà des réservations et ne peut pas être modifiée ainsi.",
+   "SESSION_CONFLICT": "Cette session entre en conflit avec une session existante.",
+   "INVALID_SESSION_DATE": "La date de la session est hors de la période d'examen.",
+   "INVALID_REPORTING_HOUR": "L'heure de présentation n'est pas valide.",
+   "DISTRICT_PROVINCE_MISMATCH": "Ce district n'appartient pas à la province choisie.",
+   "CAMPAIGN_WRITE_CONFLICT": "Quelqu'un d'autre a modifié cette campagne en même temps. Rechargez et réessayez.",
+   "UNKNOWN": "Le service des campagnes a refusé cette action.",
+   "FORBIDDEN": "Votre poste n’est pas autorisé à effectuer cette action.",
+   "REJECTED": "Le serveur a refusé la demande : {{detail}}",
+   "GENERIC": "La demande n’a pas abouti. Rien n’a été modifié ; réessayez.",
+   "goToStep": "Aller à : {{step}}"
+  },
+  "categories": {
+   "GENERAL_ENLISTMENT": "RDF — engagement général",
+   "RESERVE_FORCE_ALEVEL": "RDF — réserve — niveau A",
+   "RESERVE_FORCE_UNIVERSITY": "RDF — réserve — université",
+   "RESERVE_FORCE_SPECIALIST": "RDF — réserve — spécialiste",
+   "CADET_OFFICER": "RNP — officier cadet",
+   "BASIC_POLICE_COURSE": "RNP — formation de police de base",
+   "GENERAL_ENLISTEE": "RCS — engagé général",
+   "OFFICER_ONE_YEAR": "RCS — officier — un an",
+   "OFFICER_ONE_YEAR_SPECIALIST": "RCS — officier spécialiste — un an",
+   "OFFICER_FOUR_YEAR_UR": "RCS — officier — quatre ans à l’UR"
+  },
+  "documents": {
+   "NATIONAL_ID": "Carte d’identité nationale",
+   "APPLICATION_FORM_WITH_PHOTO": "Formulaire de candidature avec photo",
+   "BIRTH_CERTIFICATE": "Acte de naissance",
+   "OLEVEL_CERTIFICATE": "Certificat O-Level",
+   "ALEVEL_CERTIFICATE": "Certificat A-Level",
+   "DEGREE_DIPLOMA_COPY": "Diplôme (copie)",
+   "DEGREE_DIPLOMA_NOTARIZED": "Diplôme (copie légalisée)",
+   "GOOD_CONDUCT_CERTIFICATE": "Certificat de bonne conduite",
+   "NON_CONVICTION_CERTIFICATE": "Certificat de non-condamnation",
+   "CELIBACY_CERTIFICATE": "Certificat de célibat",
+   "MEDICAL_CERTIFICATE_GOVT": "Certificat médical (public)"
+  },
+  "yes": "Oui",
+  "no": "Non",
+  "choose": "Choisir…",
+  "replayed": "Déjà fait : le résultat d’origine est affiché.",
+  "noPermission": "Votre poste n’autorise pas cette action.",
+  "frozen": "La campagne est publiée : sa structure est figée et ne peut plus être modifiée.",
+  "steps": {
+   "basics": "Informations",
+   "policy": "Politique",
+   "sessions": "Sessions",
+   "publish": "Publication",
+   "lifecycle": "Cycle de vie"
+  },
+  "studio": {
+   "notFoundTitle": "Campagne introuvable",
+   "notFoundBody": "Aucune campagne portant ce code n’existe dans votre agence."
+  },
+  "list": {
+   "title": "Campagnes de recrutement",
+   "lead": "Toutes les campagnes de {{agency}}, quel que soit leur état.",
+   "new": "Nouvelle campagne",
+   "search": "Rechercher par nom ou code",
+   "statusFilter": "État",
+   "allStates": "Tous les états",
+   "cols": {
+    "label": "Campagne",
+    "status": "État",
+    "registration": "Inscription (heure de Kigali)",
+    "exam": "Examen",
+    "sessions": "Sessions",
+    "registered": "Inscrits",
+    "open": "Ouvrir"
+   },
+   "open": "Ouvrir",
+   "sessionsOf": "{{sessions}} sur {{districts}} districts",
+   "more": "{{shown}} campagnes affichées sur {{total}}.",
+   "empty": {
+    "title": "Aucune campagne pour le moment",
+    "body": "Créez la première campagne de votre agence. Elle commence comme brouillon et reste invisible aux citoyens jusqu’à sa publication."
+   }
+  },
+  "new": {
+   "title": "Nouvelle campagne : les informations de base",
+   "lead": "Étape 1 sur 4. Cela crée un brouillon. Vous fixez ensuite la politique de sélection, les sessions par district, puis vous publiez.",
+   "kigaliTime": "Toutes les heures de cet écran sont à l’heure de Kigali (UTC+2).",
+   "submit": "Créer le brouillon",
+   "next": "Ensuite : la politique de sélection.",
+   "back": "Retour aux campagnes"
+  },
+  "fields": {
+   "publicCode": "Code public",
+   "campaignLabel": "Nom de la campagne",
+   "targetCategories": "Catégories",
+   "targetDistricts": "Districts",
+   "registrationOpensAt": "Ouverture des inscriptions (heure de Kigali)",
+   "registrationClosesAt": "Clôture des inscriptions (heure de Kigali)",
+   "examinationStartDate": "Début de l’examen",
+   "examinationEndDate": "Fin de l’examen",
+   "examinationReportingHour": "Heure de présentation (0–23)",
+   "allowsWalkIn": "Inscription sur place le jour de l’examen",
+   "targetIntakeCount": "Effectif visé",
+   "contactPhoneNumbers": "Numéros de contact",
+   "contactWebsite": "Site web de contact"
+  },
+  "hints": {
+   "publicCode": "Majuscules, chiffres et tirets, 3 à 64 caractères. Visible des citoyens ; non modifiable.",
+   "campaignLabel": "50 caractères au plus ({{count}} utilisés).",
+   "targetCategories": "Seules les catégories de {{agency}} sont proposées.",
+   "targetDistricts": "Chaque district exige une session avant la publication.",
+   "reportingHour": "Heure pleine, heure de Kigali.",
+   "optional": "Facultatif.",
+   "walkIn": "Uniquement lorsque la politique de l’agence l’autorise.",
+   "phones": "Séparez les numéros par des virgules (10 au plus)."
+  },
+  "errors": {
+   "publicCode": "Utilisez 3 à 64 majuscules, chiffres ou tirets, en commençant par une lettre ou un chiffre.",
+   "labelRequired": "Saisissez un nom de campagne.",
+   "labelTooLong": "Le nom dépasse 50 caractères.",
+   "categoriesRequired": "Choisissez au moins une catégorie.",
+   "categoryAgency": "Une catégorie n’appartient pas à votre agence.",
+   "districtsRequired": "Choisissez au moins un district.",
+   "dateRequired": "Saisissez une date valide.",
+   "registrationWindow": "La clôture doit suivre l’ouverture.",
+   "examinationWindow": "L’examen ne peut pas finir avant de commencer.",
+   "examBeforeRegistrationCloses": "L’examen ne peut pas commencer avant la clôture des inscriptions.",
+   "reportingHour": "Saisissez une heure entière de 0 à 23.",
+   "intake": "Saisissez un nombre entier d’au moins 1.",
+   "phones": "10 numéros au plus, de 40 caractères.",
+   "website": "Saisissez une adresse http ou https complète.",
+   "walkIn": "La politique de votre agence n’autorise pas l’inscription sur place.",
+   "serverRejected": "Le serveur a refusé cette valeur.",
+   "venue": "Saisissez le lieu (200 caractères au plus).",
+   "sessionOutsideWindow": "Choisissez un jour dans la période d’examen.",
+   "capacity": "Saisissez une capacité d’au moins 1."
+  },
+  "basics": {
+   "title": "Informations de base",
+   "lead": "Les informations de base sont fixées à la création du brouillon. Pour les modifier, annulez le brouillon et créez-en un nouveau.",
+   "history": "Historique du cycle de vie"
+  },
+  "policy": {
+   "title": "Politique de sélection",
+   "lead": "Étape 2 sur 4. Chaque enregistrement crée une version immuable avec son empreinte SHA-256. La plateforme ne fournit aucun seuil officiel : confirmez chaque valeur d’après l’annonce officielle.",
+   "current": "Version actuelle {{version}}",
+   "none": "Aucune version de politique. La publication en exige une.",
+   "legalBasis": "Base légale",
+   "hash": "SHA-256",
+   "suggestionNotice": "Les valeurs « suggestion » proviennent du moteur d’éligibilité. C’est un point de départ, pas la politique officielle : confirmez chaque catégorie d’après l’annonce officielle.",
+   "suggestion": "Suggestion : à confirmer d’après l’annonce officielle",
+   "confirmed": "Confirmé par vous",
+   "confirm": "Confirmer les valeurs pour {{category}}",
+   "unconfirm": "Modifier à nouveau",
+   "minimumAge": "Âge minimum",
+   "maximumAge": "Âge maximum",
+   "referenceDate": "Date de référence de l’âge",
+   "educationMode": "Vérification des études",
+   "educationThreshold": "Niveau d’études minimal",
+   "criminalThreshold": "Seuil du casier judiciaire",
+   "medicalMode": "Contrôle médical",
+   "documents": "Documents requis",
+   "documentsHint": "Seuls les types de documents acceptés par votre agence sont proposés.",
+   "legalBasisCode": "Code de la base légale",
+   "legalBasisCodeHint": "Un code tel que le numéro de l’acte. La répétition utilise {{example}}.",
+   "legalBasisReference": "Référence de la base légale",
+   "legalBasisReferenceHint": "L’annonce ou l’acte suivi par cette politique (256 caractères au plus).",
+   "diffTitle": "Modifications avant enregistrement",
+   "diffFirst": "Aucune version précédente enregistrée depuis cet appareil : tout est nouveau.",
+   "diffBasis": "Comparé à la dernière version enregistrée depuis cet appareil.",
+   "incomplete": "{{count}} éléments restent à compléter ou à confirmer.",
+   "noChanges": "Aucune différence avec la dernière version enregistrée.",
+   "submit": "Enregistrer la version de la politique",
+   "created": "Version {{version}} de la politique enregistrée",
+   "localMatch": "Vérifié sur cet appareil : l’empreinte correspond à la politique envoyée.",
+   "localMismatch": "Attention : l’empreinte ne correspond pas à la politique calculée sur cet appareil.",
+   "localUnavailable": "Ce navigateur ne peut pas calculer l’empreinte pour la vérifier.",
+   "educationModes": {
+    "NESA_RESULTS": "Résultats NESA",
+    "HEC_DEGREE": "Diplôme vérifié par HEC"
+   },
+   "educationLevels": {
+    "O_LEVEL_S3": "O-Level (S3)",
+    "O_LEVEL_S6_EQUIV": "O-Level (équivalent S6)",
+    "A_LEVEL_A2": "A-Level (A2)",
+    "A1_IPRC": "Diplôme avancé (A1, IPRC)",
+    "BACHELOR_A0": "Licence (A0)",
+    "MASTERS": "Master",
+    "PHD": "Doctorat"
+   },
+   "criminal": {
+    "ANY_CONVICTION": "Toute condamnation disqualifie",
+    "IMPRISONMENT_GT_6MO": "Emprisonnement de plus de 6 mois",
+    "IMPRISONMENT_GTE_6MO": "Emprisonnement de 6 mois ou plus"
+   },
+   "medical": {
+    "BOARD": "Commission médicale interne",
+    "CERTIFICATE": "Certificat d’un médecin de l’État"
+   }
+  },
+  "sessions": {
+   "title": "Sessions par district",
+   "lead": "Étape 3 sur 4. Une session par district : lieu, jour d’examen, heure de présentation et capacité. Une capacité illimitée est une décision explicite et consignée.",
+   "coverage": "Couverture : {{covered}} districts sur {{total}} ont une session active",
+   "missing": "Sans session : {{districts}}",
+   "none": "Pas encore de session",
+   "registered": "{{count}} inscrits",
+   "capacityOf": "{{registered}} inscrits sur {{capacity}}",
+   "venue": "Lieu",
+   "examDate": "Jour d’examen",
+   "hour": "Heure de présentation",
+   "capacityMode": "Capacité",
+   "capacity": "Places",
+   "bounded": "Nombre de places limité",
+   "unbounded": "Illimitée (décision consignée)",
+   "unboundedHint": "Envoie la décision explicite UNBOUNDED_CAPACITY, qui est auditée.",
+   "save": "Enregistrer la session",
+   "saved": "Session enregistrée.",
+   "unchanged": "Déjà enregistrée : rien n’a changé."
+  },
+  "publish": {
+   "title": "Contrôle préalable et publication",
+   "lead": "Étape 4 sur 4. Vérifiez que tout est prêt, relisez ce que verront les citoyens, puis publiez en saisissant le code public.",
+   "ok": "Prêt",
+   "todo": "À faire",
+   "checks": {
+    "draft": "La campagne est encore un brouillon",
+    "policy": "Une version de la politique existe",
+    "coverage": "Chaque district cible a une session active ({{count}} manquants)",
+    "capacity": "Chaque session a une capacité valide ({{count}} invalides)",
+    "windows": "Les dates sont cohérentes ({{count}} sessions hors de la période d’examen)"
+   },
+   "action": "Publier la campagne",
+   "confirmTitle": "Publier {{code}} ?",
+   "confirmBody": "La publication rend la campagne visible aux citoyens et ouvre les inscriptions.",
+   "consequenceFrozen": "La politique et les sessions sont figées : elles ne pourront plus être modifiées.",
+   "consequenceVisible": "Les citoyens peuvent postuler immédiatement.",
+   "done": "La campagne {{code}} est publiée et les inscriptions sont ouvertes."
+  },
+  "preview": {
+   "badge": "Aperçu : ce que verront les citoyens",
+   "registration": "Inscription",
+   "exam": "Examen",
+   "categories": "Catégories",
+   "districts": "Districts",
+   "walkIn": "L’inscription sur place est possible le jour de l’examen.",
+   "contact": "Contact"
+  },
+  "confirm": {
+   "typeCode": "Pour confirmer, saisissez le code public {{code}}.",
+   "codeLabel": "Code public"
+  },
+  "lifecycle": {
+   "title": "Clôturer, terminer ou annuler",
+   "lead": "Chaque action change l’état de la campagne pour tous et est irréversible. Les chiffres proviennent de la lecture administrative en direct.",
+   "terminal": "Cette campagne est « {{state}} » : aucune action n’est plus possible.",
+   "done": "L’état de la campagne a été modifié.",
+   "unavailable": "indisponible",
+   "registeredCount": "Candidats inscrits à ce jour : {{registered}}",
+   "close": {
+    "action": "Clôturer les inscriptions",
+    "title": "Clôturer les inscriptions de {{code}} ?",
+    "body": "Les citoyens ne pourront plus s’inscrire.",
+    "effect": "Les inscriptions se ferment maintenant, même avant la date prévue."
+   },
+   "complete": {
+    "action": "Terminer la campagne",
+    "title": "Terminer {{code}} ?",
+    "body": "À utiliser lorsque l’opération de recrutement est terminée.",
+    "effect": "La campagne devient un historique en lecture seule."
+   },
+   "cancel": {
+    "action": "Annuler la campagne",
+    "title": "Annuler {{code}} ?",
+    "body": "Un brouillon, ou une campagne ouverte sans candidature, peut être annulée.",
+    "effect": "La campagne est retirée définitivement.",
+    "applications": "Le serveur refuse l’annulation d’une campagne ouverte qui compte déjà des candidatures."
+   }
+  }
+ }
+}

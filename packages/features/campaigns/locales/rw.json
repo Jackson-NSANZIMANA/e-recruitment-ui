@@ -1,1 +1,299 @@
-{"campaigns": {"states": {"DRAFT": "Umushinga", "REGISTRATION_OPEN": "Kwiyandikisha birafunguye", "REGISTRATION_CLOSED": "Kwiyandikisha byafunzwe", "COMPLETED": "Byarangiye", "CANCELLED": "Byahagaritswe"}, "refusals": {"CAMPAIGN_NOT_FOUND": "Nta bukangurambaga nk'ubwo mu rwego rwawe.", "PUBLIC_CODE_ALREADY_EXISTS": "Iyo kode isanzwe ikoreshwa n'ubundi bukangurambaga.", "CAMPAIGN_LABEL_ALREADY_EXISTS": "Iryo zina risanzwe rikoreshwa.", "INVALID_STATE": "Uko ubukangurambaga buhagaze ubu ntibyemera iki gikorwa.", "POLICY_NOT_SET": "Shyiraho amabwiriza yo gutoranya mbere yo gutangaza.", "POLICY_VERSION_CONFLICT": "Amabwiriza yahindutse mu gihe wahinduraga. Ongera uyafungure ugerageze.", "POLICY_HASH_MISMATCH": "Amabwiriza wasuzumye si yo ari ubu. Ongera uyafungure ugerageze.", "POLICY_CATEGORY_COVERAGE_MISMATCH": "Amabwiriza agomba gukubiyemo buri cyiciro kigenewe, kandi ibyo gusa.", "INCOMPLETE_COVERAGE": "Buri karere kagenewe gakeneye isomo rikora mbere yo gutangaza.", "STALE_COVERAGE": "Urutonde rw'amasomo rwahindutse kuva warusuzuma. Ongera urufungure ugerageze.", "INVALID_CAPACITY": "Umubare w'abakirwa mu isomo ntiwemewe.", "CAPACITY_DECISION_REQUIRED": "Isomo ritagira imbibi rikeneye icyemezo cyeruye cy'umubare utagira imbibi.", "SESSION_ALREADY_RESERVED": "Iryo somo rimaze kugira abiyandikishije, ntirishobora guhindurwa gutyo.", "SESSION_CONFLICT": "Iryo somo rihura n'irindi risanzwe rihari.", "INVALID_SESSION_DATE": "Itariki y'isomo iri hanze y'igihe cy'ibizamini.", "INVALID_REPORTING_HOUR": "Isaha yo kwitaba ntiyemewe.", "DISTRICT_PROVINCE_MISMATCH": "Ako karere ntikari mu ntara wahisemo.", "CAMPAIGN_WRITE_CONFLICT": "Undi muntu yahinduye ubu bukangurambaga icyarimwe nawe. Ongera ufungure ugerageze.", "UNKNOWN": "Serivisi y'ubukangurambaga yanze iki gikorwa."}}}
+{
+ "campaigns": {
+  "states": {
+   "DRAFT": "Umushinga",
+   "REGISTRATION_OPEN": "Kwiyandikisha birafunguye",
+   "REGISTRATION_CLOSED": "Kwiyandikisha byafunzwe",
+   "COMPLETED": "Byarangiye",
+   "CANCELLED": "Byahagaritswe",
+   "EXAMINATION_ACTIVE": "Ikizamini kiri gukorwa (iyi mimerere ya kera)"
+  },
+  "refusals": {
+   "CAMPAIGN_NOT_FOUND": "Nta bukangurambaga nk'ubwo mu rwego rwawe.",
+   "PUBLIC_CODE_ALREADY_EXISTS": "Iyo kode isanzwe ikoreshwa n'ubundi bukangurambaga.",
+   "CAMPAIGN_LABEL_ALREADY_EXISTS": "Iryo zina risanzwe rikoreshwa.",
+   "INVALID_STATE": "Uko ubukangurambaga buhagaze ubu ntibyemera iki gikorwa.",
+   "POLICY_NOT_SET": "Shyiraho amabwiriza yo gutoranya mbere yo gutangaza.",
+   "POLICY_VERSION_CONFLICT": "Amabwiriza yahindutse mu gihe wahinduraga. Ongera uyafungure ugerageze.",
+   "POLICY_HASH_MISMATCH": "Amabwiriza wasuzumye si yo ari ubu. Ongera uyafungure ugerageze.",
+   "POLICY_CATEGORY_COVERAGE_MISMATCH": "Amabwiriza agomba gukubiyemo buri cyiciro kigenewe, kandi ibyo gusa.",
+   "INCOMPLETE_COVERAGE": "Buri karere kagenewe gakeneye isomo rikora mbere yo gutangaza.",
+   "STALE_COVERAGE": "Urutonde rw'amasomo rwahindutse kuva warusuzuma. Ongera urufungure ugerageze.",
+   "INVALID_CAPACITY": "Umubare w'abakirwa mu isomo ntiwemewe.",
+   "CAPACITY_DECISION_REQUIRED": "Isomo ritagira imbibi rikeneye icyemezo cyeruye cy'umubare utagira imbibi.",
+   "SESSION_ALREADY_RESERVED": "Iryo somo rimaze kugira abiyandikishije, ntirishobora guhindurwa gutyo.",
+   "SESSION_CONFLICT": "Iryo somo rihura n'irindi risanzwe rihari.",
+   "INVALID_SESSION_DATE": "Itariki y'isomo iri hanze y'igihe cy'ibizamini.",
+   "INVALID_REPORTING_HOUR": "Isaha yo kwitaba ntiyemewe.",
+   "DISTRICT_PROVINCE_MISMATCH": "Ako karere ntikari mu ntara wahisemo.",
+   "CAMPAIGN_WRITE_CONFLICT": "Undi muntu yahinduye ubu bukangurambaga icyarimwe nawe. Ongera ufungure ugerageze.",
+   "UNKNOWN": "Serivisi y'ubukangurambaga yanze iki gikorwa.",
+   "FORBIDDEN": "Umwanya ufite ntumwemerera gukora ibi.",
+   "REJECTED": "Seriveri yanze icyifuzo: {{detail}}",
+   "GENERIC": "Icyifuzo ntikabashije gusozwa. Nta cyahindutse; ongera ugerageze.",
+   "goToStep": "Genda kuri: {{step}}"
+  },
+  "categories": {
+   "GENERAL_ENLISTMENT": "RDF — kwinjira muri rusange",
+   "RESERVE_FORCE_ALEVEL": "RDF — abasirikare b’abasimbura A-Level",
+   "RESERVE_FORCE_UNIVERSITY": "RDF — abasirikare b’abasimbura ba kaminuza",
+   "RESERVE_FORCE_SPECIALIST": "RDF — abasirikare b’abasimbura b’inzobere",
+   "CADET_OFFICER": "RNP — ofisiye w’umunyeshuri",
+   "BASIC_POLICE_COURSE": "RNP — amahugurwa y’ibanze ya polisi",
+   "GENERAL_ENLISTEE": "RCS — kwinjira muri rusange",
+   "OFFICER_ONE_YEAR": "RCS — ofisiye w’umwaka umwe",
+   "OFFICER_ONE_YEAR_SPECIALIST": "RCS — ofisiye w’inzobere w’umwaka umwe",
+   "OFFICER_FOUR_YEAR_UR": "RCS — ofisiye w’imyaka ine muri UR"
+  },
+  "documents": {
+   "NATIONAL_ID": "Indangamuntu",
+   "APPLICATION_FORM_WITH_PHOTO": "Ifishi y’isaba ifite ifoto",
+   "BIRTH_CERTIFICATE": "Icyemezo cy’amavuko",
+   "OLEVEL_CERTIFICATE": "Impamyabumenyi ya O-Level",
+   "ALEVEL_CERTIFICATE": "Impamyabumenyi ya A-Level",
+   "DEGREE_DIPLOMA_COPY": "Impamyabumenyi (kopi)",
+   "DEGREE_DIPLOMA_NOTARIZED": "Impamyabumenyi (kopi yemejwe na noteri)",
+   "GOOD_CONDUCT_CERTIFICATE": "Icyemezo cy’imyitwarire myiza",
+   "NON_CONVICTION_CERTIFICATE": "Icyemezo cy’uko utarakatiwe",
+   "CELIBACY_CERTIFICATE": "Icyemezo cy’ingaragu",
+   "MEDICAL_CERTIFICATE_GOVT": "Icyemezo cya muganga (cya Leta)"
+  },
+  "yes": "Yego",
+  "no": "Oya",
+  "choose": "Hitamo…",
+  "replayed": "Ibi byari byarakozwe: hagaragajwe igisubizo cya mbere.",
+  "noPermission": "Umwanya ufite ntumwemerera iki gikorwa.",
+  "frozen": "Ubukangurambaga bwamaze gutangazwa: imiterere yabwo irafunze ntishobora guhinduka.",
+  "steps": {
+   "basics": "Ibanze",
+   "policy": "Amabwiriza yo guhitamo",
+   "sessions": "Ibyiciro by’ikizamini",
+   "publish": "Gutangaza",
+   "lifecycle": "Igihe cy’ubukangurambaga"
+  },
+  "studio": {
+   "notFoundTitle": "Ubukangurambaga ntibubonetse",
+   "notFoundBody": "Nta bukangurambaga bufite iyi kode mu rwego rwawe."
+  },
+  "list": {
+   "title": "Ubukangurambaga bwo gushaka abakozi",
+   "lead": "Ubukangurambaga bwose bwa {{agency}}, mu mimerere yose.",
+   "new": "Ubukangurambaga bushya",
+   "search": "Shakisha ku izina cyangwa kode",
+   "statusFilter": "Imimerere",
+   "allStates": "Imimerere yose",
+   "cols": {
+    "label": "Ubukangurambaga",
+    "status": "Imimerere",
+    "registration": "Kwiyandikisha (isaha ya Kigali)",
+    "exam": "Ikizamini",
+    "sessions": "Ibyiciro",
+    "registered": "Biyandikishije",
+    "open": "Fungura"
+   },
+   "open": "Fungura",
+   "sessionsOf": "{{sessions}} kuri {{districts}} by’uturere",
+   "more": "Hagaragajwe {{shown}} kuri {{total}}.",
+   "empty": {
+    "title": "Nta bukangurambaga buraboneka",
+    "body": "Tangira ubukangurambaga bwa mbere bw’urwego rwawe. Butangira ari umushinga kandi abaturage ntibabubona kugeza ubutangaje."
+   }
+  },
+  "new": {
+   "title": "Ubukangurambaga bushya: ibanze",
+   "lead": "Intambwe ya 1 kuri 4. Ibi bitangiza umushinga. Nyuma uzashyiraho amabwiriza yo guhitamo, ibyiciro by’uturere, hanyuma utangaze.",
+   "kigaliTime": "Amasaha yose kuri uru rupapuro ni ay’i Kigali (UTC+2).",
+   "submit": "Tangiza umushinga",
+   "next": "Ikurikira: amabwiriza yo guhitamo.",
+   "back": "Subira ku bukangurambaga"
+  },
+  "fields": {
+   "publicCode": "Kode rusange",
+   "campaignLabel": "Izina ry’ubukangurambaga",
+   "targetCategories": "Ibyiciro by’abakandida",
+   "targetDistricts": "Uturere",
+   "registrationOpensAt": "Kwiyandikisha bitangira (isaha ya Kigali)",
+   "registrationClosesAt": "Kwiyandikisha birangira (isaha ya Kigali)",
+   "examinationStartDate": "Ikizamini gitangira",
+   "examinationEndDate": "Ikizamini kirangira",
+   "examinationReportingHour": "Isaha yo kugera ku kizamini (0–23)",
+   "allowsWalkIn": "Kwiyandikisha ku munsi w’ikizamini",
+   "targetIntakeCount": "Umubare w’abagomba gutorwa",
+   "contactPhoneNumbers": "Nimero za telefoni zo kuvugana",
+   "contactWebsite": "Urubuga rwo kuvugana"
+  },
+  "hints": {
+   "publicCode": "Inyuguti nkuru, imibare n’udukoni, inyuguti 3 kugeza kuri 64. Abaturage barayibona; ntishobora guhinduka.",
+   "campaignLabel": "Inyuguti 50 ntarengwa ({{count}} zakoreshejwe).",
+   "targetCategories": "Hatangwa gusa ibyiciro bya {{agency}}.",
+   "targetDistricts": "Buri karere gakeneye icyiciro kimwe mbere yo gutangaza.",
+   "reportingHour": "Isaha yuzuye, isaha ya Kigali.",
+   "optional": "Si itegeko.",
+   "walkIn": "Ni ho gusa politiki y’urwego yemera.",
+   "phones": "Itandukanye nimero ukoresheje akaboga (10 ntarengwa)."
+  },
+  "errors": {
+   "publicCode": "Koresha inyuguti nkuru, imibare cyangwa udukoni (3–64), utangire n’inyuguti cyangwa umubare.",
+   "labelRequired": "Andika izina ry’ubukangurambaga.",
+   "labelTooLong": "Izina rirenze inyuguti 50.",
+   "categoriesRequired": "Hitamo nibura icyiciro kimwe.",
+   "categoryAgency": "Hari icyiciro kitari icy’urwego rwawe.",
+   "districtsRequired": "Hitamo nibura akarere kamwe.",
+   "dateRequired": "Andika itariki nyayo.",
+   "registrationWindow": "Kwiyandikisha bigomba kurangira nyuma yo gutangira.",
+   "examinationWindow": "Ikizamini ntigishobora kurangira mbere yo gutangira.",
+   "examBeforeRegistrationCloses": "Ikizamini ntigishobora gutangira mbere y’uko kwiyandikisha birangira.",
+   "reportingHour": "Andika isaha yuzuye kuva kuri 0 kugeza kuri 23.",
+   "intake": "Andika umubare wuzuye utari munsi ya 1.",
+   "phones": "Nimero 10 ntarengwa, buri imwe y’inyuguti 40 ntarengwa.",
+   "website": "Andika aderesi yuzuye ya http cyangwa https.",
+   "walkIn": "Politiki y’urwego rwawe ntiyemera kwiyandikisha ku munsi w’ikizamini.",
+   "serverRejected": "Seriveri yanze iyi gaciro.",
+   "venue": "Andika izina ry’ahabera ikizamini (inyuguti 200 ntarengwa).",
+   "sessionOutsideWindow": "Hitamo umunsi uri mu gihe cy’ikizamini.",
+   "capacity": "Andika ubushobozi butari munsi ya 1."
+  },
+  "basics": {
+   "title": "Ibanze",
+   "lead": "Ibanze bikosorwa mu gihe hakorwa umushinga. Kugira ngo uhindure, hagarika umushinga ukore undi.",
+   "history": "Amateka y’imimerere"
+  },
+  "policy": {
+   "title": "Amabwiriza yo guhitamo",
+   "lead": "Intambwe ya 2 kuri 4. Buri gihe ubika hakorwa verisiyo nshya idahinduka ifite SHA-256 yayo. Urubuga nta mipaka y’ibanze rutanga: emeza buri gaciro ugereranyije n’itangazo ry’ubuyobozi.",
+   "current": "Verisiyo y’ubu {{version}}",
+   "none": "Nta verisiyo y’amabwiriza iraboneka. Gutangaza birayikenera.",
+   "legalBasis": "Ishingiro ry’amategeko",
+   "hash": "SHA-256",
+   "suggestionNotice": "Agaciro kanditseho “icyifuzo” kakuwe muri moteri y’isuzuma ry’ibisabwa. Ni intangiriro, si amabwiriza y’ubuyobozi: emeza buri cyiciro ugereranyije n’itangazo ry’ubuyobozi.",
+   "suggestion": "Icyifuzo: emeza ugereranyije n’itangazo ry’ubuyobozi",
+   "confirmed": "Cyemejwe nawe",
+   "confirm": "Emeza agaciro ka {{category}}",
+   "unconfirm": "Ongera uhindure",
+   "minimumAge": "Imyaka y’ubuto",
+   "maximumAge": "Imyaka y’ubuhaha",
+   "referenceDate": "Itariki yo gupimiraho imyaka",
+   "educationMode": "Igenzura ry’amashuri",
+   "educationThreshold": "Urwego rw’amashuri ruto",
+   "criminalThreshold": "Urugero rw’amateka y’ibyaha",
+   "medicalMode": "Isuzuma ry’ubuvuzi",
+   "documents": "Inyandiko zisabwa",
+   "documentsHint": "Hatangwa gusa ubwoko bw’inyandiko urwego rwawe rwemera.",
+   "legalBasisCode": "Kode y’ishingiro ry’amategeko",
+   "legalBasisCodeHint": "Kode nk’inomero y’iteka. Imyitozo ikoresha {{example}}.",
+   "legalBasisReference": "Icyerekezo cy’ishingiro ry’amategeko",
+   "legalBasisReferenceHint": "Itangazo cyangwa iteka aya mabwiriza akurikiza (inyuguti 256 ntarengwa).",
+   "diffTitle": "Impinduka mbere yo kubika",
+   "diffFirst": "Nta verisiyo ibitswe kuri uyu mudasobwa: buri gice ni gishya.",
+   "diffBasis": "Ugereranyije na verisiyo ya nyuma wabitse kuri uyu mudasobwa.",
+   "incomplete": "Hasigaye ibintu {{count}} byo kuzuza cyangwa kwemeza.",
+   "noChanges": "Nta mpinduka kuri verisiyo ya nyuma yabitswe.",
+   "submit": "Bika verisiyo y’amabwiriza",
+   "created": "Verisiyo {{version}} y’amabwiriza yabitswe",
+   "localMatch": "Byemejwe kuri uyu mudasobwa: hash ihuye n’amabwiriza watanze.",
+   "localMismatch": "Iburira: hash ntihuye n’amabwiriza yabazwe kuri uyu mudasobwa.",
+   "localUnavailable": "Iyi mushakisha ntishobora kubara hash ngo igenzurwe.",
+   "educationModes": {
+    "NESA_RESULTS": "Amanota ya NESA",
+    "HEC_DEGREE": "Impamyabumenyi yemejwe na HEC"
+   },
+   "educationLevels": {
+    "O_LEVEL_S3": "O-Level (S3)",
+    "O_LEVEL_S6_EQUIV": "O-Level (bihwanye na S6)",
+    "A_LEVEL_A2": "A-Level (A2)",
+    "A1_IPRC": "Dipolome (A1, IPRC)",
+    "BACHELOR_A0": "Impamyabumenyi ya Bachelor (A0)",
+    "MASTERS": "Impamyabumenyi ya Masters",
+    "PHD": "Impamyabumenyi y’ikirenga (PhD)"
+   },
+   "criminal": {
+    "ANY_CONVICTION": "Icyaha cyose cyahamijwe kirakumira",
+    "IMPRISONMENT_GT_6MO": "Igifungo kirenze amezi 6",
+    "IMPRISONMENT_GTE_6MO": "Igifungo cy’amezi 6 cyangwa arenga"
+   },
+   "medical": {
+    "BOARD": "Komisiyo y’ubuvuzi y’urwego",
+    "CERTIFICATE": "Icyemezo cya muganga wa Leta"
+   }
+  },
+  "sessions": {
+   "title": "Ibyiciro by’uturere",
+   "lead": "Intambwe ya 3 kuri 4. Icyiciro kimwe kuri buri karere: aho ikizamini kizabera, umunsi, isaha n’ubushobozi. Ubushobozi butagira imbibi ni icyemezo kigaragara kandi gikurikiranwa.",
+   "coverage": "Ubwuzuzanye: uturere {{covered}} kuri {{total}} dufite icyiciro gikora",
+   "missing": "Tudafite icyiciro: {{districts}}",
+   "none": "Nta cyiciro kiraboneka",
+   "registered": "{{count}} biyandikishije",
+   "capacityOf": "{{registered}} kuri {{capacity}} biyandikishije",
+   "venue": "Aho ikizamini kizabera",
+   "examDate": "Umunsi w’ikizamini",
+   "hour": "Isaha yo kugera",
+   "capacityMode": "Ubushobozi",
+   "capacity": "Imyanya",
+   "bounded": "Imyanya igenwe",
+   "unbounded": "Nta mbibi (icyemezo gikurikiranwa)",
+   "unboundedHint": "Yohereza icyemezo UNBOUNDED_CAPACITY, gikurikiranwa.",
+   "save": "Bika icyiciro",
+   "saved": "Icyiciro cyabitswe.",
+   "unchanged": "Cyari cyabitswe: nta cyahindutse."
+  },
+  "publish": {
+   "title": "Igenzura n’itangazwa",
+   "lead": "Intambwe ya 4 kuri 4. Genzura ko byose byuzuye, reba icyo abaturage bazabona, hanyuma utangaze wandika kode rusange.",
+   "ok": "Byuzuye",
+   "todo": "Birasigaye",
+   "checks": {
+    "draft": "Ubukangurambaga buracyari umushinga",
+    "policy": "Hari verisiyo y’amabwiriza yo guhitamo",
+    "coverage": "Buri karere kafite icyiciro gikora ({{count}} ntabwo bifite)",
+    "capacity": "Buri cyiciro gifite ubushobozi bwemewe ({{count}} ntibwemewe)",
+    "windows": "Amatariki arahuye (ibyiciro {{count}} biri hanze y’igihe cy’ikizamini)"
+   },
+   "action": "Tangaza ubukangurambaga",
+   "confirmTitle": "Gutangaza {{code}}?",
+   "confirmBody": "Gutangaza bituma abaturage babona ubukangurambaga kandi bigatangiza kwiyandikisha.",
+   "consequenceFrozen": "Amabwiriza n’ibyiciro biraba bifunze: ntibishobora guhinduka.",
+   "consequenceVisible": "Abaturage bahita babasha gusaba.",
+   "done": "Ubukangurambaga {{code}} bwatangajwe kandi kwiyandikisha birafunguye."
+  },
+  "preview": {
+   "badge": "Igaragara ry’ibanze: ibyo abaturage bazabona",
+   "registration": "Kwiyandikisha",
+   "exam": "Ikizamini",
+   "categories": "Ibyiciro",
+   "districts": "Uturere",
+   "walkIn": "Kwiyandikisha ku munsi w’ikizamini birashoboka.",
+   "contact": "Kuvugana"
+  },
+  "confirm": {
+   "typeCode": "Kugira ngo wemeze, andika kode rusange {{code}}.",
+   "codeLabel": "Kode rusange"
+  },
+  "lifecycle": {
+   "title": "Gufunga, gusoza cyangwa guhagarika",
+   "lead": "Buri gikorwa gihindura imimerere y’ubukangurambaga kuri bose kandi ntigisubirwaho. Imibare ituruka ku makuru y’ubu.",
+   "terminal": "Ubu bukangurambaga ni “{{state}}”: nta gikorwa gishobora gukurikiraho.",
+   "done": "Imimerere y’ubukangurambaga yarahinduwe.",
+   "unavailable": "ntibiboneka",
+   "registeredCount": "Abiyandikishije kugeza ubu: {{registered}}",
+   "close": {
+    "action": "Funga kwiyandikisha",
+    "title": "Gufunga kwiyandikisha kuri {{code}}?",
+    "body": "Abaturage ntibazaba bagishobora kwiyandikisha.",
+    "effect": "Kwiyandikisha birafungwa ubu, nubwo itariki yateganyijwe itaragera."
+   },
+   "complete": {
+    "action": "Soza ubukangurambaga",
+    "title": "Gusoza {{code}}?",
+    "body": "Koresha ibi iyo igikorwa cyo gushaka abakozi kirangiye.",
+    "effect": "Ubukangurambaga buhinduka amateka asomwa gusa."
+   },
+   "cancel": {
+    "action": "Hagarika ubukangurambaga",
+    "title": "Guhagarika {{code}}?",
+    "body": "Umushinga, cyangwa ubukangurambaga bufunguye butarimo ubusabe, bushobora guhagarikwa.",
+    "effect": "Ubukangurambaga burakurwaho burundu.",
+    "applications": "Seriveri yanga guhagarika ubukangurambaga bufunguye bufite ubusabe."
+   }
+  }
+ }
+}

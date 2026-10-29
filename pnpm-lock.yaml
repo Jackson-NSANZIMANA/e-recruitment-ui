@@ -408,6 +408,9 @@ importers:
       '@usrp/feature-applications':
         specifier: workspace:*
         version: link:../../packages/features/applications
+      '@usrp/feature-campaigns':
+        specifier: workspace:*
+        version: link:../../packages/features/campaigns
       '@usrp/feature-compliance':
         specifier: workspace:*
         version: link:../../packages/features/compliance
