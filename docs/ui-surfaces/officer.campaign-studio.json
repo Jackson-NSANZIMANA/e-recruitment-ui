@@ -1,0 +1,206 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.campaign-studio",
+  "title": "Campaign Studio",
+  "audience": "officer",
+  "owner": "packages/features/campaigns",
+  "purpose": "Agency administrators run a recruitment campaign through the real four-step control plane: draft, immutable policy version (SHA-256 shown, diff against the previous version), one session per target district with a coverage meter, then preflight, citizen preview and publish with the public code typed; and afterwards close registration, complete or cancel, each with a stated consequence. Every write carries one Idempotency-Key per intent and is never retried.",
+  "routes": [
+    {
+      "path": "/campaigns",
+      "app": "officer-console",
+      "source": "packages/features/campaigns/src/routes/index.tsx",
+      "role": "admin"
+    },
+    {
+      "path": "/campaigns/new",
+      "app": "officer-console",
+      "source": "packages/features/campaigns/src/routes/index.tsx",
+      "role": "admin"
+    },
+    {
+      "path": "/campaigns/:publicCode",
+      "app": "officer-console",
+      "source": "packages/features/campaigns/src/routes/index.tsx",
+      "role": "admin"
+    }
+  ],
+  "operations": [
+    "listAgencyCampaigns",
+    "getCampaignAdminDetail",
+    "createCampaign",
+    "createCampaignPolicy",
+    "configureCampaignSession",
+    "publishCampaign",
+    "closeCampaignRegistration",
+    "completeCampaign",
+    "cancelCampaign"
+  ],
+  "ads": [
+    {
+      "name": "DynamicTable",
+      "source": "packages/features/campaigns/src/ui/CampaignListPage.tsx",
+      "import": "@atlaskit/dynamic-table"
+    },
+    {
+      "name": "Select",
+      "source": "packages/features/campaigns/src/ui/NewCampaignPage.tsx",
+      "import": "@atlaskit/select"
+    },
+    {
+      "name": "Tabs",
+      "source": "packages/features/campaigns/src/ui/CampaignStudioPage.tsx",
+      "import": "@atlaskit/tabs"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/campaigns/src/ui/PolicyStep.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "ConfirmAction",
+      "source": "packages/features/campaigns/src/ui/TypedConfirm.tsx",
+      "import": "@usrp/ui"
+    }
+  ],
+  "states": [
+    {
+      "surface": "list",
+      "required": [
+        "loading",
+        "populated",
+        "empty",
+        "filtered-empty",
+        "forbidden",
+        "error"
+      ],
+      "source": "packages/features/campaigns/src/ui/CampaignListPage.tsx",
+      "evidence": [
+        "listState",
+        "StateBoundary",
+        "perms.read",
+        "campaign-table"
+      ]
+    },
+    {
+      "surface": "draft",
+      "required": [
+        "idle",
+        "validation",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
+      "source": "packages/features/campaigns/src/ui/NewCampaignPage.tsx",
+      "evidence": [
+        "create-draft",
+        "validateDraft",
+        "campaigns.errors",
+        "Refusal"
+      ]
+    },
+    {
+      "surface": "policy",
+      "required": [
+        "idle",
+        "validation",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
+      "source": "packages/features/campaigns/src/ui/PolicyStep.tsx",
+      "evidence": [
+        "create-policy",
+        "policy-suggestion-notice",
+        "policy-created",
+        "policy-diff"
+      ]
+    },
+    {
+      "surface": "sessions",
+      "required": [
+        "idle",
+        "validation",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
+      "source": "packages/features/campaigns/src/ui/SessionsStep.tsx",
+      "evidence": [
+        "coverage-meter",
+        "coverage-missing",
+        "session-saved-",
+        "session-refusal-"
+      ]
+    },
+    {
+      "surface": "publish",
+      "required": [
+        "idle",
+        "blocked",
+        "pending",
+        "success",
+        "failure",
+        "conflict"
+      ],
+      "source": "packages/features/campaigns/src/ui/PublishStep.tsx",
+      "evidence": [
+        "preflight",
+        "CitizenPreview",
+        "publish-open",
+        "published-notice"
+      ]
+    },
+    {
+      "surface": "lifecycle",
+      "required": [
+        "idle",
+        "pending",
+        "success",
+        "failure",
+        "terminal"
+      ],
+      "source": "packages/features/campaigns/src/ui/LifecycleStep.tsx",
+      "evidence": [
+        "lifecycle-terminal",
+        "lifecycle-done",
+        "registeredCount",
+        "unavailable"
+      ]
+    }
+  ],
+  "accessibility": [
+    "every field has a visible label, a hint and an error tied to it",
+    "every action states its consequence before confirmation",
+    "publish and every lifecycle command require the public code to be typed",
+    "the coverage meter has a text equivalent",
+    "status is never colour alone",
+    "times are shown with their zone (Kigali, UTC+2)",
+    "all user-facing text is translated (en, rw, fr)"
+  ],
+  "tests": [
+    "apps/officer-console/e2e/campaign-studio.spec.ts",
+    "packages/features/campaigns/src/model/studio.test.ts",
+    "packages/features/campaigns/src/model/campaigns.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/campaign-studio.spec.ts"
+      ],
+      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+    }
+  }
+}

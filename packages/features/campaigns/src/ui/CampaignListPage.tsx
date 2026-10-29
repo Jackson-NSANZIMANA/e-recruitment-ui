@@ -53,7 +53,7 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
           <Heading size="xlarge" as="h1">{t('campaigns.list.title')}</Heading>
           <Inline space="space.200" alignBlock="center" shouldWrap>
             {q.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} />}
-            {perms.create && <LinkButton appearance="primary" href="/campaigns/new" testId="new-campaign">{t('campaigns.list.new')}</LinkButton>}
+            {perms.create && <LinkButton appearance="primary" href="/campaigns/new">{t('campaigns.list.new')}</LinkButton>}
           </Inline>
         </Inline>
         <Text as="p">{t('campaigns.list.lead', { agency: perms.agency })}</Text>
