@@ -86,6 +86,16 @@ async function apply(page: Page, p: Persona, campaignLabelPart: RegExp, category
   await expect(page.getByText(/submitted — application filed|replayed — previous filing confirmed|already_applied — application already exists/i)).toBeVisible();
 }
 
+/** On the documents page: wait for the clearance block, and give the number if one is wanted (a same-day re-run finds a later state). */
+async function giveClearanceNumber(page: Page, p: Persona): Promise<void> {
+  await expect(page.getByTestId('clearance-state')).toBeVisible();
+  const field = page.getByLabel(/application number of your criminal-record certificate/i);
+  if (await field.count() > 0 && p.clearanceNumber) {
+    await field.fill(p.clearanceNumber);
+    await page.getByRole('button', { name: /send the number/i }).click();
+  }
+}
+
 async function myApplicationId(page: Page, agency: string): Promise<string> {
   const response = await page.request.get('/edge/v1/me/applications');
   expect(response.status()).toBe(200);
@@ -125,12 +135,7 @@ test('A: RDF regular - banner, picker, NIDA pre-fill, apply, clearance number, p
   const applicationId = await myApplicationId(page, 'RDF');
   await page.goto(`/applications/${applicationId}/documents`);
   await expect(page.getByTestId('citizen-documents')).toBeVisible();
-  // First run: the number is wanted. A same-day re-run finds the state it left.
-  const field = page.getByLabel(/application number of your criminal-record certificate/i);
-  if (await field.count() > 0 && p.clearanceNumber) {
-    await field.fill(p.clearanceNumber);
-    await page.getByRole('button', { name: /send the number/i }).click();
-  }
+  await giveClearanceNumber(page, p);
   await expect(page.getByTestId('clearance-state')).toContainText(/certificate is verified/i, { timeout: 120_000 });
 
   // The pipeline is asynchronous: age, NESA, clearance, then the slot and the Exam Pass.
@@ -182,11 +187,7 @@ test('B: a certificate of the wrong type is a correction, in words, and the numb
   await apply(page, p, /\[REHEARSAL\] RDF CLRM/, 'RDF general enlistment');
   const applicationId = await myApplicationId(page, 'RDF');
   await page.goto(`/applications/${applicationId}/documents`);
-  const field = page.getByLabel(/application number of your criminal-record certificate/i);
-  if (await field.count() > 0 && p.clearanceNumber) {
-    await field.fill(p.clearanceNumber);
-    await page.getByRole('button', { name: /send the number/i }).click();
-  }
+  await giveClearanceNumber(page, p);
   await expect(page.getByTestId('clearance-state')).toContainText(/not a criminal-record certificate/i, { timeout: 120_000 });
   await expect(page.getByLabel(/application number of your criminal-record certificate/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText(/another person|someone else/i);
@@ -199,11 +200,7 @@ test('C: a certificate that can carry a conviction waits for an officer, and the
   await apply(page, p, /\[REHEARSAL\] RDF CLRM/, 'RDF general enlistment');
   const applicationId = await myApplicationId(page, 'RDF');
   await page.goto(`/applications/${applicationId}/documents`);
-  const field = page.getByLabel(/application number of your criminal-record certificate/i);
-  if (await field.count() > 0 && p.clearanceNumber) {
-    await field.fill(p.clearanceNumber);
-    await page.getByRole('button', { name: /send the number/i }).click();
-  }
+  await giveClearanceNumber(page, p);
   await expect(page.getByTestId('clearance-state')).toContainText(/officer will look at your certificate/i, { timeout: 120_000 });
   await expect(page.locator('body')).not.toContainText(/CLEARANCE_CONTENT_REVIEW|conviction|criminal record needs/i);
 });

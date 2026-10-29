@@ -20,6 +20,8 @@ test('the reviewer sees the amber reasons in words, and the clearance state in t
   const m = JSON.parse(readFileSync(file, 'utf8')) as { reader: { loginHandle: string; password: string } };
   await page.addInitScript(() => window.localStorage.setItem('usrp_lang', 'en'));
   await page.goto('/login');
+  // The edge hands out the CSRF echo on the first session read; a write sent before it lands is refused.
+  expect((await page.request.get('/edge/v1/session')).status()).toBeLessThan(500);
   await expect.poll(async () => (await page.context().cookies()).some((c) => /csrf/i.test(c.name)), { timeout: 30_000 }).toBe(true);
   await page.locator('input[name="loginHandle"]').fill(m.reader.loginHandle);
   await page.locator('input[name="password"]').fill(m.reader.password);
