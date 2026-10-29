@@ -92,6 +92,8 @@ export interface AmberQueueEntry {
   readonly forensicsScore: number | null;
   readonly forensicsFlags: Readonly<Record<string, unknown>> | null;
   readonly queuedAt: string | null;
+  /** S12b: why a person must read the record (closed upper-case codes); empty for a document hold. */
+  readonly reasons?: readonly string[];
   readonly agency: Agency;
 }
 

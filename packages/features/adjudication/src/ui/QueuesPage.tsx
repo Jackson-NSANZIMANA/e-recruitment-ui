@@ -79,6 +79,22 @@ function AmberQueue({ client, agency, kind, permissions }: { readonly client: Ap
     forensicsFlags: e.forensicsFlags as AmberRow['forensicsFlags'], queuedAt: e.queuedAt,
   }));
   const shown = amberRows(rows, kind, permissions, t);
+  // S12b/ADR-048: applications a registry answered about but a person must read (a criminal-record
+  // certificate that can carry a conviction, a partial name, NESA malpractice). They are in no hold
+  // status, so they are listed apart, with the closed reason in words. Opening one is the only action:
+  // the officer decision on a criminal review has no operation yet (ADR-048 known gap 1).
+  const records: QueueRow[] = kind !== 'DOCUMENT' ? [] : (q.data ?? [])
+    .filter((e): e is typeof e & { applicationId: string; processingCode: string } =>
+      e.applicationId !== null && e.processingCode !== null && (e.reasons ?? []).length > 0 &&
+      e.status !== 'DOCUMENT_REVIEW_AMBER' && e.status !== 'ADJUDICATION_REVIEW')
+    .map((e) => ({
+      id: e.applicationId,
+      primary: e.processingCode,
+      detail: <Text as="span" testId={`reasons-${e.processingCode}`}>{(e.reasons ?? []).map((r) => t(`adjudication.reasons.${r}`, { defaultValue: r })).join(' · ')}</Text>,
+      status: t('adjudication.queue.status.records'),
+      since: e.queuedAt ?? '',
+      transitions: [{ id: 'open', label: label(t, 'open'), appearance: 'default' as const }],
+    }));
   const state = listState({ isLoading: q.isLoading, errorStatus: q.isError ? httpStatusOf(q.error) : null, rowCount: shown.length, filtersActive: false });
   const run = async (): Promise<void> => {
     if (pending === null) return;
@@ -102,6 +118,19 @@ function AmberQueue({ client, agency, kind, permissions }: { readonly client: Ap
           }}
         />
       </StateBoundary>
+      {records.length > 0 && (
+        <Stack space="space.100">
+          <Heading size="small" as="h3">{t('adjudication.queue.records_title')}</Heading>
+          <Text as="p" color="color.text.subtle">{t('adjudication.queue.records_hint')}</Text>
+          <QueueTable
+            caption={t('adjudication.queue.records_title')}
+            rows={records}
+            testId="queue-records"
+            onOpen={(id) => navigate(`/applications/${id}`)}
+            onTransition={(id) => navigate(`/applications/${id}`)}
+          />
+        </Stack>
+      )}
       <ConfirmAction
         isOpen={pending !== null}
         isPending={adjudicate.isPending}
