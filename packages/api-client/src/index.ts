@@ -182,6 +182,11 @@ export {
   CAMPAIGN_CONTROL_OPERATIONS,
 } from './operations/campaign-control.js';
 export type { CampaignControlOperation } from './operations/campaign-control.js';
+export {
+  useCreateCampaign, useCreateCampaignPolicy, useConfigureCampaignSession, usePublishCampaign,
+  useCloseCampaignRegistration, useCompleteCampaign, useCancelCampaign,
+} from './queries/campaign-control.js';
+export type { KeyedCommand } from './queries/campaign-control.js';
 export type {
   CreateCampaignInput,
   CampaignCategoryPolicy,

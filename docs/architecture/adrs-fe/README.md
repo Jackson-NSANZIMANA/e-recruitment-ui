@@ -19,4 +19,5 @@ the proof that keeps it true; a decision with no gate is a preference.
 | [012](./ADR-FE-012-contract-parity-v2.md) | Contract parity v2 (schemas, outcomes, idempotency) and the evidence bundle | contract-drift gate E + selftest |
 | [013](./ADR-FE-013-citizen-stage-projection.md) | Citizen stage is a pure projection over the canonical status enum | S10b exhaustive test |
 | [014](./ADR-FE-014-spa-serving-image.md) | One Caddy serving image per app: strict headers, /edge never the shell, signed and scanned | `tooling/images/verify-spa-image.mjs`, `spa-images` job |
+| [015](./ADR-FE-015-campaign-studio.md) | Campaign Studio: one screen per control-plane step, policy v1 in one module, hash verified on device, typed confirmation | `studio.test.ts`, `campaign-studio.spec.ts`, live parity spec |
 | [020](./ADR-FE-020-national-identity-layer.md) | National identity layer: GoR theme seed, statutory colours, emblems with provenance, official-document anatomy, no gamification | `national.test.ts`, `security-print.test.mjs`, `check-boundaries.mjs`, Storybook a11y |

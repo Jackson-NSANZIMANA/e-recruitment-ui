@@ -49,6 +49,7 @@
     "@usrp/design-system": "workspace:^",
     "@usrp/feature-adjudication": "workspace:*",
     "@usrp/feature-applications": "workspace:*",
+    "@usrp/feature-campaigns": "workspace:*",
     "@usrp/feature-compliance": "workspace:*",
     "@usrp/feature-identity": "workspace:*",
     "@usrp/feature-scheduling": "workspace:*",

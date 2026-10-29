@@ -23,6 +23,7 @@ import AppsIcon from "@atlaskit/icon/core/apps";
 import ChecklistIcon from "@atlaskit/icon/core/list-checklist";
 import DeleteIcon from "@atlaskit/icon/core/delete";
 import LockIcon from "@atlaskit/icon/core/lock-locked";
+import MegaphoneIcon from "@atlaskit/icon/core/megaphone";
 import { useTranslation } from "@usrp/i18n";
 
 import { useOfficerSession } from "@usrp/auth";
@@ -33,6 +34,7 @@ const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
   dashboard: <DashboardIcon label="" color="currentColor" />,
   applications: <AppsIcon label="" color="currentColor" />,
   queues: <ChecklistIcon label="" color="currentColor" />,
+  campaigns: <MegaphoneIcon label="" color="currentColor" />,
   erasure: <DeleteIcon label="" color="currentColor" />,
   staff: <LockIcon label="" color="currentColor" />,
 };
