@@ -142,7 +142,6 @@
    "dateRequired": "Saisissez une date valide.",
    "registrationWindow": "La clôture doit suivre l’ouverture.",
    "examinationWindow": "L’examen ne peut pas finir avant de commencer.",
-   "examBeforeRegistrationCloses": "L’examen ne peut pas commencer avant la clôture des inscriptions.",
    "reportingHour": "Saisissez une heure entière de 0 à 23.",
    "intake": "Saisissez un nombre entier d’au moins 1.",
    "phones": "10 numéros au plus, de 40 caractères.",

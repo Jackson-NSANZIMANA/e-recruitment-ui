@@ -142,7 +142,6 @@
    "dateRequired": "Enter a valid date.",
    "registrationWindow": "Registration must close after it opens.",
    "examinationWindow": "The examination cannot end before it starts.",
-   "examBeforeRegistrationCloses": "The examination cannot start before registration closes.",
    "reportingHour": "Enter a whole hour from 0 to 23.",
    "intake": "Enter a whole number of at least 1.",
    "phones": "At most 10 numbers of 40 characters.",

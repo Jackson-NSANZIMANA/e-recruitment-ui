@@ -81,8 +81,6 @@ export function validateDraft(form: DraftForm, agency: string): DraftErrors {
   if (!dateOk(form.examinationStartDate)) e['examinationStartDate'] = 'dateRequired';
   if (!dateOk(form.examinationEndDate)) e['examinationEndDate'] = 'dateRequired';
   if (dateOk(form.examinationStartDate) && dateOk(form.examinationEndDate) && form.examinationStartDate > form.examinationEndDate) e['examinationEndDate'] = 'examinationWindow';
-  // Not in the server's rule but the control plane's intent: exams follow registration.
-  if (closes !== null && dateOk(form.examinationStartDate) && form.examinationStartDate < closes.slice(0, 10)) e['examinationStartDate'] = 'examBeforeRegistrationCloses';
 
   const hour = Number(form.examinationReportingHour);
   if (form.examinationReportingHour.trim() === '' || !Number.isInteger(hour) || hour < 0 || hour > 23) e['examinationReportingHour'] = 'reportingHour';
