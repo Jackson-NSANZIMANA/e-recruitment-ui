@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@atlaskit/eslint-plugin-design-system": "^16.10.0",
+    "@axe-core/playwright": "4.13.0",
     "@compiled/vite-plugin": "2.0.4",
     "@playwright/test": "^1.62.1",
     "@testing-library/react": "^16.0.0",

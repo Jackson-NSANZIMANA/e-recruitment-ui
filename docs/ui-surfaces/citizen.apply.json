@@ -22,6 +22,8 @@
   ],
   "operations": [
     "listCampaigns",
+    "getCampaignDetail",
+    "getMyIdentity",
     "submitMyApplication"
   ],
   "ads": [
@@ -70,7 +72,8 @@
   ],
   "tests": [
     "apps/applicant-portal/e2e/apply-flow.spec.ts",
-    "apps/applicant-portal/e2e/offline.spec.ts"
+    "apps/applicant-portal/e2e/offline.spec.ts",
+    "apps/applicant-portal/e2e/s12c-screens.spec.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -84,7 +87,8 @@
     "evidence": {
       "e2e": [
         "apps/applicant-portal/e2e/apply-flow.spec.ts",
-        "apps/applicant-portal/e2e/offline.spec.ts"
+        "apps/applicant-portal/e2e/offline.spec.ts",
+        "apps/applicant-portal/e2e/s12c-screens.spec.ts"
       ]
     }
   }
