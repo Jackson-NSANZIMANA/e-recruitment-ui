@@ -181,3 +181,10 @@ export function summarise(records: readonly StoredRecord[]): QueueSummary {
   }
   return { total: records.length, acknowledged, waiting, refused, conflicts, lastAcknowledgedAt: last };
 }
+
+/** The opaque id stamped on a capture. The browser session carries no officer subject (CONTRACT-PENDING), so it is agency:role. */
+export const officerSubjectOf = (session: { readonly agency: string; readonly roles: readonly string[] }): string => `${session.agency}:${session.roles[0] ?? 'officer'}`;
+
+export const KNOWN_REJECT_REASONS = ['UNENROLLED_DEVICE', 'REVOKED_DEVICE', 'AGENCY_MISMATCH', 'BAD_SIGNATURE', 'TICKET_MISMATCH', 'NOT_ADMITTED', 'NOT_FOUND', 'INVALID_RECORD', 'INVALID_BATCH', 'NOT_SENDABLE'] as const;
+export type KnownRejectReason = (typeof KNOWN_REJECT_REASONS)[number];
+export const isKnownRejectReason = (reason: string | undefined): reason is KnownRejectReason => reason !== undefined && (KNOWN_REJECT_REASONS as readonly string[]).includes(reason);
