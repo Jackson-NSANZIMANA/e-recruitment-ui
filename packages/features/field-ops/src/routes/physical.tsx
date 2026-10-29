@@ -28,7 +28,7 @@ import type { StoredRecord } from '@usrp/field-ledger';
 import { useOfficerSession } from '@usrp/auth';
 import { useTranslation } from '@usrp/i18n';
 import { useDeviceRuntime, useOnline } from '../runtime/context.tsx';
-import { capturePhysical, fateOf, isKnownRejectReason, isServerAcknowledged, officerSubjectOf, recoverInterrupted, sendRecords, summarise, PHYSICAL_KIND } from '../model/field-sync.ts';
+import { capturePhysical, fateOf, isKnownRejectReason, isServerAcknowledged, stationActorId, recoverInterrupted, sendRecords, summarise, PHYSICAL_KIND } from '../model/field-sync.ts';
 import { PHYSICAL_BOUNDS, PHYSICAL_FIELDS, readPhysicalForm, type PhysicalField, type PhysicalForm } from '../model/physical.ts';
 import { ticketFit, type TicketRef } from '../model/ticket.ts';
 import { readVenueDay } from '../model/venue.ts';
@@ -90,7 +90,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
     if (runtime === null || session === null || ticket === null || day === null || reading.metrics === null) return;
     setBusy(true);
     try {
-      const record = await capturePhysical(runtime.ledger, { ticket, metrics: reading.metrics, day, officerSubject: officerSubjectOf(session) });
+      const record = await capturePhysical(runtime.ledger, { ticket, metrics: reading.metrics, day, officerSubject: stationActorId() });
       setCurrent(record);
       await send([record]);
     } finally {

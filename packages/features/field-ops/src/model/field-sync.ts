@@ -27,6 +27,7 @@ import type { PhysicalMetrics } from './physical.ts';
 import type { TicketRef } from './ticket.ts';
 import type { VenueDay } from './venue.ts';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export const PHYSICAL_KIND = 'physical-score';
 export const PHYSICAL_SCHEMA_VERSION = 1;
 
@@ -86,7 +87,7 @@ export async function toWireRecord(record: StoredRecord, signer: SignerPort): Pr
   const payload = e.payload as Partial<PhysicalPayload> | null;
   const applicationId = e.subject.applicationId;
   const ticket = e.subject.ticketRef;
-  if (e.kind !== PHYSICAL_KIND || payload?.metrics === undefined || applicationId === undefined || ticket === undefined) {
+  if (e.kind !== PHYSICAL_KIND || payload?.metrics === undefined || applicationId === undefined || ticket === undefined || !UUID_RE.test(e.context.officerSubject)) {
     throw new Error('not a sendable physical capture');
   }
   const metrics = payload.metrics;
@@ -182,8 +183,29 @@ export function summarise(records: readonly StoredRecord[]): QueueSummary {
   return { total: records.length, acknowledged, waiting, refused, conflicts, lastAcknowledgedAt: last };
 }
 
-/** The opaque id stamped on a capture. The browser session carries no officer subject (CONTRACT-PENDING), so it is agency:role. */
-export const officerSubjectOf = (session: { readonly agency: string; readonly roles: readonly string[] }): string => `${session.agency}:${session.roles[0] ?? 'officer'}`;
+export const STATION_ACTOR_STORAGE_KEY = 'usrp_field_station_actor';
+/**
+ * The `capturingOfficerId` stamped on a capture. The field-sync service stores it in a UUID column and a
+ * non-UUID value is a 500 (no per-record answer), but the browser session carries NO officer subject
+ * (CONTRACT-PENDING: the edge session should expose the officer's opaque id). Until it does, the capture
+ * is attributed to a per-tablet pseudonymous UUID, never to a person; the authenticated edge session on the
+ * request remains the server-side attribution. This means the ADR-037 "confirmer is not the capturing
+ * officer" rule cannot be checked from the payload yet (hand-off).
+ */
+export function stationActorId(
+  storage: Pick<Storage, 'getItem' | 'setItem'> = globalThis.localStorage,
+  random: () => string = () => crypto.randomUUID(),
+): string {
+  try {
+    const kept = storage.getItem(STATION_ACTOR_STORAGE_KEY);
+    if (kept !== null && UUID_RE.test(kept)) return kept;
+    const fresh = random();
+    storage.setItem(STATION_ACTOR_STORAGE_KEY, fresh);
+    return fresh;
+  } catch {
+    return random();
+  }
+}
 
 export const KNOWN_REJECT_REASONS = ['UNENROLLED_DEVICE', 'REVOKED_DEVICE', 'AGENCY_MISMATCH', 'BAD_SIGNATURE', 'TICKET_MISMATCH', 'NOT_ADMITTED', 'NOT_FOUND', 'INVALID_RECORD', 'INVALID_BATCH', 'NOT_SENDABLE'] as const;
 export type KnownRejectReason = (typeof KNOWN_REJECT_REASONS)[number];
