@@ -1,0 +1,76 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "field.supervisor",
+  "title": "Supervisor station",
+  "audience": "field-officer",
+  "owner": "packages/features/field-ops",
+  "purpose": "Venue live counts, this tablet's sync centre and the agency fleet, read only. Conflicts are resolved on their own page.",
+  "routes": [
+    {
+      "path": "/supervisor",
+      "app": "field-station",
+      "source": "packages/features/field-ops/src/routes/supervisor.tsx",
+      "role": "station"
+    }
+  ],
+  "operations": [
+    "getVenueLiveCounts",
+    "listFieldDevices",
+    "syncFieldScores"
+  ],
+  "ads": [
+    {
+      "name": "Lozenge",
+      "source": "packages/features/field-ops/src/routes/supervisor.tsx",
+      "import": "@atlaskit/lozenge"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/supervisor.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "supervisor",
+      "required": [
+        "counts",
+        "counts-failed",
+        "sync",
+        "fleet"
+      ],
+      "source": "packages/features/field-ops/src/routes/supervisor.tsx",
+      "evidence": [
+        "supervisor-counts",
+        "supervisor-counts-failed",
+        "supervisor-fleet",
+        "supervisor-sync-summary"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label",
+    "interactive targets are at least 48 px"
+  ],
+  "tests": [
+    "apps/field-station/e2e/field-stations.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/field-stations.spec.ts"
+      ]
+    }
+  }
+}
