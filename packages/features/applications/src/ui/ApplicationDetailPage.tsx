@@ -102,6 +102,17 @@ function DocumentsTab({ client, applicationId, t }: { readonly client: ApiClient
           <Inline key={item.documentType} space="space.150" alignBlock="center" shouldWrap>
             <Text weight="medium">{item.documentType}</Text>
             <Text color="color.text.subtle">{t(`applications.documents.satisfaction.${item.satisfaction}`)}</Text>
+            {item.clearance !== undefined && (
+              <Stack space="space.0" testId="clearance-officer-view">
+                <Text color="color.text.subtle">{t('applications.documents.clearance.label')}: {t(`applications.documents.clearance.${item.clearance.state}`)}</Text>
+                {item.clearance.code !== null && <Text size="small" color="color.text.subtle">{t('applications.documents.clearance.code')}: {item.clearance.code}</Text>}
+                {(item.clearance.reasons ?? []).length > 0 && (
+                  <Text size="small" color="color.text.subtle" testId="clearance-reasons">
+                    {t('applications.documents.clearance.reasons')}: {(item.clearance.reasons ?? []).map((r) => t(`applications.documents.clearance.reason.${r}`, { defaultValue: r })).join(' · ')}
+                  </Text>
+                )}
+              </Stack>
+            )}
             {item.satisfaction === 'VENUE_VERIFIED' && <Text color="color.text.success" testId={`venue-verified-${item.documentType}`}>{t('applications.documents.venueVerified')}</Text>}
           </Inline>
         ))}

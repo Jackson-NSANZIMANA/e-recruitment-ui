@@ -710,9 +710,14 @@
     "coat_of_arms_alt": "Armoiries de la République du Rwanda",
     "emblem_alt": "Emblème : {{agency}}",
     "restricted": "Accès restreint",
+    "sandbox": "Bac à sable",
+    "sandbox_body": "Environnement d’entraînement. Rien ici n’est un vrai recrutement et aucune personne réelle n’est concernée.",
     "restricted_body": "Agents autorisés uniquement · Données personnelles protégées par {{law}} · Les actions sont auditées",
     "document_serial": "Numéro de série",
     "verification_line": "Ligne de vérification",
     "verification_hint": "Le dernier chiffre de chaque groupe est un chiffre de contrôle qui détecte les erreurs de saisie."
+  },
+  "citizen_docs": {
+    "open_link": "Mes documents"
   }
 }

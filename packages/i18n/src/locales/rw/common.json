@@ -710,9 +710,14 @@
     "coat_of_arms_alt": "Ikirango cya Repubulika y'u Rwanda",
     "emblem_alt": "Ikirango cya {{agency}}",
     "restricted": "Bigenewe abemerewe gusa",
+    "sandbox": "Igeragezwa",
+    "sandbox_body": "Ahantu ho kwitoza. Nta gikorwa cyo gushaka abakozi nyacyo kiri hano, kandi nta muntu nyawe ukozweho.",
     "restricted_body": "Abakozi babifitiye uburenganzira gusa · Amakuru bwite arinzwe na {{law}} · Ibikorwa birakurikiranwa",
     "document_serial": "Nimero y'inyandiko",
     "verification_line": "Umurongo w'igenzura",
     "verification_hint": "Umubare wa nyuma wa buri tsinda ni umubare w'igenzura ufata amakosa yo kwandika."
+  },
+  "citizen_docs": {
+    "open_link": "Inyandiko zanjye"
   }
 }

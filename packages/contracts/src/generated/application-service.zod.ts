@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -733,6 +733,21 @@ export const OperationalReadErrorSchema = z
     "detail": z.string().optional(),
   });
 
+export const PublicCategoryEligibilitySchema = z
+  .strictObject({
+    "ageBands": z.array(z
+    .strictObject({
+      "qualifications": z.array(z.string()),
+      "minimumAge": z.number(),
+      "maximumAge": z.number(),
+    })),
+    "educationAlternatives": z.array(z
+    .strictObject({
+      "level": z.string(),
+    })),
+    "minimumSciencePercent": z.number().nullable(),
+  });
+
 /**
  * The approved public projection. Nothing internal.
  */
@@ -751,6 +766,7 @@ export const PublicCampaignSchema = z
     "allowsWalkIn": z.boolean(),
     "contactPhoneNumbers": z.array(z.string()).max(10).nullable(),
     "contactWebsite": z.string().nullable(),
+    "eligibility": z.record(z.string(), z.unknown()).optional(),
   });
 
 export const PublicCampaignDetail200Schema = z

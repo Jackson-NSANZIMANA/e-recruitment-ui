@@ -7,7 +7,7 @@ import Button from "@atlaskit/button";
 import LinkButton from "@atlaskit/button/link";
 import { useAuth, useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { ConnectionStatus, HandlingMarking, LanguageSwitcher, NationalHeader } from "@usrp/ui";
+import { ConnectionStatus, HandlingMarking, LanguageSwitcher, NationalHeader, SandboxBanner, isSandboxBuild } from "@usrp/ui";
 
 export interface StationShellProps {
   readonly children: React.ReactNode;
@@ -35,6 +35,7 @@ export function StationShell({ children }: StationShellProps): React.ReactElemen
 
   return (
     <Stack>
+      {isSandboxBuild() ? <SandboxBanner /> : null}
       <HandlingMarking />
       <NationalHeader
         compact

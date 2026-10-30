@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher.js";
 import { NationalFooter } from "./NationalFooter.js";
 import { NationalHeader } from "./NationalHeader.js";
 import { OfficialBanner } from "./OfficialBanner.js";
+import { SandboxBanner, isSandboxBuild } from "./SandboxBanner.js";
 
 const MAIN_ID = "main-content";
 
@@ -67,6 +68,7 @@ export function NationalFrame({ audience, serviceName, agency = null, children }
   return (
     <Box xcss={styles['page']}>
       <Anchor href={`#${MAIN_ID}`} xcss={styles['skip']}>{t("national.skip_to_content")}</Anchor>
+      {isSandboxBuild() ? <SandboxBanner /> : null}
       {audience === "public" ? <OfficialBanner /> : <HandlingMarking />}
       <NationalHeader
         agency={agency}

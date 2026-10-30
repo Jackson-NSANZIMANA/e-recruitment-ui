@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -2598,6 +2598,45 @@ components:
             type: "string"
         contactWebsite:
           type: ["string", "null"]
+        eligibility:
+          description: >-
+            ADR-049, detail reads only: per category the rules a citizen may read before
+            applying. Empty for a v1 campaign.
+          type: "object"
+          additionalProperties:
+            $ref: "#/components/schemas/PublicCategoryEligibility"
+
+    PublicCategoryEligibility:
+      type: "object"
+      additionalProperties: false
+      required: ["ageBands", "educationAlternatives", "minimumSciencePercent"]
+      properties:
+        ageBands:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: false
+            required: ["qualifications", "minimumAge", "maximumAge"]
+            properties:
+              qualifications:
+                type: "array"
+                items:
+                  type: "string"
+              minimumAge:
+                type: "integer"
+              maximumAge:
+                type: "integer"
+        educationAlternatives:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: false
+            required: ["level"]
+            properties:
+              level:
+                type: "string"
+        minimumSciencePercent:
+          type: ["integer", "null"]
 
     PublicCampaignList200:
       type: "object"

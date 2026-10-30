@@ -146,6 +146,9 @@ importers:
       '@atlaskit/eslint-plugin-design-system':
         specifier: ^16.10.0
         version: 16.13.6(eslint@9.39.5)(react@18.3.1)(typescript@5.4.5)
+      '@axe-core/playwright':
+        specifier: 4.13.0
+        version: 4.13.0(playwright-core@1.62.1)
       '@compiled/vite-plugin':
         specifier: 2.0.4
         version: 2.0.4(@compiled/react@1.0.2(react@18.3.1))(vite@6.4.4(@types/node@24.19.2)(terser@5.51.2)(tsx@4.23.15))

@@ -79,6 +79,15 @@ export function runSelftest(root: string): boolean {
     'SCREEN-BUILT with an untranslated key is refused',
   );
   assert(
+    !rulesOf(
+      variant({
+        states: [{ surface: 'x', required: ['loading'], source: 'apps/applicant-portal/src/routes/documents/index.tsx', evidence: ['isLoading'] }],
+        readiness: { rung: 'SCREEN-BUILT' },
+      }),
+    ).includes('locale-parity'),
+    'a key that lives in an i18n namespace bundle other than common (citizen_apply) resolves in all three languages',
+  );
+  assert(
     rulesOf(variant({ readiness: { rung: 'E2E-PROVEN', evidence: { e2e: ['apps/officer-console/e2e/offline-conflict.spec.ts'] } } })).includes('e2e-no-skip'),
     'E2E-PROVEN citing a fixme spec is refused',
   );

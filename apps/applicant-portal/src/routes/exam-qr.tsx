@@ -25,7 +25,7 @@ import { cssMap } from "@atlaskit/css";
 import { ApiError, createApiClient, useMyExamInvitation, type ExamInvitationView } from "@usrp/api-client";
 import { isRehearsalCampaign } from "@usrp/contracts";
 import { useTranslation } from "@usrp/i18n";
-import { OfficialDocument } from "@usrp/ui";
+import { OfficialDocument, isSandboxBuild } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
 import { QR_DARK, QR_LIGHT, QUIET_ZONE, downloadBlob, qrMatrix, qrSvgPath, renderTicketPng, ticketFilename } from "../qr/exam-qr.js";
 
@@ -63,7 +63,8 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
     return <SectionMessage appearance="error" title={t("exam_qr.unavailable_title")} headingLevel="h2"><Text>{t("exam_qr.unavailable_body")}</Text></SectionMessage>;
   }
   const modules = matrix.length + QUIET_ZONE * 2;
-  const rehearsal = isRehearsalCampaign(view);
+  // A pass issued by a sandbox build is practice whatever the campaign is called (ADR-FE-019).
+  const rehearsal = isRehearsalCampaign(view) || isSandboxBuild();
   const details: readonly string[] = [
     // First line of the pass, on screen, on paper and in the PNG: a rehearsal
     // pass can be printed and carried to a venue, so it says what it is.

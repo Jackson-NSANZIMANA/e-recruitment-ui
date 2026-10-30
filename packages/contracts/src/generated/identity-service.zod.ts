@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -24,6 +24,7 @@
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications                 applicant-session  browser
 //   GET  /v1/applicants/me/applications/exam-invitation applicant-session  browser
+//   GET  /v1/applicants/me/identity                     applicant-session  browser
 //   POST /v1/applicants/me/applications/clearance-certificate applicant-session  browser
 //   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
 //   POST /v1/applicants/me/applications/documents       applicant-session  browser
@@ -440,6 +441,19 @@ export const MyErasureRequestOkSchema = z
     "decisionNote": z.string().nullable(),
   });
 
+/**
+ * The citizen's own identity, allowlisted (ADR-049). The edge adds
+ * placeOfBirth and nationality as null: the platform does not retain them.
+ */
+export const MyIdentity200Schema = z
+  .strictObject({
+    "fullName": z.string(),
+    "sex": z.enum(['MALE', 'FEMALE']),
+    "dateOfBirth": z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    "homeDistrict": z.string(),
+    "homeProvince": z.string(),
+  });
+
 export const NidaUnavailable503Schema = z
   .strictObject({
     "error": z.literal('NIDA_UNAVAILABLE'),
@@ -754,6 +768,21 @@ export const identityServiceOperations = {
       "401": InvalidSession401Schema,
       "404": null,
       "502": UpstreamUnavailable502Schema,
+    },
+  },
+  "getMyIdentity": {
+    method: "GET",
+    path: "/v1/applicants/me/identity",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: null,
+    requestMediaType: null,
+    query: [],
+    responses: {
+      "200": MyIdentity200Schema,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "503": null,
     },
   },
   "attachMyClearanceCertificate": {
