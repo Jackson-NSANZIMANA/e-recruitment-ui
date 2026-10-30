@@ -5,7 +5,7 @@
   "title": "Capture conflicts",
   "audience": "field-officer",
   "owner": "packages/features/field-ops",
-  "purpose": "The supervisor's sync centre and conflict resolution. resolveFieldSyncConflict is on the edge but has no typed client yet; S08 builds it on @usrp/field-ledger.",
+  "purpose": "The supervisor resolves a score the server holds: this device's signed capture is shown, a reason is mandatory, and only a 200 RESOLVED moves the record.",
   "routes": [
     {
       "path": "/conflicts",
@@ -17,11 +17,46 @@
   "operations": [
     "resolveFieldSyncConflict"
   ],
-  "ads": [],
-  "states": [],
-  "accessibility": [],
+  "ads": [
+    {
+      "name": "TextField",
+      "source": "packages/features/field-ops/src/routes/conflicts.tsx",
+      "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/conflicts.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "conflicts",
+      "required": [
+        "none",
+        "held",
+        "reason-required",
+        "failed",
+        "resolved"
+      ],
+      "source": "packages/features/field-ops/src/routes/conflicts.tsx",
+      "evidence": [
+        "conflicts-no-permission",
+        "conflicts-none",
+        "conflict-failed-",
+        "readResolveAnswer"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label",
+    "interactive targets are at least 48 px"
+  ],
   "tests": [
-    "apps/field-station/e2e/stations.spec.ts"
+    "apps/field-station/e2e/field-stations.spec.ts",
+    "packages/features/field-ops/src/model/resolve.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -31,10 +66,11 @@
     "positivePolarityOnly": true
   },
   "readiness": {
-    "rung": "EDGE-AVAILABLE",
-    "blockedBy": [
-      "S08",
-      "W2-12"
-    ]
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/field-stations.spec.ts"
+      ]
+    }
   }
 }

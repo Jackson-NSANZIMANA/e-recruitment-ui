@@ -4,7 +4,7 @@ import {
   type Ledger, type SignerPort,
 } from '@usrp/field-ledger';
 import type { FieldScoreWireRecord, FieldSyncAnswer } from '@usrp/api-client';
-import { capturePhysical, fateOf, isServerAcknowledged, recoverInterrupted, sendRecords, summarise, toWireRecord } from './field-sync.ts';
+import { capturePhysical, stationActorId, fateOf, isServerAcknowledged, recoverInterrupted, sendRecords, summarise, toWireRecord } from './field-sync.ts';
 import { readPhysicalForm } from './physical.ts';
 
 const APP = 'a3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f';
@@ -22,7 +22,7 @@ async function rig(): Promise<{ ledger: Ledger; signer: SignerPort; spki: string
   });
   return { ledger, signer, spki: await publicKeySpkiPem(identity.pair), deviceId: identity.deviceId };
 }
-const cap = (ledger: Ledger) => capturePhysical(ledger, { ticket: TICKET, metrics, day: DAY, officerSubject: 'dev:screening_officer' });
+const cap = (ledger: Ledger) => capturePhysical(ledger, { ticket: TICKET, metrics, day: DAY, officerSubject: '0190a000-0000-4000-8000-0000000000aa' });
 const answer = (status: string, extra: Record<string, unknown> = {}) => async (records: readonly FieldScoreWireRecord[]): Promise<FieldSyncAnswer> => ({
   httpStatus: 200,
   body: { status: 'SYNCED', results: records.map((r) => ({ applicationId: r.applicationId, deviceId: r.deviceId, status, ...extra })) },
@@ -110,7 +110,7 @@ describe('the wire record matches what the backend verifies (shared-security ver
     const wire = await toWireRecord(await cap(ledger), signer);
     expect(wire.deviceSignature).toMatch(/^[A-Za-z0-9+/]{86}==$/);
     expect(wire.vectorClock).toEqual({ [deviceId]: 1 });
-    expect(wire.capturingOfficerId).toBe('dev:screening_officer');
+    expect(wire.capturingOfficerId).toBe('0190a000-0000-4000-8000-0000000000aa');
     expect(wire.signedPayloadHash).toBe(await sha256Hex(canonicalJson(wire.metrics)));
     const { deviceSignature: _s, signedPayloadHash: _h, ...signable } = wire;
     const der = fromBase64Url(spki.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
@@ -118,5 +118,35 @@ describe('the wire record matches what the backend verifies (shared-security ver
     const signature = Uint8Array.from(atob(wire.deviceSignature), (c) => c.charCodeAt(0));
     expect(await crypto.subtle.verify({ name: 'Ed25519' }, key, signature, new TextEncoder().encode(canonicalJson(signable)))).toBe(true);
     expect(toBase64Url(signature)).not.toContain('=');
+  });
+});
+
+describe('stationActorId', () => {
+  const memory = (): Pick<Storage, 'getItem' | 'setItem'> & { map: Map<string, string> } => {
+    const map = new Map<string, string>();
+    return { map, getItem: (k) => map.get(k) ?? null, setItem: (k, v) => { map.set(k, v); } };
+  };
+  it('is a UUID, created once and then kept for the tablet', () => {
+    const storage = memory();
+    const first = stationActorId(storage, () => '0190a000-0000-4000-8000-00000000a001');
+    expect(first).toBe('0190a000-0000-4000-8000-00000000a001');
+    expect(stationActorId(storage, () => '0190a000-0000-4000-8000-00000000ffff')).toBe(first);
+  });
+  it('replaces a kept value that is not a UUID, and survives a refusing storage', () => {
+    const storage = memory();
+    storage.map.set('usrp_field_station_actor', 'RDF:screening_officer');
+    expect(stationActorId(storage, () => '0190a000-0000-4000-8000-00000000a002')).toBe('0190a000-0000-4000-8000-00000000a002');
+    expect(stationActorId({ getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } }, () => '0190a000-0000-4000-8000-00000000a003')).toBe('0190a000-0000-4000-8000-00000000a003');
+  });
+});
+
+describe('a capture whose officer id is not a UUID', () => {
+  it('is refused on the device as NOT_SENDABLE and never sent (the service would answer 500)', async () => {
+    const { ledger, signer } = await rig();
+    const record = await capturePhysical(ledger, { ticket: TICKET, metrics, day: DAY, officerSubject: 'RDF:screening_officer' });
+    let calls = 0;
+    const results = await sendRecords(ledger, signer, () => { calls += 1; return Promise.resolve({ httpStatus: 200, body: null }); }, [record]);
+    expect(calls).toBe(0);
+    expect(results[0]).toMatchObject({ state: 'REJECTED_VALIDATION', reason: 'NOT_SENDABLE' });
   });
 });

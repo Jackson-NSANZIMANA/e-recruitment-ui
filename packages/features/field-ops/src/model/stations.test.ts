@@ -18,12 +18,24 @@ describe('station model', () => {
   });
 
   it('shows an unbuilt station to the officer who holds it, without a route', () => {
-    const stations = stationsFor({ agency: 'RDF', permissions: ['admission.gate', 'medical.review', 'field.conflict.resolve'] });
+    const stations = stationsFor({ agency: 'RDF', permissions: ['admission.gate', 'document.verify.venue', 'medical.review', 'field.conflict.resolve'] });
     expect(stations).toEqual([
       { id: 'gate', path: '/gate', built: true },
-      { id: 'medical', path: null, built: false },
-      { id: 'supervisor', path: null, built: false },
+      { id: 'documents', path: null, built: false },
+      { id: 'medical', path: '/medical', built: true },
+      { id: 'supervisor', path: '/supervisor', built: true },
     ]);
+  });
+
+  it('opens physical for a score-sync holder and the supervisor for a fleet manager', () => {
+    expect(stationsFor({ agency: 'RDF', permissions: ['field.score.sync'] })).toEqual([{ id: 'physical', path: '/physical', built: true }]);
+    expect(stationsFor({ agency: 'RNP', permissions: ['field.device.manage'] })).toEqual([{ id: 'supervisor', path: '/supervisor', built: true }]);
+  });
+
+  it('guards the supervisor companion pages by the supervisor station', () => {
+    expect(mayOpenStation({ agency: 'RDF', permissions: ['field.conflict.resolve'] }, '/conflicts')).toBe(true);
+    expect(mayOpenStation({ agency: 'RDF', permissions: ['field.score.sync'] }, '/conflicts')).toBe(false);
+    expect(mayOpenStation({ agency: 'RDF', permissions: ['admission.gate'] }, '/check-in')).toBe(true);
   });
 
   it('guards a station route by the same derivation', () => {

@@ -52,9 +52,7 @@ test('officer sign-in lands on the station picker, which lists only what the ses
   await expect(page.getByRole('heading', { name: /choose your station/i })).toBeVisible();
   await expect(page.getByTestId('station-gate').getByRole('link', { name: /open station/i })).toBeVisible();
   await expect(page.getByTestId('station-walk_in').getByRole('link', { name: /open station/i })).toBeVisible();
-  // Granted but not built in this release: shown, never a link.
-  await expect(page.getByTestId('station-medical')).toContainText(/not yet available/i);
-  await expect(page.getByTestId('station-medical').getByRole('link')).toHaveCount(0);
+  await expect(page.getByTestId('station-medical').getByRole('link', { name: /open station/i })).toBeVisible();
   // Not granted: not shown at all.
   await expect(page.getByTestId('station-documents')).toHaveCount(0);
   await expect(page.getByTestId('station-supervisor')).toHaveCount(0);
