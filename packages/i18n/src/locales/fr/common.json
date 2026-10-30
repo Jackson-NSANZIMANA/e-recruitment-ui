@@ -331,19 +331,6 @@
     "nesa_label": "Numéro d’index NESA",
     "hec_label": "Numéro d’inscription HEC",
     "declaration_title": "Déclaration",
-    "nida_title": "Vos informations, telles qu’enregistrées par la NIDA",
-    "nida_body": "Ces informations proviennent du registre national d’identité. Vous ne pouvez pas les modifier ici. Si quelque chose est inexact, il faut le faire corriger auprès de la NIDA.",
-    "nida_unavailable": "Nous ne pouvons pas afficher vos informations NIDA pour le moment. Vous pouvez continuer ; votre dossier est de toute façon vérifié auprès de la NIDA.",
-    "nida_asked": "La NIDA ne nous le fournit pas : il vous sera demandé",
-    "nida_full_name": "Noms",
-    "nida_sex": "Sexe",
-    "nida_date_of_birth": "Date de naissance",
-    "nida_place_of_birth": "Lieu de naissance",
-    "nida_nationality": "Nationalité",
-    "nida_district": "District de résidence",
-    "nida_female": "Féminin",
-    "nida_male": "Masculin",
-    "nida_not_held": "Non enregistré ici",
     "declaration_copy": "Je déclare que les informations fournies sont exactes. Cette confirmation reste locale à ce formulaire ; l’envoi ne contient que la catégorie et la référence académique prises en charge.",
     "listen_declaration": "Écouter en kinyarwanda",
     "listen_declaration_hint": "Écoutez cette déclaration en kinyarwanda.",
@@ -731,86 +718,6 @@
     "verification_hint": "Le dernier chiffre de chaque groupe est un chiffre de contrôle qui détecte les erreurs de saisie."
   },
   "citizen_docs": {
-    "title": "Vos documents",
-    "intro": "Ce dont ce dossier a besoin et où en est chaque pièce. Rien ici ne bloque votre dossier : l’organisme vérifie le reste sur le lieu de l’examen.",
-    "back": "Retour à mes dossiers",
-    "open_link": "Mes documents",
-    "loading": "Chargement de vos documents",
-    "error": "Impossible de charger vos documents. Réessayez dans un instant.",
-    "all_done": "Tout ce que les registres peuvent vérifier est fait.",
-    "sat": {
-      "API_VERIFIED": "Vérifié automatiquement par le registre",
-      "UPLOADED_CLEARED": "Reçu et vérifié",
-      "VENUE_VERIFIED": "Vérifié sur le lieu de l’examen",
-      "AWAITING_REGISTRY": "En attente du registre",
-      "AWAITING_NESA": "La NESA n’a pas encore publié ces résultats. Nous revérifierons nous-mêmes ; vous n’avez rien à faire.",
-      "UNDER_REVIEW": "Un agent l’examine",
-      "REJECTED": "Non accepté. Veuillez contacter l’organisme.",
-      "MISSING": "À apporter sur le lieu de l’examen"
-    },
-    "type": {
-      "NATIONAL_ID": "Carte d’identité nationale",
-      "OLEVEL_CERTIFICATE": "Certificat du tronc commun (O-Level)",
-      "ALEVEL_CERTIFICATE": "Certificat du secondaire (A-Level)",
-      "DEGREE_DIPLOMA_COPY": "Diplôme (copie)",
-      "DEGREE_DIPLOMA_NOTARIZED": "Diplôme (copie notariée)",
-      "GOOD_CONDUCT_CERTIFICATE": "Certificat de bonne conduite",
-      "NON_CONVICTION_CERTIFICATE": "Certificat de non-condamnation",
-      "CELIBACY_CERTIFICATE": "Certificat de célibat",
-      "MEDICAL_CERTIFICATE_GOVT": "Certificat d’un médecin du gouvernement",
-      "BIRTH_CERTIFICATE": "Acte de naissance",
-      "APPLICATION_FORM_WITH_PHOTO": "Formulaire de candidature avec photo d’identité"
-    },
-    "clearance": {
-      "field_label": "Numéro de demande de votre casier judiciaire",
-      "hint": "Demandez le certificat sur IremboGov, puis saisissez ici son numéro de demande : une lettre, 12 chiffres et 4 lettres.",
-      "submit": "Envoyer le numéro",
-      "sending": "Envoi en cours",
-      "shape": "Ce numéro n’a pas le bon format : une lettre, 12 chiffres et 4 lettres.",
-      "sent": "Numéro reçu. Nous le vérifions.",
-      "closed": "Ce dossier est clos : un numéro ne peut plus être ajouté.",
-      "failed": "Nous n’avons pas pu envoyer le numéro. Réessayez.",
-      "state": {
-        "NUMBER_REQUIRED": "Nous avons encore besoin du numéro de votre certificat de casier judiciaire.",
-        "VERIFYING": "Nous vérifions votre certificat. Cela peut prendre quelques minutes ; vous n’avez rien à faire.",
-        "UNDER_OFFICER_REVIEW": "Un agent examinera votre certificat. Vous n’avez rien à faire.",
-        "VERIFIED": "Votre certificat est vérifié."
-      },
-      "code": {
-        "CERTIFICATE_NUMBER_MALFORMED": "Le numéro n’a pas le bon format. Vérifiez-le et réessayez.",
-        "CERTIFICATE_NOT_FOUND": "Nous n’avons trouvé aucun certificat avec ce numéro. Vérifiez-le et réessayez.",
-        "CERTIFICATE_NOT_BOUND": "Cet enregistrement ne correspond pas à votre identité. Vérifiez que vous avez saisi le numéro de votre propre certificat.",
-        "CERTIFICATE_WRONG_TYPE": "Ce n’est pas un certificat de casier judiciaire. Demandez le bon certificat sur IremboGov et donnez son numéro.",
-        "CERTIFICATE_EXPIRED": "Ce certificat est trop ancien ou pas encore valable. Demandez-en un nouveau sur IremboGov.",
-        "CERTIFICATE_NOT_VALID": "Ce certificat n’est plus valable. Demandez-en un nouveau sur IremboGov.",
-        "DEFAULT": "Nous n’avons pas pu accepter ce certificat. Vérifiez le numéro et réessayez."
-      }
-    }
-  },
-  "category_rules": {
-    "title": "Qui peut candidater, et jusqu’à quel âge",
-    "intro": "Chaque catégorie a sa propre limite d’âge, selon votre diplôme. Trouvez la vôtre ci-dessous.",
-    "age_range": "âgé de {{min}} à {{max}} ans",
-    "age_up_to": "âgé de {{max}} ans au plus",
-    "accepted": "Diplômes acceptés (l’un d’eux suffit)",
-    "science": "Au moins {{percent}} % dans vos matières scientifiques du secondaire",
-    "none": "Les limites d’âge de ce recrutement figurent dans l’annonce officielle.",
-    "at_or_above": "{{level}} ou supérieur",
-    "qual": {
-      "O_LEVEL_S3": "S3 terminé",
-      "O_LEVEL_S6_EQUIV": "Équivalent O-Level",
-      "A_LEVEL_A2": "A-Level (A2)",
-      "A1_IPRC": "Diplôme avancé (A1, IPRC)",
-      "BACHELOR_A0": "Licence (A0)",
-      "MASTERS": "Master",
-      "PHD": "Doctorat",
-      "FIELD_MEDICINE": "Médecine",
-      "FIELD_ENGINEERING": "Ingénierie",
-      "FIELD_LAW": "Droit",
-      "FIELD_NURSING": "Soins infirmiers",
-      "FIELD_EDUCATION": "Éducation",
-      "FIELD_VETERINARY_MEDICINE": "Médecine vétérinaire",
-      "FIELD_CLINICAL_PSYCHOLOGY": "Psychologie clinique"
-    }
+    "open_link": "Mes documents"
   }
 }

@@ -331,19 +331,6 @@
     "nesa_label": "Nimero ya NESA",
     "hec_label": "Nimero yo kwiyandikisha muri HEC",
     "declaration_title": "Itangazo",
-    "nida_title": "Amakuru yawe nk’uko NIDA yayanditse",
-    "nida_body": "Aya makuru aturuka mu irangamuntu y’igihugu. Ntushobora kuyahindurira hano. Niba hari ikitari cyo, kigomba gukosorwa kuri NIDA.",
-    "nida_unavailable": "Ntitubashije kukwereka amakuru yawe ya NIDA ubu. Ushobora gukomeza; ubusabe bwawe buzagenzurwa kuri NIDA uko byagenda kose.",
-    "nida_asked": "NIDA ntitubwira ibi, bityo uzabibazwa",
-    "nida_full_name": "Amazina",
-    "nida_sex": "Igitsina",
-    "nida_date_of_birth": "Itariki y’amavuko",
-    "nida_place_of_birth": "Aho wavukiye",
-    "nida_nationality": "Ubwenegihugu",
-    "nida_district": "Akarere utuyemo",
-    "nida_female": "Gore",
-    "nida_male": "Gabo",
-    "nida_not_held": "Ntibibitswe hano",
     "declaration_copy": "Ndemeza ko amakuru ntanze ari ukuri kandi yuzuye. Uku kwemeza ni ukw’iyi fomu gusa; ibyo twohereza kuri backend ni icyiciro na nimero y’amashuri byemewe gusa.",
     "listen_declaration": "Umva mu Kinyarwanda",
     "listen_declaration_hint": "Umva iri tangazo mu Kinyarwanda.",
@@ -731,86 +718,6 @@
     "verification_hint": "Umubare wa nyuma wa buri tsinda ni umubare w'igenzura ufata amakosa yo kwandika."
   },
   "citizen_docs": {
-    "title": "Inyandiko zawe",
-    "intro": "Ibyo ubusabe bwawe bukeneye n’aho buri kimwe kigeze. Nta na kimwe hano kibuza ubusabe bwawe gukomeza: ikigo kizagenzura ibisigaye aho ikizamini kizabera.",
-    "back": "Subira ku busabe bwanjye",
-    "open_link": "Inyandiko zanjye",
-    "loading": "Turimo gushaka inyandiko zawe",
-    "error": "Ntitubashije kubona inyandiko zawe. Ongera ugerageze nyuma y’akanya gato.",
-    "all_done": "Ibyo ibigo bibasha kugenzura byose byarangiye.",
-    "sat": {
-      "API_VERIFIED": "Cyagenzuwe mu buryo bwikora n’ikigo gishinzwe kubibika",
-      "UPLOADED_CLEARED": "Cyakiriwe kandi cyagenzuwe",
-      "VENUE_VERIFIED": "Cyagenzuriwe aho ikizamini kibera",
-      "AWAITING_REGISTRY": "Dutegereje igisubizo cy’ikigo",
-      "AWAITING_NESA": "NESA ntirasohora ibi bisubizo. Tuzongera tugenzure ubwacu; nta cyo usabwa gukora.",
-      "UNDER_REVIEW": "Umukozi aracyakireba",
-      "REJECTED": "Ntikemewe. Nyamuneka vugana n’ikigo.",
-      "MISSING": "Kizane aho ikizamini kizabera"
-    },
-    "type": {
-      "NATIONAL_ID": "Irangamuntu",
-      "OLEVEL_CERTIFICATE": "Impamyabumenyi y’icyiciro rusange (O-Level)",
-      "ALEVEL_CERTIFICATE": "Impamyabumenyi y’amashuri yisumbuye (A-Level)",
-      "DEGREE_DIPLOMA_COPY": "Impamyabumenyi y’kaminuza cyangwa dipolome (kopi)",
-      "DEGREE_DIPLOMA_NOTARIZED": "Impamyabumenyi y’kaminuza cyangwa dipolome (yemejwe na noteri)",
-      "GOOD_CONDUCT_CERTIFICATE": "Icyemezo cy’imyitwarire myiza",
-      "NON_CONVICTION_CERTIFICATE": "Icyemezo cy’uko utigeze uhamwa n’icyaha",
-      "CELIBACY_CERTIFICATE": "Icyemezo cy’ingaragu",
-      "MEDICAL_CERTIFICATE_GOVT": "Icyemezo cya muganga wa Leta",
-      "BIRTH_CERTIFICATE": "Icyemezo cy’amavuko",
-      "APPLICATION_FORM_WITH_PHOTO": "Urupapuro rw’ubusabe n’ifoto"
-    },
-    "clearance": {
-      "field_label": "Numero y’ubusabe bw’icyemezo cy’uko utigeze uhamwa n’icyaha",
-      "hint": "Saba icyo cyemezo kuri IremboGov, hanyuma wandike hano numero y’ubusabe bwacyo: inyuguti imwe, imibare 12 n’inyuguti 4.",
-      "submit": "Ohereza numero",
-      "sending": "Kirimo koherezwa",
-      "shape": "Iyi numero ntabwo iri mu buryo bukwiye: inyuguti imwe, imibare 12 n’inyuguti 4.",
-      "sent": "Numero yakiriwe. Turimo kuyigenzura.",
-      "closed": "Ubu busabe bwarafunzwe, bityo ntushobora kongeraho numero.",
-      "failed": "Ntitwabashije kohereza numero. Ongera ugerageze.",
-      "state": {
-        "NUMBER_REQUIRED": "Turacyakeneye numero y’icyemezo cy’uko utigeze uhamwa n’icyaha.",
-        "VERIFYING": "Turimo kugenzura icyemezo cyawe. Bishobora gufata iminota mike; nta cyo usabwa gukora.",
-        "UNDER_OFFICER_REVIEW": "Umukozi azareba icyemezo cyawe. Nta cyo usabwa gukora.",
-        "VERIFIED": "Icyemezo cyawe cyaragenzuwe."
-      },
-      "code": {
-        "CERTIFICATE_NUMBER_MALFORMED": "Numero ntiri mu buryo bukwiye. Yisubiremo ugerageze.",
-        "CERTIFICATE_NOT_FOUND": "Ntitwabonye icyemezo gifite iyi numero. Yisubiremo ugerageze.",
-        "CERTIFICATE_NOT_BOUND": "Aya makuru ntahuye n’ayawe. Reba ko wanditse numero y’icyemezo cyawe bwite.",
-        "CERTIFICATE_WRONG_TYPE": "Iki si icyemezo cy’uko utigeze uhamwa n’icyaha. Saba icyemezo gikwiye kuri IremboGov, ushyiremo numero yacyo.",
-        "CERTIFICATE_EXPIRED": "Iki cyemezo cyarashaje cyangwa ntikiratangira kugira agaciro. Saba gishya kuri IremboGov.",
-        "CERTIFICATE_NOT_VALID": "Iki cyemezo nticyemewe ukundi. Saba gishya kuri IremboGov.",
-        "DEFAULT": "Ntitwabashije kwakira iki cyemezo. Reba numero ugerageze."
-      }
-    }
-  },
-  "category_rules": {
-    "title": "Ushobora gusaba, kandi kugeza ku myaka ingahe",
-    "intro": "Buri cyiciro gifite imyaka ntarengwa yacyo, bitewe n’amashuri wize. Shaka icyawe hano hasi.",
-    "age_range": "imyaka {{min}} kugeza kuri {{max}}",
-    "age_up_to": "imyaka {{max}} cyangwa itarenze",
-    "accepted": "Amashuri yemewe (rimwe muri yo)",
-    "science": "Nibura {{percent}}% mu masomo ya siyansi y’amashuri yisumbuye",
-    "none": "Imyaka ntarengwa y’aya mahirwe iri mu itangazo ryemewe.",
-    "at_or_above": "{{level}} cyangwa hejuru yaryo",
-    "qual": {
-      "O_LEVEL_S3": "Wasoje icyiciro rusange (S3)",
-      "O_LEVEL_S6_EQUIV": "Bihwanye na O-Level",
-      "A_LEVEL_A2": "Amashuri yisumbuye (A2)",
-      "A1_IPRC": "Dipolome y’ikiciro cya kabiri (A1, IPRC)",
-      "BACHELOR_A0": "Impamyabumenyi ya kaminuza (A0)",
-      "MASTERS": "Impamyabumenyi y’ikirenga ya kabiri (Masters)",
-      "PHD": "Impamyabumenyi y’ikirenga (PhD)",
-      "FIELD_MEDICINE": "Ubuvuzi",
-      "FIELD_ENGINEERING": "Ubwubatsi n’ubuhanga bw’inganda",
-      "FIELD_LAW": "Amategeko",
-      "FIELD_NURSING": "Ubuforomo",
-      "FIELD_EDUCATION": "Uburezi",
-      "FIELD_VETERINARY_MEDICINE": "Ubuvuzi bw’amatungo",
-      "FIELD_CLINICAL_PSYCHOLOGY": "Ubuvuzi bw’imitekerereze"
-    }
+    "open_link": "Inyandiko zanjye"
   }
 }

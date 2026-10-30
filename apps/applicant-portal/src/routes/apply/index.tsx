@@ -19,6 +19,7 @@ import {
   type PublicCampaign,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
+import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
 import { nidaRows, sexKey } from "./nida-identity.js";
@@ -326,7 +327,7 @@ function StepEducation({ data, onNext, onBack }: {
  * value is corrected with NIDA, never in this form. A failed read never blocks the wizard.
  */
 function NidaIdentityBlock(): React.ReactElement | null {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const identity = useMyIdentity(client);
   if (identity.isPending) return null;
   if (identity.isError) {

@@ -3,6 +3,7 @@ import { Stack, Text } from "@atlaskit/primitives/compiled";
 import SectionMessage from "@atlaskit/section-message";
 import type { PublicCategoryEligibility } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
+import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { rulesFor } from "./category-rules.js";
 
 /**
@@ -16,7 +17,7 @@ export function CategoryRules({ categories, eligibility, labelFor }: {
   readonly eligibility: Readonly<Record<string, PublicCategoryEligibility>> | undefined;
   readonly labelFor: (category: string) => string;
 }): React.ReactElement | null {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const rows = categories.flatMap((category) => {
     const view = rulesFor(eligibility, category);
     return view === null ? [] : [{ category, view }];

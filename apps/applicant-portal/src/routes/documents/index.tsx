@@ -10,6 +10,7 @@ import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
 import { ApiError, createApiClient, useAttachMyClearanceCertificate, useMyDocumentChecklist, type ClearanceState, type DocumentChecklist } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
+import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { EDGE_BASE_URL } from "../../env.js";
 import { clearanceCopyKey, documentTypeKey, isClearanceNumberShape, isInFlight, normaliseClearanceNumber, satisfactionCopyKey, wantsNumber } from "./model.js";
 
@@ -32,7 +33,7 @@ const TONE: Record<ClearanceState, "success" | "warning" | "information"> = {
  * and never says who else's record it was.
  */
 export default function DocumentsPage(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const { applicationId = "" } = useParams();
   const checklist = useMyDocumentChecklist(client, applicationId);
   const inFlight = isInFlight(checklist.data);
