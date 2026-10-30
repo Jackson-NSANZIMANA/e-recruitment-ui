@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 79 business operations + 22 probes = 101 total.
+// 80 business operations + 22 probes = 102 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -260,6 +260,30 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "403",
       "404",
       "500"
+    ]
+  },
+  {
+    "service": "application-service",
+    "operationId": "attachClearanceCertificateOwn",
+    "method": "POST",
+    "path": "/v1/applications/clearance-certificate-own",
+    "auth": [
+      "system"
+    ],
+    "reach": "service-internal",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/attach-clearance.controller.ts (ATTACH_CLEARANCE_OWN_PATH)",
+    "statuses": [
+      "200",
+      "202",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "500",
+      "501"
     ]
   },
   {
@@ -1613,7 +1637,8 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "401",
       "404",
       "409",
-      "422"
+      "422",
+      "502"
     ]
   },
   {

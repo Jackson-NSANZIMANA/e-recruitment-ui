@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -105,6 +105,11 @@ export const AttachClearanceOkSchema = z
     "agency": AgencySchema,
   });
 
+/**
+ * The application is named in the body, not the path (the platform's
+ * no-path-params convention), and the citizen is NOT named at all — the
+ * session is the subject.
+ */
 export const AttachClearanceRequestSchema = z
   .strictObject({
     "applicationId": UuidSchema,
@@ -112,13 +117,21 @@ export const AttachClearanceRequestSchema = z
   });
 
 /**
- * The clearance state of the RIB item. A citizen path carries no reasons.
+ * ADR-048 §2.3: where the criminal-record certificate stands, as the RIB
+ * checklist item's own block. STATE AND CLOSED CODE ONLY — an officer's
+ * review reasons are dropped by the identity layer before this reaches a
+ * browser, because a citizen reading "content review: name partial" is
+ * reading a forgery-tuning signal.
+ * 
+ * THE STATES ARE NOT A VERDICT LADDER. CORRECTION_NEEDED means the citizen
+ * may fix the NUMBER, never that they are ineligible; UNDER_OFFICER_REVIEW
+ * means a person must look, and its outcome is ACTIONED elsewhere (an
+ * officer decision), not here.
  */
 export const ClearanceItemSchema = z
   .strictObject({
     "state": z.enum(['NUMBER_REQUIRED', 'VERIFYING', 'CORRECTION_NEEDED', 'UNDER_OFFICER_REVIEW', 'VERIFIED']),
     "code": z.string().regex(/^[A-Z][A-Z0-9_]{2,47}$/).nullable(),
-    "reasons": z.array(z.enum(['CLEARANCE_CONTENT_REVIEW', 'IDENTITY_NAME_PARTIAL', 'IDENTITY_HOLDER_UNREADABLE'])).optional(),
   });
 
 export const DeclineErasureRequestSchema = z
@@ -788,6 +801,7 @@ export const identityServiceOperations = {
       "404": null,
       "409": null,
       "422": null,
+      "502": UpstreamUnavailable502Schema,
     },
   },
   "getMyDocumentChecklist": {

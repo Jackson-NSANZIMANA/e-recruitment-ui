@@ -32,7 +32,7 @@ info:
 
     THE TWO ROUTES DISAGREE ABOUT HOW TO KEY AN OUTCOME, and this document does
     not paper over it — see the analyze operation.
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_DOCUMENT_FORENSICS_SERVICE"
   x-usrp-transport-faults:
     - status: 405

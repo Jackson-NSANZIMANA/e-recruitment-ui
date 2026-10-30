@@ -10,8 +10,8 @@ test.setTimeout(90_000);
  * picker with per-qualification caps, and the citizen's document checklist with the clearance number
  * field and its states. Every screen is scanned with axe (serious and critical violations fail) and the
  * clearance copy is proven in en, rw and fr.
- * CONTRACT-PENDING: S12c. getMyIdentity, attachMyClearanceCertificate and the campaign eligibility
- * summary come from backend PR #53 / #52; this spec cannot prove the platform agrees, the live spec does.
+ * getMyIdentity, attachMyClearanceCertificate and the campaign eligibility summary come from the backend
+ * (S12c, S12b). This mocked spec cannot prove the platform agrees; the contract drift gate and the live spec do.
  */
 const APP = '33333333-3333-4333-8333-333333333333';
 const CAMPAIGN = {
@@ -106,7 +106,7 @@ test('wizard: a failed identity read never blocks the application', async ({ pag
 test('documents: the number is checked for shape before it is sent, then sent once, normalised', async ({ page }) => {
   const posts: unknown[] = [];
   await openDocuments(page, checklist({ state: 'NUMBER_REQUIRED', code: null }));
-  await page.route('**/edge/v1/me/applications/clearance-certificate', (r) => { posts.push(r.request().postDataJSON()); return r.fulfill(json({ applicationId: APP, outcome: 'ACCEPTED' }, 202)); });
+  await page.route('**/edge/v1/me/applications/clearance-certificate', (r) => { posts.push(r.request().postDataJSON()); return r.fulfill(json({ status: 'ACCEPTED', agency: 'RDF' }, 202)); });
   await expect(page.getByTestId('clearance-state')).toContainText(/still need the number/i);
   await page.getByLabel(/application number of your criminal-record certificate/i).fill('not a number');
   await page.getByRole('button', { name: /send the number/i }).click();

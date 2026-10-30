@@ -87,12 +87,22 @@ export type AmberQueueResponse = readonly AmberQueueEntry[];
 export interface AmberQueueEntry {
   readonly applicationId: string | null;
   readonly processingCode: string | null;
-  readonly status: string | null;
+  /**
+   * The row's application status, which is NOT always one of the two holds this
+   * endpoint was named after: S12b also serves live rows here whose criminal
+   * clearance is UNDER_REVIEW or whose academic record needs a NESA review.
+   * `null` only when the edge sent no status; such a row is still listed.
+   */
+  readonly status: ApplicationStatus | null;
   readonly documentType: string | null;
   readonly forensicsScore: number | null;
   readonly forensicsFlags: Readonly<Record<string, unknown>> | null;
   readonly queuedAt: string | null;
-  /** S12b: why a person must read the record (closed upper-case codes); empty for a document hold. */
+  /**
+   * S12b: WHY a person, not the analyser, must read the record — closed
+   * upper-case codes, empty for a pure document hold. Absent from a pre-S12b
+   * edge, so callers must treat "no reasons" as "not stated", never as "none".
+   */
   readonly reasons?: readonly string[];
   readonly agency: Agency;
 }
@@ -284,7 +294,6 @@ export type DocumentSatisfaction =
  * The citizen's own verified identity, allowlisted by the edge (ADR-049, ADR-FE-019).
  * placeOfBirth and nationality are always null today: the platform does not retain them,
  * so the wizard asks for them. There is no photo, signature, parents' names or National ID.
- * CONTRACT-PENDING: S12c.
  */
 export interface MyIdentity {
   readonly fullName: string;
@@ -296,23 +305,6 @@ export interface MyIdentity {
   readonly nationality: string | null;
 }
 
-/** The clearance state of the RIB item (ADR-048 section 2.3). A citizen is never given the reasons. */
-export type ClearanceState = 'NUMBER_REQUIRED' | 'VERIFYING' | 'CORRECTION_NEEDED' | 'UNDER_OFFICER_REVIEW' | 'VERIFIED';
-
-export interface ClearanceItem {
-  readonly state: ClearanceState;
-  /** A closed code for CORRECTION_NEEDED (CERTIFICATE_NOT_FOUND, _WRONG_TYPE, _EXPIRED, _NOT_BOUND, ...), else null. */
-  readonly code: string | null;
-  /** Officer audience only: the amber-queue reasons (CLEARANCE_CONTENT_REVIEW, IDENTITY_NAME_PARTIAL, ...). */
-  readonly reasons?: readonly string[];
-}
-
-/** `POST /edge/v1/me/applications/clearance-certificate`. The number is never echoed. */
-export interface AttachClearanceResponse {
-  readonly applicationId: string;
-  readonly outcome: 'ACCEPTED' | 'ALREADY_VERIFIED';
-}
-
 export interface DocumentChecklist {
   readonly agency: Agency;
   readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';
@@ -322,9 +314,49 @@ export interface DocumentChecklist {
     readonly satisfaction: DocumentSatisfaction;
     /** NIDA | NESA | HEC | RIB, or null when it can only be uploaded/presented. */
     readonly registry: string | null;
-    /** Present on the RIB-verified item when the Irembo certificate flow is on (S12b). */
+    /** The RIB item's Irembo certificate state. Absent on every other item, and on a v1 checklist. */
     readonly clearance?: ClearanceItem;
   }[];
+}
+
+/**
+ * ADR-048 §2.3: where the citizen's criminal-record certificate stands.
+ *
+ * STATE AND A CLOSED CODE, nothing else: the officer's review reasons are
+ * dropped by the identity layer before a browser ever sees them, so a citizen
+ * cannot derive from this screen what the reviewer is looking at.
+ *
+ * `CORRECTION_NEEDED` is about the NUMBER, never an eligibility verdict;
+ * `UNDER_OFFICER_REVIEW` is a wait, and the branch that ends it is an officer
+ * decision — there is no citizen action that clears it.
+ */
+export type ClearanceState =
+  | 'NUMBER_REQUIRED'
+  | 'VERIFYING'
+  | 'CORRECTION_NEEDED'
+  | 'UNDER_OFFICER_REVIEW'
+  | 'VERIFIED';
+
+export interface ClearanceItem {
+  readonly state: ClearanceState;
+  readonly code: string | null;
+  /**
+   * OFFICER audience only (`getDocumentChecklist`): the closed amber-queue reasons (CLEARANCE_CONTENT_REVIEW,
+   * IDENTITY_NAME_PARTIAL, ...). The citizen path carries none, and the contract schema for it refuses them.
+   */
+  readonly reasons?: readonly string[];
+}
+
+/**
+ * `POST /edge/v1/me/applications/clearance-certificate`.
+ *
+ * BOTH outcomes are success and they differ: ACCEPTED means the registry has not
+ * answered yet (the checklist will show VERIFYING), ALREADY_VERIFIED means the
+ * result already stands. Neither carries the number back.
+ */
+export interface AttachClearanceResponse {
+  readonly status: 'ACCEPTED' | 'ALREADY_VERIFIED';
+  readonly agency: Agency;
 }
 
 export interface VerifyAtVenueResponse {

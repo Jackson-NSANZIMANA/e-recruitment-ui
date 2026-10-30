@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -41,6 +41,7 @@
 //   POST /v1/applications/walk-in/register              officer            browser
 //   POST /v1/applications/walk-in/vet                   officer            browser
 //   POST /v1/applications/withdraw-own                  system             service-internal
+//   POST /v1/applications/clearance-certificate-own     system             service-internal
 //   GET  /health                                        none               service-internal
 //   GET  /ready                                         none               service-internal
 //   GET  /v1/applications/search                        officer            browser
@@ -267,6 +268,42 @@ export const ApplicationSummarySchema = z
     "category": ApplicationCategorySchema,
     "status": ApplicationStatusSchema,
     "submittedAt": z.string().nullable(),
+  });
+
+export const AttachClearanceInvalidNumber422Schema = z
+  .strictObject({
+    "status": z.literal('INVALID_NUMBER'),
+  });
+
+export const AttachClearanceNotApplicable409Schema = z
+  .strictObject({
+    "status": z.literal('NOT_APPLICABLE'),
+    "agency": AgencySchema,
+    "currentStatus": ApplicationStatusSchema,
+  });
+
+/**
+ * The agency's Irembo certificate flow is off. Not a failure to retry.
+ */
+export const AttachClearanceNotEnabled501Schema = z
+  .strictObject({
+    "status": z.literal('NOT_ENABLED'),
+  });
+
+export const AttachClearanceOk200Schema = z
+  .strictObject({
+    "status": z.enum(['ACCEPTED', 'ALREADY_VERIFIED']),
+    "agency": AgencySchema,
+  });
+
+/**
+ * BOTH ids, plus the number. The number is never echoed in any response.
+ */
+export const AttachClearanceOwnRequestSchema = z
+  .strictObject({
+    "applicantId": UuidSchema,
+    "applicationId": UuidSchema,
+    "clearanceCertificateNumber": z.string().min(1).max(64),
   });
 
 export const BiometricEvidenceRowSchema = z
@@ -696,6 +733,21 @@ export const OperationalReadErrorSchema = z
     "detail": z.string().optional(),
   });
 
+export const PublicCategoryEligibilitySchema = z
+  .strictObject({
+    "ageBands": z.array(z
+    .strictObject({
+      "qualifications": z.array(z.string()),
+      "minimumAge": z.number(),
+      "maximumAge": z.number(),
+    })),
+    "educationAlternatives": z.array(z
+    .strictObject({
+      "level": z.string(),
+    })),
+    "minimumSciencePercent": z.number().nullable(),
+  });
+
 /**
  * The approved public projection. Nothing internal.
  */
@@ -714,6 +766,7 @@ export const PublicCampaignSchema = z
     "allowsWalkIn": z.boolean(),
     "contactPhoneNumbers": z.array(z.string()).max(10).nullable(),
     "contactWebsite": z.string().nullable(),
+    "eligibility": z.record(z.string(), z.unknown()).optional(),
   });
 
 export const PublicCampaignDetail200Schema = z
@@ -1439,6 +1492,27 @@ export const applicationServiceOperations = {
       "404": TransitionNotFound404Schema,
       "409": WithdrawOwnNotApplicable409Schema,
       "500": ApplicationError500Schema,
+    },
+  },
+  "attachClearanceCertificateOwn": {
+    method: "POST",
+    path: "/v1/applications/clearance-certificate-own",
+    auth: ["system"],
+    reach: "service-internal",
+    request: AttachClearanceOwnRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": AttachClearanceOk200Schema,
+      "202": AttachClearanceOk200Schema,
+      "400": InvalidRequest400Schema,
+      "401": Unauthenticated401Schema,
+      "403": Forbidden403Schema,
+      "404": TransitionNotFound404Schema,
+      "409": AttachClearanceNotApplicable409Schema,
+      "422": AttachClearanceInvalidNumber422Schema,
+      "500": ApplicationError500Schema,
+      "501": AttachClearanceNotEnabled501Schema,
     },
   },
   "applicationHealth": {

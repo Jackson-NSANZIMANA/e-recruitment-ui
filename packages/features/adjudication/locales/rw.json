@@ -1,1 +1,96 @@
-{"adjudication":{"queue":{"title":"Imirongo y'abakozi","mixed_queue_title":"Uru rutonde rufite ibintu bibiri bitandukanye","mixed_queue_body":"Ibifashwe kubera inyandiko bifite ibimenyetso by'isuzuma. Ibifashwe kubera icyemezo cya nyuma ntabyo bifite: nta nyandiko yo kureba.","status":{"document":"Inyandiko zafashwe","adjudication":"Bitegereje icyemezo cy'urwego rwo hejuru","records":"Inyandiko isomwa"},"document_hint":"Inyandiko igikoresho kitashoboye kwemeza. Ikimenyetso cy'isesengura ni ukwibutsa kureba, ntabwo ari icyemezo.","adjudication_hint":"Ubusabe bwafashwe nyuma y'icyemezo cyo kwirukana cyatinze. Nta kimenyetso cy'inyandiko bufite.","truncated":"Hagaragara {{shown}} za mbere muri {{total}}. Gabanya urutonde muri Ubusabe urebe ibisigaye.","records_title":"Inyandiko zitegereje ko umukozi azisoma","records_hint":"Ikigo cyatanze igisubizo, ariko umuntu agomba gusoma inyandiko. Impamvu igaragara kuri buri busabe. Fungura kugira ngo ubone inyandiko.","reasons_label":"Impamvu"},"signal":{"no_document_evidence":"Nta bimenyetso by'inyandiko kuri iki","no_flags":"Nta kimenyetso cyagaragaye","band":{"UNSCORED":"Ntibapimwe","WEAKER":"Ikimenyetso gikeya","MIXED":"Ikimenyetso kivanze","CLEANER":"Ikimenyetso cyiza"},"flag":{"fontMismatch":"Imyandikire itandukanye"},"not_analysed":"Ntibyasesenguwe"},"decision":{"apply":"Emeza icyemezo","retry":"Ongera ugerageze: icyemezo cy'imyaka kitaraboneka","no_change":"Byari bimeze uko. Nta gihindutse."},"tabs":{"amber":"Inyandiko z'umuhondo","holds":"Ibyafashwe","medical":"Ubuzima","final":"Icyemezo cya nyuma"},"row":{"clear":"Kuraho gufata","reject":"Anga","shortlist":"Shyira ku rutonde rugufi","accept":"Emera","verdict":"Andika icyemezo","open":"Fungura"},"status":{"PHYSICAL_TEST_COMPLETE":"Isuzuma ry'umubiri ryarangiye","WALK_IN_PHYSICAL_TEST":"Isuzuma ry'umubiri ry'utatumiwe","MEDICAL_REVIEW":"Isuzuma ry'ubuzima","FINAL_SHORTLIST":"Urutonde rugufi rwa nyuma"},"confirm":{"clearTitle":"Kuraho gufata kuri {{code}}?","clearBody":"Ubusabe busubira mu nzira yikora.","rejectTitle":"Kwanga {{code}}?","rejectBody":"Hazandikwa kwangwa. Komeza gusa niba impamvu zasuzumwe.","shortlistTitle":"Gushyira {{code}} ku rutonde rugufi?","shortlistBody":"Icyemezo cya nyuma kizandikwa: SHORTLIST.","acceptTitle":"Kwemera {{code}}?","acceptBody":"Kwemerwa ni ihame kandi bishobora gukuraho ubundi busabe bw'umukandida bukiri mu nzira."},"errors":{"refused":"Igikorwa cyanzwe: {{code}}. Nta cyahinduwe."},"bulk":{"shortlistAll":"Shyira ku rutonde abategereje icyemezo bose","rejectAll":"Anga abategereje icyemezo bose","resultsTitle":"Igisubizo kuri buri dosiye","applied":"Byakozwe","refused":"Byanzwe ({{code}})","confirmShortlistTitle":"Gushyira dosiye {{count}} ku rutonde rugufi?","confirmRejectTitle":"Kwanga dosiye {{count}}?","confirmBody":"Icyemezo kizakoreshwa kuri dosiye {{count}} zitegereje icyemezo cya nyuma.","oneByOne":"Dosiye zifatirwa icyemezo imwe imwe; buri imwe ifite igisubizo cyayo kandi kwangwa kwa imwe ntibihagarika izindi."},"reasons":{"CLEARANCE_CONTENT_REVIEW":"Soma icyemezo cy’uko utigeze uhamwa n’icyaha ugereranye n’itegeko ry’ikigo","IDENTITY_NAME_PARTIAL":"Izina riri ku nyandiko rihura igice n’iry’usaba","IDENTITY_HOLDER_UNREADABLE":"Amakuru ya nyir’inyandiko ntiyashobotse gusomwa","IDENTITY_HINT_NOT_COMPARED":"Ibimenyetso by’irangamuntu ntibyagereranyijwe","NESA_MALPRACTICE":"NESA yagaragaje uburiganya kuri ibi bisubizo","NESA_LEVEL_UNKNOWN":"Urwego rwa NESA ntirwemewe","NESA_DIVISION_NOT_PASS":"Icyiciro cya NESA si icyo gutsinda","CRIMINAL_RECORD_REVIEW":"Inyandiko y’ibyaha ikeneye gusomwa","NESA_RECORD_REVIEW":"Inyandiko ya NESA ikeneye gusomwa"}}}
+{
+  "adjudication": {
+    "queue": {
+      "title": "Imirongo y'abakozi",
+      "mixed_queue_title": "Uru rutonde rufite ibintu bibiri bitandukanye",
+      "mixed_queue_body": "Ibifashwe kubera inyandiko bifite ibimenyetso by'isuzuma. Ibifashwe kubera icyemezo cya nyuma ntabyo bifite: nta nyandiko yo kureba.",
+      "status": {
+        "document": "Inyandiko zafashwe",
+        "adjudication": "Bitegereje icyemezo cy'urwego rwo hejuru",
+        "clearance": "Icyaha gitegereje isuzuma",
+        "academic": "Inyandiko z'amashuri zitegereje isuzuma",
+        "registry": "Isuzuma rya rejisitiri ritegereje"
+      },
+      "document_hint": "Inyandiko igikoresho kitashoboye kwemeza. Ikimenyetso cy'isesengura ni ukwibutsa kureba, ntabwo ari icyemezo.",
+      "adjudication_hint": "Ubusabe bwafashwe nyuma y'icyemezo cyo kwirukana cyatinze. Nta kimenyetso cy'inyandiko bufite.",
+      "truncated": "Hagaragara {{shown}} za mbere muri {{total}}. Gabanya urutonde muri Ubusabe urebe ibisigaye.",
+      "registry_hint": "Ibi bitegereje isuzuma rya rejisitiri. Nta cyemezo gishobora kwandikwa hano ubu: inyandiko itegereje ko isuzuma ry'icyaha cyangwa iry'amashuri rikemurwa. Fungura ubusabe urebe ibyageze."
+    },
+    "signal": {
+      "no_document_evidence": "Nta bimenyetso by'inyandiko kuri iki",
+      "no_flags": "Nta kimenyetso cyagaragaye",
+      "band": {
+        "UNSCORED": "Ntibapimwe",
+        "WEAKER": "Ikimenyetso gikeya",
+        "MIXED": "Ikimenyetso kivanze",
+        "CLEANER": "Ikimenyetso cyiza"
+      },
+      "flag": {
+        "fontMismatch": "Imyandikire itandukanye"
+      },
+      "not_analysed": "Ntibyasesenguwe"
+    },
+    "decision": {
+      "apply": "Emeza icyemezo",
+      "retry": "Ongera ugerageze: icyemezo cy'imyaka kitaraboneka",
+      "no_change": "Byari bimeze uko. Nta gihindutse."
+    },
+    "tabs": {
+      "amber": "Inyandiko z'umuhondo",
+      "holds": "Ibyafashwe",
+      "medical": "Ubuzima",
+      "final": "Icyemezo cya nyuma"
+    },
+    "row": {
+      "clear": "Kuraho gufata",
+      "reject": "Anga",
+      "shortlist": "Shyira ku rutonde rugufi",
+      "accept": "Emera",
+      "verdict": "Andika icyemezo",
+      "open": "Fungura"
+    },
+    "status": {
+      "PHYSICAL_TEST_COMPLETE": "Isuzuma ry'umubiri ryarangiye",
+      "WALK_IN_PHYSICAL_TEST": "Isuzuma ry'umubiri ry'utatumiwe",
+      "MEDICAL_REVIEW": "Isuzuma ry'ubuzima",
+      "FINAL_SHORTLIST": "Urutonde rugufi rwa nyuma"
+    },
+    "confirm": {
+      "clearTitle": "Kuraho gufata kuri {{code}}?",
+      "clearBody": "Ubusabe busubira mu nzira yikora.",
+      "rejectTitle": "Kwanga {{code}}?",
+      "rejectBody": "Hazandikwa kwangwa. Komeza gusa niba impamvu zasuzumwe.",
+      "shortlistTitle": "Gushyira {{code}} ku rutonde rugufi?",
+      "shortlistBody": "Icyemezo cya nyuma kizandikwa: SHORTLIST.",
+      "acceptTitle": "Kwemera {{code}}?",
+      "acceptBody": "Kwemerwa ni ihame kandi bishobora gukuraho ubundi busabe bw'umukandida bukiri mu nzira."
+    },
+    "errors": {
+      "refused": "Igikorwa cyanzwe: {{code}}. Nta cyahinduwe."
+    },
+    "bulk": {
+      "shortlistAll": "Shyira ku rutonde abategereje icyemezo bose",
+      "rejectAll": "Anga abategereje icyemezo bose",
+      "resultsTitle": "Igisubizo kuri buri dosiye",
+      "applied": "Byakozwe",
+      "refused": "Byanzwe ({{code}})",
+      "confirmShortlistTitle": "Gushyira dosiye {{count}} ku rutonde rugufi?",
+      "confirmRejectTitle": "Kwanga dosiye {{count}}?",
+      "confirmBody": "Icyemezo kizakoreshwa kuri dosiye {{count}} zitegereje icyemezo cya nyuma.",
+      "oneByOne": "Dosiye zifatirwa icyemezo imwe imwe; buri imwe ifite igisubizo cyayo kandi kwangwa kwa imwe ntibihagarika izindi."
+    },
+    "reason": {
+      "CRIMINAL_RECORD_REVIEW": "Icyaha cyanditswe gisaba umuntu kugisoma",
+      "CLEARANCE_CONTENT_REVIEW": "Icyemezo cy'uko nta cyaha ufite kirasubirwamo",
+      "IDENTITY_NAME_PARTIAL": "Amazina ahura igice gusa ku ndangamuntu",
+      "IDENTITY_HOLDER_UNREADABLE": "Amakuru y'umunyemwenda ntasomwa neza ku cyatanzwe",
+      "IDENTITY_HINT_NOT_COMPARED": "Ikimenyetso cy'umwirondoro ntigishoboye kugereranywa",
+      "NESA_MALPRACTICE": "NESA yanditse ikosa ry'uburiganya mu bizamini",
+      "NESA_LEVEL_UNKNOWN": "NESA ntiyemera urwego rw'icyemezo",
+      "NESA_DIVISION_NOT_PASS": "Icyiciro cya NESA nticyujuje ibisabwa mu ikiganiro",
+      "NESA_RECORD_REVIEW": "Inyandiko z'amashuri zisaba umuntu kuzisoma",
+      "unknown": "Impamvu itamenyekana ({{code}})",
+      "none": "Impamvu ntiyavuzwe"
+    }
+  }
+}

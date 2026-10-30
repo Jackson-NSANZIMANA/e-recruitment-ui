@@ -48,7 +48,7 @@ info:
     THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
     response in this document. The hash is an internal cross-service key; a
     browser that computes or receives one is a leak of a cross-service join key.
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -624,8 +624,7 @@ paths:
       description: >-
         SESSION-AUTHENTICATED. The subject is the session. ALLOWLISTED: names, sex,
         date of birth, district and province of residence; never a photo, signature,
-        parents' names or the National ID. CONTRACT-PENDING: S12c (backend branch
-        feat/s12c-policy-v2); re-pin and run drift when it merges.
+        parents' names or the National ID.
       x-usrp-auth: ["applicant-session"]
       x-usrp-reach: "browser"
       x-usrp-source: "src/adapters/http/own-identity.controller.ts (ME_IDENTITY_PATH)"
@@ -651,13 +650,30 @@ paths:
   /v1/applicants/me/applications/clearance-certificate:
     post:
       operationId: "attachMyClearanceCertificate"
-      summary: "The citizen gives the application number of their Irembo criminal-record certificate (ADR-048 section 2.3)"
+      summary: "The citizen gives the number of their Irembo criminal-record certificate (ADR-048 §2.3)"
       description: >-
-        SESSION-AUTHENTICATED. The subject is the session; another citizen's
-        application and a nonexistent one are the same 404. Verification is
-        asynchronous: 202 means accepted, and the state appears on the document
-        checklist. The number is never echoed. CONTRACT-PENDING: S12c (backend
-        PR #52 operation; the pinned SHA predates it).
+        SESSION-AUTHENTICATED. The subject is the session: this route takes no
+        applicant id, so another citizen's application and a nonexistent one are
+        the same 404 — the door is deliberately not an ownership oracle.
+
+
+        ASYNCHRONOUS. 202 means the number was accepted and the registry
+        verification is under way; it says NOTHING about the outcome. The result
+        arrives on the document checklist as the RIB item's `clearance` block,
+        which is why the citizen documents screen polls rather than reading a
+        verdict from this response.
+
+
+        THE NUMBER IS NEVER ECHOED, in this response or any other, and no
+        officer-facing review reason ever reaches this path: the identity layer
+        rebuilds the checklist item field by field, so only `state` and the
+        closed `code` travel to the browser.
+
+
+        BOTH 202 AND 200 ARE SUCCESS, AND THEY MEAN DIFFERENT THINGS: 202 is
+        "accepted, verification under way", 200 is "this number was already
+        verified". A client that only handles 202 reports a completed
+        verification as an error.
       x-usrp-auth: ["applicant-session"]
       x-usrp-reach: "browser"
       x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_CLEARANCE_PATH)"
@@ -670,19 +686,21 @@ paths:
               $ref: "#/components/schemas/AttachClearanceRequest"
       responses:
         "202":
-          description: "Accepted; verification is under way."
+          description: "ACCEPTED — the number was taken; verification is under way."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AttachClearanceOk"
         "200":
-          description: "Already verified."
+          description: "ALREADY_VERIFIED — no new work, the result already stands."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AttachClearanceOk"
         "400":
-          description: "INVALID_REQUEST."
+          description: >-
+            INVALID_REQUEST — applicationId is not a UUID, or the number is not
+            1–64 characters.
         "401":
           description: "No applicant session."
           content:
@@ -690,11 +708,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/InvalidSession401"
         "404":
-          description: "Not this citizen's application."
+          description: "Not this citizen's application, or no such application."
         "409":
-          description: "NOT_APPLICABLE: the application is closed."
+          description: >-
+            NOT_APPLICABLE — the application is closed (ACCEPTED, REJECTED,
+            WITHDRAWN, WALK_IN_REJECTED). Carries currentStatus.
         "422":
-          description: "INVALID_NUMBER: not a letter, 12 digits and 4 letters."
+          description: "INVALID_NUMBER — well-formed request, unusable certificate number."
+        "502":
+          description: "application-service unavailable or malformed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
 
   /v1/applicants/me/applications/document-checklist:
     get:
@@ -1918,6 +1944,10 @@ components:
           type: "string"
 
     AttachClearanceRequest:
+      description: >-
+        The application is named in the body, not the path (the platform's
+        no-path-params convention), and the citizen is NOT named at all — the
+        session is the subject.
       type: "object"
       additionalProperties: false
       required: ["applicationId", "clearanceCertificateNumber"]
@@ -1925,6 +1955,7 @@ components:
         applicationId:
           $ref: "#/components/schemas/Uuid"
         clearanceCertificateNumber:
+          description: "The Irembo certificate number. Stored for verification; never returned."
           type: "string"
           minLength: 1
           maxLength: 64
@@ -1941,7 +1972,18 @@ components:
           $ref: "#/components/schemas/Agency"
 
     ClearanceItem:
-      description: "The clearance state of the RIB item. A citizen path carries no reasons."
+      description: >-
+        ADR-048 §2.3: where the criminal-record certificate stands, as the RIB
+        checklist item's own block. STATE AND CLOSED CODE ONLY — an officer's
+        review reasons are dropped by the identity layer before this reaches a
+        browser, because a citizen reading "content review: name partial" is
+        reading a forgery-tuning signal.
+
+
+        THE STATES ARE NOT A VERDICT LADDER. CORRECTION_NEEDED means the citizen
+        may fix the NUMBER, never that they are ineligible;
+        UNDER_OFFICER_REVIEW means a person must look, and its outcome is
+        ACTIONED elsewhere (an officer decision), not here.
       type: "object"
       additionalProperties: false
       required: ["state", "code"]
@@ -1950,13 +1992,9 @@ components:
           type: "string"
           enum: ["NUMBER_REQUIRED", "VERIFYING", "CORRECTION_NEEDED", "UNDER_OFFICER_REVIEW", "VERIFIED"]
         code:
+          description: "A closed upper-case failure code when CORRECTION_NEEDED; null otherwise."
           type: ["string", "null"]
           pattern: "^[A-Z][A-Z0-9_]{2,47}$"
-        reasons:
-          type: "array"
-          items:
-            type: "string"
-            enum: ["CLEARANCE_CONTENT_REVIEW", "IDENTITY_NAME_PARTIAL", "IDENTITY_HOLDER_UNREADABLE"]
 
     DocumentChecklistItem:
       type: "object"
@@ -1974,27 +2012,6 @@ components:
           type: ["string", "null"]
         clearance:
           $ref: "#/components/schemas/ClearanceItem"
-
-    MyIdentity200:
-      description: >-
-        The citizen's own identity, allowlisted (ADR-049). The edge adds
-        placeOfBirth and nationality as null: the platform does not retain them.
-      type: "object"
-      additionalProperties: false
-      required: ["fullName", "sex", "dateOfBirth", "homeDistrict", "homeProvince"]
-      properties:
-        fullName:
-          type: "string"
-        sex:
-          type: "string"
-          enum: ["MALE", "FEMALE"]
-        dateOfBirth:
-          type: "string"
-          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
-        homeDistrict:
-          type: "string"
-        homeProvince:
-          type: "string"
 
     DocumentChecklist200:
       description: >-
@@ -2102,6 +2119,27 @@ components:
           type: "string"
           const: "UNAUTHENTICATED"
         detail:
+          type: "string"
+
+    MyIdentity200:
+      description: >-
+        The citizen's own identity, allowlisted (ADR-049). The edge adds
+        placeOfBirth and nationality as null: the platform does not retain them.
+      type: "object"
+      additionalProperties: false
+      required: ["fullName", "sex", "dateOfBirth", "homeDistrict", "homeProvince"]
+      properties:
+        fullName:
+          type: "string"
+        sex:
+          type: "string"
+          enum: ["MALE", "FEMALE"]
+        dateOfBirth:
+          type: "string"
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        homeDistrict:
+          type: "string"
+        homeProvince:
           type: "string"
 
     InvalidSession401:

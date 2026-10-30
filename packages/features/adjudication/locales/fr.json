@@ -1,1 +1,96 @@
-{"adjudication":{"queue":{"title":"Files des agents","mixed_queue_title":"Cette file contient deux choses différentes","mixed_queue_body":"Les blocages documentaires portent des signaux forensiques. Les blocages d'arbitrage n'en portent aucun: un verdict tardif les a placés ici, et il n'y a aucun document à examiner.","status":{"document":"Documents retenus","adjudication":"En attente d'arbitrage","records":"Document à lire"},"document_hint":"Documents que l'analyseur n'a pas pu valider. Le signal d'analyse invite à regarder, jamais à décider.","adjudication_hint":"Candidatures retenues après un verdict de disqualification tardif. Elles n'ont aucun signal documentaire.","truncated":"Affichage des {{shown}} premiers dossiers sur {{total}}. Restreignez la liste depuis Candidatures pour voir le reste.","records_title":"Dossiers en attente de lecture par un agent","records_hint":"Le registre a répondu, mais une personne doit lire le document. Le motif est indiqué pour chaque dossier. Ouvrez-le pour voir les pièces.","reasons_label":"Motif"},"signal":{"no_document_evidence":"Aucune preuve documentaire pour ce blocage","no_flags":"Aucun signalement","band":{"UNSCORED":"Non noté","WEAKER":"Signal plus faible","MIXED":"Signal mitigé","CLEANER":"Signal plus net"},"flag":{"fontMismatch":"Police incohérente"},"not_analysed":"Non analysé"},"decision":{"apply":"Appliquer la décision","retry":"Réessayer: le verdict d'âge n'est pas encore arrivé","no_change":"Déjà dans cet état. Rien à modifier."},"tabs":{"amber":"Documents ambre","holds":"Retenues","medical":"Médical","final":"Décision finale"},"row":{"clear":"Lever la retenue","reject":"Rejeter","shortlist":"Présélectionner","accept":"Accepter","verdict":"Enregistrer le verdict","open":"Ouvrir"},"status":{"PHYSICAL_TEST_COMPLETE":"Test physique terminé","WALK_IN_PHYSICAL_TEST":"Test physique sans rendez-vous","MEDICAL_REVIEW":"Visite médicale","FINAL_SHORTLIST":"Présélection finale"},"confirm":{"clearTitle":"Lever la retenue sur {{code}} ?","clearBody":"La candidature retourne dans la voie de traitement autonome.","rejectTitle":"Rejeter {{code}} ?","rejectBody":"Un rejet sera enregistré. Continuez seulement si les motifs ont été examinés.","shortlistTitle":"Présélectionner {{code}} ?","shortlistBody":"La décision finale sera enregistrée : SHORTLIST.","acceptTitle":"Accepter {{code}} ?","acceptBody":"L'acceptation est définitive et peut retirer les autres candidatures en cours du candidat."},"errors":{"refused":"L'action a été refusée : {{code}}. Rien n'a été modifié."},"bulk":{"shortlistAll":"Présélectionner tous ceux en attente de décision","rejectAll":"Rejeter tous ceux en attente de décision","resultsTitle":"Résultat pour chaque dossier","applied":"Appliqué","refused":"Refusé ({{code}})","confirmShortlistTitle":"Présélectionner {{count}} dossiers ?","confirmRejectTitle":"Rejeter {{count}} dossiers ?","confirmBody":"La décision sera appliquée à {{count}} dossiers en attente de décision finale.","oneByOne":"Les dossiers sont traités un par un ; chacun a son résultat et un refus n'arrête pas les autres."},"reasons":{"CLEARANCE_CONTENT_REVIEW":"Lire le certificat de casier judiciaire au regard de la règle de l’organisme","IDENTITY_NAME_PARTIAL":"Le nom du document ne correspond que partiellement au candidat","IDENTITY_HOLDER_UNREADABLE":"Les informations du titulaire n’ont pas pu être lues","IDENTITY_HINT_NOT_COMPARED":"L’indice de la carte d’identité n’a pas été comparé","NESA_MALPRACTICE":"La NESA signale une fraude sur ces résultats","NESA_LEVEL_UNKNOWN":"Le niveau NESA n’est pas reconnu","NESA_DIVISION_NOT_PASS":"La division NESA n’est pas un succès","CRIMINAL_RECORD_REVIEW":"Le casier judiciaire doit être lu","NESA_RECORD_REVIEW":"Le dossier NESA doit être lu"}}}
+{
+  "adjudication": {
+    "queue": {
+      "title": "Files des agents",
+      "mixed_queue_title": "Cette file contient deux choses différentes",
+      "mixed_queue_body": "Les blocages documentaires portent des signaux forensiques. Les blocages d'arbitrage n'en portent aucun: un verdict tardif les a placés ici, et il n'y a aucun document à examiner.",
+      "status": {
+        "document": "Documents retenus",
+        "adjudication": "En attente d'arbitrage",
+        "clearance": "Casier judiciaire en attente",
+        "academic": "Dossier scolaire en attente",
+        "registry": "Vérification de registre en attente"
+      },
+      "document_hint": "Documents que l'analyseur n'a pas pu valider. Le signal d'analyse invite à regarder, jamais à décider.",
+      "adjudication_hint": "Candidatures retenues après un verdict de disqualification tardif. Elles n'ont aucun signal documentaire.",
+      "truncated": "Affichage des {{shown}} premiers dossiers sur {{total}}. Restreignez la liste depuis Candidatures pour voir le reste.",
+      "registry_hint": "En attente d’une vérification de registre. Aucune décision ne peut encore être enregistrée ici : le dossier attend la résolution d’une vérification de casier ou de scolarité. Ouvrez la demande pour voir ce qui est arrivé."
+    },
+    "signal": {
+      "no_document_evidence": "Aucune preuve documentaire pour ce blocage",
+      "no_flags": "Aucun signalement",
+      "band": {
+        "UNSCORED": "Non noté",
+        "WEAKER": "Signal plus faible",
+        "MIXED": "Signal mitigé",
+        "CLEANER": "Signal plus net"
+      },
+      "flag": {
+        "fontMismatch": "Police incohérente"
+      },
+      "not_analysed": "Non analysé"
+    },
+    "decision": {
+      "apply": "Appliquer la décision",
+      "retry": "Réessayer: le verdict d'âge n'est pas encore arrivé",
+      "no_change": "Déjà dans cet état. Rien à modifier."
+    },
+    "tabs": {
+      "amber": "Documents ambre",
+      "holds": "Retenues",
+      "medical": "Médical",
+      "final": "Décision finale"
+    },
+    "row": {
+      "clear": "Lever la retenue",
+      "reject": "Rejeter",
+      "shortlist": "Présélectionner",
+      "accept": "Accepter",
+      "verdict": "Enregistrer le verdict",
+      "open": "Ouvrir"
+    },
+    "status": {
+      "PHYSICAL_TEST_COMPLETE": "Test physique terminé",
+      "WALK_IN_PHYSICAL_TEST": "Test physique sans rendez-vous",
+      "MEDICAL_REVIEW": "Visite médicale",
+      "FINAL_SHORTLIST": "Présélection finale"
+    },
+    "confirm": {
+      "clearTitle": "Lever la retenue sur {{code}} ?",
+      "clearBody": "La candidature retourne dans la voie de traitement autonome.",
+      "rejectTitle": "Rejeter {{code}} ?",
+      "rejectBody": "Un rejet sera enregistré. Continuez seulement si les motifs ont été examinés.",
+      "shortlistTitle": "Présélectionner {{code}} ?",
+      "shortlistBody": "La décision finale sera enregistrée : SHORTLIST.",
+      "acceptTitle": "Accepter {{code}} ?",
+      "acceptBody": "L'acceptation est définitive et peut retirer les autres candidatures en cours du candidat."
+    },
+    "errors": {
+      "refused": "L'action a été refusée : {{code}}. Rien n'a été modifié."
+    },
+    "bulk": {
+      "shortlistAll": "Présélectionner tous ceux en attente de décision",
+      "rejectAll": "Rejeter tous ceux en attente de décision",
+      "resultsTitle": "Résultat pour chaque dossier",
+      "applied": "Appliqué",
+      "refused": "Refusé ({{code}})",
+      "confirmShortlistTitle": "Présélectionner {{count}} dossiers ?",
+      "confirmRejectTitle": "Rejeter {{count}} dossiers ?",
+      "confirmBody": "La décision sera appliquée à {{count}} dossiers en attente de décision finale.",
+      "oneByOne": "Les dossiers sont traités un par un ; chacun a son résultat et un refus n'arrête pas les autres."
+    },
+    "reason": {
+      "CRIMINAL_RECORD_REVIEW": "Casier judiciaire à lire par un agent",
+      "CLEARANCE_CONTENT_REVIEW": "Contenu du certificat de bonne conduite en revue",
+      "IDENTITY_NAME_PARTIAL": "Nom partiellement concordant au dossier d’identité",
+      "IDENTITY_HOLDER_UNREADABLE": "Détails du titulaire illisibles sur le document fourni",
+      "IDENTITY_HINT_NOT_COMPARED": "Indice d’identité non comparable",
+      "NESA_MALPRACTICE": "NESA signale une fraude",
+      "NESA_LEVEL_UNKNOWN": "NESA ne reconnaît pas le niveau du certificat",
+      "NESA_DIVISION_NOT_PASS": "La division NESA ne remplit pas la règle de la campagne",
+      "NESA_RECORD_REVIEW": "Dossier scolaire à lire par un agent",
+      "unknown": "Motif non reconnu ({{code}})",
+      "none": "Le motif n’a pas été communiqué"
+    }
+  }
+}

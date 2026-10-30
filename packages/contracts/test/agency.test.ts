@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   AGENCIES,
   AGENCY_DOCUMENT_TYPES,
@@ -21,11 +22,40 @@ import {
   isTerminal,
 } from '../src/agency.js';
 
-/** The commit .github/workflows/ci.yml pins BACKEND_SHA to. */
-const CI_PINNED_BACKEND_SHA = 'cd4962842e26177f179eb3c0bd51c214dad3fd61';
+const ROOT = new URL('../../../', import.meta.url);
+
+/**
+ * The pin, READ FROM ITS SOURCES.
+ *
+ * This test used to compare `VERIFIED_BACKEND_SHA` with a second hand-written
+ * literal, which proves only that two constants in one commit agree: neither
+ * could notice that `ci.yml` had moved. It now reads the workflow and the mined
+ * route manifest, so a re-pin that touches the workflow and forgets this file
+ * (or the manifest) goes red here instead of drifting quietly. The OpenAPI
+ * documents are covered by `packages/contracts/scripts/verify.ts`, which
+ * refuses documents that disagree about the SHA.
+ */
+function pinnedInCiYml(): string {
+  const workflow = readFileSync(new URL('.github/workflows/ci.yml', ROOT), 'utf8');
+  const match = /^ {2}BACKEND_SHA: ([0-9a-f]{40})$/m.exec(workflow);
+  assert.ok(match, 'ci.yml has no BACKEND_SHA');
+  return match[1]!;
+}
+
+function pinnedInRouteManifest(): string {
+  const manifest = JSON.parse(readFileSync(new URL('tooling/contract-drift/route-manifest.json', ROOT), 'utf8')) as {
+    backendSha?: unknown;
+  };
+  assert.equal(typeof manifest.backendSha, 'string', 'route-manifest.json has no backendSha');
+  return manifest.backendSha as string;
+}
 
 test('the divergence model is pinned to the same backend commit CI checks out', () => {
-  assert.equal(VERIFIED_BACKEND_SHA, CI_PINNED_BACKEND_SHA);
+  assert.equal(VERIFIED_BACKEND_SHA, pinnedInCiYml());
+});
+
+test('the mined route manifest is pinned to the same backend commit as the divergence model', () => {
+  assert.equal(pinnedInRouteManifest(), VERIFIED_BACKEND_SHA);
 });
 
 test('three agencies, no fourth, no superadmin', () => {

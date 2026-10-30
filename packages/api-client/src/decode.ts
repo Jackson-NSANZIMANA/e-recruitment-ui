@@ -172,8 +172,24 @@ export function decodeAmberQueue(body: unknown, agency: Agency): AmberQueueRespo
     forensicsScore: num(get(row, 'forensicsScore')),
     forensicsFlags: isRecord(get(row, 'forensicsFlags')) ? get(row, 'forensicsFlags') as Record<string, unknown> : null,
     queuedAt: str(get(row, 'queuedAt')),
+    reasons: reasonCodesOf(get(row, 'reasons')),
     agency,
   }));
+}
+
+/**
+ * The queue read's closed reason codes.
+ *
+ * A code is what tells an officer WHY a row they cannot decide is in the queue,
+ * so it is carried verbatim rather than translated here: the vocabulary belongs
+ * to the backend, and a code this build does not know must still be shown as an
+ * unknown reason instead of silently dropped (the UI does that, not the decoder).
+ * Anything that is not a string is ignored — one malformed entry must not blank
+ * a queue the officer is working through.
+ */
+function reasonCodesOf(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((code): code is string => typeof code === 'string' && code.length > 0);
 }
 
 /**

@@ -200,7 +200,7 @@
       "e2e": [
         "apps/officer-console/e2e/campaign-studio.spec.ts"
       ],
-      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+      "contract": "b004fca840af12435bbc84ec0e365c513c788c36"
     }
   }
 }

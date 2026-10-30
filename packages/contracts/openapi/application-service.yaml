@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -1691,6 +1691,104 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationError500"
 
+  /v1/applications/clearance-certificate-own:
+    post:
+      operationId: "attachClearanceCertificateOwn"
+      summary: "The citizen's clearance-certificate number, relayed by identity-service (ADR-048 §2.3)"
+      description: >-
+        SERVICE-INTERNAL. identity-service calls this with its client-credentials
+        token carrying the citizen's authority derived from their validated
+        session; an officer token is refused with 403. THE BODY CARRIES BOTH
+        applicantId AND applicationId, unlike the citizen route that fronts it:
+        ownership is the row lookup, so a mismatch on either column is the same
+        404 — the door is not an ownership oracle.
+
+
+        THIS IS A WRITE THAT RECORDS NOTHING ABOUT ELIGIBILITY. It stores the
+        number and stages exactly one verification event; the criminal gate
+        moves only when the registry answers. A redelivered call is safe because
+        verification records are idempotent, which is why the citizen's own
+        retry is allowed while the edge itself never retries a write.
+
+
+        501 IS A REAL ANSWER. When the agency's Irembo flow is not enabled the
+        route says NOT_ENABLED rather than pretending the number was taken; a
+        citizen-facing client must render it as "this agency does not use the
+        certificate yet", not as a failure to retry.
+      x-usrp-auth: ["system"]
+      x-usrp-reach: "service-internal"
+      x-usrp-source: "src/adapters/http/attach-clearance.controller.ts (ATTACH_CLEARANCE_OWN_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachClearanceOwnRequest"
+      responses:
+        "202":
+          description: "ACCEPTED — the number was stored and one verification event staged."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk200"
+        "200":
+          description: "ALREADY_VERIFIED — idempotent no-op; nothing was staged."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk200"
+        "400":
+          description: "INVALID_REQUEST — an id is not a UUID, or the number is not 1–64 characters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidRequest400"
+        "401":
+          description: "No or invalid bearer token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthenticated401"
+        "403":
+          description: "Not a system principal — an officer token lands here."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Forbidden403"
+        "404":
+          description: "No such application for that applicant — one answer for both causes."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransitionNotFound404"
+        "409":
+          description: >-
+            NOT_APPLICABLE with agency + currentStatus — the application is
+            closed, so no certificate can be attached to it.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceNotApplicable409"
+        "422":
+          description: "INVALID_NUMBER — the shape passed, the certificate number did not."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceInvalidNumber422"
+        "501":
+          description: "NOT_ENABLED — the Irembo certificate flow is off for this agency."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceNotEnabled501"
+        "500":
+          description: "APPLICATION_PERSISTENCE_ERROR or INTERNAL_ERROR."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationError500"
+
   # ───────────────────────────────────────────────────────────────
   # Probes — matched BEFORE the route table, so a wrong method 404s, not 405s
   # ───────────────────────────────────────────────────────────────
@@ -2503,7 +2601,7 @@ components:
         eligibility:
           description: >-
             ADR-049, detail reads only: per category the rules a citizen may read before
-            applying. Empty for a v1 campaign. CONTRACT-PENDING: S12c.
+            applying. Empty for a v1 campaign.
           type: "object"
           additionalProperties:
             $ref: "#/components/schemas/PublicCategoryEligibility"
@@ -3535,6 +3633,64 @@ components:
         propertyName: "status"
 
     # ── Business-outcome refusals (keyed on `status`) ──
+
+    AttachClearanceOwnRequest:
+      description: "BOTH ids, plus the number. The number is never echoed in any response."
+      type: "object"
+      additionalProperties: false
+      required: ["applicantId", "applicationId", "clearanceCertificateNumber"]
+      properties:
+        applicantId:
+          $ref: "#/components/schemas/Uuid"
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        clearanceCertificateNumber:
+          type: "string"
+          minLength: 1
+          maxLength: 64
+
+    AttachClearanceOk200:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency"]
+      properties:
+        status:
+          type: "string"
+          enum: ["ACCEPTED", "ALREADY_VERIFIED"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    AttachClearanceNotApplicable409:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency", "currentStatus"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_APPLICABLE"
+        agency:
+          $ref: "#/components/schemas/Agency"
+        currentStatus:
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    AttachClearanceInvalidNumber422:
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "INVALID_NUMBER"
+
+    AttachClearanceNotEnabled501:
+      description: "The agency's Irembo certificate flow is off. Not a failure to retry."
+      type: "object"
+      additionalProperties: false
+      required: ["status"]
+      properties:
+        status:
+          type: "string"
+          const: "NOT_ENABLED"
 
     ApplicantNotFound404:
       type: "object"

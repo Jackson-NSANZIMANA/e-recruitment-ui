@@ -9,8 +9,16 @@
 // per-constant. Nothing here was inferred from a name.
 // ═════════════════════════════════════════════════════════════════
 
-/** The backend main commit every value in this file was verified against. */
-export const VERIFIED_BACKEND_SHA = 'cd4962842e26177f179eb3c0bd51c214dad3fd61';
+/**
+ * The backend main commit every value in this file was verified against.
+ *
+ * Re-verified at b004fca: d0ef603..b004fca touches `shared-types` only
+ * additively (a policy `v2` block on the campaign policy and a `clearancePolicy`
+ * on the cleared event, both optional) and adds the `getMyIdentity` edge
+ * operation, so no status, category, document type, gender, channel, lane,
+ * reach, auth kind or terminal set in this file changes.
+ */
+export const VERIFIED_BACKEND_SHA = 'b004fca840af12435bbc84ec0e365c513c788c36';
 
 export const AGENCIES = ['RDF', 'RNP', 'RCS'] as const;
 export type Agency = (typeof AGENCIES)[number];

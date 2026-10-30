@@ -24,7 +24,7 @@ info:
     UNION COVERS 403. That is recorded here rather than normalised away,
     because normalising it in the contract would hide it from the only people
     who can fix it.
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_BIOMETRIC_SERVICE"
   x-usrp-transport-faults:
     - status: 405

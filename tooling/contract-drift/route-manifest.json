@@ -1,8 +1,8 @@
 {
   "$comment": "PINNED BACKEND FACTS. Hand-mined by reading every controller under services/*/src/adapters/http/** and every src/main.ts at the SHA below. This file is what makes the drift check runnable with NO backend checkout: it is the middle term between the OpenAPI documents and the backend source. gate A diffs OpenAPI against this; gate B diffs this against a live checkout when one is available. Neither gate can be green while the other is stale, because a change to the backend that is applied here without the OpenAPI fails A, and a change applied to both without the backend fails B.",
-  "backendSha": "cd4962842e26177f179eb3c0bd51c214dad3fd61",
+  "backendSha": "b004fca840af12435bbc84ec0e365c513c788c36",
   "backendRepo": "https://github.com/Jackson-NSANZIMANA/e-recruitment",
-  "minedAt": "2026-10-15",
+  "minedAt": "2026-10-29",
   "services": {
     "iam-service": {
       "controllerDir": "services/iam-service/src/adapters/http",
@@ -257,6 +257,16 @@
         },
         {
           "method": "POST",
+          "path": "/v1/applicants/me/applications/clearance-certificate",
+          "auth": [
+            "applicant-session"
+          ],
+          "constant": "ME_CLEARANCE_PATH",
+          "controller": "applicant-auth.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "POST",
           "path": "/v1/applicants/me/applications/documents",
           "auth": [
             "applicant-session"
@@ -293,6 +303,16 @@
           ],
           "constant": "ME_ERASURE_REQUEST_PATH",
           "controller": "erasure-request.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "GET",
+          "path": "/v1/applicants/me/identity",
+          "auth": [
+            "applicant-session"
+          ],
+          "constant": "ME_IDENTITY_PATH",
+          "controller": "own-identity.controller.ts",
           "mounted": true
         }
       ]
@@ -559,6 +579,16 @@
           ],
           "constant": "WITHDRAW_OWN_PATH",
           "controller": "self-withdrawal.controller.ts",
+          "mounted": true
+        },
+        {
+          "method": "POST",
+          "path": "/v1/applications/clearance-certificate-own",
+          "auth": [
+            "system"
+          ],
+          "constant": "ATTACH_CLEARANCE_OWN_PATH",
+          "controller": "attach-clearance.controller.ts",
           "mounted": true
         },
         {
