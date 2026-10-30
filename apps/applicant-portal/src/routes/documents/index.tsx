@@ -60,7 +60,7 @@ export default function DocumentsPage(): React.ReactElement {
 }
 
 function ChecklistItems({ applicationId, checklist }: { readonly applicationId: string; readonly checklist: DocumentChecklist }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   return (
     <Stack space="space.200" testId="citizen-documents">
       {checklist.items.map((item) => (
@@ -78,7 +78,7 @@ function ChecklistItems({ applicationId, checklist }: { readonly applicationId: 
 }
 
 function ClearanceBlock({ applicationId, clearance }: { readonly applicationId: string; readonly clearance: NonNullable<DocumentChecklist["items"][number]["clearance"]> }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const attach = useAttachMyClearanceCertificate(client);
   const [value, setValue] = useState("");
   const [shapeError, setShapeError] = useState(false);
