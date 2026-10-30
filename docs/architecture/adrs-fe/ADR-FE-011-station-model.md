@@ -10,10 +10,10 @@
    |---|---|---|---|
    | Gate | `admission.gate` | all | built (`/gate`) |
    | Paper documents | `document.verify.venue` | all | S08 |
-   | Physical | `field.score.sync` | all | S08 |
-   | Medical | `medical.review` | all | S08 |
+   | Physical | `field.score.sync` | all | built (`/physical`, S08) |
+   | Medical | `medical.review` | all | built (`/medical`, S08) |
    | Walk-in | `walkin.register`, `walkin.vet`, `identity.verify` | RDF only (ADR-012) | built (`/walk-in`) |
-   | Supervisor | `field.conflict.resolve`, `field.device.enroll` | all | S08 |
+   | Supervisor | `field.conflict.resolve`, `field.device.manage` | all | built (`/supervisor`, S08; ADR-FE-016) |
 
    This is a usability layer: the edge and the owning service still refuse an unpermitted write.
 2. **The picker** (`/stations`, the Field Station's start page) shows only granted stations, links the built ones and marks the rest "not yet available" without a link. A session with no station gets a plain answer pointing at the officer console.

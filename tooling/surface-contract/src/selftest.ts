@@ -55,7 +55,7 @@ export function runSelftest(root: string): boolean {
     'EDGE-AVAILABLE with an operation the edge does not serve is refused',
   );
   assert(
-    rulesOf(variant({ operations: ['resolveFieldSyncConflict'], readiness: { rung: 'CLIENT-WIRED', blockedBy: ['S08'] } })).includes('client-wired'),
+    rulesOf(variant({ operations: ['confirmManualIdentity'], readiness: { rung: 'CLIENT-WIRED', blockedBy: ['S08'] } })).includes('client-wired'),
     'CLIENT-WIRED with no typed api-client call site is refused',
   );
   assert(

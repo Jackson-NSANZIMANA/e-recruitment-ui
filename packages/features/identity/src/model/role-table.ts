@@ -16,10 +16,10 @@ export type Post = (typeof KNOWN_POSTS)[number];
 const READ = ['application.read', 'adjudication.read'] as const;
 
 export const POST_PERMISSIONS: Readonly<Record<Post | 'agency_admin', readonly string[]>> = {
-  agency_admin: ['campaign.create', 'campaign.policy.create', 'campaign.session.configure', 'campaign.publish', 'campaign.registration.close', 'campaign.complete', 'campaign.cancel', 'campaign.read.admin', ...READ, 'officer.read', 'officer.create', 'officer.posts.assign', 'officer.disable', 'officer.sessions.revoke'],
+  agency_admin: ['field.device.manage', 'campaign.create', 'campaign.policy.create', 'campaign.session.configure', 'campaign.publish', 'campaign.registration.close', 'campaign.complete', 'campaign.cancel', 'campaign.read.admin', ...READ, 'officer.read', 'officer.create', 'officer.posts.assign', 'officer.disable', 'officer.sessions.revoke'],
   reviewer: ['campaign.read.admin', 'biometric.evidence.read', ...READ],
   screening_officer: ['walkin.register', 'walkin.vet', 'identity.verify', 'biometric.verify', 'document.verify.venue', 'admission.gate', 'field.device.enroll', 'field.score.sync', ...READ],
-  field_supervisor: ['field.device.enroll', 'field.score.sync', 'field.conflict.resolve', 'biometric.evidence.read', 'identity.manual.confirm', ...READ],
+  field_supervisor: ['field.device.enroll', 'field.device.manage', 'field.score.sync', 'field.conflict.resolve', 'biometric.evidence.read', 'identity.manual.confirm', ...READ],
   medical_officer: ['medical.review', ...READ],
   adjudicator: ['adjudication.decide', 'biometric.evidence.read', ...READ],
   decision_authority: ['decision.final', 'application.accept', 'biometric.evidence.read', ...READ],

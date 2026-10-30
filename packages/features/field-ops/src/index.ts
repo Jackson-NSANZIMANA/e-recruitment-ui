@@ -5,6 +5,7 @@ export * from './model/readiness.ts';
 export * from './model/ticket.ts';
 export * from './model/venue.ts';
 export * from './model/conflict.ts';
+export * from './model/resolve.ts';
 export * from './model/biometric.ts';
 export * from './model/gate.ts';
 export * from './model/walk-in.ts';
