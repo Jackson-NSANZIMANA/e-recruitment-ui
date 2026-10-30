@@ -17,6 +17,7 @@ import { RouterLink, ErrorBoundary, NATIONAL_THEME } from "@usrp/ui";
 import { registerAdjudicationLocales } from "@usrp/feature-adjudication";
 import { registerComplianceLocales } from "@usrp/feature-compliance";
 import { registerSchedulingLocales } from "@usrp/feature-scheduling";
+import { registerCampaignsLocales } from "@usrp/feature-campaigns";
 import { registerApplicationsLocales } from "@usrp/feature-applications";
 import { registerIdentityLocales } from "@usrp/feature-identity";
 
@@ -30,6 +31,7 @@ registerAdjudicationLocales();
 registerComplianceLocales();
 registerSchedulingLocales();
 registerApplicationsLocales();
+registerCampaignsLocales();
 registerIdentityLocales();
 assertNamespaceRegistered(...OFFICER_SLICE_NAMESPACES);
 

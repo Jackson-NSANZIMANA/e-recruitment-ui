@@ -56,7 +56,7 @@ export const ONBOARDING_EXPIRED =
 
 /** Not an MTN or Airtel Rwanda mobile number. Safe to say: it says nothing about the citizen. */
 export const PHONE_INVALID =
-  'Enter a valid Rwandan MTN or Airtel mobile number, for example 0788 123 456.';
+  'Enter a valid Rwandan MTN or Airtel mobile number, for example 0788 123 456 or 0791 234 567 (072, 073, 078 and 079 numbers).';
 
 /**
  * The ONLY message for a failed otp/verify.

@@ -698,8 +698,8 @@ export interface CampaignSessionOccupancy {
   readonly remaining: number | null;
   readonly isActive: boolean;
 }
-export interface CampaignAdminDetail {
-  readonly summary: CampaignAdminSummary;
+/** The admin read is FLAT: the summary fields and the detail fields share one object (verified live, S05). */
+export interface CampaignAdminDetail extends CampaignAdminSummary {
   readonly contactPhoneNumbers: readonly string[] | null;
   readonly contactWebsite: string | null;
   readonly announcementReference: string | null;

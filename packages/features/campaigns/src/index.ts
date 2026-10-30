@@ -4,4 +4,4 @@ export * from './api/transport.ts';
 export * from './api/campaigns.ts';
 export { CAMPAIGNS_NAMESPACE, registerCampaignsLocales } from './locales.ts';
 export { CampaignStatusLozenge } from './ui/CampaignStatusLozenge.tsx';
-export { CampaignsOfficerRoutes } from './routes/index.tsx';
+export { createCampaignsOfficerRoutes } from './routes/index.tsx';
