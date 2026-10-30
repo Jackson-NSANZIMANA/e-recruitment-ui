@@ -5,7 +5,7 @@
   "title": "Biometric check-in",
   "audience": "field-officer",
   "owner": "packages/features/field-ops",
-  "purpose": "Biometric check-in at the venue. verifyBiometric is unserved (upstream unverified); B1 and B2 own it.",
+  "purpose": "Biometric policy notice (ADR-037): evidence only. In SHADOW nothing about a face is shown and a no-match is never a refusal. Capture itself is B2.",
   "routes": [
     {
       "path": "/check-in",
@@ -14,12 +14,44 @@
       "role": "station"
     }
   ],
-  "operations": [],
-  "ads": [],
-  "states": [],
-  "accessibility": [],
+  "operations": [
+    "getBiometricPolicy"
+  ],
+  "ads": [
+    {
+      "name": "Lozenge",
+      "source": "packages/features/field-ops/src/routes/check-in.tsx",
+      "import": "@atlaskit/lozenge"
+    },
+    {
+      "name": "SectionMessage",
+      "source": "packages/features/field-ops/src/routes/check-in.tsx",
+      "import": "@atlaskit/section-message"
+    }
+  ],
+  "states": [
+    {
+      "surface": "check-in",
+      "required": [
+        "loading",
+        "mode",
+        "failed"
+      ],
+      "source": "packages/features/field-ops/src/routes/check-in.tsx",
+      "evidence": [
+        "check-in-failed",
+        "check-in-mode"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "every field has a programmatic label",
+    "interactive targets are at least 48 px"
+  ],
   "tests": [
-    "apps/field-station/e2e/stations.spec.ts"
+    "apps/field-station/e2e/field-stations.spec.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -29,10 +61,11 @@
     "positivePolarityOnly": true
   },
   "readiness": {
-    "rung": "DECLARED",
-    "blockedBy": [
-      "B1",
-      "B2"
-    ]
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/field-station/e2e/field-stations.spec.ts"
+      ]
+    }
   }
 }

@@ -33,9 +33,12 @@ export function answerFromError(error: unknown): FieldSyncAnswer {
   }
 }
 
+/** The envelope the field-sync service answers with; per-record results are read by the ledger mapper, not here. */
+export interface FieldSyncWireBody { readonly status?: string; readonly results?: readonly object[] }
+
 export async function syncFieldScores(client: ApiClient, records: readonly FieldScoreWireRecord[], correlationId?: string): Promise<FieldSyncAnswer> {
   try {
-    const body = await client.call<unknown>('syncFieldScores', { body: { records }, ...(correlationId === undefined ? {} : { correlationId }) });
+    const body = await client.call<FieldSyncWireBody>('syncFieldScores', { body: { records }, ...(correlationId === undefined ? {} : { correlationId }) });
     return { httpStatus: 200, body };
   } catch (error) {
     return answerFromError(error);
@@ -44,7 +47,7 @@ export async function syncFieldScores(client: ApiClient, records: readonly Field
 
 export async function resolveFieldSyncConflict(client: ApiClient, input: ResolveFieldConflictInput, correlationId?: string): Promise<FieldSyncAnswer> {
   try {
-    const body = await client.call<unknown>('resolveFieldSyncConflict', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
+    const body = await client.call<FieldSyncWireBody>('resolveFieldSyncConflict', { body: input, ...(correlationId === undefined ? {} : { correlationId }) });
     return { httpStatus: 200, body };
   } catch (error) {
     return answerFromError(error);

@@ -8,7 +8,8 @@
 // write, whatever the tablet shows.
 //
 // `built` says whether this release ships the station's screen. S02 ships the
-// gate and the walk-in desk; S08 fills the rest. An unbuilt station is shown to
+// gate and the walk-in desk; S08 adds physical, medical and supervisor. The paper-
+// documents station stays unbuilt (deferred). An unbuilt station is shown to
 // an officer who holds its permission (so the picker tells the truth about
 // what exists) but it is not a link.
 // ══════════════════════════════════════════════════════════════════
@@ -29,11 +30,11 @@ export interface StationDefinition {
 export const STATIONS: readonly StationDefinition[] = [
   { id: 'gate', anyOf: ['admission.gate'], agencies: null, path: '/gate' },
   { id: 'documents', anyOf: ['document.verify.venue'], agencies: null, path: null },
-  { id: 'physical', anyOf: ['field.score.sync'], agencies: null, path: null },
-  { id: 'medical', anyOf: ['medical.review'], agencies: null, path: null },
+  { id: 'physical', anyOf: ['field.score.sync'], agencies: null, path: '/physical' },
+  { id: 'medical', anyOf: ['medical.review'], agencies: null, path: '/medical' },
   // ADR-012: the walk-in lane is RDF's alone; RNP and RCS recruit online only.
   { id: 'walk_in', anyOf: ['walkin.register', 'walkin.vet', 'identity.verify'], agencies: ['RDF'], path: '/walk-in' },
-  { id: 'supervisor', anyOf: ['field.conflict.resolve', 'field.device.enroll'], agencies: null, path: null },
+  { id: 'supervisor', anyOf: ['field.conflict.resolve', 'field.device.manage'], agencies: null, path: '/supervisor' },
 ];
 
 export interface StationSession {
@@ -59,6 +60,11 @@ export function stationsFor(session: StationSession | null): readonly AvailableS
 }
 
 /** True when this session may open the station at `path` (routing guard, not authorization). */
+/** Pages a station owns beyond its main path (supervisor's conflicts; the biometric check-in view). */
+const COMPANION_PATHS: Readonly<Record<string, StationId>> = { '/conflicts': 'supervisor', '/check-in': 'gate' };
+
 export function mayOpenStation(session: StationSession | null, path: string): boolean {
+  const companion = COMPANION_PATHS[path];
+  if (companion !== undefined) return stationsFor(session).some((station) => station.id === companion);
   return stationsFor(session).some((station) => station.path === path);
 }

@@ -19,7 +19,7 @@
 import type { RouteObject } from "react-router-dom";
 import { createApiClient } from "@usrp/api-client";
 import { createFieldOpsRoutes } from "@usrp/feature-field-ops";
-import { EDGE_BASE_URL } from "../env.js";
+import { EDGE_BASE_URL, SLOT_TRUST_ANCHOR_B64 } from "../env.js";
 
 interface SliceMount {
   readonly slice: string;
@@ -33,7 +33,7 @@ export const fieldClient = createApiClient({ baseUrl: EDGE_BASE_URL });
 const APP_OWNED_PATHS: readonly string[] = ["login"];
 
 const MOUNTS: readonly SliceMount[] = [
-  { slice: "@usrp/feature-field-ops", routes: createFieldOpsRoutes({ client: fieldClient }) },
+  { slice: "@usrp/feature-field-ops", routes: createFieldOpsRoutes({ client: fieldClient, ...(SLOT_TRUST_ANCHOR_B64 === undefined ? {} : { defaultTrustAnchor: SLOT_TRUST_ANCHOR_B64 }) }) },
 ];
 
 /** See the officer-console twin for why this is a runtime assertion. */
