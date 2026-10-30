@@ -5,7 +5,16 @@
 // holds, post-clearance (adjudication) holds, medical, final decision and
 // acceptance. A queue offers a row only the transitions that its status allows
 // AND the officer's permissions permit; the backend re-checks both.
+//
+// "THE STATUS ALLOWS IT" IS A BACKEND FACT, NOT A UI OPINION (D10). The
+// adjudicate transaction accepts exactly DOCUMENT_REVIEW_AMBER and
+// ADJUDICATION_REVIEW and answers NOT_APPLICABLE to anything else, while the
+// SAME queue read also serves live rows held on a criminal or academic registry
+// review. Those rows used to be offered Clear and Reject anyway; the only
+// possible outcome was a refusal dialog that changed nothing.
 // ══════════════════════════════════════════════════════════════════
+
+import { ADJUDICABLE_STATUSES } from './amber.js';
 
 export const QUEUE_IDS = ['amber', 'holds', 'medical', 'final'] as const;
 export type QueueId = (typeof QUEUE_IDS)[number];
@@ -25,7 +34,9 @@ export function rowTransitions(queue: QueueId, status: string, permissions: read
   const can = (p: string): boolean => permissions.includes(p);
   const out: RowTransition[] = [];
   if (queue === 'amber' || queue === 'holds') {
-    if (can('adjudication.decide')) out.push('clear', 'reject');
+    // A registry hold has no decision to record: the server has no operation for
+    // it yet, so the row offers Open only. Permissions cannot unlock it.
+    if (can('adjudication.decide') && ADJUDICABLE_STATUSES.has(status)) out.push('clear', 'reject');
   } else if (queue === 'medical') {
     if (can('medical.review')) out.push('verdict');
   } else {

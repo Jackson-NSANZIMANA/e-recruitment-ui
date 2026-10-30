@@ -87,11 +87,23 @@ export type AmberQueueResponse = readonly AmberQueueEntry[];
 export interface AmberQueueEntry {
   readonly applicationId: string | null;
   readonly processingCode: string | null;
-  readonly status: string | null;
+  /**
+   * The row's application status, which is NOT always one of the two holds this
+   * endpoint was named after: S12b also serves live rows here whose criminal
+   * clearance is UNDER_REVIEW or whose academic record needs a NESA review.
+   * `null` only when the edge sent no status; such a row is still listed.
+   */
+  readonly status: ApplicationStatus | null;
   readonly documentType: string | null;
   readonly forensicsScore: number | null;
   readonly forensicsFlags: Readonly<Record<string, unknown>> | null;
   readonly queuedAt: string | null;
+  /**
+   * S12b: WHY a person, not the analyser, must read the record — closed
+   * upper-case codes, empty for a pure document hold. Absent from a pre-S12b
+   * edge, so callers must treat "no reasons" as "not stated", never as "none".
+   */
+  readonly reasons?: readonly string[];
   readonly agency: Agency;
 }
 

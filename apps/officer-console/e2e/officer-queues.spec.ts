@@ -23,6 +23,38 @@ test('amber queue: the forensic signal is words ("not analysed" when null), the 
   await expect(page.getByTestId('queue-holds')).toContainText('RDF-3');
 });
 
+/**
+ * D10. The queue read also serves LIVE rows held on a registry review
+ * (criminal clearance UNDER_REVIEW, NESA review). Before this test existed the
+ * console DROPPED them — the dashboard counted them and the queue showed fewer
+ * rows than the count, with nothing explaining the difference — and when one did
+ * reach a table it was offered Clear and Reject, which the adjudicate
+ * transaction answers NOT_APPLICABLE to. Now: listed, explained in words, and
+ * Open is the only action.
+ */
+test('D10: a registry hold is listed with its reason in words and offers no decision', async ({ page }) => {
+  await signIn(page, ['adjudicator'], POSTS.adjudicator);
+  await page.route('**/edge/v1/applications/amber-queue', (route) => json(route, 200, [
+    amber(ID1, 'RDF-1', 'DOCUMENT_REVIEW_AMBER', 0.5),
+    { applicationId: ID2, processingCode: 'RNP-2', status: 'CRIMINAL_CLEARANCE', documentType: null, forensicsScore: null, forensicsFlags: null, queuedAt: '2026-10-18T09:00:00.000Z', reasons: ['CRIMINAL_RECORD_REVIEW'], agency: 'RDF' },
+    { applicationId: ID3, processingCode: 'RCS-3', status: 'ACADEMIC_VETTING', documentType: null, forensicsScore: null, forensicsFlags: null, queuedAt: '2026-10-18T10:00:00.000Z', reasons: ['NESA_LEVEL_UNKNOWN', 'SOMETHING_NEW'], agency: 'RDF' },
+  ]));
+  await page.goto('/adjudication');
+  await page.getByRole('tab', { name: 'Holds' }).click();
+  const table = page.getByTestId('queue-holds');
+  // Listed at all — the regression that hid these rows.
+  await expect(table).toContainText('RNP-2', { timeout: 15_000 });
+  await expect(table).toContainText('RCS-3');
+  // The reason, in words; and a code this build cannot name is still shown.
+  await expect(table).toContainText('Criminal record needs a human reading');
+  await expect(table).toContainText('Unrecognised reason (SOMETHING_NEW)');
+  // Told why there is no button, rather than being given one that must fail.
+  await expect(page.getByTestId('registry-hint')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Clear hold: RNP-2$/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Reject: RNP-2$/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Open: RNP-2$/ })).toBeVisible();
+});
+
 test('a reviewer sees the queue read-only: no decision buttons', async ({ page }) => {
   await signIn(page, ['reviewer'], POSTS.reviewer);
   await page.route('**/edge/v1/applications/amber-queue', (route) => json(route, 200, [amber(ID1, 'RDF-1', 'DOCUMENT_REVIEW_AMBER', 0.95)]));
