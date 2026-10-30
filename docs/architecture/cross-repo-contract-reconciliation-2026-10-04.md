@@ -3,7 +3,7 @@
 **Status:** current engineering baseline; refreshed 2026-10-16 (S00)
 **Frontend checkout:** `Jackson-NSANZIMANA/e-recruitment-ui`
 **Frontend base:** `c5bda857e231390c7ac866a05165486f9b7de4b5` (was `93d6764`)
-**Backend baseline:** `Jackson-NSANZIMANA/e-recruitment@cd4962842e26177f179eb3c0bd51c214dad3fd61` (was `06d9f9b6`)
+**Backend baseline:** `Jackson-NSANZIMANA/e-recruitment@d0ef603ebec9fa6155d321cbeef1aff72ac3be48` (was `06d9f9b6`)
 **Counts and SHAs:** not restated by hand. Every CI run publishes an `evidence-<sha>` artefact (*Evidence bundle* job, `tooling/ci/evidence-bundle.mjs`) holding `evidence-<sha>.json`: the edge operation inventory with typed and untyped IDs, the pinned backend SHA (and whether `ci.yml`, `paths.ts` and the OpenAPI documents agree), proof assertion counts, unit and E2E counts with every skipped test named, and the lockfile hash.
 **Scope:** browser edge, service OpenAPI, generated client artifacts, officer application workspace
 
@@ -23,7 +23,7 @@ This is the evidence register for the frontend/backend reconciliation. It is int
 ## Current contract inventory
 
 - **43 browser edge operations** in the frontend registry, reconciled by gate D to the backend registry's 43 at the pinned SHA. 33 have a typed `operations/` or `queries/` function. 10 are registry IDs only: `createCampaign`, `createCampaignPolicy`, `configureCampaignSession`, `publishCampaign`, `closeCampaignRegistration`, `completeCampaign`, `cancelCampaign`, `enrollFieldDevice`, `syncFieldScores`, `resolveFieldSyncConflict`.
-- Backend SHA pinned in `ci.yml`, `paths.ts` and every OpenAPI document: `cd4962842e26177f179eb3c0bd51c214dad3fd61`. The evidence bundle checks that the three agree.
+- Backend SHA pinned in `ci.yml`, `paths.ts` and every OpenAPI document: `d0ef603ebec9fa6155d321cbeef1aff72ac3be48`. The evidence bundle checks that the three agree.
 - Service OpenAPI documents, generated operations, schemas and fixture cases: counted by `packages/contracts/scripts/verify.ts` on each run and recorded in the evidence bundle. The 2026-10-04 figures (27 edge operations, 151 fixtures) are superseded.
 
 The submission contract is deliberately named in OpenAPI rather than expressed as inline schemas. The repository generator rejects inline request/response schemas, so `SubmitApplicationRequest` and `SubmitApplicationResponse` are component references and are included in the generated types and Zod validators.

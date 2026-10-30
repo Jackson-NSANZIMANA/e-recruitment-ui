@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/identity-service.yaml                     ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  cd4962842e26177f179eb3c0bd51c214dad3fd61          ║
+// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -24,6 +24,7 @@
 //   GET  /v1/applicants/me/applications                 applicant-session  browser
 //   POST /v1/applicants/me/applications                 applicant-session  browser
 //   GET  /v1/applicants/me/applications/exam-invitation applicant-session  browser
+//   POST /v1/applicants/me/applications/clearance-certificate applicant-session  browser
 //   GET  /v1/applicants/me/applications/document-checklist applicant-session  browser
 //   POST /v1/applicants/me/applications/documents       applicant-session  browser
 //   POST /v1/applicants/me/applications/withdraw        applicant-session  browser
@@ -97,6 +98,41 @@ export const ApplicantSessionIssued200Schema = z
  */
 export const ApplicationChannelSchema = z.enum(['WEB', 'USSD', 'IREMBO_KIOSK', 'WALK_IN']);
 
+export const AttachClearanceOkSchema = z
+  .strictObject({
+    "status": z.enum(['ACCEPTED', 'ALREADY_VERIFIED']),
+    "agency": AgencySchema,
+  });
+
+/**
+ * The application is named in the body, not the path (the platform's
+ * no-path-params convention), and the citizen is NOT named at all — the
+ * session is the subject.
+ */
+export const AttachClearanceRequestSchema = z
+  .strictObject({
+    "applicationId": UuidSchema,
+    "clearanceCertificateNumber": z.string().min(1).max(64),
+  });
+
+/**
+ * ADR-048 §2.3: where the criminal-record certificate stands, as the RIB
+ * checklist item's own block. STATE AND CLOSED CODE ONLY — an officer's
+ * review reasons are dropped by the identity layer before this reaches a
+ * browser, because a citizen reading "content review: name partial" is
+ * reading a forgery-tuning signal.
+ * 
+ * THE STATES ARE NOT A VERDICT LADDER. CORRECTION_NEEDED means the citizen
+ * may fix the NUMBER, never that they are ineligible; UNDER_OFFICER_REVIEW
+ * means a person must look, and its outcome is ACTIONED elsewhere (an
+ * officer decision), not here.
+ */
+export const ClearanceItemSchema = z
+  .strictObject({
+    "state": z.enum(['NUMBER_REQUIRED', 'VERIFYING', 'CORRECTION_NEEDED', 'UNDER_OFFICER_REVIEW', 'VERIFIED']),
+    "code": z.string().regex(/^[A-Z][A-Z0-9_]{2,47}$/).nullable(),
+  });
+
 export const DeclineErasureRequestSchema = z
   .strictObject({
     "requestId": UuidSchema,
@@ -108,6 +144,7 @@ export const DocumentChecklistItemSchema = z
     "documentType": z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
     "satisfaction": z.enum(['API_VERIFIED', 'UPLOADED_CLEARED', 'VENUE_VERIFIED', 'AWAITING_REGISTRY', 'UNDER_REVIEW', 'REJECTED', 'MISSING']),
     "registry": z.string().nullable(),
+    "clearance": ClearanceItemSchema.optional(),
   });
 
 /**
@@ -716,6 +753,25 @@ export const identityServiceOperations = {
       "400": null,
       "401": InvalidSession401Schema,
       "404": null,
+      "502": UpstreamUnavailable502Schema,
+    },
+  },
+  "attachMyClearanceCertificate": {
+    method: "POST",
+    path: "/v1/applicants/me/applications/clearance-certificate",
+    auth: ["applicant-session"],
+    reach: "browser",
+    request: AttachClearanceRequestSchema,
+    requestMediaType: "application/json",
+    query: [],
+    responses: {
+      "200": AttachClearanceOkSchema,
+      "202": AttachClearanceOkSchema,
+      "400": null,
+      "401": InvalidSession401Schema,
+      "404": null,
+      "409": null,
+      "422": null,
       "502": UpstreamUnavailable502Schema,
     },
   },

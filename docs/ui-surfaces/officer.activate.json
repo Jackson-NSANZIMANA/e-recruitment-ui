@@ -74,7 +74,7 @@
       "e2e": [
         "apps/officer-console/e2e/staff-admin.spec.ts"
       ],
-      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+      "contract": "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
     }
   }
 }

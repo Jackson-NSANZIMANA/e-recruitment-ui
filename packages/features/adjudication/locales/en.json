@@ -1,1 +1,96 @@
-{"adjudication":{"queue":{"title":"Officer queues","mixed_queue_title":"This queue holds two different things","mixed_queue_body":"Document holds carry forensic signals. Adjudication holds carry none: a late disqualifying verdict put them here, and there is no document to look at.","status":{"document":"Documents held","adjudication":"Held for adjudication"},"document_hint":"Documents the analyser could not clear. The forensic signal is a prompt to look, never a decision.","adjudication_hint":"Applications held after a late disqualifying verdict. They carry no document signal.","truncated":"Showing the first {{shown}} of {{total}} records. Narrow the list from Applications to see the rest."},"signal":{"no_document_evidence":"No document evidence on this hold","no_flags":"No flags raised","band":{"UNSCORED":"Unscored","WEAKER":"Weaker signal","MIXED":"Mixed signal","CLEANER":"Cleaner signal"},"flag":{"fontMismatch":"Font mismatch"},"not_analysed":"Not analysed"},"decision":{"apply":"Apply decision","retry":"Retry: the age verdict has not landed yet","no_change":"Already in that state. Nothing to change."},"tabs":{"amber":"Amber documents","holds":"Holds","medical":"Medical","final":"Final decision"},"row":{"clear":"Clear hold","reject":"Reject","shortlist":"Shortlist","accept":"Accept","verdict":"Record verdict","open":"Open"},"status":{"PHYSICAL_TEST_COMPLETE":"Physical test complete","WALK_IN_PHYSICAL_TEST":"Walk-in physical test","MEDICAL_REVIEW":"Medical review","FINAL_SHORTLIST":"Final shortlist"},"confirm":{"clearTitle":"Clear the hold on {{code}}?","clearBody":"This returns the application to the autonomous processing lane.","rejectTitle":"Reject {{code}}?","rejectBody":"This records a rejection. Continue only when the grounds have been reviewed.","shortlistTitle":"Shortlist {{code}}?","shortlistBody":"This records the final decision as SHORTLIST.","acceptTitle":"Accept {{code}}?","acceptBody":"Acceptance is final and may withdraw the applicant's other in-flight applications."},"errors":{"refused":"The action was refused: {{code}}. Nothing was changed."},"bulk":{"shortlistAll":"Shortlist everyone awaiting a decision","rejectAll":"Reject everyone awaiting a decision","resultsTitle":"Result for each record","applied":"Applied","refused":"Refused ({{code}})","confirmShortlistTitle":"Shortlist {{count}} records?","confirmRejectTitle":"Reject {{count}} records?","confirmBody":"This applies the decision to {{count}} records awaiting a final decision.","oneByOne":"Records are decided one at a time; each has its own result and a refusal does not stop the rest."}}}
+{
+  "adjudication": {
+    "queue": {
+      "title": "Officer queues",
+      "mixed_queue_title": "This queue holds two different things",
+      "mixed_queue_body": "Document holds carry forensic signals. Adjudication holds carry none: a late disqualifying verdict put them here, and there is no document to look at.",
+      "status": {
+        "document": "Documents held",
+        "adjudication": "Held for adjudication",
+        "clearance": "Criminal record held",
+        "academic": "Academic record held",
+        "registry": "Registry review held"
+      },
+      "document_hint": "Documents the analyser could not clear. The forensic signal is a prompt to look, never a decision.",
+      "adjudication_hint": "Applications held after a late disqualifying verdict. They carry no document signal.",
+      "truncated": "Showing the first {{shown}} of {{total}} records. Narrow the list from Applications to see the rest.",
+      "registry_hint": "Held on a registry check. No decision can be recorded here yet: the record is waiting for a clearance or academic review to be resolved. Open the application to see what arrived."
+    },
+    "signal": {
+      "no_document_evidence": "No document evidence on this hold",
+      "no_flags": "No flags raised",
+      "band": {
+        "UNSCORED": "Unscored",
+        "WEAKER": "Weaker signal",
+        "MIXED": "Mixed signal",
+        "CLEANER": "Cleaner signal"
+      },
+      "flag": {
+        "fontMismatch": "Font mismatch"
+      },
+      "not_analysed": "Not analysed"
+    },
+    "decision": {
+      "apply": "Apply decision",
+      "retry": "Retry: the age verdict has not landed yet",
+      "no_change": "Already in that state. Nothing to change."
+    },
+    "tabs": {
+      "amber": "Amber documents",
+      "holds": "Holds",
+      "medical": "Medical",
+      "final": "Final decision"
+    },
+    "row": {
+      "clear": "Clear hold",
+      "reject": "Reject",
+      "shortlist": "Shortlist",
+      "accept": "Accept",
+      "verdict": "Record verdict",
+      "open": "Open"
+    },
+    "status": {
+      "PHYSICAL_TEST_COMPLETE": "Physical test complete",
+      "WALK_IN_PHYSICAL_TEST": "Walk-in physical test",
+      "MEDICAL_REVIEW": "Medical review",
+      "FINAL_SHORTLIST": "Final shortlist"
+    },
+    "confirm": {
+      "clearTitle": "Clear the hold on {{code}}?",
+      "clearBody": "This returns the application to the autonomous processing lane.",
+      "rejectTitle": "Reject {{code}}?",
+      "rejectBody": "This records a rejection. Continue only when the grounds have been reviewed.",
+      "shortlistTitle": "Shortlist {{code}}?",
+      "shortlistBody": "This records the final decision as SHORTLIST.",
+      "acceptTitle": "Accept {{code}}?",
+      "acceptBody": "Acceptance is final and may withdraw the applicant's other in-flight applications."
+    },
+    "errors": {
+      "refused": "The action was refused: {{code}}. Nothing was changed."
+    },
+    "bulk": {
+      "shortlistAll": "Shortlist everyone awaiting a decision",
+      "rejectAll": "Reject everyone awaiting a decision",
+      "resultsTitle": "Result for each record",
+      "applied": "Applied",
+      "refused": "Refused ({{code}})",
+      "confirmShortlistTitle": "Shortlist {{count}} records?",
+      "confirmRejectTitle": "Reject {{count}} records?",
+      "confirmBody": "This applies the decision to {{count}} records awaiting a final decision.",
+      "oneByOne": "Records are decided one at a time; each has its own result and a refusal does not stop the rest."
+    },
+    "reason": {
+      "CRIMINAL_RECORD_REVIEW": "Criminal record needs a human reading",
+      "CLEARANCE_CONTENT_REVIEW": "Clearance certificate content under review",
+      "IDENTITY_NAME_PARTIAL": "Name only partly matched on the identity record",
+      "IDENTITY_HOLDER_UNREADABLE": "Holder details unreadable on the submitted record",
+      "IDENTITY_HINT_NOT_COMPARED": "Identity hint could not be compared",
+      "NESA_MALPRACTICE": "NESA records a malpractice finding",
+      "NESA_LEVEL_UNKNOWN": "NESA does not recognise the level of the certificate",
+      "NESA_DIVISION_NOT_PASS": "NESA division does not meet the campaign rule",
+      "NESA_RECORD_REVIEW": "Academic record needs a human reading",
+      "unknown": "Unrecognised reason ({{code}})",
+      "none": "The reason was not stated"
+    }
+  }
+}

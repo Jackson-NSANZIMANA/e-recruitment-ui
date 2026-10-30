@@ -5,7 +5,7 @@
   "title": "Officer queues (amber, holds, medical, final)",
   "audience": "officer",
   "owner": "packages/features/adjudication",
-  "purpose": "One workspace for the four officer queues: amber document holds, post-clearance holds, medical review and final decision/acceptance, each offering only the transitions the status and the officer's post allow.",
+  "purpose": "One workspace for the four officer queues: amber document holds, post-clearance holds, registry holds (a live row whose criminal clearance or academic record is UNDER_REVIEW — listed and explained, but not decidable until the backend ships the resolving operation, D10), medical review and final decision/acceptance, each offering only the transitions the status and the officer's post allow.",
   "routes": [
     {
       "path": "/adjudication",
@@ -93,11 +93,14 @@
     "forensic signal is words, never colour alone",
     "a hold with no score reads 'not analysed'",
     "bulk results are listed per record",
-    "all user-facing text is translated"
+    "all user-facing text is translated",
+    "a registry hold states its reason in words and offers no decision",
+    "an unrecognised reason code is shown, never dropped"
   ],
   "tests": [
     "apps/officer-console/e2e/officer-queues.spec.ts",
-    "packages/features/adjudication/src/model/queues.test.ts"
+    "packages/features/adjudication/src/model/queues.test.ts",
+    "packages/features/adjudication/src/model/amber.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
@@ -112,7 +115,7 @@
       "e2e": [
         "apps/officer-console/e2e/officer-queues.spec.ts"
       ],
-      "contract": "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+      "contract": "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
     }
   }
 }

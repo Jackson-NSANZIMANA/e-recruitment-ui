@@ -48,7 +48,7 @@ info:
     THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
     response in this document. The hash is an internal cross-service key; a
     browser that computes or receives one is a leak of a cross-service join key.
-  x-usrp-backend-sha: "cd4962842e26177f179eb3c0bd51c214dad3fd61"
+  x-usrp-backend-sha: "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
   x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -610,6 +610,81 @@ paths:
                 $ref: "#/components/schemas/InvalidSession401"
         "404":
           description: "Not this citizen's application."
+        "502":
+          description: "application-service unavailable or malformed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamUnavailable502"
+
+  /v1/applicants/me/applications/clearance-certificate:
+    post:
+      operationId: "attachMyClearanceCertificate"
+      summary: "The citizen gives the number of their Irembo criminal-record certificate (ADR-048 §2.3)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session: this route takes no
+        applicant id, so another citizen's application and a nonexistent one are
+        the same 404 — the door is deliberately not an ownership oracle.
+
+
+        ASYNCHRONOUS. 202 means the number was accepted and the registry
+        verification is under way; it says NOTHING about the outcome. The result
+        arrives on the document checklist as the RIB item's `clearance` block,
+        which is why the citizen documents screen polls rather than reading a
+        verdict from this response.
+
+
+        THE NUMBER IS NEVER ECHOED, in this response or any other, and no
+        officer-facing review reason ever reaches this path: the identity layer
+        rebuilds the checklist item field by field, so only `state` and the
+        closed `code` travel to the browser.
+
+
+        BOTH 202 AND 200 ARE SUCCESS, AND THEY MEAN DIFFERENT THINGS: 202 is
+        "accepted, verification under way", 200 is "this number was already
+        verified". A client that only handles 202 reports a completed
+        verification as an error.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/applicant-auth.controller.ts (ME_CLEARANCE_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachClearanceRequest"
+      responses:
+        "202":
+          description: "ACCEPTED — the number was taken; verification is under way."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk"
+        "200":
+          description: "ALREADY_VERIFIED — no new work, the result already stands."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachClearanceOk"
+        "400":
+          description: >-
+            INVALID_REQUEST — applicationId is not a UUID, or the number is not
+            1–64 characters.
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "Not this citizen's application, or no such application."
+        "409":
+          description: >-
+            NOT_APPLICABLE — the application is closed (ACCEPTED, REJECTED,
+            WITHDRAWN, WALK_IN_REJECTED). Carries currentStatus.
+        "422":
+          description: "INVALID_NUMBER — well-formed request, unusable certificate number."
         "502":
           description: "application-service unavailable or malformed."
           content:
@@ -1838,6 +1913,59 @@ components:
         validUntil:
           type: "string"
 
+    AttachClearanceRequest:
+      description: >-
+        The application is named in the body, not the path (the platform's
+        no-path-params convention), and the citizen is NOT named at all — the
+        session is the subject.
+      type: "object"
+      additionalProperties: false
+      required: ["applicationId", "clearanceCertificateNumber"]
+      properties:
+        applicationId:
+          $ref: "#/components/schemas/Uuid"
+        clearanceCertificateNumber:
+          description: "The Irembo certificate number. Stored for verification; never returned."
+          type: "string"
+          minLength: 1
+          maxLength: 64
+
+    AttachClearanceOk:
+      type: "object"
+      additionalProperties: false
+      required: ["status", "agency"]
+      properties:
+        status:
+          type: "string"
+          enum: ["ACCEPTED", "ALREADY_VERIFIED"]
+        agency:
+          $ref: "#/components/schemas/Agency"
+
+    ClearanceItem:
+      description: >-
+        ADR-048 §2.3: where the criminal-record certificate stands, as the RIB
+        checklist item's own block. STATE AND CLOSED CODE ONLY — an officer's
+        review reasons are dropped by the identity layer before this reaches a
+        browser, because a citizen reading "content review: name partial" is
+        reading a forgery-tuning signal.
+
+
+        THE STATES ARE NOT A VERDICT LADDER. CORRECTION_NEEDED means the citizen
+        may fix the NUMBER, never that they are ineligible;
+        UNDER_OFFICER_REVIEW means a person must look, and its outcome is
+        ACTIONED elsewhere (an officer decision), not here.
+      type: "object"
+      additionalProperties: false
+      required: ["state", "code"]
+      properties:
+        state:
+          type: "string"
+          enum: ["NUMBER_REQUIRED", "VERIFYING", "CORRECTION_NEEDED", "UNDER_OFFICER_REVIEW", "VERIFIED"]
+        code:
+          description: "A closed upper-case failure code when CORRECTION_NEEDED; null otherwise."
+          type: ["string", "null"]
+          pattern: "^[A-Z][A-Z0-9_]{2,47}$"
+
     DocumentChecklistItem:
       type: "object"
       additionalProperties: false
@@ -1852,6 +1980,8 @@ components:
         registry:
           description: "NIDA | NESA | HEC | RIB when a registry can verify the item; null when it can only be uploaded or presented."
           type: ["string", "null"]
+        clearance:
+          $ref: "#/components/schemas/ClearanceItem"
 
     DocumentChecklist200:
       description: >-

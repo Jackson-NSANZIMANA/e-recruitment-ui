@@ -22,7 +22,7 @@ import type { Agency } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
 import { ConfirmAction, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { useNavigate } from 'react-router-dom';
-import { byQueueAge, holdKindOf, type AmberRow, type AmberStatus } from '../model/amber.js';
+import { byQueueAge, holdKindOf, reasonCodes, registryHoldOf, type AmberRow, type HoldKind } from '../model/amber.js';
 import { QUEUE_STATUSES, rowTransitions, runBulk, visibleQueues, type BulkResult, type QueueId, type RowTransition } from '../model/queues.js';
 import { ForensicsSignal } from './ForensicsSignal.js';
 
@@ -32,6 +32,19 @@ const styles = cssMap({
 });
 
 type T = ReturnType<typeof useTranslation>['t'];
+
+/** The closed vocabulary this build can put into words (backend `queueReasons`). */
+const REASON_CODES: ReadonlySet<string> = new Set([
+  'CRIMINAL_RECORD_REVIEW',
+  'CLEARANCE_CONTENT_REVIEW',
+  'IDENTITY_NAME_PARTIAL',
+  'IDENTITY_HOLDER_UNREADABLE',
+  'IDENTITY_HINT_NOT_COMPARED',
+  'NESA_MALPRACTICE',
+  'NESA_LEVEL_UNKNOWN',
+  'NESA_DIVISION_NOT_PASS',
+  'NESA_RECORD_REVIEW',
+]);
 
 const label = (t: T, tr: RowTransition): string => t(`adjudication.row.${tr}`);
 const appearanceOf = (tr: RowTransition): 'primary' | 'danger' | 'default' => (tr === 'reject' ? 'danger' : tr === 'open' || tr === 'verdict' ? 'default' : 'primary');
@@ -51,34 +64,72 @@ interface Pending {
   readonly action: 'clear' | 'reject' | 'shortlist' | 'accept';
 }
 
-function amberRows(rows: readonly AmberRow[], kind: 'DOCUMENT' | 'ADJUDICATION', permissions: readonly string[], t: T): QueueRow[] {
-  return rows
-    .filter((r) => holdKindOf(r) === kind)
-    .sort(byQueueAge)
-    .map((r) => ({
-      id: r.applicationId,
-      primary: r.processingCode,
-      ...(r.documentType !== null ? { secondary: r.documentType } : {}),
-      detail: <ForensicsSignal row={r} />,
-      status: t(kind === 'DOCUMENT' ? 'adjudication.queue.status.document' : 'adjudication.queue.status.adjudication'),
-      since: r.queuedAt ?? '',
-      transitions: rowTransitions(kind === 'DOCUMENT' ? 'amber' : 'holds', r.status, permissions).map((tr) => ({ id: tr, label: label(t, tr), appearance: appearanceOf(tr) })),
-    }));
+/** The queue's own name for the kind of hold, in words. Never a code on screen. */
+function holdLabel(t: T, kind: HoldKind, reasons: readonly string[]): string {
+  if (kind === 'DOCUMENT') return t('adjudication.queue.status.document');
+  if (kind === 'ADJUDICATION') return t('adjudication.queue.status.adjudication');
+  const registry = registryHoldOf(reasons);
+  return t(registry === 'CRIMINAL' ? 'adjudication.queue.status.clearance' : registry === 'ACADEMIC' ? 'adjudication.queue.status.academic' : 'adjudication.queue.status.registry');
 }
 
-function AmberQueue({ client, agency, kind, permissions }: { readonly client: ApiClient; readonly agency: Agency; readonly kind: 'DOCUMENT' | 'ADJUDICATION'; readonly permissions: readonly string[] }): React.ReactElement {
+/**
+ * WHY this row is here, in words. A code this build does not know is still
+ * shown (as an unknown reason) rather than dropped: a row an officer cannot
+ * explain is worse than a row with an ugly label. `null` means the edge sent no
+ * code at all, which is a different sentence from "no reason".
+ */
+function HoldReasons({ row }: { readonly row: AmberRow }): React.ReactElement {
+  const { t } = useTranslation('adjudication');
+  const codes = reasonCodes(row);
+  if (codes.length === 0) return <Text as="span" testId="hold-reason-none">{t('adjudication.reason.none')}</Text>;
+  return (
+    <Text as="span" testId="hold-reason">
+      {codes.map((code) => REASON_CODES.has(code) ? t(`adjudication.reason.${code}`) : t('adjudication.reason.unknown', { code })).join(' · ')}
+    </Text>
+  );
+}
+
+function amberRows(rows: readonly AmberRow[], kinds: readonly HoldKind[], permissions: readonly string[], t: T): QueueRow[] {
+  return rows
+    .filter((r) => kinds.includes(holdKindOf(r)))
+    .sort(byQueueAge)
+    .map((r) => {
+      const kind = holdKindOf(r);
+      return {
+        id: r.applicationId,
+        primary: r.processingCode,
+        ...(r.documentType !== null ? { secondary: r.documentType } : {}),
+        // A registry hold has no document to analyse; its own reason codes are the useful detail.
+        detail: kind === 'REGISTRY' ? <HoldReasons row={r} /> : <ForensicsSignal row={r} />,
+        status: holdLabel(t, kind, r.reasons),
+        since: r.queuedAt ?? '',
+        transitions: rowTransitions(kind === 'DOCUMENT' ? 'amber' : 'holds', r.status ?? '', permissions).map((tr) => ({ id: tr, label: label(t, tr), appearance: appearanceOf(tr) })),
+      };
+    });
+}
+
+function AmberQueue({ client, agency, kinds, permissions }: { readonly client: ApiClient; readonly agency: Agency; readonly kinds: readonly HoldKind[]; readonly permissions: readonly string[] }): React.ReactElement {
   const { t } = useTranslation('adjudication');
   const navigate = useNavigate();
   const q = useAmberQueue(client, agency);
   const adjudicate = useAdjudicateApplication(client, agency);
   const [pending, setPending] = React.useState<Pending | null>(null);
-  const all = (q.data ?? []).filter((e): e is typeof e & { applicationId: string; processingCode: string; status: AmberStatus } => e.applicationId !== null && e.processingCode !== null && (e.status === 'DOCUMENT_REVIEW_AMBER' || e.status === 'ADJUDICATION_REVIEW'));
-  const rows = all.map<AmberRow>((e) => ({
-    applicationId: e.applicationId, processingCode: e.processingCode, status: e.status,
-    documentType: e.documentType as AmberRow['documentType'], forensicsScore: e.forensicsScore,
-    forensicsFlags: e.forensicsFlags as AmberRow['forensicsFlags'], queuedAt: e.queuedAt,
-  }));
-  const shown = amberRows(rows, kind, permissions, t);
+  // EVERY row the read serves is listed. Filtering to the two adjudicable
+  // statuses is how a registry hold became invisible while the dashboard kept
+  // counting it; the kind decides the actions, not whether the officer sees it.
+  const rows = (q.data ?? [])
+    .filter((e): e is typeof e & { applicationId: string; processingCode: string } => e.applicationId !== null && e.processingCode !== null)
+    .map<AmberRow>((e) => ({
+      applicationId: e.applicationId, processingCode: e.processingCode, status: e.status,
+      documentType: e.documentType as AmberRow['documentType'], forensicsScore: e.forensicsScore,
+      forensicsFlags: e.forensicsFlags as AmberRow['forensicsFlags'], queuedAt: e.queuedAt,
+      reasons: e.reasons ?? [],
+    }));
+  // The warning belongs to the TAB it explains, not to the whole read: the amber
+  // tab shows no registry rows, so it must not carry their notice.
+  const scoped = rows.filter((r) => kinds.includes(holdKindOf(r)));
+  const shown = amberRows(scoped, kinds, permissions, t);
+  const registryHolds = scoped.filter((r) => holdKindOf(r) === 'REGISTRY').length;
   const state = listState({ isLoading: q.isLoading, errorStatus: q.isError ? httpStatusOf(q.error) : null, rowCount: shown.length, filtersActive: false });
   const run = async (): Promise<void> => {
     if (pending === null) return;
@@ -89,12 +140,17 @@ function AmberQueue({ client, agency, kind, permissions }: { readonly client: Ap
   };
   return (
     <Stack space="space.200">
-      <SectionMessage appearance="information"><Text as="p">{t(kind === 'DOCUMENT' ? 'adjudication.queue.document_hint' : 'adjudication.queue.adjudication_hint')}</Text></SectionMessage>
+      <SectionMessage appearance="information"><Text as="p">{t(kinds[0] === 'DOCUMENT' ? 'adjudication.queue.document_hint' : 'adjudication.queue.adjudication_hint')}</Text></SectionMessage>
+      {/* D10, said out loud rather than hidden behind a disabled button: these rows
+          are WAITING, and the console has no operation to resolve them yet. */}
+      {registryHolds > 0 && (
+        <SectionMessage appearance="warning" testId="registry-hint"><Text as="p">{t('adjudication.queue.registry_hint')}</Text></SectionMessage>
+      )}
       <StateBoundary state={state} onRetry={() => void q.refetch()}>
         <QueueTable
-          caption={t(kind === 'DOCUMENT' ? 'adjudication.tabs.amber' : 'adjudication.tabs.holds')}
+          caption={t(kinds[0] === 'DOCUMENT' ? 'adjudication.tabs.amber' : 'adjudication.tabs.holds')}
           rows={shown}
-          testId={kind === 'DOCUMENT' ? 'queue-amber' : 'queue-holds'}
+          testId={kinds[0] === 'DOCUMENT' ? 'queue-amber' : 'queue-holds'}
           onOpen={(id) => navigate(`/applications/${id}`)}
           onTransition={(id, tr) => {
             if (tr === 'open') navigate(`/applications/${id}`);
@@ -260,8 +316,9 @@ export function QueuesPage({ client, initial = 'amber' }: QueuesPageProps): Reac
           {visible.map((id) => (
             <TabPanel key={id}>
               <Box xcss={styles.panel}>
-                {id === 'amber' && <AmberQueue client={client} agency={agency} kind="DOCUMENT" permissions={permissions} />}
-                {id === 'holds' && <AmberQueue client={client} agency={agency} kind="ADJUDICATION" permissions={permissions} />}
+                {id === 'amber' && <AmberQueue client={client} agency={agency} kinds={['DOCUMENT']} permissions={permissions} />}
+                {/* The holds tab owns every non-document hold, including the registry ones. */}
+                {id === 'holds' && <AmberQueue client={client} agency={agency} kinds={['ADJUDICATION', 'REGISTRY']} permissions={permissions} />}
                 {(id === 'medical' || id === 'final') && <SearchQueue client={client} agency={agency} queue={id} permissions={permissions} />}
               </Box>
             </TabPanel>

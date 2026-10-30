@@ -87,11 +87,23 @@ export type AmberQueueResponse = readonly AmberQueueEntry[];
 export interface AmberQueueEntry {
   readonly applicationId: string | null;
   readonly processingCode: string | null;
-  readonly status: string | null;
+  /**
+   * The row's application status, which is NOT always one of the two holds this
+   * endpoint was named after: S12b also serves live rows here whose criminal
+   * clearance is UNDER_REVIEW or whose academic record needs a NESA review.
+   * `null` only when the edge sent no status; such a row is still listed.
+   */
+  readonly status: ApplicationStatus | null;
   readonly documentType: string | null;
   readonly forensicsScore: number | null;
   readonly forensicsFlags: Readonly<Record<string, unknown>> | null;
   readonly queuedAt: string | null;
+  /**
+   * S12b: WHY a person, not the analyser, must read the record — closed
+   * upper-case codes, empty for a pure document hold. Absent from a pre-S12b
+   * edge, so callers must treat "no reasons" as "not stated", never as "none".
+   */
+  readonly reasons?: readonly string[];
   readonly agency: Agency;
 }
 
@@ -279,7 +291,44 @@ export interface DocumentChecklist {
     readonly satisfaction: DocumentSatisfaction;
     /** NIDA | NESA | HEC | RIB, or null when it can only be uploaded/presented. */
     readonly registry: string | null;
+    /** The RIB item's Irembo certificate state. Absent on every other item, and on a v1 checklist. */
+    readonly clearance?: ClearanceItem;
   }[];
+}
+
+/**
+ * ADR-048 §2.3: where the citizen's criminal-record certificate stands.
+ *
+ * STATE AND A CLOSED CODE, nothing else: the officer's review reasons are
+ * dropped by the identity layer before a browser ever sees them, so a citizen
+ * cannot derive from this screen what the reviewer is looking at.
+ *
+ * `CORRECTION_NEEDED` is about the NUMBER, never an eligibility verdict;
+ * `UNDER_OFFICER_REVIEW` is a wait, and the branch that ends it is an officer
+ * decision — there is no citizen action that clears it.
+ */
+export type ClearanceState =
+  | 'NUMBER_REQUIRED'
+  | 'VERIFYING'
+  | 'CORRECTION_NEEDED'
+  | 'UNDER_OFFICER_REVIEW'
+  | 'VERIFIED';
+
+export interface ClearanceItem {
+  readonly state: ClearanceState;
+  readonly code: string | null;
+}
+
+/**
+ * `POST /edge/v1/me/applications/clearance-certificate`.
+ *
+ * BOTH outcomes are success and they differ: ACCEPTED means the registry has not
+ * answered yet (the checklist will show VERIFYING), ALREADY_VERIFIED means the
+ * result already stands. Neither carries the number back.
+ */
+export interface AttachClearanceResponse {
+  readonly status: 'ACCEPTED' | 'ALREADY_VERIFIED';
+  readonly agency: Agency;
 }
 
 export interface VerifyAtVenueResponse {

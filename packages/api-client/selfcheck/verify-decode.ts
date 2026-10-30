@@ -116,6 +116,28 @@ throwsMalformed('a status the contract does not know is refused',
 throwsMalformed('a row with no id is refused rather than keyed on undefined',
   () => decodeApplicationList([{ status: 'MEDICAL_REVIEW' }], 'RDF'), 'listApplications');
 
+// S12b: the same read serves a LIVE row whose criminal clearance is UNDER_REVIEW,
+// so a decoder that only understood the two holds would call the officer's real
+// queue malformed. And the reason codes are the only thing that says WHY.
+const s12bAmber = decodeAmberQueue([{
+  applicationId: 'b',
+  processingCode: 'RNP-2026-000002',
+  status: 'CRIMINAL_CLEARANCE',
+  documentType: null,
+  forensicsScore: null,
+  queuedAt: null,
+  reasons: ['CRIMINAL_RECORD_REVIEW'],
+}], 'RNP');
+eq('a registry hold decodes instead of failing the whole read', s12bAmber[0]?.status, 'CRIMINAL_CLEARANCE');
+deepEq('…carrying the closed reason codes verbatim', s12bAmber[0]?.reasons, ['CRIMINAL_RECORD_REVIEW']);
+deepEq('a row with no reasons gets [] — "not stated", never inferred',
+  decodeAmberQueue([{ applicationId: 'c', status: 'ADJUDICATION_REVIEW' }], 'RDF')[0]?.reasons, []);
+deepEq('a malformed reasons array is dropped, not fatal to the queue',
+  decodeAmberQueue([{ applicationId: 'd', status: 'ADJUDICATION_REVIEW', reasons: ['KEPT', 7, null, ''] }], 'RDF')[0]?.reasons, ['KEPT']);
+eq('a row with no status is listed, not refused', decodeAmberQueue([{ applicationId: 'e' }], 'RDF')[0]?.status, null);
+throwsMalformed('an unknown status is still named drift on this read',
+  () => decodeAmberQueue([{ applicationId: 'f', status: 'NOT_A_STATUS' }], 'RDF'), 'listAmberQueue');
+
 // ══ 3. One record, flat or enveloped ═══════════════════════════
 
 const flat = decodeApplication({ applicationId: 'a', processingCode: 'RDF-1', status: 'ACCEPTED', documentLane: 'GREEN' }, 'RDF');

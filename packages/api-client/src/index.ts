@@ -71,6 +71,9 @@ export type {
   UploadDocumentInput,
   UploadDocumentResponse,
   DocumentChecklist,
+  ClearanceState,
+  ClearanceItem,
+  AttachClearanceResponse,
   DocumentSatisfaction,
   VerifyAtVenueResponse,
   ExamInvitationState,
@@ -134,7 +137,7 @@ export {
   fileMyErasureRequest,
 } from './operations/applicant.js';
 export { listPublicCampaigns, getPublicCampaign } from './operations/campaigns.js';
-export { getMyDocumentChecklist, getDocumentChecklist, verifyDocumentAtVenue } from './operations/documents.js';
+export { getMyDocumentChecklist, getDocumentChecklist, verifyDocumentAtVenue, attachMyClearanceCertificate } from './operations/documents.js';
 export { getMyExamInvitation } from './operations/exam-invitation.js';
 export { admitAtGate, gateResultFromRefusal } from './operations/gate.js';
 
@@ -162,7 +165,7 @@ export {
   useFileErasureRequest,
 } from './queries/applicant.js';
 export { usePublicCampaigns, usePublicCampaign } from './queries/campaigns.js';
-export { useMyDocumentChecklist, useDocumentChecklist, useVerifyDocumentAtVenue } from './queries/documents.js';
+export { useMyDocumentChecklist, useDocumentChecklist, useVerifyDocumentAtVenue, useAttachMyClearanceCertificate } from './queries/documents.js';
 export { useMyExamInvitation, EXAM_INVITATION_POLL_MS, EXAM_INVITATION_READY_POLL_MS } from './queries/exam-invitation.js';
 export { useAdmitAtGate } from './queries/gate.js';
 

@@ -136,6 +136,13 @@ export const INVALIDATION_MAP: Readonly<Record<string, readonly InvalidationTarg
 
   withdrawMyApplication: ['applicant:applications'],
 
+  /**
+   * The number is verified ASYNCHRONOUSLY, so nothing an officer reads changes
+   * when it lands: the citizen's own checklist is the only view to invalidate,
+   * and its screen polls while the clearance is VERIFYING.
+   */
+  attachMyClearanceCertificate: [],
+
   fileMyErasureRequest: ['applicant:erasure-request'],
 
   /**
