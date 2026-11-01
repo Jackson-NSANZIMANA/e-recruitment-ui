@@ -33,6 +33,26 @@ const CAMPAIGN = {
   contactWebsite: null,
 };
 const FILED = { status: 'SUBMITTED', applicationId: APP, processingCode: 'RDF-10001', agency: 'RDF' };
+/** A synthetic identity, so the wizard's read-only NIDA block never calls the edge. */
+const IDENTITY = {
+  fullName: 'UMUTONI Alice',
+  sex: 'FEMALE',
+  dateOfBirth: '2002-05-14',
+  homeDistrict: 'GASABO',
+  homeProvince: 'KIGALI',
+  placeOfBirth: null,
+  nationality: null,
+};
+
+/**
+ * The wizard walk is the slow part of every test here: on a loaded runner it
+ * has hit the 30 s default while waiting for the declaration step's "I agree"
+ * button (CI run 41345730124: three of these six tests passed only on retry,
+ * with the same timeout hitting three PRE-EXISTING specs in the same run).
+ * 60 s buys the walk enough headroom without hiding a real product failure:
+ * every assertion below still has its own, shorter, expectation.
+ */
+test.setTimeout(60_000);
 
 const HUMAN_REVIEWED = 'This document has already been reviewed. To replace it, contact the recruitment office to re-open it.';
 const CASE_ADVANCED = 'This application has moved past document review, so documents can no longer be replaced.';
@@ -58,6 +78,12 @@ async function mockEdge(page: Page): Promise<void> {
       ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FILED) })
       : route.fallback(),
   );
+  // Every other spec in this app leaves the NIDA read unmocked, so it goes to the
+  // dev server's /edge proxy and resolves whenever that fails. Mocking it removes
+  // a per-test network race from the wizard walk.
+  await page.route('**/edge/v1/me/identity', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(IDENTITY) }),
+  );
 }
 
 /** File the application so the documents panel mounts, as it does after a filing. */
@@ -69,9 +95,16 @@ async function fileApplication(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^next$/i }).click();
   await page.getByLabel(/nesa index number/i).fill('RW2026/1001');
   await page.getByRole('button', { name: /^next$/i }).click();
-  await page.getByRole('button', { name: /i agree/i }).click();
+  // Wait for the step to actually change before acting on it: the click above
+  // submits the education form, and the declaration step it advances to renders
+  // only after the NIDA block resolves.
+  const agree = page.getByRole('button', { name: /i agree/i });
+  await expect(agree).toBeVisible({ timeout: 20_000 });
+  await agree.click();
   await page.getByRole('button', { name: /submit application/i }).click();
   await expect(page.getByText(/submitted — application filed/i)).toBeVisible({ timeout: 15_000 });
+  // The panel only mounts inside the filed confirmation.
+  await expect(page.getByText(/upload your documents/i)).toBeVisible({ timeout: 15_000 });
 }
 
 /** Reply to the next N uploads with `replies`, in order; the last one repeats. */
