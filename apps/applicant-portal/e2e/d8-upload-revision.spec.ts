@@ -46,14 +46,18 @@ const IDENTITY = {
 };
 
 /**
- * The wizard walk is the slow part of every test here: on a loaded runner it
- * has hit the 30 s default while waiting for the declaration step's "I agree"
- * button (CI run 41345730124: three of these six tests passed only on retry,
- * with the same timeout hitting three PRE-EXISTING specs in the same run).
- * 60 s buys the walk enough headroom without hiding a real product failure:
- * every assertion below still has its own, shorter, expectation.
+ * The wizard walk is the slow part of every test here. On a loaded runner the
+ * declaration step's "I agree" button has missed a 20 s wait for four of these
+ * eight tests (CI run 41361053561: all four failed at that single wait and
+ * passed on retry, as did two PRE-EXISTING s12c-screens specs at the same step
+ * in the same run). It is a harness bound, not a product one: nothing in the
+ * documents panel is under test while the wizard renders.
+ *
+ * 45 s buys the step the headroom it demonstrably needs, and 90 s gives the
+ * whole test room for that plus the walk around it. Every assertion below
+ * keeps its own, much shorter, expectation — a real failure still fails fast.
  */
-test.setTimeout(60_000);
+test.setTimeout(90_000);
 
 const HUMAN_REVIEWED = 'This document has already been reviewed. To replace it, contact the recruitment office to re-open it.';
 const CASE_ADVANCED = 'This application has moved past document review, so documents can no longer be replaced.';
@@ -112,7 +116,7 @@ async function fileApplication(page: Page): Promise<void> {
   // submits the education form, and the declaration step it advances to renders
   // only after the NIDA block resolves.
   const agree = page.getByRole('button', { name: /i agree/i });
-  await expect(agree).toBeVisible({ timeout: 20_000 });
+  await expect(agree).toBeVisible({ timeout: 45_000 });
   await agree.click();
   await page.getByRole('button', { name: /submit application/i }).click();
   await expect(page.getByText(/submitted — application filed/i)).toBeVisible({ timeout: 15_000 });
