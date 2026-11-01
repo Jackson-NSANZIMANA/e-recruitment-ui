@@ -426,10 +426,17 @@ function reviewClosedReason(error: NormalisedError): ReviewClosedReason | null {
  * one. A revision is never inferred, counted locally, or defaulted to 1: the
  * server numbers its own revisions, and an identical re-upload is a retry that
  * returns the CURRENT revision.
+ *
+ * `Number.isSafeInteger`, not `Number.isFinite`. A revision is a whole count
+ * the backend assigns, so 2.5, NaN, Infinity and anything past the safe-integer
+ * range are not revisions — they are contract drift, and printing one as
+ * "revision 2.5" would invent evidence on an evidence-integrity screen. It must
+ * also be positive: revisions start at 1, so a zero or a negative number is no
+ * more a revision than a fraction is.
  */
 function acceptedRevision(response: UploadDocumentResponse): number | null {
   const revision: unknown = response.revision;
-  return typeof revision === "number" && Number.isFinite(revision) ? revision : null;
+  return typeof revision === "number" && Number.isSafeInteger(revision) && revision > 0 ? revision : null;
 }
 
 /** One received document: its type and the latest revision accepted for it. */

@@ -56,6 +56,16 @@ const NO_REVISION: EdgeReply = {
   body: { status: "UPLOADED", documentId: DOCUMENT_ID, documentType: "NATIONAL_ID" },
 };
 
+/**
+ * A 2xx whose `revision` is not a positive safe integer. Every one of these is
+ * contract drift rather than a revision: printing it would put invented
+ * evidence on an evidence-integrity screen.
+ */
+const BAD_REVISION = (revision: unknown): EdgeReply => ({
+  status: 201,
+  body: { status: "UPLOADED", documentId: DOCUMENT_ID, documentType: "NATIONAL_ID", revision },
+});
+
 const CLOSED = (reason?: string): EdgeReply => ({
   status: 409,
   body: reason === undefined ? { error: "DOCUMENT_REVIEW_CLOSED" } : { error: "DOCUMENT_REVIEW_CLOSED", reason },
@@ -181,6 +191,28 @@ describe("D8 upload confirmation", () => {
 
     await waitFor(() => expect(text(container)).toContain(en.apply.upload_ok_title));
     expect(text(container)).not.toMatch(/revision/i);
+  });
+
+  // A revision is a positive whole count the backend assigns. Each case below
+  // is a shape that must never be echoed back to a citizen as a revision.
+  it.each([
+    ["zero", 0],
+    ["negative", -3],
+    ["fractional", 2.5],
+    ["a stringified number", "2"],
+    ["past the safe-integer range", Number.MAX_SAFE_INTEGER + 1],
+  ])("a revision that is %s is refused, not shown", async (_label, revision) => {
+    queue([BAD_REVISION(revision)]);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(en.apply.upload_ok_title));
+    // The document is still named as received…
+    expect(receivedText(container)).toContain("National ID");
+    // …but no revision is claimed, and nothing unprintable leaks into the copy.
+    expect(receivedText(container)).not.toMatch(/revision/i);
+    expect(text(container)).not.toMatch(/NaN|Infinity|undefined|null/i);
+    expect(text(container)).not.toContain(DOCUMENT_ID);
   });
 
   it("a second document type keeps its own revision", async () => {
