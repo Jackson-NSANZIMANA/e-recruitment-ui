@@ -83,7 +83,7 @@ paths:
       x-usrp-source: >-
         src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH).
         D8 (`revision` on the 201, DOCUMENT_REVIEW_CLOSED on the 409) verified
-        against backend 4683b5615daeecdf13b40bb4930c3aeec83196de — the merge of
+        against backend 4683b5615dae (full SHA in the fixtures) — the merge of
         e-recruitment PR #61. The document's global pin remains
         x-usrp-backend-sha; this operation's D8 fields are newer than that pin
         and are recorded as such rather than folded into it.

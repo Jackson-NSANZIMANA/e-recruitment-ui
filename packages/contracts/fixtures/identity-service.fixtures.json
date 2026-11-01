@@ -1011,7 +1011,7 @@
       "id": "document-uploaded-rejects-missing-revision",
       "schema": "DocumentUploaded201",
       "expect": "reject",
-      "why": "D8. Identity validates `revision` with Number.isSafeInteger && > 0 and logs document_door_contract_drift when it is absent, answering 502 rather than forwarding a body the rest of the platform treats as confirmed.",
+      "why": "D8 (verified at backend 4683b5615daeecdf13b40bb4930c3aeec83196de, the merge of e-recruitment PR #61). Identity validates `revision` with Number.isSafeInteger && > 0 and logs document_door_contract_drift when it is absent, answering 502 rather than forwarding a body the rest of the platform treats as confirmed.",
       "value": {
         "status": "UPLOADED",
         "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
