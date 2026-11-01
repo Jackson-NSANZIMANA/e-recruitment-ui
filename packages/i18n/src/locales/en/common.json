@@ -397,6 +397,11 @@
     "upload_error": "The document could not be uploaded. Check the file and try again.",
     "upload_ok_title": "Document received",
     "upload_ok_body": "Received: {{types}}. You can upload another document.",
+    "upload_received_item": "{{type}} (revision {{revision}})",
+    "upload_review_closed": {
+      "HUMAN_REVIEWED": "This document has already been reviewed. To replace it, contact the recruitment office to re-open it.",
+      "CASE_ADVANCED": "This application has moved past document review, so documents can no longer be replaced."
+    },
     "upload_refusals": {
       "APPLICATION_NOT_FOUND": "We could not find this application.",
       "NOT_ACCEPTING_DOCUMENTS": "This application is not accepting documents at this stage.",

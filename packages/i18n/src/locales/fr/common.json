@@ -397,6 +397,11 @@
     "upload_error": "Le document n’a pas pu être téléversé. Vérifiez le fichier et réessayez.",
     "upload_ok_title": "Document reçu",
     "upload_ok_body": "Reçu : {{types}}. Vous pouvez téléverser un autre document.",
+    "upload_received_item": "{{type}} (révision {{revision}})",
+    "upload_review_closed": {
+      "HUMAN_REVIEWED": "Ce document a déjà été examiné. Pour le remplacer, contactez le bureau de recrutement afin qu’il le rouvre.",
+      "CASE_ADVANCED": "Cette candidature a dépassé l’étape d’examen des documents ; les documents ne peuvent donc plus être remplacés."
+    },
     "upload_refusals": {
       "APPLICATION_NOT_FOUND": "Cette candidature est introuvable.",
       "NOT_ACCEPTING_DOCUMENTS": "Cette candidature n’accepte pas de documents à ce stade.",

@@ -265,11 +265,22 @@ export interface PublicCampaignDetailResponse {
   readonly campaign: PublicCampaign;
 }
 
-/** `POST /edge/v1/me/applications/documents` — identifiers only, never a verdict. */
+/**
+ * `POST /edge/v1/me/applications/documents` — identifiers and the revision the
+ * server ACCEPTED, never a verdict.
+ *
+ * D8. `revision` is the number the backend assigned to the bytes it stored:
+ * 1 for a first upload, 2 for a replacement with different bytes. An identical
+ * re-upload is a retry and RETURNS THE CURRENT REVISION, so a caller must never
+ * increment it locally or present it as "a new revision was created". The edge
+ * strips every other upstream field: there is no forensic verdict, score, lane,
+ * flag, HMAC or object key on this shape, and none may be added here.
+ */
 export interface UploadDocumentResponse {
   readonly status: 'UPLOADED';
   readonly documentId: string;
   readonly documentType: string;
+  readonly revision: number;
 }
 
 export interface UploadDocumentInput {

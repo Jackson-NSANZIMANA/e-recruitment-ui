@@ -17,6 +17,7 @@ import {
   useUploadMyDocument,
   type NormalisedError,
   type PublicCampaign,
+  type UploadDocumentResponse,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
 import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
@@ -396,12 +397,69 @@ function backendOutcome(error: NormalisedError): string | null {
 }
 
 /**
+ * D8. The two reasons the edge allowlists when a document can no longer be
+ * replaced. They are TRANSLATION KEYS, not text: an unrecognised reason must
+ * never be shown, and there is no UI control here that could re-open a closed
+ * review — only the recruitment office can.
+ */
+const REVIEW_CLOSED_REASONS = ["HUMAN_REVIEWED", "CASE_ADVANCED"] as const;
+type ReviewClosedReason = (typeof REVIEW_CLOSED_REASONS)[number];
+
+/**
+ * The reason a closed review refused the replacement, or null when the error is
+ * not a D8 refusal or names a reason this screen does not have words for.
+ *
+ * The reason is read from the normalised conflict data and matched against the
+ * allowlist above. Backend text is never rendered: an unknown reason returns
+ * null so the caller keeps the generic safe error.
+ */
+function reviewClosedReason(error: NormalisedError): ReviewClosedReason | null {
+  if (error.kind !== "conflict" || error.outcome !== "DOCUMENT_REVIEW_CLOSED") return null;
+  const reason = error.data["reason"];
+  return typeof reason === "string" && (REVIEW_CLOSED_REASONS as readonly string[]).includes(reason)
+    ? (reason as ReviewClosedReason)
+    : null;
+}
+
+/**
+ * D8. The revision the server ACCEPTED, or null when a 2xx carried no usable
+ * one. A revision is never inferred, counted locally, or defaulted to 1: the
+ * server numbers its own revisions, and an identical re-upload is a retry that
+ * returns the CURRENT revision.
+ */
+function acceptedRevision(response: UploadDocumentResponse): number | null {
+  const revision: unknown = response.revision;
+  return typeof revision === "number" && Number.isFinite(revision) ? revision : null;
+}
+
+/** One received document: its type and the latest revision accepted for it. */
+interface ReceivedDocument {
+  readonly documentType: string;
+  readonly revision: number | null;
+}
+
+/**
+ * Record the latest accepted revision for a document type, replacing the entry
+ * in place when that type was uploaded before. A re-upload of the same type
+ * therefore UPDATES the revision shown for it instead of listing the type twice.
+ */
+function withRevision(
+  received: readonly ReceivedDocument[],
+  documentType: string,
+  revision: number | null,
+): readonly ReceivedDocument[] {
+  return received.some((entry) => entry.documentType === documentType)
+    ? received.map((entry) => (entry.documentType === documentType ? { documentType, revision } : entry))
+    : [...received, { documentType, revision }];
+}
+
+/**
  * Document upload for the application just filed (ADR-030). The citizen picks
  * one of the document types the agency ACCEPTS and a file. The response holds
- * identifiers only: there is deliberately no verdict to show, so "uploaded"
- * means "received", never "verified".
+ * identifiers and the accepted revision: there is deliberately no verdict to
+ * show, so "uploaded" means "received", never "verified".
  */
-function DocumentsPanel({ applicationId, agency }: {
+export function DocumentsPanel({ applicationId, agency }: {
   readonly applicationId: string;
   readonly agency: Agency;
 }): React.ReactElement {
@@ -410,11 +468,21 @@ function DocumentsPanel({ applicationId, agency }: {
   const types = AGENCY_DOCUMENT_TYPES[agency];
   const [documentType, setDocumentType] = useState<string>(types[0] ?? "NATIONAL_ID");
   const [file, setFile] = useState<File | null>(null);
-  const [received, setReceived] = useState<readonly string[]>([]);
+  const [received, setReceived] = useState<readonly ReceivedDocument[]>([]);
+
+  const label = (entry: ReceivedDocument): string => {
+    const type = t(`documents.types.${entry.documentType}`);
+    // No revision claim when the server sent none: naming one would be invented
+    // evidence, and the document ID stays internal.
+    return entry.revision === null ? type : t("apply.upload_received_item", { type, revision: entry.revision });
+  };
 
   const refusal = ((): string | null => {
     const error = upload.error;
-    if (!(error instanceof ApiError)) return error === null ? null : t("apply.upload_error");
+    if (error === null) return null;
+    if (!(error instanceof ApiError)) return t("apply.upload_error");
+    const reason = reviewClosedReason(error.normalised);
+    if (reason !== null) return t(`apply.upload_review_closed.${reason}`);
     const code = backendOutcome(error.normalised);
     return code === null ? t("apply.upload_error") : t(`apply.upload_refusals.${code}`, { defaultValue: t("apply.upload_error") });
   })();
@@ -449,8 +517,8 @@ function DocumentsPanel({ applicationId, agency }: {
         </SectionMessage>
       )}
       {received.length > 0 && (
-        <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite">
-          <Text>{t("apply.upload_ok_body", { types: received.map((r) => t(`documents.types.${r}`)).join(", ") })}</Text>
+        <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite" testId="documents-received">
+          <Text>{t("apply.upload_ok_body", { types: received.map(label).join(", ") })}</Text>
         </SectionMessage>
       )}
       <Inline>
@@ -461,7 +529,15 @@ function DocumentsPanel({ applicationId, agency }: {
             if (file === null) return;
             upload.mutate(
               { applicationId, documentType, file },
-              { onSuccess: () => { setReceived((prev) => (prev.includes(documentType) ? prev : [...prev, documentType])); setFile(null); } },
+              {
+                onSuccess: (response) => {
+                  // D8: the revision the server accepted, including when this
+                  // type was uploaded before. An identical retry returns the
+                  // same revision and is displayed as the same revision.
+                  setReceived((prev) => withRevision(prev, documentType, acceptedRevision(response)));
+                  setFile(null);
+                },
+              },
             );
           }}
         >
