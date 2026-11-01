@@ -303,7 +303,10 @@ ok('detail addresses the campaign by PUBLIC code in the query', detail.last().ur
 // D8: the edge now returns the revision the server accepted. The fixture is a
 // REPLACEMENT (revision 2), which is the case a caller is most tempted to
 // reconstruct locally instead of reading from the wire.
-const uploader = capturingClient(201, { status: 'UPLOADED', documentId: 'd', documentType: 'NATIONAL_ID', revision: 2 });
+// `documentId` is a UUID below: the gateway's projection re-checks it against
+// `UUID_RE` and the client's decoder does the same, so a synthetic 'd' would be
+// refused as drift and the assertion would prove nothing.
+const uploader = capturingClient(201, { status: 'UPLOADED', documentId: '11111111-1111-4111-8111-111111111111', documentType: 'NATIONAL_ID', revision: 2 });
 const uploaded = await uploadMyDocument(uploader.client, {
   applicationId: '123e4567-e89b-12d3-a456-426614174001',
   documentType: 'NATIONAL_ID',
@@ -328,7 +331,7 @@ deepEq('…and the whole response stays the allowlisted edge projection, with no
 // An identical re-upload is a retry: the edge returns the SAME revision. The
 // client must hand that number straight to its caller — incrementing it here
 // would tell a citizen a new revision was created when none was.
-const retryClient = capturingClient(201, { status: 'UPLOADED', documentId: 'd', documentType: 'NATIONAL_ID', revision: 1 });
+const retryClient = capturingClient(201, { status: 'UPLOADED', documentId: '11111111-1111-4111-8111-111111111111', documentType: 'NATIONAL_ID', revision: 1 });
 const retried = await uploadMyDocument(retryClient.client, {
   applicationId: '123e4567-e89b-12d3-a456-426614174001',
   documentType: 'NATIONAL_ID',

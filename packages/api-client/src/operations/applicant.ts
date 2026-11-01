@@ -46,6 +46,12 @@ export function submitMyApplication(
  * ADR-030. Upload one document for the citizen's OWN application. The subject
  * is the session; no applicant id is — or can be — sent. The response is
  * identifiers only: there is no verdict to render, by design.
+ *
+ * D8. The answer is DECODED at the transport boundary (see `decode.ts`), so a
+ * 2xx that does not carry the four contract fields — `revision` included —
+ * never reaches this function's caller. It surfaces as `ApiError { kind:
+ * 'malformed' }`, which `isUnconfirmedUploadOutcome()` identifies: the upload's
+ * outcome is then UNKNOWN, not failed, and must not be retried automatically.
  */
 export function uploadMyDocument(
   client: ApiClient,

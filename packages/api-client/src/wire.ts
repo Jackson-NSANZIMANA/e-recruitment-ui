@@ -275,6 +275,14 @@ export interface PublicCampaignDetailResponse {
  * increment it locally or present it as "a new revision was created". The edge
  * strips every other upstream field: there is no forensic verdict, score, lane,
  * flag, HMAC or object key on this shape, and none may be added here.
+ *
+ * THIS TYPE IS A DESCRIPTION, NOT A CHECK. `decodeUploadAnswer()` in
+ * `decode.ts` is what enforces it at runtime, and the transport runs it for
+ * every uploadMyDocument answer — a 2xx that does not match is refused there
+ * rather than rendered. A caller that receives this type therefore knows the
+ * revision was on the wire; a caller that receives `ApiError { kind:
+ * 'malformed' }` knows only that the outcome is UNCONFIRMED, which is not the
+ * same as failed.
  */
 export interface UploadDocumentResponse {
   readonly status: 'UPLOADED';

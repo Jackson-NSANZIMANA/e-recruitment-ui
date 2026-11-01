@@ -21,6 +21,7 @@
 // ══════════════════════════════════════════════════════════════════
 
 import { ApiError, normaliseErrorBody, type NormalisedError } from './errors.js';
+import { decodeUploadAnswer, UPLOAD_DOCUMENT_OPERATION_ID } from './decode.js';
 import { operation, type EdgeOperation } from './paths.js';
 import { withRetry, type RetryPolicy, DEFAULT_RETRY_POLICY } from './retry.js';
 
@@ -28,6 +29,21 @@ export const CSRF_HEADER = 'x-csrf-token';
 export const CSRF_COOKIE_SECURE = '__Host-usrp_csrf';
 export const CSRF_COOKIE_DEV = 'usrp_csrf_dev';
 export const CORRELATION_HEADER = 'x-correlation-id';
+
+/**
+ * D8. Success bodies that carry a contract the UI depends on, decoded at the
+ * boundary instead of being cast.
+ *
+ * Keyed by OPERATION, deliberately. A 204 with no body is a perfectly good
+ * answer for a command, and an officer list that arrives as a bare array is
+ * someone else's problem to normalise; neither may be pulled into a shape
+ * check that then has to be satisfied by every operation in the platform. Only
+ * the upload's answer is evidence a screen renders, so only the upload's
+ * answer is decoded here.
+ */
+const SUCCESS_DECODERS: Readonly<Record<string, (body: unknown) => unknown>> = {
+  [UPLOAD_DOCUMENT_OPERATION_ID]: decodeUploadAnswer,
+};
 
 export interface ApiClientOptions {
   /** The EDGE base URL — e.g. "http://localhost:4021". Never a service port. */
@@ -162,7 +178,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         parsed = JSON.parse(text);
       } catch {
         if (response.ok) {
-          const normalised: NormalisedError = { kind: 'malformed', detail: 'a 2xx response was not JSON' };
+          // Named for the operation, exactly as `decode.ts` names its drift:
+          // a caller that has to tell "this answer is unusable" from "the
+          // server refused" needs to know WHICH operation went unreadable.
+          const normalised: NormalisedError = { kind: 'malformed', detail: `${edgeOperation.id}: a 2xx response was not JSON` };
           throw new ApiError(normalised, 'The server returned an unexpected response.');
         }
       }
@@ -182,6 +201,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       status: response.status, correlationId, durationMs: Date.now() - started, error: null,
     });
     callOptions.onResponse?.({ status: response.status, headers: response.headers });
+
+    // D8. Decode before the cast, for the operations whose answer the UI puts
+    // on an evidence-integrity screen. Everything else keeps its 204 contract:
+    // no body is a valid answer to a command, and it is returned untouched.
+    const decoder = SUCCESS_DECODERS[edgeOperation.id];
+    if (decoder !== undefined) return decoder(parsed) as T;
     return (response.status === 204 ? ({} as T) : (parsed as T));
   };
 

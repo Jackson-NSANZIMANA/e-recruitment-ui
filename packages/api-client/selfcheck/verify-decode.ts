@@ -30,7 +30,10 @@ import {
   decodeMyApplications,
   decodeStatusHistory,
   decodeTransition,
+  decodeUploadAnswer,
+  isUnconfirmedUploadOutcome,
 } from '../src/decode.js';
+import type { UploadDocumentResponse } from '../src/wire.js';
 
 let passed = 0;
 const failures: string[] = [];
@@ -199,6 +202,143 @@ eq('the citizen list decodes from a bare array', mine.length, 1);
 eq('…and agency comes from the ROW, because a citizen is cross-agency', mine[0]?.agency, 'RNP');
 throwsMalformed('an unknown agency on a citizen row is refused, never defaulted',
   () => decodeMyApplications([{ applicationId: 'a', agency: 'RDX', status: 'SUBMITTED' }]), 'listMyApplications');
+
+// ══ 8. D8: the upload answer is DECODED, never cast ════════════
+//
+// `POST /edge/v1/me/applications/documents` is the one operation whose 2xx
+// body is EVIDENCE: the screen prints the revision it carries. A TypeScript
+// interface is not a check, so every case below goes through the real
+// transport — `createApiClient(...).call('uploadMyDocument', { form })` →
+// `fetch` → JSON → decoder — and not through a predicate defined beside the
+// assertions.
+//
+// WHAT THESE CASES DO NOT SAY. A refused answer is NOT proof the upload
+// failed: the bytes may be stored and the revision assigned, with only the
+// answer unusable. Every refusal here is therefore reported as an UNCONFIRMED
+// outcome, and the transport must not re-send the file to find out.
+
+const UPLOAD_DOCUMENT_ID = '11111111-1111-4111-8111-111111111111';
+const VALID_ANSWER = JSON.stringify({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision: 1 });
+
+/** One upload through the real transport, with the edge answering `raw`. */
+function uploadClient(raw: string, status = 201, counter?: number[]): ReturnType<typeof createApiClient> {
+  return createApiClient({
+    baseUrl: 'https://portal.usrp.gov.rw',
+    fetchImpl: (async () => {
+      counter?.push(1);
+      return new Response(raw, { status, headers: { 'content-type': 'application/json' } });
+    }) as unknown as typeof fetch,
+  });
+}
+
+/** The two things a call can produce: a decoded answer, or the thrown error. */
+async function uploadOutcome(raw: string, status = 201, counter?: number[]): Promise<{ answer?: UploadDocumentResponse; error?: unknown }> {
+  try {
+    const answer = await uploadClient(raw, status, counter).call<UploadDocumentResponse>('uploadMyDocument', { form: new FormData() });
+    return { answer };
+  } catch (error) {
+    return { error };
+  }
+}
+
+const answerWith = (revision: unknown): string =>
+  JSON.stringify({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision });
+
+const withoutRevision = (body: Record<string, unknown>): string =>
+  JSON.stringify({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', ...body });
+
+// A body that is not an answer at all.
+const NON_ANSWERS: readonly (readonly [string, string])[] = [
+  ['JSON null', 'null'],
+  ['the string "null"', '"null"'],
+  ['an array', '[]'],
+  ['a number primitive', '7'],
+  ['a string primitive', '"UPLOADED"'],
+  ['an empty body', ''],
+  ['a 201 that is not JSON', 'UPLOADED 201'],
+];
+
+// A JSON object that is not the upload answer.
+const DRIFTED_ANSWERS: readonly (readonly [string, string])[] = [
+  ['no revision at all', withoutRevision({})],
+  ['revision 0', answerWith(0)],
+  ['a negative revision', answerWith(-3)],
+  ['a fractional revision', answerWith(2.5)],
+  ['a stringified revision', answerWith('2')],
+  ['a revision past the safe-integer range', answerWith(Number.MAX_SAFE_INTEGER + 1)],
+  ['a null revision', answerWith(null)],
+  ['a boolean revision', answerWith(true)],
+  ['a revision object', answerWith({ value: 2 })],
+  ['a status that is not UPLOADED', JSON.stringify({ status: 'REFUSED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision: 1 })],
+  ['a documentId that is not a UUID', JSON.stringify({ status: 'UPLOADED', documentId: 'doc-internal-0001', documentType: 'NATIONAL_ID', revision: 1 })],
+  ['a documentType that is not a document type', JSON.stringify({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'whatever-the-browser-sent', revision: 1 })],
+];
+
+for (const [label, body] of NON_ANSWERS) {
+  const { answer, error } = await uploadOutcome(body);
+  ok(`${label} is refused instead of rendered as a receipt`, answer === undefined, 'it decoded instead of throwing');
+  ok(`…and ${label} is named an UNCONFIRMED upload outcome, not a failure`, isUnconfirmedUploadOutcome(error),
+    `got ${error instanceof Error ? error.message : String(error)}`);
+}
+
+for (const [label, body] of DRIFTED_ANSWERS) {
+  const { answer, error } = await uploadOutcome(body);
+  ok(`a 201 with ${label} is refused`, answer === undefined, 'it decoded instead of throwing');
+  ok(`…and ${label} is reported as an UNCONFIRMED outcome`, isUnconfirmedUploadOutcome(error),
+    `got ${error instanceof Error ? error.message : String(error)}`);
+}
+
+// The two cases JSON cannot express, straight through the decoder.
+throwsMalformed('NaN is not a revision', () => decodeUploadAnswer({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision: Number.NaN }), 'uploadMyDocument');
+throwsMalformed('Infinity is not a revision', () => decodeUploadAnswer({ status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision: Number.POSITIVE_INFINITY }), 'uploadMyDocument');
+
+// The well-formed answers, including the two the journey actually produces.
+deepEq('a first upload decodes to revision 1', await uploadClient(VALID_ANSWER).call('uploadMyDocument', { form: new FormData() }),
+  { status: 'UPLOADED', documentId: UPLOAD_DOCUMENT_ID, documentType: 'NATIONAL_ID', revision: 1 });
+eq('a replacement decodes to the revision the server assigned, not revision+1',
+  (await uploadClient(answerWith(2)).call<UploadDocumentResponse>('uploadMyDocument', { form: new FormData() })).revision, 2);
+
+// The decoder is an ALLOWLIST, not a pass-through: forensics verdict, score,
+// lane, flags, HMAC, object key and revision history are internal, and a
+// future edge that starts echoing them must not move them into the DOM.
+const tainted = decodeUploadAnswer({
+  status: 'UPLOADED',
+  documentId: UPLOAD_DOCUMENT_ID,
+  documentType: 'NATIONAL_ID',
+  revision: 3,
+  lane: 'GREEN',
+  forensicsScore: 3,
+  flags: ['LOW_RESOLUTION'],
+  contentHmac: 'deadbeef',
+  objectKey: 'applications/a/NATIONAL_ID/3',
+  superseded: [1, 2],
+});
+deepEq('a tainted 201 decodes to the four allowlisted fields and nothing else',
+  Object.keys(tainted).sort(), ['documentId', 'documentType', 'revision', 'status']);
+eq('…keeping the revision the server assigned', tainted.revision, 3);
+
+// An unconfirmed outcome must not trigger a second upload: upstream, an
+// identical re-upload is a RETRY — same revision, no new history entry — so
+// resending cannot repair a lost answer and only muddies the record.
+const uploadCalls: number[] = [];
+await uploadOutcome(withoutRevision({}), 201, uploadCalls);
+eq('an unconfirmed upload is NOT retried by the transport', uploadCalls.length, 1);
+
+// The decoder is keyed by operation: every other answer keeps its own contract.
+deepEq('a bare array is still a valid answer to listMyApplications',
+  await uploadClient('[]', 200).call('listMyApplications'), []);
+const noBodyClient = createApiClient({
+  baseUrl: 'https://portal.usrp.gov.rw',
+  fetchImpl: (async () => new Response(null, { status: 204 })) as unknown as typeof fetch,
+});
+deepEq('a 204 with no body is still a valid answer to a command',
+  await noBodyClient.call('withdrawMyApplication', { body: { applicationId: 'a' } }), {});
+
+// The message a citizen could see is generic: the drift stays in `detail`,
+// which no screen renders.
+const { error: driftError } = await uploadOutcome(answerWith('2'));
+ok('the citizen-facing message names no drift', driftError instanceof Error && driftError.message === 'The server returned an unexpected response.',
+  `got ${driftError instanceof Error ? driftError.message : String(driftError)}`);
 
 const total = passed + failures.length;
 if (failures.length > 0) {
