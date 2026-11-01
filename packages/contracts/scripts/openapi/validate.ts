@@ -104,8 +104,21 @@ function check(node: SchemaNode, value: unknown, path: string, ctx: Ctx): void {
       ctx.out.push({ path, message: `expected ${primary}, got ${actual}` });
       return;
     }
-    if (primary === 'integer' && !Number.isInteger(value)) {
-      ctx.out.push({ path, message: 'expected an integer' });
+    // `Number.isSafeInteger`, not `Number.isInteger`. Every reader of this
+    // contract is a JavaScript client, and above 2**53 a number is no longer
+    // the integer it claims to be — it silently equals its neighbours. The
+    // gateway's own revision check uses the same rule, and zod's `.int()` has
+    // always enforced it, so the two readers now agree.
+    if (primary === 'integer' && !Number.isSafeInteger(value)) {
+      ctx.out.push({ path, message: 'expected a safe integer' });
+    }
+    const min = node['minimum'];
+    const max = node['maximum'];
+    if (typeof min === 'number' && (value as number) < min) {
+      ctx.out.push({ path, message: `expected a number of at least ${min}` });
+    }
+    if (typeof max === 'number' && (value as number) > max) {
+      ctx.out.push({ path, message: `expected a number of at most ${max}` });
     }
     return;
   }

@@ -85,7 +85,7 @@ export const OfficerChangeOkSchema = z
   .strictObject({
     "outcome": z.enum(['ASSIGNED', 'DISABLED', 'ENABLED', 'REVOKED', 'UNCHANGED']),
     "officer": OfficerRowSchema,
-    "sessionsRevoked": z.number(),
+    "sessionsRevoked": z.number().int().min(0),
   });
 
 export const OfficerCreateRequestSchema = z

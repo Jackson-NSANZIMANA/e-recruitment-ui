@@ -39,6 +39,16 @@ function typesOf(node: SchemaNode): readonly string[] {
   return [];
 }
 
+/** `minimum`/`maximum` on a number, emitted so the zod reader binds what the IR binds. */
+function numberBounds(node: SchemaNode): string {
+  const min = node['minimum'];
+  const max = node['maximum'];
+  return (
+    (typeof min === 'number' ? `.min(${min})` : '') +
+    (typeof max === 'number' ? `.max(${max})` : '')
+  );
+}
+
 function stringChain(node: SchemaNode): string {
   let out = 'z.string()';
   const min = node['minLength'];
@@ -102,7 +112,13 @@ export function emitZod(node: SchemaNode, file: string, indent = 0): string {
       return stringChain(node) + suffix;
     case 'number':
     case 'integer':
-      return `z.number()${suffix}`;
+      // `integer` is NOT the same contract as `number`, and the structural
+      // validator has always enforced the difference (`Number.isInteger`).
+      // Emitting `z.number()` for both made the two readers disagree: a
+      // generated schema accepted 2.5 where the IR refused it, which is how a
+      // "revision" of 2.5 reaches a screen. Bounds are emitted for the same
+      // reason — `minimum: 1` that nothing checks is decoration.
+      return `z.number()${primary === 'integer' ? '.int()' : ''}${numberBounds(node)}${suffix}`;
     case 'boolean':
       return `z.boolean()${suffix}`;
     case 'array': {

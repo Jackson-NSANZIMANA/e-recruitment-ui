@@ -512,11 +512,12 @@
       "id": "document-uploaded",
       "schema": "DocumentUploaded201",
       "expect": "accept",
-      "why": "uploadMyDocument 201: identifiers only (documentId, documentType) — transcribed from applicant-documents.controller.ts; the verdict is withheld on purpose.",
+      "why": "uploadMyDocument 201: identifiers and the accepted revision (D8). Identity REBUILDS this body from the four fields it validated, so nothing the forensics service adds later reaches a citizen through this hop; the verdict is withheld on purpose.",
       "value": {
         "status": "UPLOADED",
         "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
-        "documentType": "NATIONAL_ID"
+        "documentType": "NATIONAL_ID",
+        "revision": 2
       }
     },
     {
@@ -528,6 +529,7 @@
         "status": "UPLOADED",
         "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
         "documentType": "NATIONAL_ID",
+        "revision": 1,
         "lane": "GREEN",
         "score": 0.97
       }
@@ -1003,6 +1005,104 @@
             "Name on certificate differs"
           ]
         }
+      }
+    },
+    {
+      "id": "document-uploaded-rejects-missing-revision",
+      "schema": "DocumentUploaded201",
+      "expect": "reject",
+      "why": "D8. Identity validates `revision` with Number.isSafeInteger && > 0 and logs document_door_contract_drift when it is absent, answering 502 rather than forwarding a body the rest of the platform treats as confirmed.",
+      "value": {
+        "status": "UPLOADED",
+        "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "documentType": "NATIONAL_ID"
+      }
+    },
+    {
+      "id": "document-uploaded-rejects-zero-revision",
+      "schema": "DocumentUploaded201",
+      "expect": "reject",
+      "why": "A zero revision is drift at this hop too: the gateway re-checks before it rebuilds, so a healthy deployment cannot emit one.",
+      "value": {
+        "status": "UPLOADED",
+        "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "documentType": "NATIONAL_ID",
+        "revision": 0
+      }
+    },
+    {
+      "id": "document-uploaded-rejects-stringified-revision",
+      "schema": "DocumentUploaded201",
+      "expect": "reject",
+      "why": "Stringified numbers survive JSON round-trips and silently become \u0022revision 2\u0022 in a UI. Refused here rather than coerced.",
+      "value": {
+        "status": "UPLOADED",
+        "documentId": "b3f1c2d4-5b6e-4f70-8192-0a1b2c3d4e5f",
+        "documentType": "NATIONAL_ID",
+        "revision": "2"
+      }
+    },
+    {
+      "id": "document-review-closed-relayed",
+      "schema": "DocumentReviewClosed409",
+      "expect": "accept",
+      "why": "D8, RELAYED \u2014 note the `status`: \u0022REFUSED\u0022 key. This is IDENTITY'S OWN shape, not what a browser receives: the edge tier strips that key and publishes only the error and the reason. Recording the two shapes as different is the point.",
+      "value": {
+        "status": "REFUSED",
+        "error": "DOCUMENT_REVIEW_CLOSED",
+        "reason": "HUMAN_REVIEWED"
+      }
+    },
+    {
+      "id": "document-review-closed-rejects-unknown-reason",
+      "schema": "DocumentReviewClosed409",
+      "expect": "reject",
+      "why": "An unrecognised reason is logged and answered 502 DEPENDENCY_UNAVAILABLE. Passing it on would put an upstream string on a citizen screen.",
+      "value": {
+        "status": "REFUSED",
+        "error": "DOCUMENT_REVIEW_CLOSED",
+        "reason": "CASE_WITHDRAWN"
+      }
+    },
+    {
+      "id": "document-review-closed-requires-status-key",
+      "schema": "DocumentReviewClosed409",
+      "expect": "reject",
+      "why": "Identity's refusal envelope is keyed on `status` as well as `error`. A client that copied the EDGE shape would not recognise this body \u2014 the two contracts are deliberately not the same.",
+      "value": {
+        "error": "DOCUMENT_REVIEW_CLOSED",
+        "reason": "CASE_ADVANCED"
+      }
+    },
+    {
+      "id": "upload-conflict-not-accepting",
+      "schema": "UploadConflict409",
+      "expect": "accept",
+      "why": "The union's other member, in identity's own envelope: code and status only, no currentStatus. A client that expects the upstream's explanatory field will not find it here.",
+      "value": {
+        "status": "REFUSED",
+        "error": "NOT_ACCEPTING_DOCUMENTS"
+      }
+    },
+    {
+      "id": "upload-conflict-review-closed",
+      "schema": "UploadConflict409",
+      "expect": "accept",
+      "why": "The D8 member of the same union, carrying its closed-set reason.",
+      "value": {
+        "status": "REFUSED",
+        "error": "DOCUMENT_REVIEW_CLOSED",
+        "reason": "CASE_ADVANCED"
+      }
+    },
+    {
+      "id": "upload-conflict-rejects-unknown-code",
+      "schema": "UploadConflict409",
+      "expect": "reject",
+      "why": "A refusal code the door does not emit is drift. The union is closed, so an unknown code cannot be laundered into a citizen-facing message.",
+      "value": {
+        "status": "REFUSED",
+        "error": "CASE_WITHDRAWN"
       }
     }
   ]

@@ -33,6 +33,7 @@ import type {
   DeclineErasureRequestSchema,
   DocumentChecklistItemSchema,
   DocumentChecklist200Schema,
+  DocumentReviewClosed409Schema,
   DocumentUploaded201Schema,
   EraseIdentityRequestSchema,
   ErasedOkSchema,
@@ -81,9 +82,11 @@ import type {
   OtpChallenged202Schema,
   OtpRequestBodySchema,
   OtpVerifyBodySchema,
+  RefusedNotAcceptingDocuments409Schema,
   SubmitApplicationRequestSchema,
   SubmitApplicationResponseSchema,
   Unauthenticated401Schema,
+  UploadConflict409Schema,
   UploadDocumentFormSchema,
   UpstreamUnavailable502Schema,
   VerifyIdentity400Schema,
@@ -111,6 +114,7 @@ export type ClearanceItem = z.infer<typeof ClearanceItemSchema>;
 export type DeclineErasureRequest = z.infer<typeof DeclineErasureRequestSchema>;
 export type DocumentChecklistItem = z.infer<typeof DocumentChecklistItemSchema>;
 export type DocumentChecklist200 = z.infer<typeof DocumentChecklist200Schema>;
+export type DocumentReviewClosed409 = z.infer<typeof DocumentReviewClosed409Schema>;
 export type DocumentUploaded201 = z.infer<typeof DocumentUploaded201Schema>;
 export type EraseIdentityRequest = z.infer<typeof EraseIdentityRequestSchema>;
 export type ErasedOk = z.infer<typeof ErasedOkSchema>;
@@ -159,9 +163,11 @@ export type OnboardingExpired401 = z.infer<typeof OnboardingExpired401Schema>;
 export type OtpChallenged202 = z.infer<typeof OtpChallenged202Schema>;
 export type OtpRequestBody = z.infer<typeof OtpRequestBodySchema>;
 export type OtpVerifyBody = z.infer<typeof OtpVerifyBodySchema>;
+export type RefusedNotAcceptingDocuments409 = z.infer<typeof RefusedNotAcceptingDocuments409Schema>;
 export type SubmitApplicationRequest = z.infer<typeof SubmitApplicationRequestSchema>;
 export type SubmitApplicationResponse = z.infer<typeof SubmitApplicationResponseSchema>;
 export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
+export type UploadConflict409 = z.infer<typeof UploadConflict409Schema>;
 export type UploadDocumentForm = z.infer<typeof UploadDocumentFormSchema>;
 export type UpstreamUnavailable502 = z.infer<typeof UpstreamUnavailable502Schema>;
 export type VerifyIdentity400 = z.infer<typeof VerifyIdentity400Schema>;

@@ -30,6 +30,7 @@ import type {
   DocumentLaneSchema,
   DocumentAnalyzed200Schema,
   DocumentRejectedMalware422Schema,
+  DocumentReviewClosed409Schema,
   DocumentUploaded201Schema,
   FileTooLarge413Schema,
   Forbidden403Schema,
@@ -41,6 +42,7 @@ import type {
   UnsupportedDocumentType422Schema,
   UnsupportedFileContent422Schema,
   UnsupportedFileType422Schema,
+  UploadConflict409Schema,
   UploadDocumentFormSchema,
   UploadRequest400Schema,
   UploadUnavailable503Schema,
@@ -59,6 +61,7 @@ export type ContentTypeMismatch422 = z.infer<typeof ContentTypeMismatch422Schema
 export type DocumentLane = z.infer<typeof DocumentLaneSchema>;
 export type DocumentAnalyzed200 = z.infer<typeof DocumentAnalyzed200Schema>;
 export type DocumentRejectedMalware422 = z.infer<typeof DocumentRejectedMalware422Schema>;
+export type DocumentReviewClosed409 = z.infer<typeof DocumentReviewClosed409Schema>;
 export type DocumentUploaded201 = z.infer<typeof DocumentUploaded201Schema>;
 export type FileTooLarge413 = z.infer<typeof FileTooLarge413Schema>;
 export type Forbidden403 = z.infer<typeof Forbidden403Schema>;
@@ -70,6 +73,7 @@ export type Unauthenticated401 = z.infer<typeof Unauthenticated401Schema>;
 export type UnsupportedDocumentType422 = z.infer<typeof UnsupportedDocumentType422Schema>;
 export type UnsupportedFileContent422 = z.infer<typeof UnsupportedFileContent422Schema>;
 export type UnsupportedFileType422 = z.infer<typeof UnsupportedFileType422Schema>;
+export type UploadConflict409 = z.infer<typeof UploadConflict409Schema>;
 export type UploadDocumentForm = z.infer<typeof UploadDocumentFormSchema>;
 export type UploadRequest400 = z.infer<typeof UploadRequest400Schema>;
 export type UploadUnavailable503 = z.infer<typeof UploadUnavailable503Schema>;
