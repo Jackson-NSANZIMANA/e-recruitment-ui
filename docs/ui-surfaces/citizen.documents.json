@@ -1,0 +1,87 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "citizen.documents",
+  "title": "Citizen documents",
+  "audience": "citizen",
+  "owner": "apps/applicant-portal",
+  "purpose": "Show the citizen what an application needs and where each item stands, and take the number of the Irembo criminal-record certificate with its states. Advisory: it never blocks the application.",
+  "routes": [
+    {
+      "path": "/applications/:applicationId/documents",
+      "app": "applicant-portal",
+      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "role": "checklist"
+    }
+  ],
+  "operations": [
+    "getMyDocumentChecklist",
+    "attachMyClearanceCertificate"
+  ],
+  "ads": [
+    {
+      "name": "SectionMessage",
+      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "Spinner",
+      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "import": "@atlaskit/spinner"
+    },
+    {
+      "name": "TextField",
+      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "import": "@atlaskit/textfield"
+    }
+  ],
+  "states": [
+    {
+      "surface": "checklist",
+      "required": [
+        "loading",
+        "number-required",
+        "verifying",
+        "correction-needed",
+        "under-officer-review",
+        "verified",
+        "error"
+      ],
+      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "evidence": [
+        "isLoading",
+        "NUMBER_REQUIRED",
+        "VERIFYING",
+        "CORRECTION_NEEDED",
+        "UNDER_OFFICER_REVIEW",
+        "VERIFIED",
+        "isError"
+      ]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated",
+    "status is not communicated by color alone",
+    "the number field has a visible label and a hint",
+    "an error is announced (role alert)"
+  ],
+  "tests": [
+    "apps/applicant-portal/e2e/s12c-screens.spec.ts",
+    "apps/applicant-portal/src/routes/documents/model.test.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "derived-server-side",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/applicant-portal/e2e/s12c-screens.spec.ts"
+      ]
+    }
+  }
+}

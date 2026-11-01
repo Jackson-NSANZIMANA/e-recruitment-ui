@@ -31,6 +31,7 @@ const ApplicationsPage = lazy(() => import("./routes/applications.js"));
 const StatusPage = lazy(() => import("./routes/status.js"));
 const ApplyPage = lazy(() => import("./routes/apply/index.js"));
 const ExamQrPage = lazy(() => import("./routes/exam-qr.js"));
+const DocumentsPage = lazy(() => import("./routes/documents/index.js"));
 
 const FullPageSpinner = (): React.ReactElement => (
   <Box xcss={spinnerStyles.fullPage}>
@@ -66,6 +67,8 @@ const router = createBrowserRouter(gateByReadiness([{ element: <CitizenLayout />
       { path: "applications", element: <ApplicationsPage /> },
       // ADR-033: the downloadable exam QR for one of the citizen's applications.
       { path: "applications/:applicationId/exam-qr", element: <ExamQrPage /> },
+      // ADR-032 / ADR-048: the citizen's document checklist and the clearance number field.
+      { path: "applications/:applicationId/documents", element: <DocumentsPage /> },
 
       // ── Feature slices (ADR-FE-006) ──────────────────────────────────────
       //

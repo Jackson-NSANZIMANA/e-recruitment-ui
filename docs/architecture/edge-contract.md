@@ -2,7 +2,7 @@
 
 **Status:** Current frontend contract, 2026-10-04
 **Supersedes:** the earlier multi-BFF specification in this file
-**Backend authority:** `services/edge-gateway/src/domain/edge-operations.ts` and `services/edge-gateway/src/routes.ts` at backend `d0ef603ebec9fa6155d321cbeef1aff72ac3be48`
+**Backend authority:** `services/edge-gateway/src/domain/edge-operations.ts` and `services/edge-gateway/src/routes.ts` at backend `b004fca840af12435bbc84ec0e365c513c788c36`
 **Frontend authority:** `packages/api-client/src/paths.ts` and `packages/auth/src/edge-client.ts`
 
 This file used to describe separate `citizen-bff`, `agency-bff`, and `admin-bff` deployments. That topology is retired. Backend ADR-021 explicitly chooses **one edge service** under `/edge/v1/**`, with agency derived from the server-side officer session rather than supplied in a request path. Do not implement or document the old multi-BFF shape.

@@ -90,6 +90,8 @@ export default function StatusPage(): React.ReactElement {
               {application.applicationId !== null && (
                 <Text size="small">
                   <Link to={`/applications/${application.applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>
+                  {" · "}
+                  <Link to={`/applications/${application.applicationId}/documents`}>{t("citizen_docs.open_link")}</Link>
                 </Text>
               )}
 

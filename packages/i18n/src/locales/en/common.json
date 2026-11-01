@@ -710,9 +710,14 @@
     "coat_of_arms_alt": "Coat of arms of the Republic of Rwanda",
     "emblem_alt": "Emblem of the {{agency}}",
     "restricted": "Restricted",
+    "sandbox": "Sandbox",
+    "sandbox_body": "Practice environment. Nothing here is a real recruitment, and no real person is affected.",
     "restricted_body": "Authorised officers only · Personal data protected under {{law}} · Actions are audited",
     "document_serial": "Serial number",
     "verification_line": "Verification line",
     "verification_hint": "The last digit of each group is a check digit that catches typing errors."
+  },
+  "citizen_docs": {
+    "open_link": "My documents"
   }
 }

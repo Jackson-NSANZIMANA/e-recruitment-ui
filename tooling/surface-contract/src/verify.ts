@@ -262,6 +262,15 @@ function loadLocales(root: string): Record<'en' | 'rw' | 'fr', LocaleTree[]> {
   for (const lang of ['en', 'rw', 'fr'] as const) {
     const common = source(root, `packages/i18n/src/locales/${lang}/common.json`);
     if (common !== null) out[lang].push(JSON.parse(common) as LocaleTree);
+    // Every other namespace bundle the i18n package owns (a lazily registered namespace such as citizen_apply):
+    // a key that lives there is as real as one in common, and it is checked in all three languages.
+    const own = resolve(root, `packages/i18n/src/locales/${lang}`);
+    if (existsSync(own)) {
+      for (const file of readdirSync(own).filter((f) => f.endsWith('.json') && f !== 'common.json').sort()) {
+        const bundle = source(root, `packages/i18n/src/locales/${lang}/${file}`);
+        if (bundle !== null) out[lang].push(JSON.parse(bundle) as LocaleTree);
+      }
+    }
     const features = resolve(root, 'packages/features');
     if (!existsSync(features)) continue;
     for (const slice of readdirSync(features)) {

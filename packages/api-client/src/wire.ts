@@ -247,6 +247,14 @@ export interface PublicCampaign {
   readonly allowsWalkIn: boolean;
   readonly contactPhoneNumbers: readonly string[] | null;
   readonly contactWebsite: string | null;
+  /** ADR-049: detail reads only; per category the rules a citizen may read before applying. Empty for a v1 campaign. */
+  readonly eligibility?: Readonly<Record<string, PublicCategoryEligibility>>;
+}
+
+export interface PublicCategoryEligibility {
+  readonly ageBands: readonly { readonly qualifications: readonly string[]; readonly minimumAge: number; readonly maximumAge: number }[];
+  readonly educationAlternatives: readonly { readonly level: string }[];
+  readonly minimumSciencePercent: number | null;
 }
 
 export interface PublicCampaignListResponse {
@@ -282,6 +290,21 @@ export type DocumentSatisfaction =
   | 'MISSING';
 
 /** ADVISORY: never a gate. No score, flag, object key or officer id. */
+/**
+ * The citizen's own verified identity, allowlisted by the edge (ADR-049, ADR-FE-019).
+ * placeOfBirth and nationality are always null today: the platform does not retain them,
+ * so the wizard asks for them. There is no photo, signature, parents' names or National ID.
+ */
+export interface MyIdentity {
+  readonly fullName: string;
+  readonly sex: 'MALE' | 'FEMALE';
+  readonly dateOfBirth: string;
+  readonly homeDistrict: string;
+  readonly homeProvince: string;
+  readonly placeOfBirth: string | null;
+  readonly nationality: string | null;
+}
+
 export interface DocumentChecklist {
   readonly agency: Agency;
   readonly source: 'POLICY_VERSION' | 'GROUND_TRUTH_TABLE';
@@ -317,6 +340,11 @@ export type ClearanceState =
 export interface ClearanceItem {
   readonly state: ClearanceState;
   readonly code: string | null;
+  /**
+   * OFFICER audience only (`getDocumentChecklist`): the closed amber-queue reasons (CLEARANCE_CONTENT_REVIEW,
+   * IDENTITY_NAME_PARTIAL, ...). The citizen path carries none, and the contract schema for it refuses them.
+   */
+  readonly reasons?: readonly string[];
 }
 
 /**

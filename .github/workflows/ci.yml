@@ -26,7 +26,7 @@ env:
   # /edge/v1/** in the browser, so they point at the local harness edge; a
   # deployment sets its own VITE_EDGE_URL (.env.example documents it).
   VITE_EDGE_URL: http://localhost:4021
-  BACKEND_SHA: d0ef603ebec9fa6155d321cbeef1aff72ac3be48
+  BACKEND_SHA: b004fca840af12435bbc84ec0e365c513c788c36
   TURBO_SCM_BASE: origin/main
   TURBO_SCM_HEAD: HEAD
   # One Trivy for the whole pipeline. The advisory scan (security-scan.sh, which

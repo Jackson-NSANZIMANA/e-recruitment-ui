@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/*.yaml                                    ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -17,7 +17,7 @@
 // machine-readable half of "the frontend and the backend agree about what
 // exists".
 //
-// 79 business operations + 22 probes = 101 total.
+// 80 business operations + 22 probes = 102 total.
 
 export interface RouteFact {
   readonly service: string;
@@ -1755,6 +1755,24 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
       "202",
       "401",
       "500"
+    ]
+  },
+  {
+    "service": "identity-service",
+    "operationId": "getMyIdentity",
+    "method": "GET",
+    "path": "/v1/applicants/me/identity",
+    "auth": [
+      "applicant-session"
+    ],
+    "reach": "browser",
+    "verified": "controller-verbatim",
+    "source": "src/adapters/http/own-identity.controller.ts (ME_IDENTITY_PATH)",
+    "statuses": [
+      "200",
+      "401",
+      "404",
+      "503"
     ]
   },
   {

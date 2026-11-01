@@ -17,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = 'd0ef603ebec9fa6155d321cbeef1aff72ac3be48' as const;
+export const EDGE_BACKEND_SHA = 'b004fca840af12435bbc84ec0e365c513c788c36' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
@@ -52,6 +52,8 @@ export const EDGE_OPERATIONS = [
   { id: 'submitMyApplication', method: 'POST', edgePath: '/edge/v1/me/applications', upstreamOperationId: 'submitMyApplication', session: 'applicant', retryOnG2G: false, composition: 'single' },
   { id: 'getMyExamInvitation', method: 'GET', edgePath: '/edge/v1/me/applications/exam-invitation', upstreamOperationId: 'getMyExamInvitation', session: 'applicant', retryOnG2G: true, composition: 'single' },
   { id: 'getMyDocumentChecklist', method: 'GET', edgePath: '/edge/v1/me/applications/document-checklist', upstreamOperationId: 'getMyDocumentChecklist', session: 'applicant', retryOnG2G: true, composition: 'single' },
+  // ADR-049 (S12c). Read-only; the edge retries it on a G2G fault.
+  { id: 'getMyIdentity', method: 'GET', edgePath: '/edge/v1/me/identity', upstreamOperationId: 'getMyIdentity', session: 'applicant', retryOnG2G: true, composition: 'single' },
   // ADR-048 §2.3 (S12b). A write: the edge never retries it. The citizen's own
   // retry is safe because the staged verification record is idempotent, and
   // that is the caller's decision to make, not the transport's.

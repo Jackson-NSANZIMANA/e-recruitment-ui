@@ -10,6 +10,8 @@ import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPE
 import {
   ApiError,
   createApiClient,
+  useMyIdentity,
+  usePublicCampaign,
   usePublicCampaigns,
   useSubmitMyApplication,
   useUploadMyDocument,
@@ -17,8 +19,11 @@ import {
   type PublicCampaign,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
+import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
+import { nidaRows, sexKey } from "./nida-identity.js";
+import { CategoryRules } from "./CategoryRules.js";
 
 const STORAGE_KEY = "usrp_apply_draft";
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -194,6 +199,8 @@ function StepCategory({ data, onNext, onBack }: {
   const offered = APPLICATION_CATEGORIES.filter(
     (c) => data.campaignCategories === undefined || data.campaignCategories.includes(c),
   );
+  // ADR-049: the rules per qualification come from the campaign's public detail; absent for a v1 campaign.
+  const detail = usePublicCampaign(client, data.campaignCode ?? null);
   return (
     <Form<{ category: string }> onSubmit={(values) => {
       const category = categoryOrUndefined(values.category);
@@ -202,6 +209,11 @@ function StepCategory({ data, onNext, onBack }: {
       {({ formProps }) => (
         <form {...formProps}>
           <Stack space="space.400">
+            <CategoryRules
+              categories={offered}
+              eligibility={detail.data?.campaign.eligibility}
+              labelFor={(category) => t(`apply.categories.${category}`)}
+            />
             <Field
               name="category"
               label={t("apply.category_label")}
@@ -310,6 +322,39 @@ function StepEducation({ data, onNext, onBack }: {
   );
 }
 
+/**
+ * Identity as recorded by NIDA, read-only (ADR-FE-019). Nothing here is editable: a wrong
+ * value is corrected with NIDA, never in this form. A failed read never blocks the wizard.
+ */
+function NidaIdentityBlock(): React.ReactElement | null {
+  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
+  const identity = useMyIdentity(client);
+  if (identity.isPending) return null;
+  if (identity.isError) {
+    return <SectionMessage appearance="information"><Text>{t("apply.nida_unavailable")}</Text></SectionMessage>;
+  }
+  const label = (key: string, value: string | null): string => {
+    if (value === null) return t("apply.nida_not_held");
+    if (key === "sex") return t(`apply.nida_${sexKey(value === "FEMALE" ? "FEMALE" : "MALE")}`);
+    return value;
+  };
+  return (
+    <SectionMessage title={t("apply.nida_title")} headingLevel="h3" appearance="information">
+      <Stack space="space.100">
+        <Text>{t("apply.nida_body")}</Text>
+        <Stack space="space.050" testId="nida-identity">
+          {nidaRows(identity.data).map((row) => (
+            <Inline key={row.key} space="space.100">
+              <Text weight="bold">{t(`apply.nida_${row.key}`)}</Text>
+              <Text>{label(row.key, row.value)}{row.value === null ? ` (${t("apply.nida_asked")})` : ""}</Text>
+            </Inline>
+          ))}
+        </Stack>
+      </Stack>
+    </SectionMessage>
+  );
+}
+
 function StepDeclaration({ onNext, onBack }: {
   readonly onNext: (patch: Partial<WizardData>) => void;
   readonly onBack: () => void;
@@ -317,6 +362,7 @@ function StepDeclaration({ onNext, onBack }: {
   const { t } = useTranslation();
   return (
     <Stack space="space.400">
+      <NidaIdentityBlock />
       <SectionMessage title={t("apply.declaration_title")} headingLevel="h3">
         <Text>{t("apply.declaration_copy")}</Text>
       </SectionMessage>
@@ -440,7 +486,7 @@ function SubmissionResult({ result, applicationId, agency, error, onNewAttempt }
         <Stack space="space.200">
           <Text>{result === "REPLAYED" ? t("apply.replay_body") : t("apply.success_body")}</Text>
           {applicationId !== null && (
-            <Text><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link></Text>
+            <Text><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>{" · "}<Link to={`/applications/${applicationId}/documents`}>{t("citizen_docs.open_link")}</Link></Text>
           )}
           {applicationId !== null && agency !== null && (
             <DocumentsPanel applicationId={applicationId} agency={agency} />

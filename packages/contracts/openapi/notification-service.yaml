@@ -18,7 +18,7 @@ info:
 
 
     THERE IS NO NOTIFICATION READ OR RESEND ENDPOINT. A citizen cannot see what was sent to them and an officer cannot resend a failed SMS. The only visible trace is smsNotificationSentAt on the officer detail read — a timestamp with no content and no delivery status.
-  x-usrp-backend-sha: "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_NOTIFICATION_SERVICE"
   x-usrp-business-routes: 0
 

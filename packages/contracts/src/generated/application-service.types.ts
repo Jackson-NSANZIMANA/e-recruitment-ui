@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/application-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║
@@ -92,6 +92,7 @@ import type {
   NotFound404Schema,
   OpaqueAdminReadSchema,
   OperationalReadErrorSchema,
+  PublicCategoryEligibilitySchema,
   PublicCampaignSchema,
   PublicCampaignDetail200Schema,
   PublicCampaignList200Schema,
@@ -202,6 +203,7 @@ export type NoWalkInCampaign409 = z.infer<typeof NoWalkInCampaign409Schema>;
 export type NotFound404 = z.infer<typeof NotFound404Schema>;
 export type OpaqueAdminRead = z.infer<typeof OpaqueAdminReadSchema>;
 export type OperationalReadError = z.infer<typeof OperationalReadErrorSchema>;
+export type PublicCategoryEligibility = z.infer<typeof PublicCategoryEligibilitySchema>;
 export type PublicCampaign = z.infer<typeof PublicCampaignSchema>;
 export type PublicCampaignDetail200 = z.infer<typeof PublicCampaignDetail200Schema>;
 export type PublicCampaignList200 = z.infer<typeof PublicCampaignList200Schema>;

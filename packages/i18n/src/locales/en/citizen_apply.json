@@ -1,0 +1,99 @@
+{
+  "citizen_docs": {
+    "title": "Your documents",
+    "intro": "What this application needs, and where each item stands. Nothing here blocks your application: the agency checks the rest at the venue.",
+    "back": "Back to my applications",
+    "loading": "Loading your documents",
+    "error": "We could not load your documents. Try again in a moment.",
+    "all_done": "Everything the registries can check is done.",
+    "sat": {
+      "API_VERIFIED": "Verified automatically by the registry",
+      "UPLOADED_CLEARED": "Received and checked",
+      "VENUE_VERIFIED": "Checked at the venue",
+      "AWAITING_REGISTRY": "Waiting for the registry",
+      "AWAITING_NESA": "NESA has not published these results yet. We will check again by ourselves; you do not need to do anything.",
+      "UNDER_REVIEW": "An officer is looking at it",
+      "REJECTED": "Not accepted. Please contact the agency.",
+      "MISSING": "Bring it to the venue"
+    },
+    "type": {
+      "NATIONAL_ID": "National ID",
+      "OLEVEL_CERTIFICATE": "O-Level certificate",
+      "ALEVEL_CERTIFICATE": "A-Level certificate",
+      "DEGREE_DIPLOMA_COPY": "Degree or diploma (copy)",
+      "DEGREE_DIPLOMA_NOTARIZED": "Degree or diploma (notarised)",
+      "GOOD_CONDUCT_CERTIFICATE": "Certificate of good conduct",
+      "NON_CONVICTION_CERTIFICATE": "Certificate of no criminal conviction",
+      "CELIBACY_CERTIFICATE": "Certificate of single status",
+      "MEDICAL_CERTIFICATE_GOVT": "Medical certificate from a government doctor",
+      "BIRTH_CERTIFICATE": "Birth certificate",
+      "APPLICATION_FORM_WITH_PHOTO": "Application form with a passport photo"
+    },
+    "clearance": {
+      "field_label": "Application number of your criminal-record certificate",
+      "hint": "Request the certificate on IremboGov, then type its application number here: a letter, 12 digits and 4 letters.",
+      "submit": "Send the number",
+      "sending": "Sending",
+      "shape": "This number is not in the right shape: a letter, 12 digits and 4 letters.",
+      "sent": "Number received. We are checking it.",
+      "closed": "This application is closed, so a number can no longer be added.",
+      "failed": "We could not send the number. Try again.",
+      "state": {
+        "NUMBER_REQUIRED": "We still need the number of your criminal-record certificate.",
+        "VERIFYING": "We are checking your certificate. This can take a few minutes; you do not need to do anything.",
+        "UNDER_OFFICER_REVIEW": "An officer will look at your certificate. You do not need to do anything.",
+        "VERIFIED": "Your certificate is verified."
+      },
+      "code": {
+        "CERTIFICATE_NUMBER_MALFORMED": "The number is not in the right shape. Check it and try again.",
+        "CERTIFICATE_NOT_FOUND": "We could not find a certificate with this number. Check the number and try again.",
+        "CERTIFICATE_NOT_BOUND": "This record does not match your identity. Check that you typed the number of your own certificate.",
+        "CERTIFICATE_WRONG_TYPE": "This is not a criminal-record certificate. Request the right certificate on IremboGov and give its number.",
+        "CERTIFICATE_EXPIRED": "This certificate is too old or not yet valid. Request a new one on IremboGov.",
+        "CERTIFICATE_NOT_VALID": "This certificate is no longer valid. Request a new one on IremboGov.",
+        "DEFAULT": "We could not accept this certificate. Check the number and try again."
+      }
+    }
+  },
+  "category_rules": {
+    "title": "Who can apply, and up to what age",
+    "intro": "Each category has its own age limit, depending on your qualification. Find yours below.",
+    "age_range": "aged {{min}} to {{max}}",
+    "age_up_to": "aged {{max}} or under",
+    "accepted": "Accepted qualifications (any one of them)",
+    "science": "At least {{percent}}% in your secondary science subjects",
+    "none": "The age limits for this recruitment are on the official announcement.",
+    "at_or_above": "{{level}} or above",
+    "qual": {
+      "O_LEVEL_S3": "S3 completed",
+      "O_LEVEL_S6_EQUIV": "O-Level equivalent",
+      "A_LEVEL_A2": "A-Level (A2)",
+      "A1_IPRC": "Advanced diploma (A1, IPRC)",
+      "BACHELOR_A0": "Bachelor degree (A0)",
+      "MASTERS": "Master degree",
+      "PHD": "Doctorate",
+      "FIELD_MEDICINE": "Medicine",
+      "FIELD_ENGINEERING": "Engineering",
+      "FIELD_LAW": "Law",
+      "FIELD_NURSING": "Nursing",
+      "FIELD_EDUCATION": "Education",
+      "FIELD_VETERINARY_MEDICINE": "Veterinary medicine",
+      "FIELD_CLINICAL_PSYCHOLOGY": "Clinical psychology"
+    }
+  },
+  "apply": {
+    "nida_title": "Your details, as recorded by NIDA",
+    "nida_body": "These details come from the national identity record. You cannot change them here. If something is wrong, it must be corrected with NIDA.",
+    "nida_unavailable": "We could not show your NIDA details right now. You can continue; your application is checked against NIDA in any case.",
+    "nida_asked": "NIDA does not give us this, so you will be asked for it",
+    "nida_full_name": "Names",
+    "nida_sex": "Sex",
+    "nida_date_of_birth": "Date of birth",
+    "nida_place_of_birth": "Place of birth",
+    "nida_nationality": "Nationality",
+    "nida_district": "District of residence",
+    "nida_female": "Female",
+    "nida_male": "Male",
+    "nida_not_held": "Not on record here"
+  }
+}

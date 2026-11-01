@@ -64,6 +64,10 @@ export const examInvitationKeys = {
   mine: (applicationId: string) => ['exam-invitation', 'mine', applicationId] as const,
 };
 
+export const identityKeys = {
+  mine: ['identity', 'mine'] as const,
+};
+
 export const documentKeys = {
   all: ['documents'] as const,
   mine: (applicationId: string) => ['documents', 'checklist', 'mine', applicationId] as const,

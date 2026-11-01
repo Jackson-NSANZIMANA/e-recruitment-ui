@@ -48,7 +48,7 @@ info:
     THE RAW NATIONAL ID IS REQUEST-ONLY and nationalIdHash appears in NO
     response in this document. The hash is an internal cross-service key; a
     browser that computes or receives one is a leak of a cross-service join key.
-  x-usrp-backend-sha: "d0ef603ebec9fa6155d321cbeef1aff72ac3be48"
+  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
   x-usrp-service-port-var: "PORT_IDENTITY_SERVICE"
   x-usrp-transport-faults:
     - status: 405
@@ -616,6 +616,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UpstreamUnavailable502"
+
+  /v1/applicants/me/identity:
+    get:
+      operationId: "getMyIdentity"
+      summary: "The citizen's own verified identity, allowlisted (ADR-049, ADR-FE-019)"
+      description: >-
+        SESSION-AUTHENTICATED. The subject is the session. ALLOWLISTED: names, sex,
+        date of birth, district and province of residence; never a photo, signature,
+        parents' names or the National ID.
+      x-usrp-auth: ["applicant-session"]
+      x-usrp-reach: "browser"
+      x-usrp-source: "src/adapters/http/own-identity.controller.ts (ME_IDENTITY_PATH)"
+      x-usrp-verified: "controller-verbatim"
+      responses:
+        "200":
+          description: "The allowlisted identity."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyIdentity200"
+        "401":
+          description: "No applicant session."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidSession401"
+        "404":
+          description: "No verified identity for this session."
+        "503":
+          description: "The identity record could not be read."
 
   /v1/applicants/me/applications/clearance-certificate:
     post:
@@ -2089,6 +2119,27 @@ components:
           type: "string"
           const: "UNAUTHENTICATED"
         detail:
+          type: "string"
+
+    MyIdentity200:
+      description: >-
+        The citizen's own identity, allowlisted (ADR-049). The edge adds
+        placeOfBirth and nationality as null: the platform does not retain them.
+      type: "object"
+      additionalProperties: false
+      required: ["fullName", "sex", "dateOfBirth", "homeDistrict", "homeProvince"]
+      properties:
+        fullName:
+          type: "string"
+        sex:
+          type: "string"
+          enum: ["MALE", "FEMALE"]
+        dateOfBirth:
+          type: "string"
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        homeDistrict:
+          type: "string"
+        homeProvince:
           type: "string"
 
     InvalidSession401:

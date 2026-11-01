@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/notification-service.yaml                 ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  d0ef603ebec9fa6155d321cbeef1aff72ac3be48          ║
+// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║

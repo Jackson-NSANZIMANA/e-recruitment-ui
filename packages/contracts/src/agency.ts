@@ -12,12 +12,13 @@
 /**
  * The backend main commit every value in this file was verified against.
  *
- * Re-verified at d0ef603: cd49628..d0ef603 touches `shared-types` only
- * additively (`EligibilityResult.reviewReasons`) and adds S12b's clearance
- * tables, so no status, category, document type, gender, channel, lane, reach,
- * auth kind or terminal set in this file changes.
+ * Re-verified at b004fca: d0ef603..b004fca touches `shared-types` only
+ * additively (a policy `v2` block on the campaign policy and a `clearancePolicy`
+ * on the cleared event, both optional) and adds the `getMyIdentity` edge
+ * operation, so no status, category, document type, gender, channel, lane,
+ * reach, auth kind or terminal set in this file changes.
  */
-export const VERIFIED_BACKEND_SHA = 'd0ef603ebec9fa6155d321cbeef1aff72ac3be48';
+export const VERIFIED_BACKEND_SHA = 'b004fca840af12435bbc84ec0e365c513c788c36';
 
 export const AGENCIES = ['RDF', 'RNP', 'RCS'] as const;
 export type Agency = (typeof AGENCIES)[number];
