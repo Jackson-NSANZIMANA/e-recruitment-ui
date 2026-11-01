@@ -398,6 +398,9 @@
     "upload_ok_title": "Inyandiko yakiriwe",
     "upload_ok_body": "Byakiriwe: {{types}}. Ushobora kohereza indi nyandiko.",
     "upload_received_item": "{{type}} (ivugururwa rya {{revision}})",
+    "upload_unconfirmed_title": "Ntitwabashije kwemeza iki cyoherejwe",
+    "upload_unconfirmed_body": "Ntitwabashije kwemeza niba iyi nyandiko yakiriwe. Reba urupapuro rw’inyandiko zawe; niba itarugaragaraho, yongeye kohereza cyangwa uhamagare ibiro bishinzwe gushaka abakozi.",
+    "upload_unconfirmed_on_file_body": "Ntitwabashije kwemeza niba iyoherezwa rya nyuma rya {{type}} ryakiriwe. Inyandiko y’ubu bwoko isanzwe ibaho kuri iyi dosiye. Reba urupapuro rw’inyandiko zawe kugira ngo urebe ibyanditswe.",
     "upload_review_closed": {
       "HUMAN_REVIEWED": "Iyi nyandiko yamaze gusuzumwa. Kugira ngo uyisimbuze, hamagara ibiro bishinzwe gushaka abakozi kugira ngo bongere kuyifungura.",
       "CASE_ADVANCED": "Iyi dosiye y’isaba yarenze icyiciro cy’isuzuma ry’inyandiko, bityo inyandiko ntizishobora kongera gusimbuzwa."

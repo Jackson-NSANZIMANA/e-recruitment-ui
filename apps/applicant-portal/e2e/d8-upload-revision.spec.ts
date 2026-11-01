@@ -4,7 +4,8 @@ import { expect, test, type Page, type Route } from '@playwright/test';
  * D8 — the citizen's upload journey, in a real browser over the real bundle,
  * with the edge intercepted. It proves what the applicant sees for each answer
  * the D8 contract can return: a first upload, a replacement, an identical
- * retry, and both closed-review refusals.
+ * retry, both closed-review refusals, an unknown reason, an absent reason, and
+ * a 2xx the client cannot trust.
  *
  * WHAT THIS FILE DOES NOT PROVE, AND WHAT IS STILL OWED. The edge responses
  * below are controlled, so this proves the UI renders the server's answer
@@ -57,6 +58,8 @@ test.setTimeout(60_000);
 const HUMAN_REVIEWED = 'This document has already been reviewed. To replace it, contact the recruitment office to re-open it.';
 const CASE_ADVANCED = 'This application has moved past document review, so documents can no longer be replaced.';
 const GENERIC = 'The document could not be uploaded. Check the file and try again.';
+const UNCONFIRMED_TITLE = 'We could not confirm this upload';
+const UNCONFIRMED_BODY = 'We could not confirm whether this document was received.';
 
 async function mockEdge(page: Page): Promise<void> {
   // Pin the language: these specs prove the flow, not the host machine's locale.
@@ -83,6 +86,16 @@ async function mockEdge(page: Page): Promise<void> {
   // a per-test network race from the wizard walk.
   await page.route('**/edge/v1/me/identity', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(IDENTITY) }),
+  );
+  // The advisory checklist the panel reads to RECONCILE an upload it cannot
+  // confirm. It carries no revision, so it can only ever say "on file". A test
+  // that needs a different answer re-routes it after calling this.
+  await page.route('**/edge/v1/me/applications/document-checklist*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ agency: 'RDF', source: 'POLICY_VERSION', complete: false, items: [] }),
+    }),
   );
 }
 
@@ -116,10 +129,18 @@ function replyToUploads(replies: readonly { status: number; body: unknown }[], s
   };
 }
 
+// A real UUID: the edge's projection re-checks `documentId` against its UUID
+// pattern and the api-client decoder does the same, so a synthetic id would be
+// refused as drift and the success-path assertions would prove nothing.
+const DOCUMENT_ID = '11111111-1111-4111-8111-111111111111';
+
 const UPLOADED = (revision: number): { status: number; body: unknown } => ({
   status: 201,
-  body: { status: 'UPLOADED', documentId: 'doc-internal-0001', documentType: 'NATIONAL_ID', revision },
+  body: { status: 'UPLOADED', documentId: DOCUMENT_ID, documentType: 'NATIONAL_ID', revision },
 });
+
+/** A 2xx the client CANNOT trust: the contract's `revision` is missing. */
+const UNCONFIRMED = { status: 201, body: { status: 'UPLOADED', documentId: DOCUMENT_ID, documentType: 'NATIONAL_ID' } };
 
 const REFUSED = (reason?: string): { status: number; body: unknown } => ({
   status: 409,
@@ -180,7 +201,7 @@ test('CASE_ADVANCED explains that the application has moved on', async ({ page }
   await expect(page.getByText(CASE_ADVANCED)).toBeVisible({ timeout: 15_000 });
 });
 
-test('an unknown or absent reason shows the generic safe error and no backend text', async ({ page }) => {
+test('an unknown reason shows the generic safe error and no backend text', async ({ page }) => {
   await mockEdge(page);
   await page.route('**/edge/v1/me/applications/documents', replyToUploads([REFUSED('SOMETHING_NEW')], []));
 
@@ -190,7 +211,49 @@ test('an unknown or absent reason shows the generic safe error and no backend te
   await expect(page.getByText(GENERIC)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('SOMETHING_NEW')).toHaveCount(0);
   await expect(page.getByText('DOCUMENT_REVIEW_CLOSED')).toHaveCount(0);
-  await expect(page.getByText('doc-internal-0001')).toHaveCount(0);
+  await expect(page.getByText(DOCUMENT_ID)).toHaveCount(0);
+});
+
+// Distinct from the case above: a reason the server did not send at all is not
+// the same defect as a reason the server sent and this build does not know.
+test('an absent reason shows the generic safe error and no backend text', async ({ page }) => {
+  await mockEdge(page);
+  await page.route('**/edge/v1/me/applications/documents', replyToUploads([REFUSED()], []));
+
+  await fileApplication(page);
+  await upload(page, 'national-id.pdf');
+
+  await expect(page.getByText(GENERIC)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('DOCUMENT_REVIEW_CLOSED')).toHaveCount(0);
+  await expect(page.getByText(DOCUMENT_ID)).toHaveCount(0);
+  await expect(page.getByText('undefined')).toHaveCount(0);
+});
+
+/**
+ * A 2xx the client cannot trust. It is NOT a failed upload — the bytes may be
+ * stored — so the screen must say the outcome is unconfirmed rather than either
+ * "received" or "could not be uploaded", and must never re-send the file:
+ * upstream an identical re-upload is a retry, so a recovery upload cannot
+ * repair a lost answer.
+ */
+test('a 201 with no revision is reported as unconfirmed, and the file is not re-sent', async ({ page }) => {
+  await mockEdge(page);
+  const seen: number[] = [];
+  await page.route('**/edge/v1/me/applications/documents', replyToUploads([UNCONFIRMED], seen));
+
+  await fileApplication(page);
+  await upload(page, 'national-id.pdf');
+
+  await expect(page.getByText(UNCONFIRMED_TITLE)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(UNCONFIRMED_BODY)).toBeVisible({ timeout: 15_000 });
+  // Neither story is told.
+  await expect(page.getByTestId('documents-received')).toHaveCount(0);
+  await expect(page.getByText(GENERIC)).toHaveCount(0);
+  // No revision is invented, and nothing internal crosses.
+  await expect(page.getByText(/revision/i)).toHaveCount(0);
+  await expect(page.getByText(DOCUMENT_ID)).toHaveCount(0);
+  // One upload, and one reconciliation read — never a second upload.
+  expect(seen).toHaveLength(1);
 });
 
 test('a closed review offers no way to re-open it from the citizen screen', async ({ page }) => {

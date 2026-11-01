@@ -398,6 +398,9 @@
     "upload_ok_title": "Document reçu",
     "upload_ok_body": "Reçu : {{types}}. Vous pouvez téléverser un autre document.",
     "upload_received_item": "{{type}} (révision {{revision}})",
+    "upload_unconfirmed_title": "Nous n’avons pas pu confirmer ce téléversement",
+    "upload_unconfirmed_body": "Nous n’avons pas pu confirmer si ce document a été reçu. Consultez votre page de documents ; s’il n’y figure pas, téléversez-le à nouveau ou contactez le bureau de recrutement.",
+    "upload_unconfirmed_on_file_body": "Nous n’avons pas pu confirmer si le dernier téléversement de {{type}} a été reçu. Un document de ce type figure déjà dans cette candidature. Consultez votre page de documents pour voir ce qui est enregistré.",
     "upload_review_closed": {
       "HUMAN_REVIEWED": "Ce document a déjà été examiné. Pour le remplacer, contactez le bureau de recrutement afin qu’il le rouvre.",
       "CASE_ADVANCED": "Cette candidature a dépassé l’étape d’examen des documents ; les documents ne peuvent donc plus être remplacés."

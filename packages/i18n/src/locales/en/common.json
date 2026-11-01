@@ -398,6 +398,9 @@
     "upload_ok_title": "Document received",
     "upload_ok_body": "Received: {{types}}. You can upload another document.",
     "upload_received_item": "{{type}} (revision {{revision}})",
+    "upload_unconfirmed_title": "We could not confirm this upload",
+    "upload_unconfirmed_body": "We could not confirm whether this document was received. Check your documents page; if it is not listed there, upload it again or contact the recruitment office.",
+    "upload_unconfirmed_on_file_body": "We could not confirm whether the latest upload of {{type}} was received. A document of this type is already on file for this application. Check your documents page to see what is recorded.",
     "upload_review_closed": {
       "HUMAN_REVIEWED": "This document has already been reviewed. To replace it, contact the recruitment office to re-open it.",
       "CASE_ADVANCED": "This application has moved past document review, so documents can no longer be replaced."

@@ -34,12 +34,21 @@ import rw from "@usrp/i18n/locales/rw/common.json" with { type: "json" };
 
 const APP = "33333333-3333-4333-8333-333333333333";
 const ROUTE = "/edge/v1/me/applications/documents";
-/** An internal identifier the citizen must never see. */
-const DOCUMENT_ID = "doc-internal-0001";
+/**
+ * An internal identifier the citizen must never see. A real UUID, because the
+ * gateway's projection re-checks `documentId` against its UUID pattern and the
+ * client's decoder does the same — a synthetic id would be refused as drift and
+ * every success-path assertion below would prove nothing.
+ */
+const DOCUMENT_ID = "11111111-1111-4111-8111-111111111111";
 
 /** The English copy the assertions are written against, read from the bundle. */
 const COPY = en.apply.upload_review_closed;
 const GENERIC = en.apply.upload_error;
+const UNCONFIRMED_TITLE = en.apply.upload_unconfirmed_title;
+const UNCONFIRMED_BODY = en.apply.upload_unconfirmed_body;
+/** A stable fragment of the interpolated "already on file" variant. */
+const UNCONFIRMED_ON_FILE = "already on file for this application";
 
 interface EdgeReply {
   readonly status: number;
@@ -71,21 +80,59 @@ const CLOSED = (reason?: string): EdgeReply => ({
   body: reason === undefined ? { error: "DOCUMENT_REVIEW_CLOSED" } : { error: "DOCUMENT_REVIEW_CLOSED", reason },
 });
 
+/**
+ * The advisory checklist the panel reconciles against when an upload's outcome
+ * cannot be confirmed. It carries NO revision — by design — so it can only ever
+ * say "a document of this type is on file", never "your upload was stored".
+ */
+const CHECKLIST = (satisfaction: string): EdgeReply => ({
+  status: 200,
+  body: {
+    agency: "RDF",
+    source: "POLICY_VERSION",
+    complete: false,
+    items: [{ documentType: "NATIONAL_ID", satisfaction, registry: null }],
+  },
+});
+
 let replies: readonly EdgeReply[] = [];
 let index = 0;
+let checklist: EdgeReply | null = null;
+/** When set, the edge answers with this EXACT text — for bodies that are not JSON. */
+let raw: string | null = null;
 const urls: string[] = [];
 
 vi.stubGlobal(
   "fetch",
   (url: string, _init: RequestInit): Promise<Response> => {
-    urls.push(String(url));
-    const reply = replies[Math.min(index, replies.length - 1)]!;
+    const target = String(url);
+    urls.push(target);
+    if (raw !== null) {
+      return Promise.resolve(new Response(raw, { status: 201, headers: { "content-type": "application/json" } }));
+    }
+    // The reconciliation read is a different route and is answered separately;
+    // `null` means the checklist itself is unreadable.
+    if (target.includes("document-checklist")) {
+      return Promise.resolve(
+        checklist === null
+          ? new Response("UPSTREAM_DOWN", { status: 500, headers: { "content-type": "application/json" } })
+          : new Response(JSON.stringify(checklist.body), {
+              status: checklist.status,
+              headers: { "content-type": "application/json" },
+            }),
+      );
+    }
+    const reply = replies[Math.min(index, replies.length - 1)];
     index += 1;
+    // A request no reply was queued for is a 500, not a TypeError inside the
+    // stub: this suite must fail on an unexpected CALL, not on undefined.
     return Promise.resolve(
-      new Response(JSON.stringify(reply.body), {
-        status: reply.status,
-        headers: { "content-type": "application/json" },
-      }),
+      reply === undefined
+        ? new Response("NO_REPLY_QUEUED", { status: 500, headers: { "content-type": "application/json" } })
+        : new Response(JSON.stringify(reply.body), {
+            status: reply.status,
+            headers: { "content-type": "application/json" },
+          }),
     );
   },
 );
@@ -94,11 +141,16 @@ vi.stubGlobal(
 const { DocumentsPanel } = await import("./index.js");
 
 /** Queue the edge replies the transport will receive, in order. */
-function queue(next: readonly EdgeReply[]): void {
+function queue(next: readonly EdgeReply[], checklistReply: EdgeReply | null = null, rawBody: string | null = null): void {
   replies = next;
   index = 0;
+  checklist = checklistReply;
+  raw = rawBody;
   urls.length = 0;
 }
+
+/** How many of the requests so far were the upload itself, not the reconciliation read. */
+const uploadCalls = (): readonly string[] => urls.filter((url) => url === ROUTE);
 
 function renderPanel(): HTMLElement {
   const queryClient = new QueryClient({
@@ -184,34 +236,67 @@ describe("D8 upload confirmation", () => {
     expect(text(container)).not.toContain("revision 2");
   });
 
-  it("a 2xx that carries no revision names the document and claims no revision", async () => {
+  it("a 2xx that carries no revision is UNCONFIRMED, never a receipt", async () => {
     queue([NO_REVISION]);
     const container = renderPanel();
     await upload(container, "id.pdf");
 
-    await waitFor(() => expect(text(container)).toContain(en.apply.upload_ok_title));
+    // Not "received": the server's answer is unusable, so there is no receipt.
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(text(container)).toContain(UNCONFIRMED_BODY);
+    expect(text(container)).not.toContain(en.apply.upload_ok_title);
+    expect(receivedText(container)).toBe("");
+    // Not "failed" either: an unreadable answer is not proof nothing was stored.
+    expect(text(container)).not.toContain(en.apply.upload_error_title);
+    expect(text(container)).not.toContain(GENERIC);
+    // And no revision is invented, in any shape.
     expect(text(container)).not.toMatch(/revision/i);
+    expect(text(container)).not.toMatch(/NaN|Infinity|undefined|null/i);
+    expect(text(container)).not.toContain(DOCUMENT_ID);
   });
 
   // A revision is a positive whole count the backend assigns. Each case below
-  // is a shape that must never be echoed back to a citizen as a revision.
+  // is contract drift, not a revision, so none of them may reach the citizen as
+  // one — and none of them is a receipt either.
   it.each([
     ["zero", 0],
     ["negative", -3],
     ["fractional", 2.5],
     ["a stringified number", "2"],
     ["past the safe-integer range", Number.MAX_SAFE_INTEGER + 1],
-  ])("a revision that is %s is refused, not shown", async (_label, revision) => {
+    ["null", null],
+    ["a boolean", true],
+    ["an object", { value: 2 }],
+  ])("a revision that is %s is unconfirmed, never shown", async (_label, revision) => {
     queue([BAD_REVISION(revision)]);
     const container = renderPanel();
     await upload(container, "id.pdf");
 
-    await waitFor(() => expect(text(container)).toContain(en.apply.upload_ok_title));
-    // The document is still named as received…
-    expect(receivedText(container)).toContain("National ID");
-    // …but no revision is claimed, and nothing unprintable leaks into the copy.
-    expect(receivedText(container)).not.toMatch(/revision/i);
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(text(container)).not.toContain(en.apply.upload_ok_title);
+    expect(receivedText(container)).toBe("");
+    // Nothing unprintable leaks into the copy, and no internal id crosses.
+    expect(text(container)).not.toMatch(/revision/i);
     expect(text(container)).not.toMatch(/NaN|Infinity|undefined|null/i);
+    expect(text(container)).not.toContain(DOCUMENT_ID);
+  });
+
+  // A body that is not an answer at all: a 201 that says nothing readable.
+  it.each([
+    ["JSON null", "null"],
+    ["an array", "[]"],
+    ["a number", "7"],
+    ["a string", '"UPLOADED"'],
+    ["text that is not JSON", "UPLOADED 201"],
+    ["nothing at all", ""],
+  ])("a 201 whose body is %s is unconfirmed, never shown", async (_label, body) => {
+    queue([], null, body);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(text(container)).not.toContain(en.apply.upload_ok_title);
+    expect(receivedText(container)).toBe("");
     expect(text(container)).not.toContain(DOCUMENT_ID);
   });
 
@@ -228,6 +313,92 @@ describe("D8 upload confirmation", () => {
 
     await waitFor(() => expect(text(container)).toContain("O-Level certificate (revision 1)"));
     expect(text(container)).toContain("National ID (revision 1)");
+  });
+});
+
+describe("D8 an upload whose outcome cannot be confirmed", () => {
+  /**
+   * An unreadable answer is NOT a failed upload. It is also not a receipt. The
+   * contract requires `revision` on a 201, so a 2xx without one leaves the panel
+   * knowing neither, and the only honest thing it can do is say so.
+   */
+  it("says the outcome is unconfirmed instead of claiming success or failure", async () => {
+    queue([NO_REVISION]);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    // Neither story is told: no "document received", no "could not be uploaded".
+    expect(receivedText(container)).toBe("");
+    expect(text(container)).not.toContain(en.apply.upload_ok_title);
+    expect(text(container)).not.toContain(en.apply.upload_error_title);
+    expect(text(container)).not.toContain(GENERIC);
+    // No revision, no id, no diagnostic.
+    expect(text(container)).not.toMatch(/revision/i);
+    expect(text(container)).not.toContain(DOCUMENT_ID);
+    expect(text(container)).not.toMatch(/score|lane|flag|verdict|hmac|forensic|GREEN|AMBER/i);
+  });
+
+  /**
+   * The recovery a client must NOT attempt on its own. Upstream, an identical
+   * re-upload is a RETRY — same revision, no new history entry — so resending
+   * cannot repair a lost answer and would only put a second attempt in the log.
+   */
+  it("never re-sends the file: the upload is attempted exactly once", async () => {
+    queue([NO_REVISION]);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(uploadCalls()).toEqual([ROUTE]);
+    // The reconciliation read is not a second upload, and it is a read.
+    expect(urls.filter((url) => url.includes("document-checklist")).length).toBe(1);
+    expect(urls.filter((url) => url.includes("document-checklist"))[0]).toContain(APP);
+  });
+
+  it("reconciles against the checklist, and says a document of that type is on file", async () => {
+    queue([NO_REVISION], CHECKLIST("UNDER_REVIEW"));
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_ON_FILE));
+    // Even with a document on file, this upload is not confirmed…
+    expect(text(container)).not.toContain(en.apply.upload_ok_title);
+    expect(receivedText(container)).toBe("");
+    expect(text(container)).not.toMatch(/revision/i);
+    // …and the reconciliation is a read, never a second upload.
+    expect(uploadCalls()).toEqual([ROUTE]);
+  });
+
+  it("treats an unreadable checklist as no record, rather than inventing one", async () => {
+    queue([NO_REVISION], null);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(text(container)).toContain(UNCONFIRMED_BODY);
+    expect(text(container)).not.toContain(UNCONFIRMED_ON_FILE);
+  });
+
+  it("a document the checklist lists as MISSING is not reported as on file", async () => {
+    queue([NO_REVISION], CHECKLIST("MISSING"));
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+    expect(text(container)).not.toContain(UNCONFIRMED_ON_FILE);
+  });
+
+  it("a later confirmed upload clears the unconfirmed notice", async () => {
+    queue([NO_REVISION, OK(1)]);
+    const container = renderPanel();
+    await upload(container, "id.pdf");
+    await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
+
+    await upload(container, "id-v1.pdf");
+    await waitFor(() => expect(text(container)).toContain("National ID (revision 1)"));
+    expect(text(container)).not.toContain(UNCONFIRMED_TITLE);
+    expect(uploadCalls()).toEqual([ROUTE, ROUTE]);
   });
 });
 
