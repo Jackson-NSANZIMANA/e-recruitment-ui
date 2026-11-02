@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 
 /**
  * D8 — the citizen's upload journey, in a real browser over the real bundle,
@@ -46,18 +46,40 @@ const IDENTITY = {
 };
 
 /**
- * The wizard walk is the slow part of every test here. On a loaded runner the
- * declaration step's "I agree" button has missed a 20 s wait for four of these
- * eight tests (CI run 41361053561: all four failed at that single wait and
- * passed on retry, as did two PRE-EXISTING s12c-screens specs at the same step
- * in the same run). It is a harness bound, not a product one: nothing in the
- * documents panel is under test while the wizard renders.
+ * THE WIZARD WALK, AND WHY IT NO LONGER RELIES ON A LONG WAIT.
  *
- * 45 s buys the step the headroom it demonstrably needs, and 90 s gives the
- * whole test room for that plus the walk around it. Every assertion below
- * keeps its own, much shorter, expectation — a real failure still fails fast.
+ * The walk to the documents panel is setup, not the thing under test: nothing
+ * in `DocumentsPanel` is exercised while it renders. It was also the only
+ * flaky part of this file. Raising its wait from 20 s to 45 s (commit
+ * 1800cf9) did not fix it — CI run 41364349616 still flaked 7 of these 8
+ * specs, all of them at the same place, and passed only on Playwright's
+ * retries.
+ *
+ * The cause is not slowness. Atlaskit's `Form` validates asynchronously, and
+ * `StepEducation`'s submit handler RETURNS EARLY on an empty value with no
+ * error and no movement. A `next` click that lands while validation is still
+ * in flight is therefore discarded: the step never changes, and no wait,
+ * however long, will produce the next step. A fresh attempt works because
+ * validation has settled by then — which is exactly the signature of a
+ * swallowed click, and exactly why the old harness greened on retry.
+ *
+ * So the walk below does two things instead of waiting longer. It waits for
+ * each step to ACTUALLY ARRIVE, and it re-clicks a `next` whose landing step
+ * did not appear (see `advance`). A swallowed click now heals in seconds
+ * rather than burning 45 s and then being retried by the runner.
+ *
+ * 90 s stays as the whole-test ceiling: the walk is bounded well below it, and
+ * every D8 assertion below keeps its own much shorter expectation, so a real
+ * product failure still fails fast.
  */
 test.setTimeout(90_000);
+
+/**
+ * Motion is switched off in `mockEdge`, below: Atlaskit animates step
+ * transitions and select menus, and on a loaded runner those animations are
+ * what make a click land on an element that is still moving. Nothing asserted
+ * in this file is about motion.
+ */
 
 const HUMAN_REVIEWED = 'This document has already been reviewed. To replace it, contact the recruitment office to re-open it.';
 const CASE_ADVANCED = 'This application has moved past document review, so documents can no longer be replaced.';
@@ -68,6 +90,20 @@ const UNCONFIRMED_BODY = 'We could not confirm whether this document was receive
 async function mockEdge(page: Page): Promise<void> {
   // Pin the language: these specs prove the flow, not the host machine's locale.
   await page.addInitScript(() => window.localStorage.setItem('usrp_lang', 'en'));
+  /**
+   * Motion off, applied as CSS rather than through a Playwright context option
+   * (which this runner's version does not expose as a `use` fixture). Atlaskit
+   * animates wizard step transitions and select menus; a click that lands on a
+   * still-moving element is a click that may be dropped. `!important` on the
+   * durations — not on `display` — so nothing is hidden, only made instant.
+   */
+  await page.addInitScript(() => {
+    const style = document.createElement('style');
+    style.textContent =
+      '*,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;' +
+      'transition-duration:1ms !important;transition-delay:0ms !important;}';
+    document.addEventListener('DOMContentLoaded', () => document.head.appendChild(style));
+  });
   await page.route('**/edge/v1/session', (route) =>
     route.fulfill({
       status: 200,
@@ -103,23 +139,61 @@ async function mockEdge(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Press a `next` that submits an Atlaskit `Form`, and wait for `landing` — a
+ * control ONLY the following step renders — to appear. When the click is
+ * swallowed, press again.
+ *
+ * `landing` is what makes this safe as well as useful: the retry fires solely
+ * while the walk is still on the step it started from, so it can never submit
+ * twice or skip a step. After the last attempt the original error propagates,
+ * so a step that genuinely refuses to advance still fails the test.
+ *
+ * This is deliberately NOT used for "I agree" or "submit application". Those
+ * are direct `onClick`s, not validated form submits, and the second has a side
+ * effect — a duplicate filing is not a thing to retry into.
+ */
+async function advance(page: Page, name: RegExp, landing: Locator, attempts = 3): Promise<void> {
+  const trigger = page.getByRole('button', { name });
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    await trigger.click({ timeout: 15_000 });
+    try {
+      await expect(landing).toBeVisible({ timeout: 7_000 });
+      return;
+    } catch (err) {
+      if (attempt === attempts) throw err;
+    }
+  }
+}
+
 /** File the application so the documents panel mounts, as it does after a filing. */
 async function fileApplication(page: Page): Promise<void> {
   await page.goto('/apply');
-  await page.getByRole('button', { name: /apply to this recruitment/i }).click({ timeout: 15_000 });
+
+  // Campaign → category.
+  await advance(page, /apply to this recruitment/i, page.getByLabel(/recruitment category/i));
+
+  // Category → education. The select is opened and its option chosen before
+  // `next` is pressed, because a `next` carrying no category is rejected.
   await page.getByLabel(/recruitment category/i).click();
   await page.getByText('RDF general enlistment', { exact: true }).click();
-  await page.getByRole('button', { name: /^next$/i }).click();
-  await page.getByLabel(/nesa index number/i).fill('RW2026/1001');
-  await page.getByRole('button', { name: /^next$/i }).click();
-  // Wait for the step to actually change before acting on it: the click above
-  // submits the education form, and the declaration step it advances to renders
-  // only after the NIDA block resolves.
-  const agree = page.getByRole('button', { name: /i agree/i });
-  await expect(agree).toBeVisible({ timeout: 45_000 });
-  await agree.click();
-  await page.getByRole('button', { name: /submit application/i }).click();
+  await advance(page, /^next$/i, page.getByLabel(/nesa index number/i));
+
+  // Education → declaration. The fill is asserted to have landed: the step's
+  // submit handler returns early on an empty value, so a `next` pressed
+  // against a field the form has not registered yet is silently discarded.
+  const nesa = page.getByLabel(/nesa index number/i);
+  await nesa.fill('RW2026/1001');
+  await expect(nesa).toHaveValue('RW2026/1001');
+  await advance(page, /^next$/i, page.getByRole('button', { name: /i agree/i }));
+
+  // Declaration → review, then the filing itself.
+  await page.getByRole('button', { name: /i agree/i }).click();
+  const submit = page.getByRole('button', { name: /submit application/i });
+  await expect(submit).toBeVisible({ timeout: 15_000 });
+  await submit.click();
   await expect(page.getByText(/submitted — application filed/i)).toBeVisible({ timeout: 15_000 });
+
   // The panel only mounts inside the filed confirmation.
   await expect(page.getByText(/upload your documents/i)).toBeVisible({ timeout: 15_000 });
 }
