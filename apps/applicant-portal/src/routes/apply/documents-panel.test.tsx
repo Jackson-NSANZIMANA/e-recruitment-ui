@@ -18,9 +18,13 @@
  * a green suite proving nothing. Hence the dynamic import below.
  *
  * WHAT THIS CANNOT PROVE. It does not prove that the backend numbers revisions
- * or that a reviewed document is really refused. That is the backend E2E, which
- * waits on e-recruitment PR #61; a controlled edge response proves only that the
- * UI renders the server's answer truthfully.
+ * or that a reviewed document is really refused.
+ *
+ * Not because the backend work is missing — e-recruitment PR #61 IS merged, at
+ * `4683b5615daeecdf13b40bb4930c3aeec83196de`. It is because that proof needs
+ * the CONNECTED service chain at that SHA, which needs a Postgres, MinIO, Kafka
+ * and ClamAV stack this environment does not have. A controlled edge response
+ * proves only that the UI renders the server's answer truthfully.
  */
 import React from "react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";

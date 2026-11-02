@@ -10,11 +10,16 @@ import { expect, test, type Locator, type Page, type Route } from '@playwright/t
  * WHAT THIS FILE DOES NOT PROVE, AND WHAT IS STILL OWED. The edge responses
  * below are controlled, so this proves the UI renders the server's answer
  * truthfully — it does NOT prove the backend numbers revisions or that a
- * reviewed document is really refused. The backend-contract proof (upload →
- * revision 1 → replacement → revision 2 → refusal once reviewed, through the
- * real forensics → identity → edge chain at the approved SHA) still owes on
- * e-recruitment PR #61 being merged and the integration baseline being
- * approved. Until then this file is the browser half only, and must not be
+ * reviewed document is really refused.
+ *
+ * That is not because the backend work is missing. e-recruitment PR #61 IS
+ * merged, at `4683b5615daeecdf13b40bb4930c3aeec83196de`. What is still owed is
+ * the CONNECTED run of this journey — upload → revision 1 → replacement →
+ * revision 2 → refusal once reviewed, through the real
+ * forensics → identity → edge chain at that SHA — which needs a running
+ * Postgres, MinIO, Kafka and ClamAV stack that this environment does not have.
+ *
+ * Until that run exists, this file is the browser half only, and must not be
  * reported as D8 completion.
  */
 const APP = '33333333-3333-4333-8333-333333333333';
