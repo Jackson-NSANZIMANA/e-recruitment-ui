@@ -102,13 +102,20 @@ export function loadEdgeConfig(
     );
   }
 
+  // ADR-021 retired the per-deployment BFFs. `EDGE_PORTS` now contains exactly
+  // ONE entry — `edge-gateway` at 4021 — while the old `citizen-bff` and
+  // `agency-bff (RDF|RNP|RCS)` names live only in `RETIRED_EDGE_PORTS`, which
+  // `port()` deliberately does not search. Resolving the default through those
+  // names made every documented `dev`/`dev:mocks` invocation die with
+  // "No port-map entry named ..." unless the caller happened to set
+  // EDGE_DEV_PORT, even though all three SPA vite configs already proxy /edge
+  // to 4021. Both deployments therefore default to the SINGLE edge port;
+  // EDGE_DEV_PORT remains the explicit override (selfcheck uses '0').
   const configuredPort = env['EDGE_DEV_PORT'];
   const resolvedPort =
     configuredPort !== undefined && configuredPort !== ''
       ? Number.parseInt(configuredPort, 10)
-      : deployment.kind === 'citizen'
-        ? port('citizen-bff')
-        : port(`agency-bff (${deployment.agency})`);
+      : port('edge-gateway');
 
   const corsOrigins = (env['CORS_ORIGINS'] ?? 'http://localhost:3000,http://localhost:3001')
     .split(',')
