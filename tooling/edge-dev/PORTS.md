@@ -67,14 +67,19 @@ of a stale document.
 | 4901 | edge-dev mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | Mirrors 4001. |
 | 4906 | edge-dev mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | Mirrors 4006. |
 | 4031 | edge-dev citizen edge | USRP_CITIZEN_EDGE_PORT | ui-convention | pnpm dev:local only. Serves the citizen routes to applicant-portal. Never a production port. |
-| 4931 | edge-dev citizen mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
-| 4932 | edge-dev citizen mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
-| 4933 | edge-dev citizen mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+| 4941 | edge-dev agency mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | pnpm dev:local only. Mock upstream of the agency edge. |
+| 4942 | edge-dev agency mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | pnpm dev:local only. Mock upstream of the agency edge. |
+| 4943 | edge-dev agency mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | pnpm dev:local only. Mock upstream of the agency edge. |
+| 4944 | edge-dev citizen mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+| 4945 | edge-dev citizen mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+| 4946 | edge-dev citizen mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
 
 `pnpm dev:local` is the one case where the SPAs do not share 4021: the mock
 harness registers citizen or agency routes per process, never both, so the
 applicant portal gets its own dev edge on 4031. This is a harness limit, not a
-second gateway. ADR-021's single edge is unchanged.
+second gateway. ADR-021's single edge is unchanged. Both of its edges use the
+494x band because the backend's `pnpm sandbox:full` owns 4901-4911 and 4930-4932,
+so the two stacks can run side by side.
 
 ## Reserved, retired, and not to be reallocated
 

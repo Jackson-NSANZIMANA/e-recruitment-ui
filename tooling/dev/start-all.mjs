@@ -14,8 +14,10 @@
  *
  * Two edges are REQUIRED: `edgeRoutes()` registers either the citizen routes or
  * the agency routes, never both. A single agency edge answers the applicant
- * OTP endpoints with 404. The second edge gets its own mock upstream ports via
- * the EDGE_DEV_MOCK_*_PORT overrides documented in tooling/edge-dev/PORTS.md.
+ * OTP endpoints with 404. Each edge gets its own mock upstream ports in the
+ * 494x band via the EDGE_DEV_MOCK_*_PORT overrides (tooling/edge-dev/PORTS.md),
+ * because the backend's `pnpm sandbox:full` owns 4901-4911 and 4930-4932. This
+ * stack can therefore run beside the sandbox.
  *
  * Zero new dependencies: it spawns the repo's own `node` and `vite` binaries.
  *
@@ -23,10 +25,9 @@
  *   USRP_APPLICANT_PORT / USRP_OFFICER_PORT / USRP_FIELD_PORT  (3000/3001/3002)
  *   USRP_EDGE_PORT           agency edge port (default 4021)
  *   USRP_CITIZEN_EDGE_PORT   citizen edge port (default 4031)
- *   USRP_DEV_HOST            Vite bind address (default localhost; 0.0.0.0 in E2B)
- *   USRP_DEV_ALLOWED_HOST    extra Vite allowedHosts entry (default .e2b.app in E2B)
+ *   USRP_DEV_HOST            Vite bind address (default localhost)
+ *   USRP_DEV_ALLOWED_HOST    extra Vite allowedHosts entry (default none)
  *   CORS_ORIGINS             additional exact origins appended to the edge's list
- *   E2B_SANDBOX_ID           when set, preview origins are added automatically
  */
 import { spawn } from 'node:child_process';
 import { existsSync, realpathSync } from 'node:fs';
@@ -54,14 +55,22 @@ const APPS = [
 const FIELD_PORT = APPS.find((app) => app.label === 'field').port;
 
 const EDGES = {
-  agency: { label: 'edge-agency', port: positivePort('USRP_EDGE_PORT', 4021), args: ['--deployment=agency', '--agency=RDF'] },
-  citizen: { label: 'edge-citizen', port: positivePort('USRP_CITIZEN_EDGE_PORT', 4031), args: ['--deployment=citizen'] },
+  agency: {
+    label: 'edge-agency',
+    port: positivePort('USRP_EDGE_PORT', 4021),
+    args: ['--deployment=agency', '--agency=RDF'],
+    mocks: { iam: 4941, identity: 4942, application: 4943 },
+  },
+  citizen: {
+    label: 'edge-citizen',
+    port: positivePort('USRP_CITIZEN_EDGE_PORT', 4031),
+    args: ['--deployment=citizen'],
+    mocks: { iam: 4944, identity: 4945, application: 4946 },
+  },
 };
 
-const sandboxId = process.env['E2B_SANDBOX_ID'] ?? '';
-const inSandbox = Boolean(process.env['E2B_SANDBOX'] || sandboxId);
-const host = process.env['USRP_DEV_HOST'] ?? (inSandbox ? '0.0.0.0' : 'localhost');
-const allowedHost = process.env['USRP_DEV_ALLOWED_HOST'] ?? (sandboxId ? '.e2b.app' : '');
+const host = process.env['USRP_DEV_HOST'] ?? 'localhost';
+const allowedHost = process.env['USRP_DEV_ALLOWED_HOST'] ?? '';
 const edgeBin = join(ROOT, 'tooling', 'edge-dev', 'src', 'main.ts');
 const viteBins = APPS.map((app) => join(ROOT, app.dir, 'node_modules', 'vite', 'bin', 'vite.js'));
 
@@ -98,6 +107,13 @@ async function assertPortsFree() {
       label: edge.label,
       override: kind === 'agency' ? 'USRP_EDGE_PORT' : 'USRP_CITIZEN_EDGE_PORT',
     })),
+    ...Object.values(EDGES).flatMap((edge) =>
+      Object.entries(edge.mocks).map(([service, port]) => ({
+        port,
+        label: `${edge.label} mock ${service}`,
+        override: null,
+      })),
+    ),
   ];
   const busy = [];
   for (const owner of owners) {
@@ -106,7 +122,8 @@ async function assertPortsFree() {
   if (busy.length === 0) return;
   console.error('[dev:local] These ports are already in use:');
   for (const owner of busy) {
-    console.error(`  :${owner.port} (${owner.label}) — free it or set ${owner.override}=<other port>`);
+    const remedy = owner.override === null ? 'free it' : `free it or set ${owner.override}=<other port>`;
+    console.error(`  :${owner.port} (${owner.label}) — ${remedy}`);
   }
   process.exit(2);
 }
@@ -118,7 +135,6 @@ const origins = new Set();
 for (const app of APPS) {
   origins.add(`http://localhost:${app.port}`);
   origins.add(`http://127.0.0.1:${app.port}`);
-  if (sandboxId) origins.add(`https://${app.port}-${sandboxId}.e2b.app`);
 }
 for (const origin of (process.env['CORS_ORIGINS'] ?? '').split(',')) {
   if (origin.trim() !== '') origins.add(origin.trim());
@@ -183,19 +199,15 @@ async function main() {
   assertRuntime();
   await assertPortsFree();
 
-  for (const [kind, edge] of Object.entries(EDGES)) {
+  for (const edge of Object.values(EDGES)) {
     const env = {
       ...baseEnv,
       EDGE_DEV_PORT: String(edge.port),
       CORS_ORIGINS: [...origins].join(','),
+      EDGE_DEV_MOCK_IAM_PORT: String(edge.mocks.iam),
+      EDGE_DEV_MOCK_IDENTITY_PORT: String(edge.mocks.identity),
+      EDGE_DEV_MOCK_APPLICATION_PORT: String(edge.mocks.application),
     };
-    // The agency edge keeps the canonical 49xx mock ports. The citizen edge gets
-    // its own band so the two --mocks processes can run at the same time.
-    if (kind === 'citizen') {
-      env['EDGE_DEV_MOCK_IAM_PORT'] = '4931';
-      env['EDGE_DEV_MOCK_IDENTITY_PORT'] = '4932';
-      env['EDGE_DEV_MOCK_APPLICATION_PORT'] = '4933';
-    }
     launch(edge.label, ['--experimental-strip-types', edgeBin, ...edge.args, '--mocks'], { env });
   }
 
@@ -213,9 +225,7 @@ async function main() {
     const env = {
       ...baseEnv,
       VITE_EDGE_URL: `http://localhost:${EDGES[app.edge].port}`,
-      VITE_FIELD_STATION_URL: sandboxId
-        ? `https://${FIELD_PORT}-${sandboxId}.e2b.app`
-        : `http://localhost:${FIELD_PORT}`,
+      VITE_FIELD_STATION_URL: `http://localhost:${FIELD_PORT}`,
       NODE_PATH: [viteStore, pnpmHoisted, process.env['NODE_PATH'] ?? '']
         .filter((part) => part !== '')
         .join(delimiter),

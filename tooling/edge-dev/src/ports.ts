@@ -153,7 +153,10 @@ export const EDGE_DEV_MOCK_PORTS: readonly PortEntry[] = [
 ] as const;
 
 /**
- * The SECOND dev edge that `pnpm dev:local` (tooling/dev/start-all.mjs) starts.
+ * The SECOND dev edge that `pnpm dev:local` (tooling/dev/start-all.mjs) starts,
+ * and the mock upstreams of both of its edges. The 494x band is deliberate: the
+ * backend's `pnpm sandbox:full` owns 4901-4911 and 4930-4932, so the two stacks
+ * can run side by side.
  *
  * A dev-harness limit, NOT a second gateway: `edgeRoutes()` registers either the
  * citizen routes or the agency routes, so a mock-backed applicant portal needs
@@ -163,9 +166,12 @@ export const EDGE_DEV_MOCK_PORTS: readonly PortEntry[] = [
  */
 export const EDGE_DEV_LOCAL_STACK_PORTS: readonly PortEntry[] = [
   { name: 'edge-dev citizen edge', port: 4031, envVar: 'USRP_CITIZEN_EDGE_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Serves the citizen routes to applicant-portal. Never a production port.' },
-  { name: 'edge-dev citizen mock iam-service', port: 4931, envVar: 'EDGE_DEV_MOCK_IAM_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
-  { name: 'edge-dev citizen mock identity-service', port: 4932, envVar: 'EDGE_DEV_MOCK_IDENTITY_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
-  { name: 'edge-dev citizen mock application-service', port: 4933, envVar: 'EDGE_DEV_MOCK_APPLICATION_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+  { name: 'edge-dev agency mock iam-service', port: 4941, envVar: 'EDGE_DEV_MOCK_IAM_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the agency edge.' },
+  { name: 'edge-dev agency mock identity-service', port: 4942, envVar: 'EDGE_DEV_MOCK_IDENTITY_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the agency edge.' },
+  { name: 'edge-dev agency mock application-service', port: 4943, envVar: 'EDGE_DEV_MOCK_APPLICATION_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the agency edge.' },
+  { name: 'edge-dev citizen mock iam-service', port: 4944, envVar: 'EDGE_DEV_MOCK_IAM_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+  { name: 'edge-dev citizen mock identity-service', port: 4945, envVar: 'EDGE_DEV_MOCK_IDENTITY_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+  { name: 'edge-dev citizen mock application-service', port: 4946, envVar: 'EDGE_DEV_MOCK_APPLICATION_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
 ] as const;
 
 export const ALL_PORTS: readonly PortEntry[] = [

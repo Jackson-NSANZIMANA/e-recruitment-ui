@@ -63,8 +63,8 @@ pnpm dev:local
 This starts all **five** processes in one process group (Ctrl+C stops all of
 them):
 
-- agency `edge-dev --mocks` on **4021** → officer-console + field-station
-- citizen `edge-dev --mocks` on **4031** → applicant-portal (mocks on 4931–4933)
+- agency `edge-dev --mocks` on **4021** → officer-console + field-station (mocks on 4941–4943)
+- citizen `edge-dev --mocks` on **4031** → applicant-portal (mocks on 4944–4946)
 - applicant-portal **3000**, officer-console **3001**, field-station **3002**
 
 Open <http://localhost:3001> and sign in as an officer:
@@ -101,13 +101,13 @@ curl http://localhost:3000                      # HTML shell
 | `USRP_APPLICANT_PORT` / `USRP_OFFICER_PORT` / `USRP_FIELD_PORT` | `3000` / `3001` / `3002` | App ports, if the defaults are taken |
 | `USRP_EDGE_PORT` | `4021` | Agency edge port; Vite proxy target for 3001/3002 |
 | `USRP_CITIZEN_EDGE_PORT` | `4031` | Citizen edge port; Vite proxy target for 3000 |
-| `USRP_DEV_HOST` | `localhost` (`0.0.0.0` in a sandbox) | Vite bind address |
-| `USRP_DEV_ALLOWED_HOST` | unset (`.e2b.app` in a sandbox) | Extra Vite `allowedHosts` entry |
+| `USRP_DEV_HOST` | `localhost` | Vite bind address |
+| `USRP_DEV_ALLOWED_HOST` | unset | Extra Vite `allowedHosts` entry |
 | `CORS_ORIGINS` | localhost/127.0.0.1 on 3000–3002 | Extra exact origins for edge CORS + CSRF pinning |
 | `AGENCY`, `EDGE_SESSION_HMAC_KEY`, `EDGE_COOKIE_SECURE` | dev defaults | See `tooling/edge-dev/src/config.ts` |
-| `EDGE_DEV_MOCK_*_PORT` | 4911/4901/4906 | Mock upstream ports; see `tooling/edge-dev/PORTS.md` |
+| `EDGE_DEV_MOCK_*_PORT` | 4911/4901/4906 for one bare edge; set by `dev:local` otherwise | Mock upstream ports; see `tooling/edge-dev/PORTS.md` |
 
-For a remotely proxied preview (Codespaces, E2B, a container), bind all
+For a remotely proxied preview (Codespaces, a container), bind all
 interfaces and allow the preview host explicitly:
 
 ```bash
@@ -125,8 +125,8 @@ node --experimental-strip-types tooling/edge-dev/src/main.ts \
   --deployment=agency --agency=RDF --mocks
 
 # Terminal 2 — citizen edge, own edge port AND own mock upstream ports
-EDGE_DEV_PORT=4031 EDGE_DEV_MOCK_IAM_PORT=4931 \
-EDGE_DEV_MOCK_IDENTITY_PORT=4932 EDGE_DEV_MOCK_APPLICATION_PORT=4933 \
+EDGE_DEV_PORT=4031 EDGE_DEV_MOCK_IAM_PORT=4944 \
+EDGE_DEV_MOCK_IDENTITY_PORT=4945 EDGE_DEV_MOCK_APPLICATION_PORT=4946 \
 node --experimental-strip-types tooling/edge-dev/src/main.ts \
   --deployment=citizen --mocks
 
@@ -192,10 +192,11 @@ pnpm --filter @usrp/edge-dev selfcheck   # edge proof over real sockets
 - The mock edges cover sign-in, sessions and the core application routes only.
   Campaigns, gate, field sync, officer administration and the newer applicant
   routes have no mock route, so those calls return 404 under `pnpm dev:local`.
-- A real end-to-end run (real campaigns, SMS OTP, Kafka events, Postgres RLS)
-  needs the backend repository `Jackson-NSANZIMANA/e-recruitment` running its
-  infra tiers and services, plus `pnpm rehearse` / `pnpm dev:sms` for dev data.
-  Then run edge-dev without `--mocks` with the backend `.env` sourced, or point
-  the SPA at the real edge gateway via `VITE_EDGE_URL`.
+- A real end-to-end run (campaigns, SMS OTP, Kafka events, Postgres RLS) comes
+  from the backend repository. Clone `Jackson-NSANZIMANA/e-recruitment` next to
+  this one and run `pnpm sandbox:full` there: it boots every service and builds
+  and serves these three apps on 4930 (applicant), 4931 (officer) and 4932
+  (field), proxied to the real edge on 4921. It runs side by side with
+  `pnpm dev:local`. This is the path that proves a change works.
 - Architecture, ADRs, and the authoritative port map live in
   `docs/architecture/` and `tooling/edge-dev/PORTS.md`.

@@ -31,7 +31,7 @@ get all three PWAs running against an in-process mock edge with fixture data.
 | Node.js | **24** (pinned by `.node-version` and `engines: >=24 <25`). Node 22.6+ also runs dev, with a harmless engine warning. |
 | pnpm | **9.15.0** (pinned by `packageManager`). Shipped via `corepack`, no global install needed. |
 | RAM / disk | ~2 GB free for `node_modules`; a production build wants ~4 GB. |
-| Free TCP ports | `3000`, `3001`, `3002`, `4021`, `4031`, plus internal mock ports `4901`, `4906`, `4911`, `4931`–`4933`. |
+| Free TCP ports | `3000`, `3001`, `3002`, `4021`, `4031`, plus internal mock ports `4941`–`4946`. |
 
 ### Install Node 24
 
@@ -175,7 +175,7 @@ in memory, so restarting simply logs everyone out.
 | Blank page, or `/src/main.tsx` returns 500 `Cannot find package '@compiled/babel-plugin'` | You launched Vite by some other route. Use `pnpm dev:local` (it sets pnpm's `NODE_PATH` explicitly) or `pnpm --filter <app> exec vite`. |
 | Applicant login / OTP endpoints return 404 | Only one edge is running. `pnpm dev:local` starts both the citizen and agency edges. |
 | `403 ORIGIN_NOT_ALLOWED` / CORS errors | You opened the app on a LAN IP or tunnelled host instead of `localhost`. Add it explicitly, e.g. `CORS_ORIGINS=http://192.168.1.20:3001 USRP_DEV_ALLOWED_HOST=192.168.1.20 pnpm dev:local` (with `USRP_DEV_HOST=0.0.0.0` if the browser is on another device). |
-| `EADDRINUSE` on 4901/4906/4911/4931–4933 | Another process owns an internal mock port. Stop it; these are the dev harness's in-process fixtures. |
+| `These ports are already in use: :4941 …` (any of 4941–4946) | Another process owns an internal mock port. Stop it; these are the dev harness's in-process fixtures. |
 | `turbo: Unable to find package manager binary` | Affects `pnpm build` / `pnpm dev`, not `dev:local`. `corepack enable` puts `pnpm` on `PATH`. |
 | Production build killed (exit 137) | Three Rollup bundles at once can OOM. Use `VITE_EDGE_URL=https://your-edge.example pnpm build --concurrency=1`. |
 | Windows: `EDGE_DEV_PORT=4031 node …` fails | Those inline env assignments in the README's manual section are bash syntax. On Windows just use `pnpm dev:local`, which is cross-platform. |
