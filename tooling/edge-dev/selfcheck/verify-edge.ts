@@ -229,7 +229,7 @@ async function run(): Promise<void> {
     eq('officer console targets the single edge gateway on :4021', EDGE_PORTS.find((p) => p.port === 4021)?.name, 'edge-gateway');
     ok('no app port collides with a service port',
       !APP_PORTS.some((app) => SERVICE_PORTS.some((service) => service.port === app.port)));
-    eq('the map covers every process', ALL_PORTS.length, 21);
+    eq('the map covers every process', ALL_PORTS.length, 25);
 
     // ══ 2. Exact-path discipline ═════════════════════════════════
     const allEdgePaths = [...rdfRoutes, ...citizenRoutes].map((route) => route.path);

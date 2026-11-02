@@ -152,12 +152,29 @@ export const EDGE_DEV_MOCK_PORTS: readonly PortEntry[] = [
   { name: 'edge-dev mock application-service', port: 4906, envVar: 'EDGE_DEV_MOCK_APPLICATION_PORT', provenance: 'ui-convention', note: 'Mirrors 4006.' },
 ] as const;
 
+/**
+ * The SECOND dev edge that `pnpm dev:local` (tooling/dev/start-all.mjs) starts.
+ *
+ * A dev-harness limit, NOT a second gateway: `edgeRoutes()` registers either the
+ * citizen routes or the agency routes, so a mock-backed applicant portal needs
+ * its own process. ADR-021's one-edge topology is unchanged and `EDGE_PORTS`
+ * stays at exactly one entry. These numbers are also hardcoded in start-all.mjs,
+ * which runs without type stripping and so cannot import this file.
+ */
+export const EDGE_DEV_LOCAL_STACK_PORTS: readonly PortEntry[] = [
+  { name: 'edge-dev citizen edge', port: 4031, envVar: 'USRP_CITIZEN_EDGE_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Serves the citizen routes to applicant-portal. Never a production port.' },
+  { name: 'edge-dev citizen mock iam-service', port: 4931, envVar: 'EDGE_DEV_MOCK_IAM_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+  { name: 'edge-dev citizen mock identity-service', port: 4932, envVar: 'EDGE_DEV_MOCK_IDENTITY_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+  { name: 'edge-dev citizen mock application-service', port: 4933, envVar: 'EDGE_DEV_MOCK_APPLICATION_PORT', provenance: 'ui-convention', note: 'pnpm dev:local only. Mock upstream of the citizen edge.' },
+] as const;
+
 export const ALL_PORTS: readonly PortEntry[] = [
   ...APP_PORTS,
   ...G2G_MOCK_PORTS,
   ...SERVICE_PORTS,
   ...EDGE_PORTS,
   ...EDGE_DEV_MOCK_PORTS,
+  ...EDGE_DEV_LOCAL_STACK_PORTS,
 ];
 
 /**

@@ -74,9 +74,24 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
       if (entry === undefined) throw new Error(`No port-map entry named "${name}".`);
       return entry.port;
     };
-    const iamPort = portOf('edge-dev mock iam-service');
-    const identityPort = portOf('edge-dev mock identity-service');
-    const applicationPort = portOf('edge-dev mock application-service');
+    // PORTS.md already documents these three env vars, but the boot path read
+    // only the fixed port-map numbers. A second edge-dev process (the citizen
+    // deployment running beside the agency deployment) would therefore die
+    // with EADDRINUSE on 4911. Honour the documented overrides; the defaults
+    // keep a single-edge boot byte-identical. `0` asks the OS for an ephemeral
+    // port (used by the selfcheck).
+    const mockPort = (name: string, envName: string): number => {
+      const raw = env[envName];
+      if (raw === undefined || raw === '') return portOf(name);
+      const parsed = Number.parseInt(raw, 10);
+      if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65_535) {
+        throw new Error(`${envName} must be a TCP port (0-65535), got ${JSON.stringify(raw)}.`);
+      }
+      return parsed;
+    };
+    const iamPort = mockPort('edge-dev mock iam-service', 'EDGE_DEV_MOCK_IAM_PORT');
+    const identityPort = mockPort('edge-dev mock identity-service', 'EDGE_DEV_MOCK_IDENTITY_PORT');
+    const applicationPort = mockPort('edge-dev mock application-service', 'EDGE_DEV_MOCK_APPLICATION_PORT');
     servers.push(await startIamMock(iamPort, log));
     servers.push(await startIdentityMock(identityPort, log, freshIdentityState()));
     servers.push(await startApplicationMock(applicationPort, log));
@@ -97,7 +112,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   servers.push(server);
 
   const names = cookieNames(config.cookieSecure);
-  const label = config.deployment.kind === 'citizen' ? 'citizen-bff' : `agency-bff (${config.deployment.agency})`;
+  const label = config.deployment.kind === 'citizen' ? 'edge-gateway (citizen)' : `edge-gateway (${config.deployment.agency})`;
 
   process.stdout.write(
     [
@@ -114,10 +129,8 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
       `  upstreams       : iam=${config.upstream.iam} identity=${config.upstream.identity} application=${config.upstream.application}`,
       args.withMocks ? '  mode            : CONTRACT MOCKS (no Postgres/Kafka/G2G required)' : '  mode            : REAL SERVICES',
       '',
-      '  Point the SPA at this process:',
-      config.deployment.kind === 'citizen'
-        ? `    apps/applicant-portal/.env.local  VITE_EDGE_URL=${server.url}`
-        : `    apps/officer-console/.env.local   VITE_EDGE_URL=${server.url}`,
+      '  The SPA dev servers already proxy /edge here — no .env.local needed.',
+      `    vite proxy target: ${server.url} (set VITE_EDGE_URL only for a production build)`,
       '',
     ].join('\n'),
   );

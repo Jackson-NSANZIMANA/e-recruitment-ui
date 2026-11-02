@@ -14,6 +14,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
+    "dev:local": "node tooling/dev/start-all.mjs",
     "storybook": "pnpm --filter @usrp/design-system run storybook",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

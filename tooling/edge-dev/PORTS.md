@@ -66,6 +66,15 @@ of a stale document.
 | 4911 | edge-dev mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | Mirrors 4011 in the 49xx band. |
 | 4901 | edge-dev mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | Mirrors 4001. |
 | 4906 | edge-dev mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | Mirrors 4006. |
+| 4031 | edge-dev citizen edge | USRP_CITIZEN_EDGE_PORT | ui-convention | pnpm dev:local only. Serves the citizen routes to applicant-portal. Never a production port. |
+| 4931 | edge-dev citizen mock iam-service | EDGE_DEV_MOCK_IAM_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+| 4932 | edge-dev citizen mock identity-service | EDGE_DEV_MOCK_IDENTITY_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+| 4933 | edge-dev citizen mock application-service | EDGE_DEV_MOCK_APPLICATION_PORT | ui-convention | pnpm dev:local only. Mock upstream of the citizen edge. |
+
+`pnpm dev:local` is the one case where the SPAs do not share 4021: the mock
+harness registers citizen or agency routes per process, never both, so the
+applicant portal gets its own dev edge on 4031. This is a harness limit, not a
+second gateway. ADR-021's single edge is unchanged.
 
 ## Reserved, retired, and not to be reallocated
 
@@ -89,8 +98,8 @@ entry claims one.
   `.env.example`, which `scripts/verify-dev-boot.sh` boots the whole platform
   from on every gate run. Do not change these here.
 - **ui-convention** — this repo is the source; no backend variable names it.
-  Only the three edge-dev mock ports, now that the invented RNP/RCS agency-bff
-  dev allocations are retired.
+  Only the edge-dev mock ports and the `pnpm dev:local` citizen edge, now that
+  the invented RNP/RCS agency-bff dev allocations are retired.
 
 ## Why the mocks live in the 49xx band
 
