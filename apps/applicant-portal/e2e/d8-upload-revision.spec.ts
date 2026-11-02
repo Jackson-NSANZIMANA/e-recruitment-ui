@@ -46,27 +46,46 @@ const IDENTITY = {
 };
 
 /**
- * THE WIZARD WALK, AND WHY IT NO LONGER RELIES ON A LONG WAIT.
+ * THE WIZARD WALK, AND THE EVIDENCE STANDARD IT IS HELD TO.
  *
  * The walk to the documents panel is setup, not the thing under test: nothing
  * in `DocumentsPanel` is exercised while it renders. It was also the only
- * flaky part of this file. Raising its wait from 20 s to 45 s (commit
- * 1800cf9) did not fix it — CI run 41364349616 still flaked 7 of these 8
- * specs, all of them at the same place, and passed only on Playwright's
- * retries.
+ * flaky part of this file. CI run 41364349616 reported 11 flaky tests, 7 of
+ * the 8 D8 specs among them, every one at the same wait — the declaration
+ * step's "I agree" control. Raising that wait from 20 s to 45 s (commit
+ * 1800cf9) did not fix it.
  *
- * The cause is not slowness. Atlaskit's `Form` validates asynchronously, and
- * `StepEducation`'s submit handler RETURNS EARLY on an empty value with no
- * error and no movement. A `next` click that lands while validation is still
- * in flight is therefore discarded: the step never changes, and no wait,
- * however long, will produce the next step. A fresh attempt works because
- * validation has settled by then — which is exactly the signature of a
- * swallowed click, and exactly why the old harness greened on retry.
+ * ROOT CAUSE: NOT ESTABLISHED. The traces that would settle it could not be
+ * retrieved — Playwright report artifacts and CI job logs both fail to
+ * download from this environment. What IS established, by reading the product
+ * source:
  *
- * So the walk below does two things instead of waiting longer. It waits for
- * each step to ACTUALLY ARRIVE, and it re-clicks a `next` whose landing step
- * did not appear (see `advance`). A swallowed click now heals in seconds
- * rather than burning 45 s and then being retried by the runner.
+ *   - `StepCampaign`'s "Apply to this recruitment" is a DIRECT onClick. It is
+ *     not a form submit, so no validation can swallow it.
+ *   - `StepCategory` and `StepEducation` ARE Atlaskit `Form`s, and both submit
+ *     handlers return early on an absent or empty value
+ *     (`if (category !== undefined) onNext(...)` and
+ *     `if (value === undefined || value.length === 0) return;`). Either
+ *     Atlaskit's own `isRequired` validation or that early return would stop
+ *     the step advancing silently, rendering no error.
+ *   - `StepDeclaration` renders its "I agree" control unconditionally, so once
+ *     step 3 is reached the control is always present.
+ *
+ * That makes the early return a PLAUSIBLE mechanism, not a proven one, and
+ * nothing below claims otherwise.
+ *
+ * WHAT THIS HARNESS DOES INSTEAD OF GUESSING. There are no retries in it, and
+ * none in the Playwright config for the runs reported. Every interaction
+ * happens once, after an explicit readiness gate (the source step is mounted;
+ * a required field holds its value and does not report itself invalid), and
+ * every transition is verified by asserting the next step arrived.
+ *
+ * That is what makes a green run EVIDENCE rather than an absence of red: with
+ * no retry to absorb a failure, a passing test means every interaction
+ * succeeded on its first attempt. A step that does not advance is a hard
+ * failure carrying diagnostics naming the step, whether the source step was
+ * still active, and the field's value and validity — so a swallowed submit can
+ * be told apart from a product defect without re-running anything.
  *
  * 90 s stays as the whole-test ceiling: the walk is bounded well below it, and
  * every D8 assertion below keeps its own much shorter expectation, so a real
@@ -140,29 +159,111 @@ async function mockEdge(page: Page): Promise<void> {
 }
 
 /**
- * Press a `next` that submits an Atlaskit `Form`, and wait for `landing` — a
- * control ONLY the following step renders — to appear. When the click is
- * swallowed, press again.
+ * What the wizard looked like at the moment a step refused to advance.
  *
- * `landing` is what makes this safe as well as useful: the retry fires solely
- * while the walk is still on the step it started from, so it can never submit
- * twice or skip a step. After the last attempt the original error propagates,
- * so a step that genuinely refuses to advance still fails the test.
- *
- * This is deliberately NOT used for "I agree" or "submit application". Those
- * are direct `onClick`s, not validated form submits, and the second has a side
- * effect — a duplicate filing is not a thing to retry into.
+ * Deliberately reads state rather than guessing at it: `wizardStep` is the
+ * stepper's own current-step label, and the field pair distinguishes "the
+ * value never reached the form" from "the form has it but judged it invalid" —
+ * the two candidate explanations for a silently swallowed submit.
  */
-async function advance(page: Page, name: RegExp, landing: Locator, attempts = 3): Promise<void> {
-  const trigger = page.getByRole('button', { name });
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    await trigger.click({ timeout: 15_000 });
-    try {
-      await expect(landing).toBeVisible({ timeout: 7_000 });
-      return;
-    } catch (err) {
-      if (attempt === attempts) throw err;
-    }
+async function describeWizard(page: Page, field?: Locator): Promise<string> {
+  const step = await page
+    .locator('[aria-current="step"]')
+    .first()
+    .textContent()
+    .catch(() => null);
+  const value = field === undefined ? null : await field.inputValue().catch(() => null);
+  const invalid = field === undefined ? null : await field.getAttribute('aria-invalid').catch(() => null);
+  return [
+    `wizardStep=${JSON.stringify(step?.trim() ?? null)}`,
+    `fieldValue=${JSON.stringify(value)}`,
+    `ariaInvalid=${JSON.stringify(invalid)}`,
+  ].join(' ');
+}
+
+/**
+ * Press a control ONCE and assert the next step arrived.
+ *
+ * For DIRECT `onClick` controls only — the campaign choice and "I agree",
+ * neither of which goes through form validation. No retry: a second press of
+ * either would be a different action (re-choosing a campaign, re-agreeing a
+ * declaration), and both are cheap to assert, so the honest behaviour on a
+ * missed transition is to fail with diagnostics rather than press again.
+ */
+async function pressOnce(
+  page: Page,
+  step: string,
+  trigger: Locator,
+  landing: Locator,
+  landingName: string,
+): Promise<void> {
+  await expect(trigger).toBeVisible({ timeout: 15_000 });
+  await trigger.click();
+  try {
+    await expect(landing).toBeVisible({ timeout: 15_000 });
+  } catch (err) {
+    const stillOnSource = await trigger.isVisible().catch(() => false);
+    const reachedTarget = await landing.isVisible().catch(() => false);
+    throw new Error(
+      `D8 walk: "${step}" did not advance. Expected ${landingName}. ` +
+        `triggerStillVisible=${stillOnSource} targetVisible=${reachedTarget} ` +
+        `${await describeWizard(page)} :: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+/**
+ * Submit one of the wizard's Atlaskit `Form` steps ONCE, after a readiness
+ * gate, and assert the next step arrived.
+ *
+ * READINESS, because that is the thing worth fixing rather than papering over.
+ * The step is submitted only once its own control is mounted and, where the
+ * step has a required field, that field holds the typed value and does not
+ * report itself invalid. The field is blurred first so Atlaskit commits and
+ * validates it — a DOM value that the form has not registered is precisely the
+ * state in which this step's submit handler returns early and does nothing.
+ *
+ * NO RETRY, and that is the point. These are validated submits, so a silent
+ * non-advance is exactly the failure being investigated; pressing again would
+ * hide it behind a green tick. Failing carries the diagnostics instead.
+ */
+async function submitFormStep(
+  page: Page,
+  options: {
+    readonly step: string;
+    /** A control only the step being submitted renders. */
+    readonly source: Locator;
+    /** A control only the FOLLOWING step renders. */
+    readonly landing: Locator;
+    readonly landingName: string;
+    /** The required field, when the step has one. */
+    readonly field?: Locator;
+  },
+): Promise<void> {
+  await expect(options.source).toBeVisible({ timeout: 15_000 });
+  if (options.field !== undefined) {
+    await options.field.blur();
+    await expect(options.field).not.toHaveAttribute('aria-invalid', 'true', { timeout: 10_000 });
+  }
+
+  const next = page.getByRole('button', { name: /^next$/i });
+  await expect(next).toBeVisible({ timeout: 15_000 });
+  await next.click();
+
+  try {
+    await expect(options.landing).toBeVisible({ timeout: 15_000 });
+  } catch (err) {
+    // Read before concluding anything: whether the source step is still on
+    // screen is the difference between "the submit was swallowed" and "it
+    // advanced somewhere unexpected".
+    const stillOnSource = await options.source.isVisible().catch(() => false);
+    const reachedTarget = await options.landing.isVisible().catch(() => false);
+    throw new Error(
+      `D8 walk: "${options.step}" did not advance. Expected ${options.landingName}. ` +
+        `stillOnSource=${stillOnSource} targetVisible=${reachedTarget} ` +
+        `${await describeWizard(page, options.field)} :: ` +
+        `${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -170,28 +271,56 @@ async function advance(page: Page, name: RegExp, landing: Locator, attempts = 3)
 async function fileApplication(page: Page): Promise<void> {
   await page.goto('/apply');
 
-  // Campaign → category.
-  await advance(page, /apply to this recruitment/i, page.getByLabel(/recruitment category/i));
+  // Campaign → category. A direct onClick, pressed once.
+  await pressOnce(
+    page,
+    'campaign',
+    page.getByRole('button', { name: /apply to this recruitment/i }),
+    page.getByLabel(/recruitment category/i),
+    'the recruitment category select',
+  );
 
-  // Category → education. The select is opened and its option chosen before
-  // `next` is pressed, because a `next` carrying no category is rejected.
-  await page.getByLabel(/recruitment category/i).click();
+  // Category → education. The option is chosen, then the select is left to
+  // commit it before the step is submitted.
+  const category = page.getByLabel(/recruitment category/i);
+  await category.click();
   await page.getByText('RDF general enlistment', { exact: true }).click();
-  await advance(page, /^next$/i, page.getByLabel(/nesa index number/i));
+  // `.first()`, because for a moment the chosen label is legitimately rendered
+  // twice — as the menu option being dismissed and as the control's new value.
+  // The point is that a value is showing, not that exactly one thing shows it.
+  await expect(page.getByText('RDF general enlistment', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  await submitFormStep(page, {
+    step: 'category',
+    source: category,
+    landing: page.getByLabel(/nesa index number/i),
+    landingName: 'the NESA index number field',
+    field: category,
+  });
 
-  // Education → declaration. The fill is asserted to have landed: the step's
-  // submit handler returns early on an empty value, so a `next` pressed
-  // against a field the form has not registered yet is silently discarded.
+  // Education → declaration. The value is asserted to have landed before the
+  // step is submitted; the readiness gate then blurs and checks validity.
   const nesa = page.getByLabel(/nesa index number/i);
   await nesa.fill('RW2026/1001');
   await expect(nesa).toHaveValue('RW2026/1001');
-  await advance(page, /^next$/i, page.getByRole('button', { name: /i agree/i }));
+  await submitFormStep(page, {
+    step: 'education',
+    source: nesa,
+    landing: page.getByRole('button', { name: /i agree/i }),
+    landingName: 'the declaration step\'s "I agree" button',
+    field: nesa,
+  });
 
-  // Declaration → review, then the filing itself.
-  await page.getByRole('button', { name: /i agree/i }).click();
-  const submit = page.getByRole('button', { name: /submit application/i });
-  await expect(submit).toBeVisible({ timeout: 15_000 });
-  await submit.click();
+  // Declaration → review. A direct onClick, pressed once.
+  await pressOnce(
+    page,
+    'declaration',
+    page.getByRole('button', { name: /i agree/i }),
+    page.getByRole('button', { name: /submit application/i }),
+    'the "Submit application" button',
+  );
+
+  // The filing itself: a side effect, so it is pressed once and never repeated.
+  await page.getByRole('button', { name: /submit application/i }).click();
   await expect(page.getByText(/submitted — application filed/i)).toBeVisible({ timeout: 15_000 });
 
   // The panel only mounts inside the filed confirmation.
