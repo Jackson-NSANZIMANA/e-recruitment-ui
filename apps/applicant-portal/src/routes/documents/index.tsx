@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button/new";
@@ -17,6 +17,8 @@ import { clearanceCopyKey, documentTypeKey, isClearanceNumberShape, isInFlight, 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 const page = cssMap({ base: { maxWidth: "640px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") } });
 const POLL_MS = 4_000;
+/** How long the page waits for an accepted number to show up in the checklist before offering the field again. */
+const SENT_WAIT_MS = 60_000;
 /** How each clearance state is drawn: never colour alone (the words differ), but the tone follows the state. */
 const TONE: Record<ClearanceState, "success" | "warning" | "information"> = {
   NUMBER_REQUIRED: "information",
@@ -52,14 +54,14 @@ export default function DocumentsPage(): React.ReactElement {
         <Text>{t("citizen_docs.intro")}</Text>
         {checklist.isLoading && <Spinner label={t("citizen_docs.loading")} />}
         {checklist.isError && <SectionMessage appearance="error"><Text>{t("citizen_docs.error")}</Text></SectionMessage>}
-        {checklist.data !== undefined && <ChecklistItems applicationId={applicationId} checklist={checklist.data} />}
+        {checklist.data !== undefined && <ChecklistItems applicationId={applicationId} checklist={checklist.data} refresh={() => { void checklist.refetch(); }} />}
         <Text size="small"><Link to="/status">{t("citizen_docs.back")}</Link></Text>
       </Stack>
     </Box>
   );
 }
 
-function ChecklistItems({ applicationId, checklist }: { readonly applicationId: string; readonly checklist: DocumentChecklist }): React.ReactElement {
+function ChecklistItems({ applicationId, checklist, refresh }: { readonly applicationId: string; readonly checklist: DocumentChecklist; readonly refresh: () => void }): React.ReactElement {
   const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   return (
     <Stack space="space.200" testId="citizen-documents">
@@ -68,7 +70,7 @@ function ChecklistItems({ applicationId, checklist }: { readonly applicationId: 
           <Stack space="space.100">
             <Text weight="bold">{t(documentTypeKey(item.documentType), { defaultValue: item.documentType })}</Text>
             <Text color="color.text.subtle" testId={`doc-state-${item.documentType}`}>{t(satisfactionCopyKey(item))}</Text>
-            {item.clearance !== undefined && <ClearanceBlock applicationId={applicationId} clearance={item.clearance} />}
+            {item.clearance !== undefined && <ClearanceBlock applicationId={applicationId} clearance={item.clearance} refresh={refresh} />}
           </Stack>
         </Box>
       ))}
@@ -77,7 +79,7 @@ function ChecklistItems({ applicationId, checklist }: { readonly applicationId: 
   );
 }
 
-function ClearanceBlock({ applicationId, clearance }: { readonly applicationId: string; readonly clearance: NonNullable<DocumentChecklist["items"][number]["clearance"]> }): React.ReactElement {
+function ClearanceBlock({ applicationId, clearance, refresh }: { readonly applicationId: string; readonly clearance: NonNullable<DocumentChecklist["items"][number]["clearance"]>; readonly refresh: () => void }): React.ReactElement {
   const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const attach = useAttachMyClearanceCertificate(client);
   const [value, setValue] = useState("");
@@ -85,6 +87,25 @@ function ClearanceBlock({ applicationId, clearance }: { readonly applicationId: 
   const sent = attach.isSuccess;
   const error = attach.error instanceof ApiError ? attach.error.normalised : null;
   const closed = error !== null && error.kind === "conflict";
+  const { reset } = attach;
+
+  // "Sent" describes the attempt in flight. Once the registry answers that the number needs
+  // correcting, that attempt is over and the citizen must get the field back without a reload.
+  useEffect(() => {
+    if (wantsNumber(clearance.state)) reset();
+  }, [clearance.state, reset]);
+
+  // The edge accepts the number before a consumer records it, so the next read can still look
+  // unchanged, and the page-level poll only runs during VERIFYING. Keep reading until it moves.
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+  const awaitingRecord = sent && wantsNumber(clearance.state);
+  useEffect(() => {
+    if (!awaitingRecord) return undefined;
+    const poll = setInterval(() => { refreshRef.current(); }, POLL_MS);
+    const giveUp = setTimeout(reset, SENT_WAIT_MS);
+    return () => { clearInterval(poll); clearTimeout(giveUp); };
+  }, [awaitingRecord, reset]);
 
   const submit = (): void => {
     if (!isClearanceNumberShape(value)) { setShapeError(true); return; }

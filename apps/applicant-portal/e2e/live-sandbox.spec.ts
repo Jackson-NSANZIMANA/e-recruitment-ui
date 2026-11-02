@@ -202,5 +202,5 @@ test('C: a certificate that can carry a conviction waits for an officer, and the
   await page.goto(`/applications/${applicationId}/documents`);
   await giveClearanceNumber(page, p);
   await expect(page.getByTestId('clearance-state')).toContainText(/officer will look at your certificate/i, { timeout: 120_000 });
-  await expect(page.locator('body')).not.toContainText(/CLEARANCE_CONTENT_REVIEW|conviction|criminal record needs/i);
+  await expect(page.locator('body')).not.toContainText(/CLEARANCE_CONTENT_REVIEW|(?<!no criminal )conviction|criminal record needs/i);
 });

@@ -30,12 +30,14 @@ test('the reviewer sees the amber reasons in words, and the clearance state in t
   await expect(page.getByTestId('sandbox-banner')).toBeVisible();
 
   await page.goto('/adjudication');
-  const records = page.getByTestId('queue-records');
+  // A criminal-record hold lives on the holds tab, not the default documents tab.
+  await page.getByRole('tab', { name: 'Holds' }).click();
+  const records = page.getByRole('table', { name: 'Holds' });
   await expect(records).toBeVisible({ timeout: 90_000 });
-  await expect(records).toContainText(/Read the criminal-record certificate against the agency.s rule/);
+  await expect(records).toContainText(/clearance certificate content under review/i);
   await expect(records.getByRole('button', { name: /clear|reject/i })).toHaveCount(0);
 
-  await records.getByRole('row').nth(1).click();
+  await records.getByRole('link', { name: /^open/i }).or(records.getByRole('button', { name: /^open/i })).first().click();
   await expect(page).toHaveURL(/\/applications\//);
   await page.getByRole('tab', { name: /documents/i }).click();
   const view = page.getByTestId('clearance-officer-view');
