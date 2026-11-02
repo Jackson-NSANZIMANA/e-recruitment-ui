@@ -30,7 +30,7 @@ info:
 
     NOTHING PAGINATES. The list read caps at 100 with no filter, no cursor and
     no total.
-  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
+  x-usrp-backend-sha: "6584a1a160e5008c26c0c744b0988b7eb7cd58c5"
   x-usrp-service-port-var: "PORT_APPLICATION_SERVICE"
   x-usrp-transport-faults:
     - status: 405

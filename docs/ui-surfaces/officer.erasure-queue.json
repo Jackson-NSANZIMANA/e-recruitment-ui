@@ -104,7 +104,7 @@
       "e2e": [
         "apps/officer-console/e2e/dpo-erasure-queue.spec.ts"
       ],
-      "contract": "b004fca840af12435bbc84ec0e365c513c788c36"
+      "contract": "6584a1a160e5008c26c0c744b0988b7eb7cd58c5"
     }
   }
 }

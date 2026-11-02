@@ -27,7 +27,7 @@ info:
     NEITHER TOKEN IS A COOKIE. Both are returned in a JSON body. There is no
     Set-Cookie header anywhere in this document because there is no server in
     the system that sets one.
-  x-usrp-backend-sha: "b004fca840af12435bbc84ec0e365c513c788c36"
+  x-usrp-backend-sha: "6584a1a160e5008c26c0c744b0988b7eb7cd58c5"
   x-usrp-service-port-var: "PORT_IAM_SERVICE"
   x-usrp-transport-faults:
     - status: 405
