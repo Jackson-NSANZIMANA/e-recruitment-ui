@@ -79,18 +79,27 @@ const IDENTITY = {
  * That makes the early return a PLAUSIBLE mechanism, not a proven one, and
  * nothing below claims otherwise.
  *
- * WHAT THIS HARNESS DOES INSTEAD OF GUESSING. There are no retries in it, and
- * none in the Playwright config for the runs reported. Every interaction
- * happens once, after an explicit readiness gate (the source step is mounted;
- * a required field holds its value and does not report itself invalid), and
- * every transition is verified by asserting the next step arrived.
+ * WHAT THIS HARNESS DOES INSTEAD OF GUESSING. The helper contains no retry of
+ * its own: every interaction happens once, after an explicit readiness gate
+ * (the source step is mounted; a required field holds its value and does not
+ * report itself invalid), and every transition is verified by asserting the
+ * next step arrived.
  *
- * That is what makes a green run EVIDENCE rather than an absence of red: with
- * no retry to absorb a failure, a passing test means every interaction
- * succeeded on its first attempt. A step that does not advance is a hard
- * failure carrying diagnostics naming the step, whether the source step was
- * still active, and the field's value and validity — so a swallowed submit can
- * be told apart from a product defect without re-running anything.
+ * THE PLAYWRIGHT CONFIG DOES NOT DISABLE RETRIES. It permits two
+ * (`retries: process.env["CI"] ? 2 : 0`), and that is deliberate — a re-run is
+ * useful diagnostic evidence. What makes a green run mean something is
+ * `failOnFlakyTests`, now enabled for CI in `playwright.config.ts`, which fails
+ * the run if any test needed a second attempt.
+ *
+ * So the precise claim is: the helper never retries internally, and the
+ * reporting run consumed no Playwright retries — 0 flaky, 0 failed, and the
+ * gate makes that the only way the job can be green. It is NOT a claim that
+ * retries are switched off in configuration.
+ *
+ * A step that does not advance is a hard failure carrying diagnostics naming
+ * the step, whether the source step was still active, and the field's value
+ * and validity — so a swallowed submit can be told apart from a product
+ * defect without re-running anything.
  *
  * 90 s stays as the whole-test ceiling: the walk is bounded well below it, and
  * every D8 assertion below keeps its own much shorter expectation, so a real
