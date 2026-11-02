@@ -103,13 +103,42 @@ export const DocumentRejectedMalware422Schema = z
   });
 
 /**
- * THE WHOLE BODY. Three fields. No verdict, by design.
+ * D8. The document's review is closed, so these bytes are refused and
+ * NOTHING is written: the object write happens inside the slot lock, after
+ * this decision, so a refusal leaves the stored bytes and the revision
+ * exactly as they were.
+ * 
+ * `reason` is one of two values and both are safe to show a citizen:
+ * HUMAN_REVIEWED (an officer has reviewed this document; the recruitment
+ * office must re-open it) and CASE_ADVANCED (the application has moved past
+ * document review). No other value is emitted, and a caller must fall back
+ * to a generic message for anything else rather than printing it.
+ */
+export const DocumentReviewClosed409Schema = z
+  .strictObject({
+    "error": z.literal('DOCUMENT_REVIEW_CLOSED'),
+    "reason": z.enum(['HUMAN_REVIEWED', 'CASE_ADVANCED']),
+  });
+
+/**
+ * THE WHOLE BODY. Four fields. No verdict, by design.
+ * 
+ * `revision` (D8) is the number THIS service assigned to the bytes it
+ * stored, produced by `decideSupersession()` in src/domain/supersession.ts:
+ * 1 on a first upload for the slot, n+1 on a SUPERSEDE, and the CURRENT
+ * number unchanged on a RETRY — a re-upload whose keyed HMAC matches what is
+ * already stored writes nothing and adds no history entry. It is therefore
+ * not a counter a caller may increment: reading it back is the only way to
+ * know it. Verdict, lane, score, flags, content HMAC, object key and
+ * revision history stay inside this service — a score handed to the uploader
+ * is a forgery-tuning oracle.
  */
 export const DocumentUploaded201Schema = z
   .strictObject({
     "status": z.literal('UPLOADED'),
     "documentId": UuidSchema,
     "documentType": DocumentTypeSchema,
+    "revision": z.number().int().min(1),
   });
 
 export const FileTooLarge413Schema = z
@@ -168,6 +197,16 @@ export const UnsupportedFileType422Schema = z
   });
 
 /**
+ * The upload route's 409, discriminated on `error`: NOT_ACCEPTING_DOCUMENTS
+ * (the application is not collecting documents) or DOCUMENT_REVIEW_CLOSED
+ * (D8 — this document's review is closed).
+ */
+export const UploadConflict409Schema = z.discriminatedUnion('error', [
+  NotAcceptingDocuments409Schema,
+  DocumentReviewClosed409Schema,
+]);
+
+/**
  * multipart/form-data. The file part MUST be named exactly "file"; a
  * differently named file part is 400 MISSING_FILE, not a warning. Max 8
  * parts, max 1 file, max 4 KiB per text field.
@@ -220,7 +259,7 @@ export const documentForensicsServiceOperations = {
       "401": Unauthenticated401Schema,
       "403": Forbidden403Schema,
       "404": ApplicationNotFound404Schema,
-      "409": NotAcceptingDocuments409Schema,
+      "409": UploadConflict409Schema,
       "413": FileTooLarge413Schema,
       "422": UploadUnprocessable422Schema,
       "500": ForensicsError500Schema,

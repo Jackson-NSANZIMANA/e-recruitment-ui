@@ -160,11 +160,44 @@ export const DocumentChecklist200Schema = z
     "items": z.array(DocumentChecklistItemSchema),
   });
 
+/**
+ * D8. Relayed from document-forensics-service, in IDENTITY's OWN shape —
+ * note the `status: "REFUSED"` key, which the edge tier strips before the
+ * body reaches a browser. That difference is the point: this document
+ * describes what this service answers, not what the edge publishes.
+ * 
+ * `reason` is one of two closed-set values (HUMAN_REVIEWED, CASE_ADVANCED).
+ * A reason outside that set, or a missing one, is drift: the controller logs
+ * it and answers 502 DEPENDENCY_UNAVAILABLE instead of passing an
+ * unrecognised string to a citizen.
+ */
+export const DocumentReviewClosed409Schema = z
+  .strictObject({
+    "status": z.literal('REFUSED'),
+    "error": z.literal('DOCUMENT_REVIEW_CLOSED'),
+    "reason": z.enum(['HUMAN_REVIEWED', 'CASE_ADVANCED']),
+  });
+
+/**
+ * REBUILT here, not relayed: the gateway validates the four fields it got
+ * from document-forensics-service and re-emits exactly them, so a field the
+ * upstream adds later cannot reach a citizen through this hop. Drift — a
+ * missing or non-integer `revision`, a non-UUID `documentId` — is logged as
+ * document_door_contract_drift and answered 502 DEPENDENCY_UNAVAILABLE
+ * rather than forwarded.
+ * 
+ * `revision` (D8) is the number document-forensics-service assigned to the
+ * bytes: 1 on a first upload for the slot, n+1 when different bytes replace
+ * what is stored, and the CURRENT number when identical bytes are
+ * re-uploaded (a retry writes nothing). Identity does not compute, adjust or
+ * default it — it passes the number it validated.
+ */
 export const DocumentUploaded201Schema = z
   .strictObject({
     "status": z.literal('UPLOADED'),
     "documentId": z.string().guid(),
     "documentType": z.string(),
+    "revision": z.number().int().min(1),
   });
 
 export const EraseIdentityRequestSchema = z
@@ -258,7 +291,7 @@ export const ExamInvitationPayloadSchema = z
     "ticketId": z.string(),
     "venueName": z.string(),
     "examDate": z.string(),
-    "reportingTimeHour": z.number(),
+    "reportingTimeHour": z.number().int().min(0).max(23),
     "validUntil": z.string(),
   });
 
@@ -307,7 +340,7 @@ export const GateAdmitted200Schema = z
     "candidate": GateCandidateSchema,
     "venueName": z.string().min(1).max(200),
     "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
-    "reportingTimeHour": z.number(),
+    "reportingTimeHour": z.number().int().min(0).max(23),
     "admittedAt": z.string(),
     "statusAdvanced": z.boolean(),
   });
@@ -515,6 +548,18 @@ export const OtpVerifyBodySchema = z
     "channel": ApplicationChannelSchema,
   });
 
+/**
+ * Relayed from document-forensics-service. Note what is NOT here: no
+ * `currentStatus`. Identity's gateway relays the code and the status only,
+ * so a client that expects the upstream's explanatory field will not find it
+ * on this hop.
+ */
+export const RefusedNotAcceptingDocuments409Schema = z
+  .strictObject({
+    "status": z.literal('REFUSED'),
+    "error": z.literal('NOT_ACCEPTING_DOCUMENTS'),
+  });
+
 export const SubmitApplicationRequestSchema = z
   .strictObject({
     "category": z.string().max(64),
@@ -539,6 +584,17 @@ export const Unauthenticated401Schema = z
     "error": z.literal('UNAUTHENTICATED'),
     "detail": z.string().optional(),
   });
+
+/**
+ * Identity's 409 envelope for the upload door, discriminated on `error`.
+ * Both members carry `status: "REFUSED"`, which is the shape of THIS
+ * service's answer and not of the edge's; a client reading the public
+ * contract would see neither key.
+ */
+export const UploadConflict409Schema = z.discriminatedUnion('error', [
+  RefusedNotAcceptingDocuments409Schema,
+  DocumentReviewClosed409Schema,
+]);
 
 export const UploadDocumentFormSchema = z
   .strictObject({
@@ -833,7 +889,7 @@ export const identityServiceOperations = {
       "400": null,
       "401": InvalidSession401Schema,
       "404": null,
-      "409": null,
+      "409": UploadConflict409Schema,
       "413": null,
       "422": null,
       "502": UpstreamUnavailable502Schema,

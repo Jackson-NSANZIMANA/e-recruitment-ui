@@ -40,6 +40,7 @@ import type {
   StatusHistoryEntry,
   StatusHistoryResponse,
   TransitionResult,
+  UploadDocumentResponse,
   WalkInVetResponse,
 } from './wire.js';
 
@@ -339,4 +340,86 @@ export function decodeMyApplications(body: unknown): MyApplicationsResponse {
     category: str(get(row, 'category')),
     submittedAt: str(get(row, 'submittedAt')),
   }));
+}
+
+// ── Citizen document upload (D8) ────────────────────────────────
+
+/**
+ * The operation whose SUCCESS body carries a contract the screen depends on.
+ * Named once because three places must agree on it: the transport (which
+ * decodes by operation id), the decoder (which names the drift it reports) and
+ * the applicant UI (which recognises the resulting error).
+ */
+export const UPLOAD_DOCUMENT_OPERATION_ID = 'uploadMyDocument';
+
+/** The gateway's own identifier pattern; an id is a UUID or it is not an id. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** `DOCUMENT_TYPE_RE` in the edge gateway: upper snake case, and never empty. */
+const DOCUMENT_TYPE_RE = /^[A-Z][A-Z0-9_]{2,63}$/;
+
+/**
+ * D8. `POST /edge/v1/me/applications/documents` — decode the 2xx answer, or
+ * refuse it.
+ *
+ * WHY A RUNTIME DECODER AND NOT THE TYPE. `UploadDocumentResponse` is a
+ * TypeScript interface, and an interface checks nothing at runtime: `parsed as
+ * T` hands `null`, `[]`, `201 'null'`, `201 7` or a 201 with no `revision`
+ * straight to a render that then says "Document received". On an
+ * evidence-integrity screen the cheap error is the expensive one — a receipt
+ * the server never issued is worse than an honest "we could not confirm".
+ *
+ * WHAT A REFUSAL MEANS, AND WHAT IT DOES NOT. It means this answer cannot be
+ * shown. It does NOT mean the upload failed: the bytes may be stored and the
+ * revision assigned, with only the answer unusable — the gateway itself
+ * answers `502 UPSTREAM_CONTRACT_MISMATCH` from the same upstream drift, but
+ * only when IT is the tier that notices. Callers must therefore treat this as
+ * an UNCONFIRMED outcome, never as a failed upload, and must not re-send the
+ * file: an identical re-upload is a retry upstream (same revision, no new
+ * history entry), so an automatic retry cannot repair a lost answer and can
+ * only add noise.
+ *
+ * REJECTED HERE: a non-object body (null, a primitive, an array), a body whose
+ * `status` is not `UPLOADED`, a `documentId` that is not a UUID, a
+ * `documentType` outside the gateway's pattern, and a `revision` that is not a
+ * positive safe integer — missing, 0, negative, fractional, stringified, NaN,
+ * Infinity, or past `Number.MAX_SAFE_INTEGER`. Every one of those is contract
+ * drift, not a revision.
+ */
+export function decodeUploadAnswer(body: unknown, operationId: string = UPLOAD_DOCUMENT_OPERATION_ID): UploadDocumentResponse {
+  if (!isRecord(body)) {
+    return malformed(operationId, `expected an object, got ${describe(body)}`);
+  }
+  if (body['status'] !== 'UPLOADED') {
+    return malformed(operationId, `status is ${JSON.stringify(body['status']) ?? 'absent'}, not "UPLOADED"`);
+  }
+  const documentId = str(get(body, 'documentId'));
+  if (documentId === null || !UUID_RE.test(documentId)) {
+    return malformed(operationId, `documentId is not a UUID: ${JSON.stringify(body['documentId']) ?? 'absent'}`);
+  }
+  const documentType = str(get(body, 'documentType'));
+  if (documentType === null || !DOCUMENT_TYPE_RE.test(documentType)) {
+    return malformed(operationId, `documentType is not a document type: ${JSON.stringify(body['documentType']) ?? 'absent'}`);
+  }
+  const revision = get(body, 'revision');
+  // `Number.isSafeInteger` before the sign test: NaN, Infinity and 2**53 are
+  // all "numbers" to `typeof`, and none of them is a revision.
+  if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 1) {
+    return malformed(operationId, `revision is ${JSON.stringify(revision) ?? 'absent'}, not a positive whole number the server assigned`);
+  }
+  return { status: 'UPLOADED', documentId, documentType, revision };
+}
+
+/**
+ * True when an error is the transport refusing an upload answer it cannot
+ * trust — the unconfirmed outcome, as opposed to a refusal the server stated.
+ *
+ * Scoped to the upload operation by the drift detail, so a malformed answer on
+ * any other operation is NOT silently reported as an unconfirmed upload.
+ */
+export function isUnconfirmedUploadOutcome(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.normalised.kind === 'malformed' &&
+    error.normalised.detail.startsWith(`${UPLOAD_DOCUMENT_OPERATION_ID}:`)
+  );
 }

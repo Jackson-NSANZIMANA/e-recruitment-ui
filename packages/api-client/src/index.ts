@@ -86,6 +86,13 @@ export type {
   GateAdmissionResult,
 } from './wire.js';
 
+// ── Response decoders (D8: the upload answer is decoded, never cast) ──
+export {
+  decodeUploadAnswer,
+  isUnconfirmedUploadOutcome,
+  UPLOAD_DOCUMENT_OPERATION_ID,
+} from './decode.js';
+
 // ── Query keys and the invalidation map ──
 export { staffKeys, searchKeys, evidenceKeys, erasureKeys, applicationKeys, applicantKeys, campaignKeys, documentKeys, examInvitationKeys, sessionKeys, INVALIDATION_MAP, resolveInvalidation } from './keys.js';
 export type { InvalidationTarget } from './keys.js';

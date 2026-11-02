@@ -245,7 +245,7 @@ export const ApplicationSearchOkSchema = z
   .strictObject({
     "agency": z.string(),
     "applications": z.array(ApplicationSearchRowSchema),
-    "total": z.number(),
+    "total": z.number().int().min(0),
     "nextCursor": z.string().nullable(),
   });
 
@@ -315,8 +315,8 @@ export const BiometricEvidenceRowSchema = z
     "consentState": z.string(),
     "outcome": z.string(),
     "notAttemptedReason": z.string().nullable(),
-    "livenessScoreBp": z.number().nullable(),
-    "matchScoreBp": z.number().nullable(),
+    "livenessScoreBp": z.number().int().nullable(),
+    "matchScoreBp": z.number().int().nullable(),
     "modelId": z.string().nullable(),
     "modelVersion": z.string().nullable(),
     "thresholdPolicyVersion": z.string(),
@@ -390,9 +390,9 @@ export const CampaignDraftRequestSchema = z
     "registrationClosesAt": z.string(),
     "examinationStartDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
     "examinationEndDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
-    "examinationReportingHour": z.number(),
+    "examinationReportingHour": z.number().int().min(0).max(23),
     "allowsWalkIn": z.boolean(),
-    "targetIntakeCount": z.number().nullable().optional(),
+    "targetIntakeCount": z.number().int().min(1).nullable().optional(),
     "contactPhoneNumbers": z.array(z.string().min(1).max(40)).max(10).optional(),
     "contactWebsite": z.string().max(100).nullable().optional(),
   });
@@ -438,7 +438,7 @@ export const CampaignPolicyVersionCreated201Schema = z
   .strictObject({
     "status": z.literal('POLICY_VERSION_CREATED'),
     "publicCode": CampaignPublicCodeSchema,
-    "policyVersion": z.number(),
+    "policyVersion": z.number().int().min(1),
     "policyHash": Sha256HexSchema,
   });
 
@@ -455,8 +455,8 @@ export const CampaignPublished200Schema = z
     "status": z.literal('CAMPAIGN_PUBLISHED'),
     "publicCode": CampaignPublicCodeSchema,
     "campaignStatus": z.literal('REGISTRATION_OPEN'),
-    "policyVersion": z.number(),
-    "coverageVersion": z.number(),
+    "policyVersion": z.number().int().min(1),
+    "coverageVersion": z.number().int(),
     "coverageHash": Sha256HexSchema,
   });
 
@@ -495,7 +495,7 @@ export const ExamInvitationPayloadSchema = z
     "ticketId": z.string(),
     "venueName": z.string(),
     "examDate": z.string(),
-    "reportingTimeHour": z.number(),
+    "reportingTimeHour": z.number().int().min(0).max(23),
     "validUntil": z.string(),
   });
 
@@ -557,7 +557,7 @@ export const GateDecisionAdmitted200Schema = z
     "candidate": GateDecisionCandidateSchema,
     "venueName": z.string().min(1).max(200),
     "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
-    "reportingTimeHour": z.number(),
+    "reportingTimeHour": z.number().int().min(0).max(23),
     "admittedAt": z.string(),
     "statusAdvanced": z.boolean(),
   });
@@ -738,14 +738,14 @@ export const PublicCategoryEligibilitySchema = z
     "ageBands": z.array(z
     .strictObject({
       "qualifications": z.array(z.string()),
-      "minimumAge": z.number(),
-      "maximumAge": z.number(),
+      "minimumAge": z.number().int(),
+      "maximumAge": z.number().int(),
     })),
     "educationAlternatives": z.array(z
     .strictObject({
       "level": z.string(),
     })),
-    "minimumSciencePercent": z.number().nullable(),
+    "minimumSciencePercent": z.number().int().nullable(),
   });
 
 /**
@@ -903,11 +903,11 @@ export const VenueLiveCountsSchema = z
     }),
     "counts": z
     .strictObject({
-      "expected": z.number(),
-      "admitted": z.number(),
-      "physicalCaptured": z.number(),
-      "medicalRecorded": z.number(),
-      "openConflicts": z.number(),
+      "expected": z.number().int(),
+      "admitted": z.number().int(),
+      "physicalCaptured": z.number().int(),
+      "medicalRecorded": z.number().int(),
+      "openConflicts": z.number().int(),
     }),
     "asOf": z.string(),
   });

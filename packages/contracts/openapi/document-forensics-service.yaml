@@ -80,7 +80,13 @@ paths:
         drive the upload UI from AGENCY_DOCUMENT_TYPES in src/agency.ts.
       x-usrp-auth: ["system"]
       x-usrp-reach: "service-internal"
-      x-usrp-source: "src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH)"
+      x-usrp-source: >-
+        src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH).
+        D8 (`revision` on the 201, DOCUMENT_REVIEW_CLOSED on the 409) verified
+        against backend 4683b5615dae (full SHA in the fixtures) — the merge of
+        e-recruitment PR #61. The document's global pin remains
+        x-usrp-backend-sha; this operation's D8 fields are newer than that pin
+        and are recorded as such rather than folded into it.
       x-usrp-verified: "controller-verbatim"
       requestBody:
         required: true
@@ -126,12 +132,19 @@ paths:
                 $ref: "#/components/schemas/ApplicationNotFound404"
         "409":
           description: >-
+            TWO distinct refusals, discriminated on `error`:
+
+
             NOT_ACCEPTING_DOCUMENTS with currentStatus — the application is in a
             terminal or non-collecting state. The status is the explanation.
+
+
+            DOCUMENT_REVIEW_CLOSED with reason (D8) — this document's review is
+            closed, so nothing is written and the revision is untouched.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotAcceptingDocuments409"
+                $ref: "#/components/schemas/UploadConflict409"
         "413":
           description: >-
             FILE_TOO_LARGE. Note this is the CONTRACT check inside the handler,
@@ -382,10 +395,22 @@ components:
           maxLength: 100
 
     DocumentUploaded201:
-      description: "THE WHOLE BODY. Three fields. No verdict, by design."
+      description: >-
+        THE WHOLE BODY. Four fields. No verdict, by design.
+
+
+        `revision` (D8) is the number THIS service assigned to the bytes it
+        stored, produced by `decideSupersession()` in
+        src/domain/supersession.ts: 1 on a first upload for the slot, n+1 on a
+        SUPERSEDE, and the CURRENT number unchanged on a RETRY — a re-upload
+        whose keyed HMAC matches what is already stored writes nothing and adds
+        no history entry. It is therefore not a counter a caller may increment:
+        reading it back is the only way to know it. Verdict, lane, score, flags,
+        content HMAC, object key and revision history stay inside this service —
+        a score handed to the uploader is a forgery-tuning oracle.
       type: "object"
       additionalProperties: false
-      required: ["status", "documentId", "documentType"]
+      required: ["status", "documentId", "documentType", "revision"]
       properties:
         status:
           type: "string"
@@ -395,6 +420,14 @@ components:
         documentType:
           description: "Echoed from the request, not re-derived from the bytes."
           $ref: "#/components/schemas/DocumentType"
+        revision:
+          description: >-
+            Assigned here, never by a caller. A positive whole number: 1 for the
+            first accepted upload in the slot, incremented only when different
+            bytes replace what is stored, and returned UNCHANGED when identical
+            bytes are re-uploaded.
+          type: "integer"
+          minimum: 1
 
     DocumentAnalyzed200:
       type: "object"
@@ -418,6 +451,41 @@ components:
           description: "The ForensicsFlags object, verbatim. Opaque by design."
           type: "object"
           additionalProperties: true
+
+    UploadConflict409:
+      description: >-
+        The upload route's 409, discriminated on `error`:
+        NOT_ACCEPTING_DOCUMENTS (the application is not collecting documents) or
+        DOCUMENT_REVIEW_CLOSED (D8 — this document's review is closed).
+      oneOf:
+        - $ref: "#/components/schemas/NotAcceptingDocuments409"
+        - $ref: "#/components/schemas/DocumentReviewClosed409"
+      discriminator:
+        propertyName: "error"
+
+    DocumentReviewClosed409:
+      description: >-
+        D8. The document's review is closed, so these bytes are refused and
+        NOTHING is written: the object write happens inside the slot lock, after
+        this decision, so a refusal leaves the stored bytes and the revision
+        exactly as they were.
+
+
+        `reason` is one of two values and both are safe to show a citizen:
+        HUMAN_REVIEWED (an officer has reviewed this document; the recruitment
+        office must re-open it) and CASE_ADVANCED (the application has moved past
+        document review). No other value is emitted, and a caller must fall back
+        to a generic message for anything else rather than printing it.
+      type: "object"
+      additionalProperties: false
+      required: ["error", "reason"]
+      properties:
+        error:
+          type: "string"
+          const: "DOCUMENT_REVIEW_CLOSED"
+        reason:
+          type: "string"
+          enum: ["HUMAN_REVIEWED", "CASE_ADVANCED"]
 
     ApplicationNotFound404:
       type: "object"

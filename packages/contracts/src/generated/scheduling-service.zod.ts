@@ -32,7 +32,7 @@ export const CampaignSessionConfigured200Schema = z
     "status": z.enum(['SESSION_CONFIGURED', 'SESSION_UNCHANGED']),
     "publicCode": z.string().regex(/^[A-Z0-9][A-Z0-9-]{2,63}$/),
     "district": z.string(),
-    "coverageVersion": z.number(),
+    "coverageVersion": z.number().int(),
     "coverageHash": z.string().regex(/^[0-9a-f]{64}$/),
     "capacityDecisionCode": z.union([
     z.literal('UNBOUNDED_CAPACITY'),
@@ -51,8 +51,8 @@ export const CampaignSessionRequestSchema = z
     "province": z.string().min(1),
     "venueName": z.string().min(1).max(200),
     "examDate": z.string().regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/),
-    "reportingTimeHour": z.number(),
-    "capacityLimit": z.number().nullable(),
+    "reportingTimeHour": z.number().int().min(0).max(23),
+    "capacityLimit": z.number().int().min(1).nullable(),
     "capacityDecisionCode": z.union([
     z.literal('UNBOUNDED_CAPACITY'),
     z.null(),

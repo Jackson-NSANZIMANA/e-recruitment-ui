@@ -69,6 +69,37 @@ eq('409 AGE_PENDING is a conflict, not an outage', agePending.kind, 'conflict');
 ok('…with currentStatus preserved', agePending.kind === 'conflict' && agePending.data['currentStatus'] === 'WALK_IN_REGISTERED');
 ok('…and is NOT retryable by the client', !new ApiError(agePending, 'x').isRetryable);
 
+// ══ D8: a closed document review refuses replacement ════════════════
+// The edge allowlists exactly two reasons. Both must survive normalisation so
+// the citizen screen can explain WHICH lock applied, and neither may be
+// retryable: clicking again cannot open a document an officer has closed.
+const humanReviewed = normaliseErrorBody(409, { error: 'DOCUMENT_REVIEW_CLOSED', reason: 'HUMAN_REVIEWED' });
+eq('409 DOCUMENT_REVIEW_CLOSED is a conflict', humanReviewed.kind, 'conflict');
+ok('…keeping the edge-visible outcome name', humanReviewed.kind === 'conflict' && humanReviewed.outcome === 'DOCUMENT_REVIEW_CLOSED');
+ok('…with HUMAN_REVIEWED available in data.reason', humanReviewed.kind === 'conflict' && humanReviewed.data['reason'] === 'HUMAN_REVIEWED');
+ok('…and it is NOT retryable', !new ApiError(humanReviewed, 'x').isRetryable);
+
+const caseAdvanced = normaliseErrorBody(409, { error: 'DOCUMENT_REVIEW_CLOSED', reason: 'CASE_ADVANCED' });
+eq('409 DOCUMENT_REVIEW_CLOSED / CASE_ADVANCED is the same conflict', caseAdvanced.kind, 'conflict');
+ok('…with the outcome preserved', caseAdvanced.kind === 'conflict' && caseAdvanced.outcome === 'DOCUMENT_REVIEW_CLOSED');
+ok('…with CASE_ADVANCED available in data.reason', caseAdvanced.kind === 'conflict' && caseAdvanced.data['reason'] === 'CASE_ADVANCED');
+ok('…and it is NOT retryable', !new ApiError(caseAdvanced, 'x').isRetryable);
+
+ok('the two reasons stay distinguishable', humanReviewed.kind === 'conflict' && caseAdvanced.kind === 'conflict'
+  && humanReviewed.data['reason'] !== caseAdvanced.data['reason']);
+eq('describeError names the outcome, never the reason', describeError(humanReviewed), '409 DOCUMENT_REVIEW_CLOSED');
+ok('no upstream forensic field reaches the browser through a refusal',
+  humanReviewed.kind === 'conflict' && Object.keys(humanReviewed.data).sort().join(',') === 'reason');
+
+// An unknown or malformed reason is still the same outcome; the UI decides the
+// words, so the normaliser must not invent or drop one.
+const unknownReason = normaliseErrorBody(409, { error: 'DOCUMENT_REVIEW_CLOSED', reason: 'SOMETHING_NEW' });
+ok('an unrecognised reason is preserved verbatim for the UI to fall back from',
+  unknownReason.kind === 'conflict' && unknownReason.outcome === 'DOCUMENT_REVIEW_CLOSED' && unknownReason.data['reason'] === 'SOMETHING_NEW');
+const absentReason = normaliseErrorBody(409, { error: 'DOCUMENT_REVIEW_CLOSED' });
+ok('an absent reason is a conflict with no reason to name',
+  absentReason.kind === 'conflict' && absentReason.outcome === 'DOCUMENT_REVIEW_CLOSED' && absentReason.data['reason'] === undefined);
+
 // ADR-013: the agency-mode mismatch.
 const wrongMode = normaliseErrorBody(422, { status: 'INVALID_MEDICAL_INPUT', reason: 'AGENCY_USES_CERTIFICATE' });
 eq('422 INVALID_MEDICAL_INPUT is unprocessable', wrongMode.kind, 'unprocessable');
@@ -269,10 +300,16 @@ const detail = capturingClient(200, { campaign: {} });
 await getPublicCampaign(detail.client, 'RDF-2026-A');
 ok('detail addresses the campaign by PUBLIC code in the query', detail.last().url === '/edge/v1/campaigns/detail?publicCode=RDF-2026-A');
 
-const uploader = capturingClient(201, { status: 'UPLOADED', documentId: 'd', documentType: 'NATIONAL_ID_COPY' });
-await uploadMyDocument(uploader.client, {
+// D8: the edge now returns the revision the server accepted. The fixture is a
+// REPLACEMENT (revision 2), which is the case a caller is most tempted to
+// reconstruct locally instead of reading from the wire.
+// `documentId` is a UUID below: the gateway's projection re-checks it against
+// `UUID_RE` and the client's decoder does the same, so a synthetic 'd' would be
+// refused as drift and the assertion would prove nothing.
+const uploader = capturingClient(201, { status: 'UPLOADED', documentId: '11111111-1111-4111-8111-111111111111', documentType: 'NATIONAL_ID', revision: 2 });
+const uploaded = await uploadMyDocument(uploader.client, {
   applicationId: '123e4567-e89b-12d3-a456-426614174001',
-  documentType: 'NATIONAL_ID_COPY',
+  documentType: 'NATIONAL_ID',
   file: new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
 });
 const uploadInit = uploader.last().init;
@@ -283,6 +320,24 @@ ok('…with the CSRF header and NO Authorization header', uploadHeaders.get('x-c
 const sentForm = uploadInit.body as FormData;
 ok('…carrying exactly applicationId, documentType, file — never an applicant id',
   [...sentForm.keys()].sort().join(',') === 'applicationId,documentType,file');
+
+// ── D8: the accepted revision survives the client operation ─────────
+eq('uploadMyDocument returns the revision the server accepted', uploaded.revision, 2);
+eq('…as a NUMBER, not a stringified counter', typeof uploaded.revision, 'number');
+eq('…with the document identifiers unchanged', uploaded.documentType, 'NATIONAL_ID');
+deepEq('…and the whole response stays the allowlisted edge projection, with no forensic field', Object.keys(uploaded).sort(),
+  ['documentId', 'documentType', 'revision', 'status']);
+
+// An identical re-upload is a retry: the edge returns the SAME revision. The
+// client must hand that number straight to its caller — incrementing it here
+// would tell a citizen a new revision was created when none was.
+const retryClient = capturingClient(201, { status: 'UPLOADED', documentId: '11111111-1111-4111-8111-111111111111', documentType: 'NATIONAL_ID', revision: 1 });
+const retried = await uploadMyDocument(retryClient.client, {
+  applicationId: '123e4567-e89b-12d3-a456-426614174001',
+  documentType: 'NATIONAL_ID',
+  file: new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
+});
+eq('an identical retry returns the CURRENT revision, unincremented', retried.revision, 1);
 
 // ── ADR-032 checklist operations ──
 import { getDocumentChecklist, getMyDocumentChecklist, verifyDocumentAtVenue } from '../src/operations/documents.js';

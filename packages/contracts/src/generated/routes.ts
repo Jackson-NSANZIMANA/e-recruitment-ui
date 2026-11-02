@@ -938,7 +938,7 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     ],
     "reach": "service-internal",
     "verified": "controller-verbatim",
-    "source": "src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH)",
+    "source": "src/adapters/http/upload-document.controller.ts (UPLOAD_DOCUMENT_PATH). D8 (`revision` on the 201, DOCUMENT_REVIEW_CLOSED on the 409) verified against backend 4683b5615dae (full SHA in the fixtures) — the merge of e-recruitment PR #61. The document's global pin remains x-usrp-backend-sha; this operation's D8 fields are newer than that pin and are recorded as such rather than folded into it.",
     "statuses": [
       "201",
       "400",
@@ -1670,7 +1670,7 @@ export const ROUTE_TABLE: readonly RouteFact[] = [
     ],
     "reach": "browser",
     "verified": "controller-verbatim",
-    "source": "src/adapters/http/applicant-documents.controller.ts (ME_DOCUMENTS_PATH)",
+    "source": "src/adapters/http/applicant-documents.controller.ts (ME_DOCUMENTS_PATH) and src/adapters/document-upload.http-gateway.ts. D8 (`revision` on the 201, DOCUMENT_REVIEW_CLOSED on the 409) verified against backend 4683b5615dae (full SHA in the fixtures) — the merge of e-recruitment PR\n\noperation's D8 fields are newer than that pin and are recorded as such rather than folded into it.",
     "statuses": [
       "201",
       "400",

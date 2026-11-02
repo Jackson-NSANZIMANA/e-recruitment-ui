@@ -1,4 +1,10 @@
-import { defineConfig, loadEnv } from "vite";
+// `vitest/config` re-exports Vite's defineConfig with the `test` block typed.
+// Vite loads this same file for `dev` and `build`, so the test configuration
+// lives HERE rather than in a second config Vitest would prefer over this one -
+// a separate vitest.config.ts would drop the React and @compiled transforms the
+// component tests need.
+import { defineConfig } from "vitest/config";
+import { loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import compiled from "@compiled/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
@@ -25,6 +31,12 @@ function assertEdgeUrl(command: string, mode: string): void {
 export default defineConfig(({ command, mode }) => {
   assertEdgeUrl(command, mode);
   return {
+    test: {
+      // `node` by default: the existing suites are pure model tests. A DOM test
+      // opts in per file with `// @vitest-environment jsdom`, which is what
+      // src/routes/apply/documents-panel.test.tsx does to render the real panel.
+      setupFiles: ["./src/test/setup.ts"],
+    },
     plugins: [
       readinessStubPlugin({ app: "applicant-portal", repoRoot: fileURLToPath(new URL("../..", import.meta.url)) }),
       // Must precede react(). Extracts @compiled/react and @atlaskit/css
