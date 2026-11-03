@@ -3,7 +3,7 @@
 // ║                                                              ║
 // ║  Source:   openapi/eligibility-service.yaml                  ║
 // ║  Producer: pnpm --filter @usrp/contracts generate             ║
-// ║  Backend:  b004fca840af12435bbc84ec0e365c513c788c36          ║
+// ║  Backend:  6584a1a160e5008c26c0c744b0988b7eb7cd58c5          ║
 // ║                                                              ║
 // ║  Edits here are erased on the next generate, and `verify`     ║
 // ║  fails on any diff between committed and regenerated output,  ║

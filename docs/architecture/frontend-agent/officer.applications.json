@@ -9,7 +9,7 @@
   "goal": "Review agency-scoped applications, understand why a record is at its current lifecycle stage, and execute only the human decisions allowed by the current state.",
   "backend": {
     "repository": "Jackson-NSANZIMANA/e-recruitment",
-    "mainSha": "b004fca840af12435bbc84ec0e365c513c788c36",
+    "mainSha": "6584a1a160e5008c26c0c744b0988b7eb7cd58c5",
     "edgeBase": "4021"
   },
   "operations": [

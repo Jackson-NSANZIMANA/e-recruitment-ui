@@ -17,7 +17,7 @@ export interface EdgeOperation {
  * and reconciled by contract-drift gate D. Keep this next to the operation
  * registry so a pending operation cannot quietly outlive its evidence.
  */
-export const EDGE_BACKEND_SHA = 'b004fca840af12435bbc84ec0e365c513c788c36' as const;
+export const EDGE_BACKEND_SHA = '6584a1a160e5008c26c0c744b0988b7eb7cd58c5' as const;
 
 export const EDGE_OPERATIONS = [
   { id: 'officerLogin', method: 'POST', edgePath: '/edge/v1/auth/officer/login', upstreamOperationId: 'officerLogin', session: 'anonymous', retryOnG2G: false, composition: 'single' },
