@@ -12,6 +12,10 @@
     }
   },
   "main": "./src/index.ts",
+  "//sideEffects": "Modules here only declare components, styles and constants, so an app that imports one name from the barrel must not ship every chart. Without this flag Rollup keeps each re-exported module for its module-scope work (token() tables, cssMap), which is how the dashboard charts landed in the applicant portal's entry chunk and pushed it over its 300 KB gzip ceiling. CSS is the one real side effect: an extracted Compiled stylesheet is imported for its effect and must never be dropped.",
+  "sideEffects": [
+    "*.css"
+  ],
   "//dependencies": "@usrp/contracts replaces @usrp/shared-types here. Every domain type this package renders (Agency, ApplicationStatus) now comes from the contract that was generated from the backend at a pinned commit. Do NOT reintroduce @usrp/shared-types: .dependency-cruiser.cjs forbids importing it and tooling/repo-hygiene/lib/predicates.mjs lists the scope as forbidden. Every @atlaskit entry below is imported by a file in src/; removing one breaks typecheck in both apps, so verify consumers before editing this list. @usrp/design-system was added 2026-09-13 so components consume the a11y floor (TOUCH_TARGET_TOKEN_PX) instead of retyping 48px - the dependency direction is legal because design-system is the domain-free layer and may not import this package, only the reverse.",
   "scripts": {
     "typecheck": "tsc --noEmit",
