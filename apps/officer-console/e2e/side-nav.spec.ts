@@ -25,3 +25,20 @@ test('desktop: the side nav is visible by default and the toggle really collapse
   await page.getByRole('button', { name: /expand navigation|développer la navigation|fungura urutonde/i }).click();
   await expect(nav).toBeVisible();
 });
+
+// Regression: in a sandbox build the SANDBOX and RESTRICTED bars share a fixed-height
+// Banner. The marking used to claim 100% of that height, overflowed it, and the top
+// nav covered its lower half (clipped text). Each bar must end where the next begins.
+test('the handling marking is not covered by the top navigation', async ({ page }) => {
+  await page.route('**/edge/v1/**', (route) => json(route, 200, { campaigns: [], applications: [], officers: [], devices: [], total: 0, nextCursor: null }));
+  await signIn(page, ['agency_admin'], POSTS.admin);
+  await page.goto('/dashboard');
+
+  const marking = page.locator('[role="note"][aria-label]').last();
+  await expect(marking).toBeVisible();
+  const [m, nav] = await Promise.all([marking.boundingBox(), page.locator('header').first().boundingBox()]);
+  expect(m).not.toBeNull();
+  expect(nav).not.toBeNull();
+  expect(m!.y + m!.height).toBeLessThanOrEqual(nav!.y);
+  expect(m!.width).toBeGreaterThan(1300); // spans the page, not shrink-wrapped to its text
+});

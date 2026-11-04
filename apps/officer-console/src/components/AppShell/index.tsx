@@ -64,6 +64,18 @@ const RAIL = cssMap({
   },
 });
 
+/**
+ * The banner's two bars (SANDBOX above RESTRICTED) share its fixed height. A flex
+ * column lets each take an equal half; without it the marking overflowed the
+ * Banner and the top navigation covered its lower half.
+ */
+const BANNER_STACK = cssMap({
+  stack: { display: "flex", flexDirection: "column", blockSize: "100%" },
+  // Each bar gets an equal share. The wrapper is a one-cell grid, so the bar
+  // inside stretches to the full share, width and height, without the bar knowing about the Banner.
+  half: { display: "grid", flexGrow: 1, flexShrink: 1, flexBasis: 0, minBlockSize: 0, overflow: "hidden" },
+});
+
 // The top bar's logo slot takes a logo and an icon component (ADS CustomLogo).
 // The lockup replaces the Atlassian product mark this console shipped with: a
 // Government of Rwanda tool identifies the Republic of Rwanda, not its UI kit.
@@ -108,9 +120,11 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
     <Root>
       {/* Handling marking: every staff screen states its restriction (ADR-FE-020). */}
       <Banner height={isSandboxBuild() ? 64 : 32}>
-        {/* ADR-FE-019: a sandbox build says so above everything else. */}
-        {isSandboxBuild() ? <SandboxBanner /> : null}
-        <HandlingMarking />
+        <Box xcss={BANNER_STACK["stack"]}>
+          {/* ADR-FE-019: a sandbox build says so above everything else. */}
+          {isSandboxBuild() ? <Box xcss={BANNER_STACK["half"]}><SandboxBanner /></Box> : null}
+          <Box xcss={BANNER_STACK["half"]}><HandlingMarking /></Box>
+        </Box>
       </Banner>
       <TopNav>
         <TopNavStart

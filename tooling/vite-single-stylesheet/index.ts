@@ -18,11 +18,24 @@
 // ══════════════════════════════════════════════════════════════════
 
 import { createRequire } from "node:module";
-import type { Plugin } from "vite";
+
+// Structural types only: tooling/ sits outside every app's dependencies, so it
+// cannot import from "vite" (same approach as surface-contract's vite-readiness).
+interface BundleEntry {
+  readonly type: "asset" | "chunk";
+  readonly fileName: string;
+  source?: string | Uint8Array;
+}
+interface MinimalPlugin {
+  readonly name: string;
+  readonly apply: "build";
+  readonly enforce: "post";
+  generateBundle(this: { error(message: string): never }, options: unknown, bundle: Record<string, BundleEntry>): void;
+}
 
 const EXTRACTED = /(^|\/)compiled-extracted[^/]*\.css$/;
 
-export function singleCompiledStylesheet(appRoot: string): Plugin {
+export function singleCompiledStylesheet(appRoot: string): MinimalPlugin {
   // @compiled/css is a transitive dependency; resolve it through the plugin
   // that owns it rather than relying on hoisting.
   const requireFromApp = createRequire(`${appRoot}/package.json`);
@@ -39,8 +52,7 @@ export function singleCompiledStylesheet(appRoot: string): Plugin {
     enforce: "post",
     generateBundle(_options, bundle) {
       const sheets = Object.entries(bundle).filter(
-        (entry): entry is [string, typeof entry[1] & { type: "asset" }] =>
-          entry[0].endsWith(".css") && entry[1].type === "asset",
+        ([name, entry]) => name.endsWith(".css") && entry.type === "asset",
       );
       const extracted = sheets.filter(([name]) => EXTRACTED.test(name));
       const main = sheets.filter(([name]) => !EXTRACTED.test(name));
