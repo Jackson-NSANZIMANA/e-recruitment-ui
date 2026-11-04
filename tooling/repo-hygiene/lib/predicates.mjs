@@ -129,7 +129,12 @@ export const TEXT_SIZE_PX = Object.freeze({ small: 12, medium: 14, large: 16 });
  *    the agency name sits inside a lockup beside the emblem.
  */
 export const BODY_TEXT_SCAN = Object.freeze({
-  roots: Object.freeze(['apps', 'packages']),
+  // `tooling` is included because the ESLint rule now runs repo-wide, and two
+  // gates that scan different trees will disagree the first time a .tsx lands in
+  // the one they do not share. It already happened here: the surface-contract
+  // selftest fixture rendered 12px body copy, was linted nowhere (that package
+  // replaces ESLint with its own linter) and sat in no sweep root either.
+  roots: Object.freeze(['apps', 'packages', 'tooling']),
   exemptPaths: Object.freeze(['packages/ui/src/national/', 'packages/ui/src/components/AgencyLogo/']),
 });
 

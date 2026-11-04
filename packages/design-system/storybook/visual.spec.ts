@@ -41,11 +41,15 @@ test("the gallery is not empty", async ({ request }) => {
   const stories = Object.values(entries).filter((e) => e.type !== "docs");
   // A guard on the guard: a glob that stops matching, or a build that ships no
   // stories, would otherwise make this whole file pass while screenshotting
-  // nothing at all.
-  expect(stories.length).toBeGreaterThanOrEqual(15);
+  // nothing at all. The floor matches packages/ui/test/story-coverage.test.ts, so
+  // the two gates cannot disagree about how small the gallery is allowed to get.
+  expect(stories.length).toBeGreaterThanOrEqual(30);
 });
 
 test("every story renders without a console error", async ({ page, request }) => {
+  // One test walking the whole gallery: the default 30s budget is not enough for
+  // 40+ page loads, and a timeout here would look like a product failure.
+  test.setTimeout(300_000);
   const res = await request.get("/index.json");
   const { entries } = (await res.json()) as { entries: Record<string, StoryEntry> };
   const stories = Object.values(entries).filter((e) => e.type !== "docs");
@@ -79,10 +83,28 @@ test("every story renders without a console error", async ({ page, request }) =>
  * collects - which is what the webServer block in playwright.visual.config.ts
  * guarantees, because Playwright starts the server before collecting.
  */
-const STATIC_DIR = process.env["STORYBOOK_STATIC_DIR"] ?? "storybook-static";
-const INDEX = JSON.parse(readFileSync(join(STATIC_DIR, "index.json"), "utf8")) as {
-  entries: Record<string, StoryEntry>;
-};
+// Resolved from THIS file, never from process.cwd(). Playwright runs a spec with
+// the config's directory or the package root depending on how it was invoked, and
+// a cwd-relative build path silently collected zero stories when it guessed wrong
+// - a gate that reports green because it found nothing is the worst possible
+// failure mode for this file.
+const STATIC_DIR =
+  process.env["STORYBOOK_STATIC_DIR"] ?? join(import.meta.dirname, "..", "storybook-static");
+const INDEX_PATH = join(STATIC_DIR, "index.json");
+
+let INDEX: { entries: Record<string, StoryEntry> };
+try {
+  INDEX = JSON.parse(readFileSync(INDEX_PATH, "utf8")) as { entries: Record<string, StoryEntry> };
+} catch {
+  // Collection-time failure with the one fact the reader needs: no build, no
+  // cases. The webServer block normally prevents this; a direct `playwright test`
+  // invocation without a build does not.
+  throw new Error(
+    `[visual] cannot read ${INDEX_PATH}\n` +
+      "[visual] Build the gallery first: pnpm --filter @usrp/design-system run build-storybook\n" +
+      "[visual] (or run `pnpm visual`, which does it for you).",
+  );
+}
 
 const ALL_STORIES = Object.values(INDEX.entries).filter((e) => e.type !== "docs");
 

@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import {
   CHART_SERIES_TOKENS,
   PAGE_MAX_WIDTH,
-  seriesTokenAt,
   seriesIndexAt,
   sparklineIsDot,
   sparklinePath,
@@ -149,16 +148,16 @@ test("chart series colours come from the eight ADS categorical slots, and wrap",
   for (const name of CHART_SERIES_TOKENS) {
     assert.ok(/^color\.chart\.categorical\.[1-8]$/.test(name), name);
   }
-  assert.equal(seriesTokenAt(0), "color.chart.categorical.1");
-  assert.equal(seriesTokenAt(7), "color.chart.categorical.8");
+  assert.equal(CHART_SERIES_TOKENS[seriesIndexAt(0)], "color.chart.categorical.1");
+  assert.equal(CHART_SERIES_TOKENS[seriesIndexAt(7)], "color.chart.categorical.8");
   // A ninth series reuses slot 1 rather than inventing a colour.
-  assert.equal(seriesTokenAt(8), "color.chart.categorical.1");
+  assert.equal(CHART_SERIES_TOKENS[seriesIndexAt(8)], "color.chart.categorical.1");
 });
 
 test("chart series slot survives a garbage index instead of rendering untokenised", () => {
-  assert.equal(seriesTokenAt(-3), "color.chart.categorical.1");
-  assert.equal(seriesTokenAt(NaN), "color.chart.categorical.1");
-  assert.equal(seriesTokenAt(2.7), "color.chart.categorical.3");
+  assert.equal(seriesIndexAt(-3), 0);
+  assert.equal(seriesIndexAt(NaN), 0);
+  assert.equal(seriesIndexAt(2.7), 2);
 });
 
 // ── The three-state count ────────────────────────────────────────
@@ -251,9 +250,9 @@ test("the formatter's language list cannot drift from the i18n package", () => {
 });
 
 describe('seriesIndexAt', () => {
-  test('is the one wrap rule, and seriesTokenAt reads it', () => {
+  test('wraps over the whole categorical scale, in order', () => {
     for (let i = 0; i < 20; i += 1) {
-      assert.equal(seriesTokenAt(i), CHART_SERIES_TOKENS[seriesIndexAt(i)]);
+      assert.equal(seriesIndexAt(i), i % CHART_SERIES_TOKENS.length);
     }
   });
 

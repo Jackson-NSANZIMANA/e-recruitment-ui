@@ -15,23 +15,18 @@
 
 export const NATIONAL_COLOURS = {
   /** Flag blue - Pantone 3005 (RISA "Blue"). Identity only: 2.9:1 on white, never text. */
-  // eslint-disable-next-line usrp/no-raw-hex -- statutory national colour, see the file header (ADR-FE-020)
   flagBlue: "#00A1DE", // hygiene-allow-hex: statutory flag colour, Law 34/2008 + RISA brand sheet
   /** Flag yellow - Pantone 109 (RISA "Yellow"). */
-  // eslint-disable-next-line usrp/no-raw-hex -- statutory national colour, see the file header (ADR-FE-020)
   flagYellow: "#FAD201", // hygiene-allow-hex: statutory flag colour, Law 34/2008 + RISA brand sheet
   /** Flag green - Pantone 3415 (RISA "Green", "Primary Green"). */
-  // eslint-disable-next-line usrp/no-raw-hex -- statutory national colour, see the file header (ADR-FE-020)
   flagGreen: "#20603D", // hygiene-allow-hex: statutory flag colour, Law 34/2008 + RISA brand sheet
   /** Sun gold - Pantone 130 (RISA "Secondary Gold"). */
-  // eslint-disable-next-line usrp/no-raw-hex -- statutory national colour, see the file header (ADR-FE-020)
   sunGold: "#E5BE01", // hygiene-allow-hex: statutory flag colour, Law 34/2008 + RISA brand sheet
   /**
    * RISA "Primary Blue": the Government of Rwanda's interface colour for
    * headings, links and buttons (10.32:1 on white, WCAG AAA). It seeds the ADS
    * brand ramp, so ADS derives every brand/link/focus token from it.
    */
-  // eslint-disable-next-line usrp/no-raw-hex -- statutory national colour, see the file header (ADR-FE-020)
   primaryBlue: "#003F82", // hygiene-allow-hex: RISA GoR Primary Blue, seeds the ADS brand theme
 } as const;
 

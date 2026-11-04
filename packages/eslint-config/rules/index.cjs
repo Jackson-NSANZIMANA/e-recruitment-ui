@@ -158,10 +158,39 @@ const noRawHex = {
     },
   },
   create(context) {
-    const { findRawHexColors } = predicates();
+    const { findRawHexColors, ALLOW_HEX_MARKER } = predicates();
+    const sourceCode = context.sourceCode ?? context.getSourceCode();
+
+    /**
+     * A hex literal is exempt when `hygiene-allow-hex` appears on its line or in
+     * the comment block directly above it - the same rule, and the same marker,
+     * that check-boundaries.mjs applies.
+     *
+     * WHY THIS HAD TO BE ADDED. The two consumers of `findRawHexColors` drifted:
+     * the sweep honoured the marker and this rule did not, so the three app
+     * `vite.config.ts` manifests - whose colours are the OS-read PWA theme and
+     * carry written justifications - were "exempt" in CI and red in the editor.
+     * A rule that disagrees with the gate beside it is worse than either alone,
+     * because the next person to see the red assumes the marker does not work.
+     */
+    const isExempt = (node) => {
+      const lines = sourceCode.getText().split(/\r?\n/);
+      const index = node.loc.start.line - 1;
+      if ((lines[index] ?? '').includes(ALLOW_HEX_MARKER)) return true;
+      for (let i = index - 1; i >= 0; i -= 1) {
+        const line = lines[i] ?? '';
+        if (line.includes(ALLOW_HEX_MARKER)) return true;
+        // Only walk a contiguous comment block, so an unrelated remark far above
+        // can never reach down and exempt code below it.
+        if (!/^\s*(\/\/|\*|\/\*)/.test(line)) return false;
+      }
+      return false;
+    };
+
     const check = (node, text) => {
       if (typeof text !== 'string') return;
       for (const hit of findRawHexColors(text)) {
+        if (isExempt(node)) continue;
         context.report({ node, messageId: 'hex', data: { value: hit.value } });
       }
     };

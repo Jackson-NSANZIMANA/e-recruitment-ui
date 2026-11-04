@@ -180,6 +180,23 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: bash tooling/ci/run-scoped.sh lint
       - run: pnpm scan:cssmap
+      # REPO-WIDE, above the per-package scripts. Each package's `lint` says
+      # `eslint src`, and six packages (api-client, auth, contracts, i18n,
+      # shared-types, surface-contract) replace ESLint entirely with a
+      # domain-specific linter. That is fine for .ts and a hole for .tsx:
+      # tooling/surface-contract/fixtures/untranslated-screen.tsx shipped 14px
+      # body text that no job could see, because the root config knows how to
+      # lint it and nothing invoked that config on that directory.
+      #
+      # This one pass closes the class rather than the instance: it makes the set
+      # of linted files a property of the repository, not of whichever package
+      # script happens to glob them.
+      # No --max-warnings=0: the repo carries 25 justified warnings (the
+      # SimpleField / placeholder migrations are deliberately queued, not
+      # defects), and the per-package scripts do not fail on them either. Failing
+      # here would make this job stricter than the contract it shares.
+      - name: ESLint over every .ts/.tsx in the repo
+        run: pnpm exec eslint . --ext .ts,.tsx
 
   contract-drift:
     name: Contract drift vs pinned backend
@@ -275,6 +292,47 @@ jobs:
       - run: pnpm --filter @usrp/design-system run test
       - run: pnpm --filter @usrp/design-system run build-storybook --quiet
       - run: pnpm a11y
+      # The visual gate runs HERE, in the one job that already has Chromium and
+      # the static build the a11y sweep just audited. It is the same artefact:
+      # if the gallery renders for axe, it renders for the screenshot diff.
+      #
+      # Baselines are committed and therefore Linux. `run-storybook-visual.sh`
+      # refuses to compare on any other OS rather than failing a contributor's
+      # laptop for a font-rasterisation difference, which is why this step is
+      # not offered as a local-only convenience.
+      # STAGED, NOT PASSING. No baseline has ever been recorded: `pnpm visual`
+      # exits 1 while the baseline directory is empty rather than letting
+      # Playwright write one, pass, and call that proof. That check is correct and
+      # stays - it is the same hollow-gate guard the other gates carry - so this
+      # step runs it in "record what is missing" mode instead of pretending the
+      # comparison happened. Invert to `run: pnpm visual` in the same PR that
+      # commits reviewed baselines, at which point this conditional disappears.
+      - name: Visual regression (awaiting first baseline)
+        run: |
+          if compgen -G "packages/design-system/storybook/__screenshots__/*.png" > /dev/null 2>&1; then
+            pnpm visual
+          else
+            echo "::notice title=Visual gate staged::No baselines committed yet. Run 'pnpm --filter @usrp/design-system run test:visual:update' on Linux, review the images, and commit packages/design-system/storybook/__screenshots__."
+            {
+              echo "### Visual gate is staged, not passing"
+              echo ""
+              echo "No screenshot baseline is committed, so nothing has been compared."
+              echo "Record them on Linux, review every image, and commit:"
+              echo ""
+              echo '```'
+              echo "pnpm --filter @usrp/design-system run test:visual:update"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload visual diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diffs
+          path: |
+            packages/design-system/test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
   build:
     name: Build and production proof

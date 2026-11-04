@@ -227,13 +227,19 @@ export function amberArrivalSeries(
   const span = Math.max(1, Math.floor(days));
   // Midnight in Kigali, not UTC: a queue entry at 01:00 local belongs to that
   // local day, and Rwanda is UTC+2 year-round (no DST to get wrong).
+  //
+  // ONE formatter, built once. `Intl.DateTimeFormat` construction is the
+  // expensive part (locale data lookup), and this function is called with one
+  // entry per row on the dashboard - a formatter per row turned a seven-bucket
+  // count into hundreds of them on every render.
+  const KIGALI_DAY = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Africa/Kigali",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
   const dayStart = (d: Date): number => {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Africa/Kigali",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(d);
+    const parts = KIGALI_DAY.formatToParts(d);
     const get = (t: string): number => Number(parts.find((p) => p.type === t)?.value ?? "0");
     return Date.UTC(get("year"), get("month") - 1, get("day"));
   };

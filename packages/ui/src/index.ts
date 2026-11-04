@@ -30,7 +30,6 @@ export {
   trendOf,
   trendTone,
   stackShares,
-  seriesTokenAt,
   seriesIndexAt,
 } from "./model.js";
 export type { PageAlign, TrendDirection } from "./model.js";

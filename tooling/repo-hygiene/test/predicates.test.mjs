@@ -383,3 +383,30 @@ describe('isBodyTextExemptPath', () => {
     }
   });
 });
+
+describe('the two hex consumers agree about the marker', () => {
+  test('a marker on the line exempts, and one in the comment block above exempts', () => {
+    const onLine = 'export const c = "#003F82"; // hygiene-allow-hex: PWA theme, OS-read';
+    assert.equal(findRawHexColors(onLine).length, 0);
+
+    const above = [
+      '// hygiene-allow-hex: PWA theme, read before any CSS exists',
+      '// a second justified line',
+      'export const c = "#003F82";',
+    ].join('\n');
+    assert.equal(findRawHexColors(above).length, 0);
+  });
+
+  test('an unrelated comment above does NOT exempt (the walk stops at code)', () => {
+    const src = [
+      '// an ordinary remark with no marker',
+      'const other = 1;',
+      'export const c = "#003F82";',
+    ].join('\n');
+    assert.equal(findRawHexColors(src).length, 1);
+  });
+
+  test('an unmarked literal is still a violation', () => {
+    assert.equal(findRawHexColors('export const c = "#003F82";').length, 1);
+  });
+});

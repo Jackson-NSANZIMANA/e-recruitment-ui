@@ -37,12 +37,11 @@ const styles = cssMap({
  *
  * `token()` only rewrites calls whose first argument is a string literal, so
  * each slot is named individually - but the SLOT ORDER is not re-decided here.
- * `seriesTokenAt(i)` in model.ts is the one definition of "which colour is
- * series i", and it wraps at 8 the same way this table does. Before this was
- * wired, the wrapping rule was written twice (once here as `% SERIES_FILL
- * .length`, once in a model function nobody called) and the copy in model.ts
- * was dead. A single series can no longer be coloured two ways depending on
- * which file drew it.
+ * The table is keyed on `CHART_SERIES_TOKENS` and indexed through
+ * `seriesIndexAt()`, so "which slot is series i" and "does it wrap at 8" each
+ * have one definition in model.ts. Both the bar and the legend below read the
+ * table through that same index, which is what stops a legend swatch from
+ * disagreeing with the rect it labels.
  *
  * A category keeps its slot when another category is added, and no category
  * ever borrows a status colour: a category is not a verdict.

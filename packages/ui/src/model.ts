@@ -198,19 +198,6 @@ export function seriesIndexAt(index: number): number {
   return safe % CHART_SERIES_TOKENS.length;
 }
 
-/**
- * The token NAME for slot `index`; wraps after 8 because there is no slot 9.
- *
- * Note it returns a name, not a resolved value: `token()` only rewrites calls
- * whose argument is a string literal at the call site, so a component that
- * needs a colour writes `token("color.chart.categorical.1")` itself. This
- * function is what tells it WHICH literal to write, and it is what the
- * StackedBar fill table is keyed on.
- */
-export function seriesTokenAt(index: number): (typeof CHART_SERIES_TOKENS)[number] {
-  return CHART_SERIES_TOKENS[seriesIndexAt(index)] as (typeof CHART_SERIES_TOKENS)[number];
-}
-
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { join, resolve } from "node:path";
 
 /**
  * THE VISUAL GATE: every story in the gallery, rendered and diffed.
@@ -40,11 +41,28 @@ import { defineConfig, devices } from "@playwright/test";
  * (the `stillness` wrapper around the skeleton keys off exactly that media
  * query).
  */
+/**
+ * The package root, resolved from this file's own location.
+ *
+ * LOAD-BEARING, and the reason it is explicit: Playwright resolves BOTH
+ * `webServer.command` and the relative paths inside a spec against the CONFIG
+ * FILE's directory, which is `storybook/`. That directory has no package.json
+ * and no scripts/, so `pnpm run build-storybook` and
+ * `node scripts/serve-storybook-static.mjs` both failed at startup - the gate
+ * could not run anywhere, and the failure looked like infrastructure rather than
+ * like a bug in this file.
+ */
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
+const STATIC_DIR = join(PACKAGE_ROOT, "storybook-static");
+
 export default defineConfig({
-  testDir: ".",
-  // Only the spec beside this config; the component package has no other
-  // Playwright specs and must not grow a second glob by accident.
-  testMatch: /visual\.spec\.ts$/,
+  // Everything below is relative to the package root, not to storybook/.
+  testDir: PACKAGE_ROOT,
+  outputDir: join(PACKAGE_ROOT, "test-results"),
+  // The one spec beside this config. `testDir` is the package root (see
+  // PACKAGE_ROOT), so this glob is what keeps the gate from collecting the
+  // component's unit tests or any future spec as a screenshot case.
+  testMatch: /storybook\/visual\.spec\.ts$/,
   fullyParallel: true,
   forbidOnly: Boolean(process.env["CI"]),
   retries: 0,
@@ -58,7 +76,10 @@ export default defineConfig({
   // and Linux for this content, but `expect.toHaveScreenshot` still scopes by
   // project by default; the single `chromium` project below keeps one baseline
   // directory, which is only safe because CI and local both run Linux x64.
-  snapshotPathTemplate: "{testDir}/__screenshots__/{arg}{ext}",
+  // Baselines live beside the spec, in the package, and are COMMITTED: a
+  // screenshot gate whose baselines are not in the repository has nothing to
+  // compare against on a fresh checkout and reports green by skipping.
+  snapshotPathTemplate: "{testDir}/storybook/__screenshots__/{arg}{ext}",
   expect: {
     toHaveScreenshot: {
       // Zero tolerance on layout, a small tolerance on rasterisation: subpixel
@@ -88,7 +109,8 @@ export default defineConfig({
     // long-running dev process, and the artefact is the same one `pnpm a11y`
     // audits.
     command:
-      "pnpm run build-storybook --quiet && node scripts/serve-storybook-static.mjs",
+      "pnpm run build-storybook --quiet && node scripts/serve-storybook-static.mjs storybook-static 6007",
+    cwd: PACKAGE_ROOT,
     url: "http://127.0.0.1:6007/index.json",
     reuseExistingServer: false,
     timeout: 600_000,

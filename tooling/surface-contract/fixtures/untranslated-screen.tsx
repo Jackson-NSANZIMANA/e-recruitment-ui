@@ -8,8 +8,8 @@ export default function UntranslatedScreen(): React.ReactElement {
   const isLoading = false;
   return (
     <Stack space="space.200">
-      <Text as="p">{t("selftest_only.never_translated")}</Text>
-      <Text as="p">{isLoading ? t("a11y.loading") : t("errors.generic")}</Text>
+      <Text as="p" size="large">{t("selftest_only.never_translated")}</Text>
+      <Text as="p" size="large">{isLoading ? t("a11y.loading") : t("errors.generic")}</Text>
     </Stack>
   );
 }
