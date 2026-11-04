@@ -8,7 +8,7 @@ import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
 import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel, countFrom } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
-import { accessFor, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
+import { AMBER_HISTORY_DAYS, accessFor, amberArrivalSeries, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
 import { AttentionPanel, CampaignsPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -18,6 +18,21 @@ const pageStyles = cssMap({
   columns: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" },
   metrics: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" },
 });
+
+
+/**
+ * The x label a screen reader hears for one day of the arrival series.
+ *
+ * Built from the bundle's own month names, not `toLocaleDateString`: browsers
+ * ship trimmed locale data and would print the US order for rw-RW - the exact
+ * defect `calendarDay` exists to avoid. The month is read with UTC getters
+ * because `amberArrivalSeries` has already normalised each bucket to a Kigali
+ * midnight expressed as a UTC calendar date.
+ */
+function dayLabel(at: Date, t: ReturnType<typeof useTranslation>["t"]): string {
+  const month = t(`dashboard.months.${String(at.getUTCMonth() + 1)}`);
+  return t("dashboard.series.day_short", { day: at.getUTCDate(), month });
+}
 
 /**
  * The officer's landing page. Posts that run the agency (campaigns, staff,
@@ -135,6 +150,19 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.awaiting_adjudication")}
             count={countFrom(amber, (d) => d.length)}
+            // The history is the queue's own arrival dates, so the tile changes
+            // shape when the work does - not a decorative sine wave. A rising
+            // backlog is bad news, so goodDirection is "down".
+            {...(amber.data !== undefined
+              ? {
+                  trend: amberArrivalSeries(amber.data, now).map((day) => ({
+                    label: dayLabel(day.at, t),
+                    value: day.count,
+                  })),
+                  trendCaption: t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS }),
+                }
+              : {})}
+            goodDirection="down"
             urgent
             testId="metric-requires-action"
           />

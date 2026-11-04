@@ -67,6 +67,12 @@ export interface MetricCardProps {
    */
   readonly goodDirection?: Exclude<TrendDirection, "flat">;
   /**
+   * One visible line explaining what the history counts, already localised.
+   * A sparkline under a number is read as that number's own past unless the
+   * tile says otherwise; this is where it says otherwise.
+   */
+  readonly trendCaption?: string;
+  /**
    * Marks the tile as needing action. Colour is a repeat of the label, never
    * the only signal: the count is printed and the label says what it counts.
    */
@@ -97,6 +103,7 @@ export function MetricCard({
   count,
   trend,
   goodDirection = "up",
+  trendCaption,
   urgent = false,
   action,
   testId,
@@ -149,6 +156,7 @@ export function MetricCard({
               goodDirection={goodDirection}
               height={40}
               showTrend
+              {...(trendCaption !== undefined ? { caption: trendCaption } : {})}
               testId={testId === undefined ? "metric-chart" : `${testId}-chart`}
             />
           </Box>

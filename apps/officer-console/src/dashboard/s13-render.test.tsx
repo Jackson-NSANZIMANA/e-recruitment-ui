@@ -134,6 +134,30 @@ describe("MetricCard", () => {
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
     expect(container.querySelector("table")).not.toBeNull();
   });
+
+  it("says in words what the line counts, so a shape is not read as the figure's own past", () => {
+    render(
+      <MetricCard
+        label="Awaiting adjudication"
+        count={{ state: "known", value: 12 }}
+        trend={series(3, 5, 4)}
+        goodDirection="down"
+        trendCaption="Arrivals per day, last 7 days"
+        testId="captioned"
+      />,
+    );
+    const caption = document.querySelector("figcaption");
+    expect(caption).not.toBeNull();
+    // The caption joins the accessible name, so a reader is told what the line
+    // is as well as what the tile measures.
+    expect(caption?.textContent).toContain("Arrivals per day, last 7 days");
+    expect(caption?.textContent).toContain("Awaiting adjudication");
+  });
+
+  it("omits the caption sentence when the caller supplies none", () => {
+    render(<MetricCard label="Queue" count={{ state: "known", value: 3 }} trend={series(1, 2)} goodDirection="down" testId="nocap" />);
+    expect(document.querySelector("figcaption")?.textContent).toBe("Queue");
+  });
 });
 
 describe("Sparkline", () => {

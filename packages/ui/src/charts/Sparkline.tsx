@@ -50,6 +50,18 @@ export interface SparklineProps {
   readonly goodDirection: Exclude<TrendDirection, "flat">;
   /** Draw the trend badge above the line. Off inside a small metric tile. */
   readonly showTrend?: boolean;
+  /**
+   * Visible caption under the line, already localised.
+   *
+   * Separate from `label` on purpose. `label` is the accessible NAME ("Awaiting
+   * adjudication"), which is announced once and must stay short; this is the
+   * visible sentence that says what the line IS, because a sparkline's shape is
+   * ambiguous on its own - a rising line under a queue count means arrivals,
+   * not backlog. It joins the label inside the figcaption, so the figure's
+   * name (which comes from the figcaption) states both what is measured and
+   * what the line means.
+   */
+  readonly caption?: string;
   readonly testId?: string;
 }
 
@@ -77,6 +89,7 @@ export function Sparkline({
   height = 48,
   goodDirection,
   showTrend = true,
+  caption,
   testId,
 }: SparklineProps): React.ReactElement {
   const { t, i18n } = useTranslation();
@@ -90,6 +103,7 @@ export function Sparkline({
   const path = sparklinePath(values, width, height);
   const isDot = sparklineIsDot(values);
   const tableId = React.useId();
+  const captionId = React.useId();
 
   // SVG elements do not accept `xcss`, and the tokens plugin only rewrites
   // `token()` calls with a string literal, so each branch names its token.
@@ -130,8 +144,14 @@ export function Sparkline({
         `aria-details` points at the table, which is the real interface.
       */}
       <Box as="figure" xcss={styles['frame']} aria-details={tableId}>
-        <figcaption>
+        <figcaption id={captionId}>
+          {/* The caption is the figure's accessible name, so the label text is
+              always present - visually hidden when the caller only wants the
+              short name, visible when it supplies the explanation. */}
           <VisuallyHidden>{label}</VisuallyHidden>
+          {caption !== undefined && (
+            <Text as="span" size="large" color="color.text.subtle">{caption}</Text>
+          )}
         </figcaption>
         <Box xcss={styles['plot']}>
         <svg
