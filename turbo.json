@@ -4,6 +4,9 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      // ".env.*" because Vite reads .env.[mode] and .env.[mode].local as well as .env.local, and
+      // the .local ones are gitignored, so $TURBO_DEFAULT$ does not see them: without this an
+      // .env.production.local edit was a cache hit on a bundle built without it.
       // Files outside the app that are part of its bundle: vite.config.ts imports the
       // readiness plugin by relative path, src/routes/readiness.ts globs
       // docs/ui-surfaces/*.json into the bundle, and every app tsconfig extends
@@ -12,7 +15,7 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env",
-        ".env.local",
+        ".env.*",
         "$TURBO_ROOT$/tsconfig.base.json",
         "$TURBO_ROOT$/tooling/surface-contract/src/vite-readiness.ts",
         "$TURBO_ROOT$/docs/ui-surfaces/*.json"

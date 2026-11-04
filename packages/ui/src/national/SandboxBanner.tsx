@@ -34,7 +34,18 @@ export function SandboxBanner(): React.ReactElement {
   );
 }
 
-/** True for a sandbox build: VITE_USRP_SANDBOX=1 is set by the sandbox serving images, never by production. */
+/**
+ * True for a sandbox build: VITE_USRP_SANDBOX=1 is set by the sandbox serving images, never by production.
+ *
+ * Read as the literal member `import.meta.env.VITE_USRP_SANDBOX`, which Vite replaces with its value.
+ * The previous optional, computed access made Vite inline the whole env object of every build that
+ * imports @usrp/ui, so each app shipped every VITE_* variable it was built with. The try/catch keeps a
+ * runtime without `import.meta.env` (plain node) answering false instead of throwing.
+ */
 export function isSandboxBuild(): boolean {
-  return (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.["VITE_USRP_SANDBOX"] === "1";
+  try {
+    return (import.meta as unknown as { env: { VITE_USRP_SANDBOX?: string } }).env.VITE_USRP_SANDBOX === "1";
+  } catch {
+    return false;
+  }
 }
