@@ -1,0 +1,61 @@
+diff --git a/dist/plugins/merge-duplicate-at-rules.js b/dist/plugins/merge-duplicate-at-rules.js
+index 193e4f1b5439523effcac0902446c5783d1d7809..079ebe0490ba7358e46445759f5ce4fb7df0abf1 100644
+--- a/dist/plugins/merge-duplicate-at-rules.js
++++ b/dist/plugins/merge-duplicate-at-rules.js
+@@ -19,6 +19,18 @@ const non_atomic_1 = require("../utils/non-atomic");
+  * @media (min-width:500px){._171dak0l{border:2px solid red}._1swkri7e:before{content:'large screen'}}
+  * ```
+  */
++/**
++ * USRP patch (patches/@compiled__css@3.1.0.patch): merge ONLY conditional group rules.
++ *
++ * A duplicate key is `name + params`, which identifies a block only for conditional group rules
++ * (`@media`, `@supports`, `@container`): two `@media (min-width:500px)` blocks select the same
++ * condition, so their children can be unioned. For every other at-rule it is wrong. Every
++ * `@font-face` has empty params, so all of them collapsed into ONE rule whose repeated descriptors
++ * the browser resolves last-wins: four faces became "Atlassian Mono italic" and nothing else.
++ * `@keyframes` bodies were concatenated, and `@import` / `@layer` statements were moved to the end
++ * as empty blocks. Those at-rules are now left exactly where they are.
++ */
++const MERGEABLE_GROUP_RULES = new Set(['media', 'supports', 'container']);
+ const mergeDuplicateAtRules = () => {
+     return {
+         postcssPlugin: 'merge-duplicate-at-rules',
+@@ -26,6 +38,8 @@ const mergeDuplicateAtRules = () => {
+             const atRuleStore = {};
+             return {
+                 AtRule(atRule) {
++                    if (!MERGEABLE_GROUP_RULES.has(atRule.name.toLowerCase()) || !atRule.nodes)
++                        return;
+                     // Skip non-atomic cssMapScoped at-rules — merging would break source-order cascade.
+                     const hasNonAtomic = (0, non_atomic_1.isNonAtomicNode)(atRule);
+                     if (hasNonAtomic)
+diff --git a/src/plugins/merge-duplicate-at-rules.ts b/src/plugins/merge-duplicate-at-rules.ts
+index 579a744472a438dd815fb56d80e024abecc8d0f4..ea3e4b3989841890f4f94f0fb4ca0c14afb1defe 100644
+--- a/src/plugins/merge-duplicate-at-rules.ts
++++ b/src/plugins/merge-duplicate-at-rules.ts
+@@ -19,6 +19,15 @@ import { isNonAtomicNode } from '../utils/non-atomic';
+  * @media (min-width:500px){._171dak0l{border:2px solid red}._1swkri7e:before{content:'large screen'}}
+  * ```
+  */
++/**
++ * USRP patch (patches/@compiled__css@3.1.0.patch): merge ONLY conditional group rules. `name + params`
++ * identifies a block only for `@media`, `@supports` and `@container`; every `@font-face` has empty
++ * params, so all of them collapsed into one rule (last-wins descriptors), `@keyframes` bodies were
++ * concatenated and `@import` / `@layer` statements moved to the end as empty blocks. Those at-rules
++ * are now left exactly where they are.
++ */
++const MERGEABLE_GROUP_RULES = new Set(['media', 'supports', 'container']);
++
+ export const mergeDuplicateAtRules = (): Plugin => {
+   return {
+     postcssPlugin: 'merge-duplicate-at-rules',
+@@ -26,6 +35,8 @@ export const mergeDuplicateAtRules = (): Plugin => {
+       const atRuleStore: Record<string, { node: AtRule; children: Record<string, ChildNode> }> = {};
+       return {
+         AtRule(atRule) {
++          if (!MERGEABLE_GROUP_RULES.has(atRule.name.toLowerCase()) || !atRule.nodes) return;
++
+           // Skip non-atomic cssMapScoped at-rules — merging would break source-order cascade.
+           const hasNonAtomic = isNonAtomicNode(atRule);
+           if (hasNonAtomic) return;

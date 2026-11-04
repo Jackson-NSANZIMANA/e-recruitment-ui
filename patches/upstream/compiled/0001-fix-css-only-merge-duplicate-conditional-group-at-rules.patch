@@ -1,0 +1,146 @@
+From 5d4dd96a5dc9e33180337116f3e0cff960cc941a Mon Sep 17 00:00:00 2001
+From: Jackson NSANZIMANA <worldbesthighlights@gmail.com>
+Date: Wed, 4 Nov 2026 12:37:53 +0000
+Subject: [PATCH] fix(css): only merge duplicate conditional group at-rules
+
+merge-duplicate-at-rules keys every at-rule by `name + params`. That
+identifies a block only for conditional group rules (@media, @supports,
+@container). For anything else it is wrong:
+
+- every @font-face has empty params, so all faces in one stylesheet
+  collapse into a single rule; its repeated descriptors resolve last-wins,
+  so only the last font face survives
+- same-named @keyframes bodies are concatenated
+- statement at-rules (@import url(a.css); @layer a, b;) are moved to the
+  end of the stylesheet as empty blocks
+
+@compiled/vite-plugin runs sort() on every CSS asset containing an atomic
+class, which includes global stylesheets bundled next to .compiled.css
+imports, so a design system's @font-face declarations are hit in practice.
+sortAtRules: false does not help, because the merge runs regardless.
+
+Only @media, @supports and @container are merged now; all other at-rules
+are left where they are.
+---
+ .../merge-only-conditional-group-at-rules.md  |  5 +++
+ packages/css/src/__tests__/sort.test.ts       | 22 +++++++++++++
+ .../merge-duplicate-at-rules.test.ts          | 32 +++++++++++++++++++
+ .../src/plugins/merge-duplicate-at-rules.ts   | 12 +++++++
+ 4 files changed, 71 insertions(+)
+ create mode 100644 .changeset/merge-only-conditional-group-at-rules.md
+
+diff --git a/.changeset/merge-only-conditional-group-at-rules.md b/.changeset/merge-only-conditional-group-at-rules.md
+new file mode 100644
+index 0000000..5c2ca72
+--- /dev/null
++++ b/.changeset/merge-only-conditional-group-at-rules.md
+@@ -0,0 +1,5 @@
++---
++'@compiled/css': patch
++---
++
++Fix `merge-duplicate-at-rules` merging at-rules that are not conditional group rules. It keyed every at-rule by `name + params`, so all `@font-face` rules (empty params) collapsed into one rule whose repeated descriptors resolve last-wins (only the last font face survived), same-named `@keyframes` were concatenated, and statement at-rules such as `@import` and `@layer a, b;` were moved to the end of the stylesheet as empty blocks. Only `@media`, `@supports` and `@container` are merged now; all other at-rules are left untouched.
+diff --git a/packages/css/src/__tests__/sort.test.ts b/packages/css/src/__tests__/sort.test.ts
+index c1cd3ed..6680435 100644
+--- a/packages/css/src/__tests__/sort.test.ts
++++ b/packages/css/src/__tests__/sort.test.ts
+@@ -183,3 +183,25 @@ describe('sort — cssMapScoped non-atomic rule handling', () => {
+     `);
+   });
+ });
++
++describe('sort — at-rules that are not conditional groups', () => {
++  it('should keep every @font-face rule of a stylesheet that also holds atomic rules', () => {
++    // @compiled/vite-plugin sorts every CSS asset containing an atomic class, and a bundler puts
++    // a global font stylesheet in the same asset as the .compiled.css it is imported next to.
++    const input =
++      '._syaz1q9b{color:green}' +
++      '@font-face{font-family:Sans;src:url(/a/sans.woff2) format("woff2");font-weight:100 900;font-style:normal}' +
++      '@font-face{font-family:Sans;src:url(/a/sans-italic.woff2) format("woff2");font-weight:100 900;font-style:italic}' +
++      '@font-face{font-family:Mono;src:url(/a/mono.woff2) format("woff2");font-weight:100 800;font-style:normal}';
++
++    for (const sortAtRulesEnabled of [true, false]) {
++      const faces = sort(input, { sortAtRulesEnabled }).match(/@font-face\{[^}]*\}/g) ?? [];
++
++      expect(faces).toEqual([
++        '@font-face{font-family:Sans;src:url(/a/sans.woff2) format("woff2");font-weight:100 900;font-style:normal}',
++        '@font-face{font-family:Sans;src:url(/a/sans-italic.woff2) format("woff2");font-weight:100 900;font-style:italic}',
++        '@font-face{font-family:Mono;src:url(/a/mono.woff2) format("woff2");font-weight:100 800;font-style:normal}',
++      ]);
++    }
++  });
++});
+diff --git a/packages/css/src/plugins/__tests__/merge-duplicate-at-rules.test.ts b/packages/css/src/plugins/__tests__/merge-duplicate-at-rules.test.ts
+index e5a98c8..b28c734 100644
+--- a/packages/css/src/plugins/__tests__/merge-duplicate-at-rules.test.ts
++++ b/packages/css/src/plugins/__tests__/merge-duplicate-at-rules.test.ts
+@@ -36,4 +36,36 @@ describe('discard duplicate at-rule children plugin', () => {
+           "
+     `);
+   });
++
++  it('should merge duplicate @supports and @container blocks', () => {
++    const actual = transform`@supports (display:grid){._a{display:grid}}@supports (display:grid){._b{gap:0}}@container (min-width:1px){._c{color:red}}@container (min-width:1px){._c{color:red}}`;
++
++    expect(actual).toBe(
++      '@supports (display:grid){._a{display:grid}._b{gap:0}}@container (min-width:1px){._c{color:red}}'
++    );
++  });
++
++  it('should keep every @font-face rule, as each one declares a separate font face', () => {
++    const css =
++      '@font-face{font-family:Sans;src:url(sans.woff2) format("woff2");font-style:normal}' +
++      '@font-face{font-family:Sans;src:url(sans-italic.woff2) format("woff2");font-style:italic}' +
++      '@font-face{font-family:Mono;src:url(mono.woff2) format("woff2");font-style:normal}';
++    const actual = postcss([mergeDuplicateAtRules()]).process(css, { from: undefined }).css;
++
++    expect(actual).toBe(css);
++  });
++
++  it('should not merge @keyframes that share a name', () => {
++    const css = '@keyframes k{0%{opacity:0}}@keyframes k{0%{color:red}}';
++    const actual = postcss([mergeDuplicateAtRules()]).process(css, { from: undefined }).css;
++
++    expect(actual).toBe(css);
++  });
++
++  it('should leave statement at-rules in place', () => {
++    const css = '@import url(a.css);@layer reset, base;._a{color:red}';
++    const actual = postcss([mergeDuplicateAtRules()]).process(css, { from: undefined }).css;
++
++    expect(actual).toBe(css);
++  });
+ });
+diff --git a/packages/css/src/plugins/merge-duplicate-at-rules.ts b/packages/css/src/plugins/merge-duplicate-at-rules.ts
+index 579a744..5e48068 100644
+--- a/packages/css/src/plugins/merge-duplicate-at-rules.ts
++++ b/packages/css/src/plugins/merge-duplicate-at-rules.ts
+@@ -2,6 +2,16 @@ import type { AtRule, ChildNode, Plugin } from 'postcss';
+ 
+ import { isNonAtomicNode } from '../utils/non-atomic';
+ 
++/**
++ * Only conditional group rules are merged. Their `name + params` identifies a condition, so two
++ * `@media (min-width:500px)` blocks can be unioned. For any other at-rule it does not identify a block:
++ * every `@font-face` has empty params, so separate faces would collapse into one rule whose repeated
++ * descriptors resolve last-wins; same-named `@keyframes` would be concatenated; and statement at-rules
++ * such as `@import` and `@layer a, b;` have no children to merge and would be moved to the end of the
++ * stylesheet as empty blocks. Those are left untouched.
++ */
++const MERGEABLE_AT_RULES = new Set(['media', 'supports', 'container']);
++
+ /**
+  * Plugin to remove duplicate children found in at-rules.
+  * Currently does not handle nested at-rules.
+@@ -26,6 +36,8 @@ export const mergeDuplicateAtRules = (): Plugin => {
+       const atRuleStore: Record<string, { node: AtRule; children: Record<string, ChildNode> }> = {};
+       return {
+         AtRule(atRule) {
++          if (!MERGEABLE_AT_RULES.has(atRule.name.toLowerCase()) || !atRule.nodes) return;
++
+           // Skip non-atomic cssMapScoped at-rules — merging would break source-order cascade.
+           const hasNonAtomic = isNonAtomicNode(atRule);
+           if (hasNonAtomic) return;
+-- 
+2.43.0
+

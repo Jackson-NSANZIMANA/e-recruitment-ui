@@ -51,6 +51,13 @@ export default defineConfig(({ command, mode }) => {
         registerType: "autoUpdate",
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          // Revision EVERY precached file from its final bytes. vite-plugin-pwa's default
+          // (/^assets\//) treats an assets/ filename as proof of its content, but Vite fixes a CSS
+          // asset's name BEFORE @compiled/vite-plugin rewrites it in generateBundle, so the same name
+          // can carry different CSS (a Compiled fix or upgrade). With `revision: null` an installed
+          // service worker would keep serving the old bytes. A pattern that never matches makes
+          // Workbox hash each file instead; only files whose bytes changed are fetched again.
+          dontCacheBustURLsMatching: /$^/,
           navigateFallback: "index.html",
           navigateFallbackDenylist: [/^\/edge\//],
           runtimeCaching: [

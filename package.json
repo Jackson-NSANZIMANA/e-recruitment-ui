@@ -28,7 +28,7 @@
     "lint:affected": "turbo run lint --affected",
     "test:affected": "turbo run test --affected",
     "verify:hygiene": "node tooling/repo-hygiene/verify.mjs",
-    "verify:rules": "node tooling/repo-hygiene/test/*.test.mjs",
+    "verify:rules": "node --test tooling/repo-hygiene/test/*.test.mjs",
     "surface:verify": "node --experimental-strip-types tooling/surface-contract/src/cli.ts",
     "verify:extraction": "node tooling/repo-hygiene/verify-compiled-extraction.mjs",
     "size": "node tooling/repo-hygiene/check-bundle-size.mjs",
@@ -75,6 +75,9 @@
         "GHSA-7pqw-9j4j-h8q3",
         "GHSA-vfj7-8cjw-p6xm"
       ]
+    },
+    "patchedDependencies": {
+      "@compiled/css@3.1.0": "patches/@compiled__css@3.1.0.patch"
     }
   }
 }
