@@ -152,6 +152,16 @@ export function DocumentUpload({
     inputRef.current?.click();
   }, []);
 
+  // The button sits inside the drop zone, which opens the picker on click too.
+  // Stop the event here so one click opens one dialog, not two.
+  const handleButtonClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>): void => {
+      e.stopPropagation();
+      inputRef.current?.click();
+    },
+    [],
+  );
+
   const handleRemove = useCallback(
     (index: number): void => {
       setFiles((prev) => {
@@ -161,16 +171,6 @@ export function DocumentUpload({
       });
     },
     [onFilesSelected],
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>): void => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        inputRef.current?.click();
-      }
-    },
-    [],
   );
 
   return (
@@ -187,7 +187,18 @@ export function DocumentUpload({
         aria-hidden="true"
       />
 
-      {/* Drop zone — border uses token vars for theming compliance */}
+      {/*
+        Drop zone — border uses token vars for theming compliance.
+
+        The zone is a drop TARGET, not a control. It used to carry
+        role="button" + tabIndex + aria-label with the real <Button> nested
+        inside, which axe reports twice: nested-interactive (a button inside a
+        button is never announced reliably) and label-content-name-mismatch
+        (its accessible name was the hint, not "Select files"). The <Button>
+        is now the one keyboard and screen-reader entry point; clicking the
+        zone's empty space still opens the picker as a mouse convenience, and
+        drag-and-drop is a pointer-only gesture by nature.
+      */}
       <Box
         xcss={isDragOver ? cx(dropzoneStyles['base'], dropzoneStyles['active']) : dropzoneStyles['base']}
         style={{
@@ -196,20 +207,16 @@ export function DocumentUpload({
             ? `2px dashed ${token("color.border.selected")}`
             : `2px dashed ${token("color.border")}`,
         }}
-        role="button"
-        tabIndex={0}
-        aria-label={t("upload.drop_hint")}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
-        onKeyDown={handleKeyDown}
       >
         <Stack space="space.150" alignInline="center">
           <Text size="large" color="color.text.subtle">
             {isDragOver ? t("upload.drag_active") : t("upload.drop_hint")}
           </Text>
-          <Button appearance="default" onClick={handleClick} tabIndex={-1}>
+          <Button appearance="default" onClick={handleButtonClick}>
             {t("upload.select_files")}
           </Button>
         </Stack>
