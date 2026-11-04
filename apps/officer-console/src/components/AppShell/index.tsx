@@ -27,6 +27,7 @@ import MegaphoneIcon from "@atlaskit/icon/core/megaphone";
 import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "@usrp/i18n";
 
 import { useOfficerSession } from "@usrp/auth";
@@ -64,12 +65,39 @@ const RAIL = cssMap({
   },
 });
 
+/**
+ * The banner's two bars (SANDBOX above RESTRICTED) share its fixed height. A flex
+ * column lets each take an equal half; without it the marking overflowed the
+ * Banner and the top navigation covered its lower half.
+ */
+const BANNER_STACK = cssMap({
+  stack: { display: "flex", flexDirection: "column", blockSize: "100%" },
+  // Each bar gets an equal share. The wrapper is a one-cell grid, so the bar
+  // inside stretches to the full share, width and height, without the bar knowing about the Banner.
+  half: { display: "grid", flexGrow: 1, flexShrink: 1, flexBasis: 0, minBlockSize: 0, overflow: "hidden" },
+});
+
 // The top bar's logo slot takes a logo and an icon component (ADS CustomLogo).
 // The lockup replaces the Atlassian product mark this console shipped with: a
 // Government of Rwanda tool identifies the Republic of Rwanda, not its UI kit.
+//
+// ADS draws the logo slot as a link (underlined) and expects an SVG inside it. This
+// lockup is TEXT, and a link's text-decoration propagates into every in-flow
+// descendant, so the names showed underlined. A text-decoration cannot be undone by a
+// descendant, but an atomic inline box (inline-block) does not receive it; the outer
+// Box absorbs the slot's flex blockification so the inner span stays inline-block.
+const LOGO = cssMap({
+  inner: { display: "inline-block" },
+});
 function ConsoleLogo(): React.ReactElement {
   const session = useOfficerSession();
-  return <NationalLockup compact agency={session?.agency ?? null} />;
+  return (
+    <Box>
+      <Box as="span" xcss={LOGO["inner"]}>
+        <NationalLockup compact agency={session?.agency ?? null} />
+      </Box>
+    </Box>
+  );
 }
 function ConsoleIcon(): React.ReactElement {
   return <CoatOfArms height={28} alt="" />;
@@ -101,6 +129,7 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
   const { t, i18n } = useTranslation();
   const session = useOfficerSession();
   const items = navItemsFor(session?.permissions ?? []);
+  const { pathname } = useLocation();
   // The venue gate and the walk-in desk left this menu in S02: they run on the
   // Field Station (ADR-FE-007); /gate and /walk-in redirect to a notice.
 
@@ -108,9 +137,11 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
     <Root>
       {/* Handling marking: every staff screen states its restriction (ADR-FE-020). */}
       <Banner height={isSandboxBuild() ? 64 : 32}>
-        {/* ADR-FE-019: a sandbox build says so above everything else. */}
-        {isSandboxBuild() ? <SandboxBanner /> : null}
-        <HandlingMarking />
+        <Box xcss={BANNER_STACK["stack"]}>
+          {/* ADR-FE-019: a sandbox build says so above everything else. */}
+          {isSandboxBuild() ? <Box xcss={BANNER_STACK["half"]}><SandboxBanner /></Box> : null}
+          <Box xcss={BANNER_STACK["half"]}><HandlingMarking /></Box>
+        </Box>
       </Banner>
       <TopNav>
         <TopNavStart
@@ -139,7 +170,7 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
         <SideNavBody>
           <MenuList>
             {items.map((item) => (
-              <LinkMenuItem key={item.id} href={item.href} elemBefore={NAV_ICONS[item.id]}>
+              <LinkMenuItem key={item.id} href={item.href} isSelected={pathname === item.href || pathname.startsWith(`${item.href}/`)} elemBefore={NAV_ICONS[item.id]}>
                 {t(item.labelKey)}
               </LinkMenuItem>
             ))}
