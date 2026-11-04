@@ -17,16 +17,16 @@ export function CitizenPreview({ detail, agency }: { readonly detail: CampaignAd
   return (
     <Panel testId="citizen-preview">
       <Stack space="space.100">
-        <Text size="small" color="color.text.subtle">{t('campaigns.preview.badge')}</Text>
+        <Text size="large" color="color.text.subtle">{t('campaigns.preview.badge')}</Text>
         <Heading size="medium" as="h3">{s.campaignLabel}</Heading>
-        <Text size="small" color="color.text.subtle">{agency} · {s.publicCode}</Text>
-        <Text size="small">{t('campaigns.preview.registration')}: {formatKigali(s.registrationOpensAt)} → {formatKigali(s.registrationClosesAt)}</Text>
-        <Text size="small">{t('campaigns.preview.exam')}: {s.examinationStartDate} → {s.examinationEndDate}</Text>
-        <Text size="small">{t('campaigns.preview.categories')}: {s.targetCategories.map((c) => t(`campaigns.categories.${c}`, { defaultValue: c })).join(', ')}</Text>
-        <Text size="small">{t('campaigns.preview.districts')}: {s.targetDistricts.map(districtLabel).join(', ')}</Text>
-        {s.allowsWalkIn && <Text size="small">{t('campaigns.preview.walkIn')}</Text>}
+        <Text size="large" color="color.text.subtle">{agency} · {s.publicCode}</Text>
+        <Text size="large">{t('campaigns.preview.registration')}: {formatKigali(s.registrationOpensAt)} → {formatKigali(s.registrationClosesAt)}</Text>
+        <Text size="large">{t('campaigns.preview.exam')}: {s.examinationStartDate} → {s.examinationEndDate}</Text>
+        <Text size="large">{t('campaigns.preview.categories')}: {s.targetCategories.map((c) => t(`campaigns.categories.${c}`, { defaultValue: c })).join(', ')}</Text>
+        <Text size="large">{t('campaigns.preview.districts')}: {s.targetDistricts.map(districtLabel).join(', ')}</Text>
+        {s.allowsWalkIn && <Text size="large">{t('campaigns.preview.walkIn')}</Text>}
         {((detail.contactPhoneNumbers?.length ?? 0) > 0 || detail.contactWebsite !== null) && (
-          <Inline space="space.100" shouldWrap><Text size="small">{t('campaigns.preview.contact')}: {[...(detail.contactPhoneNumbers ?? []), detail.contactWebsite].filter((x): x is string => x !== null).join(' · ')}</Text></Inline>
+          <Inline space="space.100" shouldWrap><Text size="large">{t('campaigns.preview.contact')}: {[...(detail.contactPhoneNumbers ?? []), detail.contactWebsite].filter((x): x is string => x !== null).join(' · ')}</Text></Inline>
         )}
       </Stack>
     </Panel>

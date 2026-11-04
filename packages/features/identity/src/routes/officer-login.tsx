@@ -96,7 +96,7 @@ export default function OfficerLoginPage({ homePath, productName }: OfficerLogin
               title={t("auth.invalid_credentials")}
               headingLevel="h3"
             >
-              <Text as="p" role="alert">
+              <Text size="large" as="p" role="alert">
                 {serverError}
               </Text>
             </SectionMessage>

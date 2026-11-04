@@ -42,12 +42,12 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
   const tableRows = rows.map((c) => ({
     key: c.publicCode,
     cells: [
-      { key: 'label', content: <Stack space="space.0"><Text weight="medium">{c.campaignLabel}</Text><Text size="small" color="color.text.subtle">{c.publicCode}</Text></Stack> },
+      { key: 'label', content: <Stack space="space.0"><Text size="large" weight="medium">{c.campaignLabel}</Text><Text size="large" color="color.text.subtle">{c.publicCode}</Text></Stack> },
       { key: 'status', content: <CampaignStatusLozenge state={c.status} /> },
-      { key: 'registration', content: <Text size="small">{formatKigali(c.registrationOpensAt)} → {formatKigali(c.registrationClosesAt)}</Text> },
-      { key: 'exam', content: <Text size="small">{c.examinationStartDate} → {c.examinationEndDate}</Text> },
-      { key: 'sessions', content: <Text size="small">{t('campaigns.list.sessionsOf', { sessions: c.occupancy.sessionCount, districts: c.targetDistricts.length })}</Text> },
-      { key: 'registered', content: <Text size="small">{c.occupancy.registeredTotal}</Text> },
+      { key: 'registration', content: <Text size="large">{formatKigali(c.registrationOpensAt)} → {formatKigali(c.registrationClosesAt)}</Text> },
+      { key: 'exam', content: <Text size="large">{c.examinationStartDate} → {c.examinationEndDate}</Text> },
+      { key: 'sessions', content: <Text size="large">{t('campaigns.list.sessionsOf', { sessions: c.occupancy.sessionCount, districts: c.targetDistricts.length })}</Text> },
+      { key: 'registered', content: <Text size="large">{c.occupancy.registeredTotal}</Text> },
       { key: 'open', content: <LinkButton href={`/campaigns/${encodeURIComponent(c.publicCode)}`} aria-label={`${t('campaigns.list.open')}: ${c.publicCode}`}>{t('campaigns.list.open')}</LinkButton> },
     ],
   }));
@@ -62,7 +62,7 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
             {perms.create && <LinkButton appearance="primary" href="/campaigns/new">{t('campaigns.list.new')}</LinkButton>}
           </Inline>
         </Inline>
-        <Text as="p">{t('campaigns.list.lead', { agency: perms.agency })}</Text>
+        <Text size="large" as="p">{t('campaigns.list.lead', { agency: perms.agency })}</Text>
         {perms.read && (
           <Inline space="space.200" shouldWrap alignBlock="end">
             <Field label={t('campaigns.list.search')}>
@@ -85,7 +85,7 @@ export function CampaignListPage({ client }: { readonly client: ApiClient }): Re
           <div data-testid="campaign-table"><DynamicTable caption={t('campaigns.list.title')} head={head} rows={tableRows} /></div>
           {q.data !== undefined && (q.data.nextCursor !== null || trail.length > 0) && (
             <Inline space="space.150" alignBlock="center" testId="campaign-more">
-              <Text size="small" color="color.text.subtle">{t('campaigns.list.more', { shown: rows.length, total: q.data.total })}</Text>
+              <Text size="large" color="color.text.subtle">{t('campaigns.list.more', { shown: rows.length, total: q.data.total })}</Text>
               {trail.length > 0 && <Button onClick={() => setTrail(trail.slice(0, -1))}>{t('campaigns.list.previous')}</Button>}
               {q.data.nextCursor !== null && <Button onClick={() => setTrail([...trail, q.data.nextCursor as string])}>{t('campaigns.list.next')}</Button>}
             </Inline>

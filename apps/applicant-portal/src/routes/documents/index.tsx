@@ -51,11 +51,11 @@ export default function DocumentsPage(): React.ReactElement {
     <Box xcss={page.base}>
       <Stack space="space.300">
         <Heading size="large" as="h1">{t("citizen_docs.title")}</Heading>
-        <Text>{t("citizen_docs.intro")}</Text>
+        <Text size="large">{t("citizen_docs.intro")}</Text>
         {checklist.isLoading && <Spinner label={t("citizen_docs.loading")} />}
-        {checklist.isError && <SectionMessage appearance="error"><Text>{t("citizen_docs.error")}</Text></SectionMessage>}
+        {checklist.isError && <SectionMessage appearance="error"><Text size="large">{t("citizen_docs.error")}</Text></SectionMessage>}
         {checklist.data !== undefined && <ChecklistItems applicationId={applicationId} checklist={checklist.data} refresh={() => { void checklist.refetch(); }} />}
-        <Text size="small"><Link to="/status">{t("citizen_docs.back")}</Link></Text>
+        <Text size="large"><Link to="/status">{t("citizen_docs.back")}</Link></Text>
       </Stack>
     </Box>
   );
@@ -68,13 +68,13 @@ function ChecklistItems({ applicationId, checklist, refresh }: { readonly applic
       {checklist.items.map((item) => (
         <Box key={item.documentType} padding="space.200" backgroundColor="color.background.neutral">
           <Stack space="space.100">
-            <Text weight="bold">{t(documentTypeKey(item.documentType), { defaultValue: item.documentType })}</Text>
-            <Text color="color.text.subtle" testId={`doc-state-${item.documentType}`}>{t(satisfactionCopyKey(item))}</Text>
+            <Text size="large" weight="bold">{t(documentTypeKey(item.documentType), { defaultValue: item.documentType })}</Text>
+            <Text size="large" color="color.text.subtle" testId={`doc-state-${item.documentType}`}>{t(satisfactionCopyKey(item))}</Text>
             {item.clearance !== undefined && <ClearanceBlock applicationId={applicationId} clearance={item.clearance} refresh={refresh} />}
           </Stack>
         </Box>
       ))}
-      {checklist.complete && <SectionMessage appearance="success"><Text>{t("citizen_docs.all_done")}</Text></SectionMessage>}
+      {checklist.complete && <SectionMessage appearance="success"><Text size="large">{t("citizen_docs.all_done")}</Text></SectionMessage>}
     </Stack>
   );
 }
@@ -116,12 +116,12 @@ function ClearanceBlock({ applicationId, clearance, refresh }: { readonly applic
   return (
     <Stack space="space.100" testId="clearance-block">
       <SectionMessage appearance={TONE[clearance.state]}>
-        <Text testId="clearance-state">{t(clearanceCopyKey(clearance))}</Text>
+        <Text size="large" testId="clearance-state">{t(clearanceCopyKey(clearance))}</Text>
       </SectionMessage>
       {wantsNumber(clearance.state) && !sent && (
         <Stack space="space.100">
-          <label htmlFor="clearance-number"><Text weight="medium">{t("citizen_docs.clearance.field_label")}</Text></label>
-          <Text size="small" color="color.text.subtle">{t("citizen_docs.clearance.hint")}</Text>
+          <label htmlFor="clearance-number"><Text size="large" weight="medium">{t("citizen_docs.clearance.field_label")}</Text></label>
+          <Text size="large" color="color.text.subtle">{t("citizen_docs.clearance.hint")}</Text>
           <TextField
             id="clearance-number"
             name="clearanceCertificateNumber"
@@ -131,8 +131,8 @@ function ClearanceBlock({ applicationId, clearance, refresh }: { readonly applic
             isInvalid={shapeError}
             onChange={(e) => { setValue((e.target as HTMLInputElement).value); setShapeError(false); }}
           />
-          {shapeError && <div role="alert"><Text color="color.text.danger">{t("citizen_docs.clearance.shape")}</Text></div>}
-          {error !== null && <div role="alert"><Text color="color.text.danger">{closed ? t("citizen_docs.clearance.closed") : t("citizen_docs.clearance.failed")}</Text></div>}
+          {shapeError && <div role="alert"><Text size="large" color="color.text.danger">{t("citizen_docs.clearance.shape")}</Text></div>}
+          {error !== null && <div role="alert"><Text size="large" color="color.text.danger">{closed ? t("citizen_docs.clearance.closed") : t("citizen_docs.clearance.failed")}</Text></div>}
           <Inline>
             <Button appearance="primary" isDisabled={attach.isPending} onClick={submit}>
               {attach.isPending ? t("citizen_docs.clearance.sending") : t("citizen_docs.clearance.submit")}
@@ -140,7 +140,7 @@ function ClearanceBlock({ applicationId, clearance, refresh }: { readonly applic
           </Inline>
         </Stack>
       )}
-      {sent && <div role="status"><Text color="color.text.success">{t("citizen_docs.clearance.sent")}</Text></div>}
+      {sent && <div role="status"><Text size="large" color="color.text.success">{t("citizen_docs.clearance.sent")}</Text></div>}
     </Stack>
   );
 }

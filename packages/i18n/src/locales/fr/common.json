@@ -161,7 +161,11 @@
       "11": "nov.",
       "12": "déc."
     },
-    "day": "{{day}} {{month}} {{year}}"
+    "day": "{{day}} {{month}} {{year}}",
+    "series": {
+      "day_short": "{{day}} {{month}}",
+      "arrivals_caption": "Arrivées par jour, {{days}} derniers jours"
+    }
   },
   "application": {
     "id": "Numéro de candidature",
@@ -727,5 +731,15 @@
   },
   "citizen_docs": {
     "open_link": "Mes documents"
+  },
+  "chart": {
+    "period": "Période",
+    "value": "Valeur",
+    "total": "Total",
+    "needs_attention": "Nécessite une attention"
+  },
+  "metric": {
+    "loading": "Chargement…",
+    "unavailable": "Indisponible"
   }
 }

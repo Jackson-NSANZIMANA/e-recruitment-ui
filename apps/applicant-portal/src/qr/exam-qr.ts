@@ -16,9 +16,15 @@ import qrcode from "qrcode-generator";
 // The QR's colours are NOT theme colours: a scanner needs maximum contrast, so
 // the code is black on white in every theme (dark mode / high contrast would
 // otherwise invert it and some gate scanners refuse inverted codes).
-// eslint-disable-next-line usrp/no-raw-hex -- hygiene-allow-hex: QR scan contrast, theme-independent
+//
+// `hygiene-allow-hex` is the ONE mechanism, read by both the lint rule and the
+// standalone sweep. The `eslint-disable` comments that used to sit here were a
+// second, weaker mechanism that only worked in the editor - they went stale the
+// moment the rule started honouring the marker, and ESLint reported them as
+// unused directives.
+// hygiene-allow-hex: QR scan contrast, theme-independent
 export const QR_LIGHT = "#ffffff";
-// eslint-disable-next-line usrp/no-raw-hex -- hygiene-allow-hex: QR scan contrast, theme-independent
+// hygiene-allow-hex: QR scan contrast, theme-independent
 export const QR_DARK = "#000000";
 
 export const QUIET_ZONE = 4;

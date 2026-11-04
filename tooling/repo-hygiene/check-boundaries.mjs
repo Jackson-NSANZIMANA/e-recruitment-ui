@@ -2,9 +2,10 @@
 /**
  * GATE: the design-system layer stays domain-free, token-pure and thumb-sized.
  *
- * Enforces four rules over the configured roots:
+ * Enforces five rules over the configured roots:
  *   1. no imports from domain packages          (the split, made structural)
  *   2. no domain vocabulary at all              (incl. nationalId / nationalIdHash)
+ *   2b. no <Text> below the 16px body floor     (mobile zoom + sunlight legibility)
  *   3. no raw hex colour literals               (brief invariant 5)
  *   4. no interactive dimension below 48px      (WCAG 2.1 AA + field-use floor)
  *
@@ -22,7 +23,11 @@ import {
   findDomainIdentifiers,
   findRawHexColors,
   findUndersizedTouchTargets,
+  findUndersizedBodyText,
+  isBodyTextExemptPath,
+  BODY_TEXT_SCAN,
   MIN_TOUCH_TARGET_PX,
+  MIN_BODY_TEXT_PX,
 } from './lib/predicates.mjs';
 import { fieldLedgerViolations, fieldStationViolations } from './lib/app-boundaries.mjs';
 
@@ -92,6 +97,38 @@ for (const r of bRoots) {
   }
 }
 
+// 2b --- the 16px body-text floor
+//
+// Runs over the same roots the ESLint rule covers, using the same predicate, so
+// a developer sees this in the editor and CI sees it without node_modules.
+// packages/ui/src/national and components/AgencyLogo are exempt BY PATH rather
+// than per-line: their type is proportional to an emblem, and a rule that argues
+// with a mark on every line is a rule people disable wholesale.
+const bodyTextMin = MIN_BODY_TEXT_PX;
+let bodyTextScanned = 0;
+for (const r of BODY_TEXT_SCAN.roots) {
+  for (const file of walk(join(root, r), new Set(['.tsx']))) {
+    const rel = relative(root, file);
+    if (isBodyTextExemptPath(rel)) continue;
+    bodyTextScanned += 1;
+    for (const v of findUndersizedBodyText(readFileSync(file, 'utf8'), bodyTextMin)) {
+      violations.push({
+        rule: 'min-body-text',
+        file: rel,
+        line: v.line,
+        detail:
+          'Text size="' +
+          v.size +
+          '" is ' +
+          (v.px === null ? 'not decidable at source' : v.px + 'px') +
+          ', below the ' +
+          bodyTextMin +
+          'px body floor - use size="large"',
+      });
+    }
+  }
+}
+
 // 3 --- raw hex, over a wider net than the ADS lint rule can reach
 const hRoots = config.hexScan?.roots ?? [];
 const hExts = new Set(config.hexScan?.extensions ?? ['.ts', '.tsx']);
@@ -135,7 +172,13 @@ console.log(
 );
 
 if (violations.length === 0) {
-  console.log('[boundaries] PASS - domain-free, token-pure, 48px floor held; field-station and field-ledger composition held.');
+  console.log(
+    '[boundaries] PASS - domain-free, token-pure, 48px interactive floor and ' +
+      bodyTextMin +
+      'px body-text floor held across ' +
+      bodyTextScanned +
+      ' tsx file(s); field-station and field-ledger composition held.',
+  );
   process.exit(0);
 }
 
@@ -154,7 +197,7 @@ for (const [rule, list] of Object.entries(byRule)) {
 console.error('');
 console.error('These are the same rules your editor enforces via @usrp/eslint-config.');
 console.error('If a violation is genuinely correct, mark the line with one of:');
-console.error('  hygiene-allow-hex | hygiene-allow-small-target | hygiene-allow-domain');
+console.error('  hygiene-allow-hex | hygiene-allow-small-target | hygiene-allow-domain | hygiene-allow-small-text');
 console.error('and say why in the comment. An unexplained exemption is a review failure.');
 process.exit(1);
 

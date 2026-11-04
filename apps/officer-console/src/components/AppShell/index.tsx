@@ -24,6 +24,9 @@ import ChecklistIcon from "@atlaskit/icon/core/list-checklist";
 import DeleteIcon from "@atlaskit/icon/core/delete";
 import LockIcon from "@atlaskit/icon/core/lock-locked";
 import MegaphoneIcon from "@atlaskit/icon/core/megaphone";
+import { Box } from "@atlaskit/primitives/compiled";
+import { cssMap } from "@atlaskit/css";
+import { token } from "@atlaskit/tokens";
 import { useTranslation } from "@usrp/i18n";
 
 import { useOfficerSession } from "@usrp/auth";
@@ -38,6 +41,28 @@ const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
   erasure: <DeleteIcon label="" color="currentColor" />,
   staff: <LockIcon label="" color="currentColor" />,
 };
+
+/**
+ * The brand rail.
+ *
+ * A 4px brand-coloured line directly under the top navigation. It is the
+ * cheapest "designed by someone" signal available: ADS uses the same device to
+ * separate product chrome from page content, and it gives the header a bottom
+ * edge without adding a second border colour to the page. Colour comes from
+ * `color.border.brand.bold`, so it is a token like everything else.
+ */
+const RAIL = cssMap({
+  rail: {
+    // Drawn as a border, not a 4px box: a box that thin reads to the 48px
+    // interactive-floor rule as a shrunken control, and a decorative line is not
+    // a control. `border.width.selected` is 2px, doubled by the token's own job
+    // (a selected edge), so this is a 4px brand edge with no box at all.
+    borderBlockEndWidth: token("border.width.selected"),
+    borderBlockEndStyle: "solid",
+    borderBlockEndColor: token("color.border.brand"),
+    boxSizing: "border-box",
+  },
+});
 
 // The top bar's logo slot takes a logo and an icon component (ADS CustomLogo).
 // The lockup replaces the Atlassian product mark this console shipped with: a
@@ -108,6 +133,7 @@ export function AppShell({ children }: AppShellProps): React.ReactElement {
           <Profile label={t("nav.settings")} />
         </TopNavEnd>
       </TopNav>
+      <Box xcss={RAIL['rail']} aria-hidden="true" />
 
       <SideNav label={t("a11y.open_menu")}>
         <SideNavBody>

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CampaignAdminSummary, FleetDevice, OfficerRow } from '@usrp/api-client';
 import {
-  accessFor, attentionItems, calendarDay, fleetSummary, isAdministrationView, isClosingSoon, isNearCapacity, isStaleAssignedDevice,
-  openCampaignCount, sortCampaigns, staffSummary,
+  AMBER_HISTORY_DAYS, accessFor, amberArrivalSeries, attentionItems, calendarDay, fleetSummary, isAdministrationView,
+  isClosingSoon, isNearCapacity, isStaleAssignedDevice, openCampaignCount, sortCampaigns, staffSummary,
 } from './model.js';
 
 const NOW = new Date('2026-10-28T08:00:00.000Z');
@@ -106,5 +106,57 @@ describe('calendar days', () => {
     expect(calendarDay('2026-10-26T21:59:00.000Z')).toEqual({ year: '2026', month: 10, day: '26' });
     expect(calendarDay('2026-12-01')).toEqual({ year: '2026', month: 12, day: '1' });
     expect(calendarDay('not a date')).toBeNull();
+  });
+});
+
+describe('amber arrival series', () => {
+  const NOW = new Date('2026-10-28T08:00:00.000Z'); // 10:00 in Kigali
+
+  it('counts the queue rows by the Kigali day they arrived', () => {
+    const series = amberArrivalSeries(
+      [
+        { queuedAt: '2026-10-28T06:00:00.000Z' }, // 08:00 local, today
+        { queuedAt: '2026-10-27T22:30:00.000Z' }, // 00:30 local on the 28th - TODAY, not the 27th
+        { queuedAt: '2026-10-27T09:00:00.000Z' }, // yesterday
+      ],
+      NOW,
+    );
+    expect(series).toHaveLength(AMBER_HISTORY_DAYS);
+    expect(series.at(-1)?.count).toBe(2);
+    expect(series.at(-2)?.count).toBe(1);
+  });
+
+  it('drops undated rows instead of bucketing them into today', () => {
+    const series = amberArrivalSeries([{ queuedAt: null }, { queuedAt: 'not a date' }], NOW);
+    expect(series.every((d) => d.count === 0)).toBe(true);
+  });
+
+  it('drops rows older than the window rather than piling them into the first bucket', () => {
+    const series = amberArrivalSeries([{ queuedAt: '2026-01-01T09:00:00.000Z' }], NOW);
+    expect(series.every((d) => d.count === 0)).toBe(true);
+  });
+
+  it('changes shape when the data changes - it is not a fixed picture', () => {
+    const quiet = amberArrivalSeries([{ queuedAt: '2026-10-28T06:00:00.000Z' }], NOW);
+    const busy = amberArrivalSeries(
+      [
+        { queuedAt: '2026-10-28T06:00:00.000Z' },
+        { queuedAt: '2026-10-28T06:30:00.000Z' },
+        { queuedAt: '2026-10-28T07:00:00.000Z' },
+      ],
+      NOW,
+    );
+    expect(busy.at(-1)?.count).toBe(3);
+    expect(quiet.at(-1)?.count).toBe(1);
+    expect(busy.map((d) => d.count)).not.toEqual(quiet.map((d) => d.count));
+  });
+
+  it('returns exactly `days` buckets, oldest first, on Kigali midnights', () => {
+    const series = amberArrivalSeries([], NOW, 3);
+    expect(series.map((d) => d.at.toISOString())).toEqual([
+      '2026-10-26T00:00:00.000Z',
+      '2026-10-27T00:00:00.000Z',
+      '2026-10-28T00:00:00.000Z',
+    ]);
   });
 });

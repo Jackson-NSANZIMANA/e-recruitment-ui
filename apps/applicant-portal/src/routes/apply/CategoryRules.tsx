@@ -26,14 +26,14 @@ export function CategoryRules({ categories, eligibility, labelFor }: {
   return (
     <SectionMessage appearance="information" title={t("category_rules.title")} headingLevel="h3">
       <Stack space="space.200" testId="category-rules">
-        <Text>{t("category_rules.intro")}</Text>
+        <Text size="large">{t("category_rules.intro")}</Text>
         {rows.map(({ category, view }) => (
           <Stack key={category} space="space.050" testId={`category-rules-${category}`}>
-            <Text weight="bold" as="strong">{labelFor(category)}</Text>
+            <Text size="large" weight="bold" as="strong">{labelFor(category)}</Text>
             <ul>
               {view.bands.map((band, i) => (
                 <li key={i}>
-                  <Text>
+                  <Text size="large">
                     {band.qualificationKeys.map((k) => t(k)).join(", ")}
                     {": "}
                     {band.ceilingOnly ? t("category_rules.age_up_to", { max: band.maximumAge }) : t("category_rules.age_range", { min: band.minimumAge, max: band.maximumAge })}
@@ -41,10 +41,10 @@ export function CategoryRules({ categories, eligibility, labelFor }: {
                 </li>
               ))}
             </ul>
-            <Text size="small" color="color.text.subtle">
+            <Text size="large" color="color.text.subtle">
               {t("category_rules.accepted")}: {view.acceptedLevelKeys.map((k) => t("category_rules.at_or_above", { level: t(k) })).join(" · ")}
             </Text>
-            {view.sciencePercent !== null && <Text size="small">{t("category_rules.science", { percent: view.sciencePercent })}</Text>}
+            {view.sciencePercent !== null && <Text size="large">{t("category_rules.science", { percent: view.sciencePercent })}</Text>}
           </Stack>
         ))}
       </Stack>

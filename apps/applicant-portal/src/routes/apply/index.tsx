@@ -133,12 +133,12 @@ function StepCampaign({ data, onNext }: {
   const { t } = useTranslation();
   const campaigns = usePublicCampaigns(client);
 
-  if (campaigns.isPending) return <Text>{t("apply.campaign_loading")}</Text>;
+  if (campaigns.isPending) return <Text size="large">{t("apply.campaign_loading")}</Text>;
   if (campaigns.isError) {
     return (
       <SectionMessage appearance="warning" title={t("apply.campaign_error_title")} headingLevel="h3">
         <Stack space="space.200">
-          <Text>{t("apply.campaign_error_body")}</Text>
+          <Text size="large">{t("apply.campaign_error_body")}</Text>
           <Button onClick={() => { void campaigns.refetch(); }}>{t("apply.retry")}</Button>
         </Stack>
       </SectionMessage>
@@ -148,13 +148,13 @@ function StepCampaign({ data, onNext }: {
   if (open.length === 0) {
     return (
       <SectionMessage title={t("apply.campaign_none_title")} headingLevel="h3">
-        <Text>{t("apply.campaign_none_body")}</Text>
+        <Text size="large">{t("apply.campaign_none_body")}</Text>
       </SectionMessage>
     );
   }
   return (
     <Stack space="space.300">
-      <Text>{t("apply.campaign_help")}</Text>
+      <Text size="large">{t("apply.campaign_help")}</Text>
       {open.map((campaign) => {
         // A rehearsal is practice on the real platform; it must never pass for a real recruitment.
         const rehearsal = isRehearsalCampaign(campaign);
@@ -166,9 +166,9 @@ function StepCampaign({ data, onNext }: {
           headingLevel="h3"
         >
           <Stack space="space.100">
-            {rehearsal && <Text weight="bold">{t("rehearsal.apply_notice")}</Text>}
-            <Text>{t("apply.review_agency")}: {campaign.agency}</Text>
-            <Text size="small" color="color.text.subtle">
+            {rehearsal && <Text size="large" weight="bold">{t("rehearsal.apply_notice")}</Text>}
+            <Text size="large">{t("apply.review_agency")}: {campaign.agency}</Text>
+            <Text size="large" color="color.text.subtle">
               {t("apply.campaign_window", { date: new Date(campaign.registrationClosesAt).toLocaleDateString() })}
             </Text>
             <Inline>
@@ -250,12 +250,12 @@ function StepCategory({ data, onNext, onBack }: {
                 );
               }}
             </Field>
-            <Text id="application-category-help" size="small" color="color.text.subtle">
+            <Text id="application-category-help" size="large" color="color.text.subtle">
               {t("apply.category_help")}
             </Text>
             {data.category !== undefined && (
               <SectionMessage appearance="information" title={t("apply.agency_derived_title")} headingLevel="h3">
-                <Text>{t("apply.agency_derived", { agency: CATEGORY_AGENCY[data.category] })}</Text>
+                <Text size="large">{t("apply.agency_derived", { agency: CATEGORY_AGENCY[data.category] })}</Text>
               </SectionMessage>
             )}
             <FormFooter>
@@ -289,7 +289,7 @@ function StepEducation({ data, onNext, onBack }: {
       {({ formProps }) => (
         <form {...formProps}>
           <Stack space="space.400">
-            <Text>{t("apply.education_help", { registry: path ?? "" })}</Text>
+            <Text size="large">{t("apply.education_help", { registry: path ?? "" })}</Text>
             {path === "NESA" && (
               <Field
                 name="nesaIndexNumber"
@@ -334,7 +334,7 @@ function NidaIdentityBlock(): React.ReactElement | null {
   const identity = useMyIdentity(client);
   if (identity.isPending) return null;
   if (identity.isError) {
-    return <SectionMessage appearance="information"><Text>{t("apply.nida_unavailable")}</Text></SectionMessage>;
+    return <SectionMessage appearance="information"><Text size="large">{t("apply.nida_unavailable")}</Text></SectionMessage>;
   }
   const label = (key: string, value: string | null): string => {
     if (value === null) return t("apply.nida_not_held");
@@ -344,12 +344,12 @@ function NidaIdentityBlock(): React.ReactElement | null {
   return (
     <SectionMessage title={t("apply.nida_title")} headingLevel="h3" appearance="information">
       <Stack space="space.100">
-        <Text>{t("apply.nida_body")}</Text>
+        <Text size="large">{t("apply.nida_body")}</Text>
         <Stack space="space.050" testId="nida-identity">
           {nidaRows(identity.data).map((row) => (
             <Inline key={row.key} space="space.100">
-              <Text weight="bold">{t(`apply.nida_${row.key}`)}</Text>
-              <Text>{label(row.key, row.value)}{row.value === null ? ` (${t("apply.nida_asked")})` : ""}</Text>
+              <Text size="large" weight="bold">{t(`apply.nida_${row.key}`)}</Text>
+              <Text size="large">{label(row.key, row.value)}{row.value === null ? ` (${t("apply.nida_asked")})` : ""}</Text>
             </Inline>
           ))}
         </Stack>
@@ -367,11 +367,11 @@ function StepDeclaration({ onNext, onBack }: {
     <Stack space="space.400">
       <NidaIdentityBlock />
       <SectionMessage title={t("apply.declaration_title")} headingLevel="h3">
-        <Text>{t("apply.declaration_copy")}</Text>
+        <Text size="large">{t("apply.declaration_copy")}</Text>
       </SectionMessage>
       <Inline space="space.100" alignBlock="center">
         <AudioTooltip audioSrc="/audio/declaration-rw.mp3" label={t("apply.listen_declaration")} />
-        <Text size="small" color="color.text.subtle">{t("apply.listen_declaration_hint")}</Text>
+        <Text size="large" color="color.text.subtle">{t("apply.listen_declaration_hint")}</Text>
       </Inline>
       <Inline space="space.200">
         <Button appearance="subtle" onClick={onBack}>{t("actions.back")}</Button>
@@ -532,8 +532,8 @@ export function DocumentsPanel({ applicationId, agency }: {
 
   return (
     <Stack space="space.200">
-      <Text weight="bold">{t("apply.documents_title")}</Text>
-      <Text size="small" color="color.text.subtle">{t("apply.documents_help")}</Text>
+      <Text size="large" weight="bold">{t("apply.documents_title")}</Text>
+      <Text size="large" color="color.text.subtle">{t("apply.documents_help")}</Text>
       <Field name="documentType" label={t("apply.document_type_label")}>
         {() => (
           <Select
@@ -546,7 +546,7 @@ export function DocumentsPanel({ applicationId, agency }: {
         )}
       </Field>
       <label htmlFor="document-file">
-        <Text size="small">{t("apply.document_file_label")}</Text>
+        <Text size="large">{t("apply.document_file_label")}</Text>
       </label>
       <input
         id="document-file"
@@ -562,7 +562,7 @@ export function DocumentsPanel({ applicationId, agency }: {
       */}
       {unconfirmed !== null && (
         <SectionMessage appearance="warning" title={t("apply.upload_unconfirmed_title")} headingLevel="h4" aria-live="polite" testId="upload-unconfirmed">
-          <Text>
+          <Text size="large">
             {unconfirmed.onFile
               ? t("apply.upload_unconfirmed_on_file_body", { type: t(`documents.types.${unconfirmed.documentType}`) })
               : t("apply.upload_unconfirmed_body")}
@@ -571,12 +571,12 @@ export function DocumentsPanel({ applicationId, agency }: {
       )}
       {unconfirmed === null && refusal !== null && (
         <SectionMessage appearance="error" title={t("apply.upload_error_title")} headingLevel="h4" aria-live="assertive">
-          <Text>{refusal}</Text>
+          <Text size="large">{refusal}</Text>
         </SectionMessage>
       )}
       {received.length > 0 && (
         <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite" testId="documents-received">
-          <Text>{t("apply.upload_ok_body", { types: received.map(label).join(", ") })}</Text>
+          <Text size="large">{t("apply.upload_ok_body", { types: received.map(label).join(", ") })}</Text>
         </SectionMessage>
       )}
       <Inline>
@@ -641,14 +641,14 @@ function SubmissionResult({ result, applicationId, agency, error, onNewAttempt }
     return (
       <SectionMessage appearance="success" title={result === "REPLAYED" ? t("apply.replay_title") : t("apply.success_title")} headingLevel="h4" aria-live="polite">
         <Stack space="space.200">
-          <Text>{result === "REPLAYED" ? t("apply.replay_body") : t("apply.success_body")}</Text>
+          <Text size="large">{result === "REPLAYED" ? t("apply.replay_body") : t("apply.success_body")}</Text>
           {applicationId !== null && (
-            <Text><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>{" · "}<Link to={`/applications/${applicationId}/documents`}>{t("citizen_docs.open_link")}</Link></Text>
+            <Text size="large"><Link to={`/applications/${applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>{" · "}<Link to={`/applications/${applicationId}/documents`}>{t("citizen_docs.open_link")}</Link></Text>
           )}
           {applicationId !== null && agency !== null && (
             <DocumentsPanel applicationId={applicationId} agency={agency} />
           )}
-          <Text><Link to="/status">{t("apply.view_applications")}</Link></Text>
+          <Text size="large"><Link to="/status">{t("apply.view_applications")}</Link></Text>
         </Stack>
       </SectionMessage>
     );
@@ -716,8 +716,8 @@ function SubmissionResult({ result, applicationId, agency, error, onNewAttempt }
   return (
     <SectionMessage appearance={appearance} title={title} headingLevel="h4" aria-live="assertive">
       <Stack space="space.200">
-        <Text>{body}</Text>
-        {code !== null && <Text size="small" color="color.text.subtle">{t("apply.backend_outcome")} {code}</Text>}
+        <Text size="large">{body}</Text>
+        {code !== null && <Text size="large" color="color.text.subtle">{t("apply.backend_outcome")} {code}</Text>}
         {canStartNewAttempt && <Button appearance="subtle" onClick={onNewAttempt}>{t("apply.new_attempt")}</Button>}
         {error.kind === "unauthenticated" && <Button appearance="primary" href="/login">{t("apply.sign_in_again")}</Button>}
       </Stack>
@@ -799,14 +799,14 @@ export default function ApplyPage(): React.ReactElement {
         <Stack space="space.400">
           <SectionMessage title={t("apply.review_title")} headingLevel="h3">
             <Stack space="space.100">
-              <Text>{t("apply.review_campaign")}: {data.campaignLabel ?? data.campaignCode ?? t("apply.not_selected")}</Text>
-              <Text>{t("apply.review_category")}: {data.category === undefined ? t("apply.not_selected") : t(`apply.categories.${data.category}`)}</Text>
-              <Text>{t("apply.review_agency")}: {data.category === undefined ? t("apply.not_selected") : CATEGORY_AGENCY[data.category]}</Text>
-              <Text>{t("apply.review_credential")}: {path === "NESA" ? data.nesaIndexNumber : data.hecRegistrationNumber}</Text>
-              <Text>{t("apply.review_declaration")}: {data.declaration === true ? t("apply.yes") : t("apply.no")}</Text>
+              <Text size="large">{t("apply.review_campaign")}: {data.campaignLabel ?? data.campaignCode ?? t("apply.not_selected")}</Text>
+              <Text size="large">{t("apply.review_category")}: {data.category === undefined ? t("apply.not_selected") : t(`apply.categories.${data.category}`)}</Text>
+              <Text size="large">{t("apply.review_agency")}: {data.category === undefined ? t("apply.not_selected") : CATEGORY_AGENCY[data.category]}</Text>
+              <Text size="large">{t("apply.review_credential")}: {path === "NESA" ? data.nesaIndexNumber : data.hecRegistrationNumber}</Text>
+              <Text size="large">{t("apply.review_declaration")}: {data.declaration === true ? t("apply.yes") : t("apply.no")}</Text>
             </Stack>
           </SectionMessage>
-          <Text size="small" color="color.text.subtle">{t("apply.review_body")}</Text>
+          <Text size="large" color="color.text.subtle">{t("apply.review_body")}</Text>
           <SubmissionResult
             result={mutation.data?.outcome ?? null}
             applicationId={mutation.data?.response.applicationId ?? null}

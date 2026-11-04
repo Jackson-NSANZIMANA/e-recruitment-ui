@@ -54,13 +54,13 @@ export default function HomePage(): React.ReactElement {
 
         {!isApplicant && (
           <SectionMessage appearance="warning">
-            <Text>{t("errors.generic")}</Text>
+            <Text size="large">{t("errors.generic")}</Text>
           </SectionMessage>
         )}
 
         <Stack space="space.300">
           <Heading size="medium" as="h2">{t("nav.applications")}</Heading>
-          <Text color="color.text.subtle">
+          <Text size="large" color="color.text.subtle">
             You can review the applications you have already filed, and their
             current status, across all three agencies.
           </Text>

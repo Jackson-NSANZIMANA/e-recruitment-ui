@@ -119,13 +119,13 @@ export function AudioTooltip({
           xcss={cx(buttonStyles['base'], playing ? buttonStyles['playing'] : buttonStyles['idle'])}
         >
           <Box>
-            <Text aria-hidden="true">
+            <Text size="large" aria-hidden="true">
               {playing ? "🔊" : "🔈"}
             </Text>
           </Box>
         </Pressable>
         {label !== undefined && (
-          <Text size="small" color="color.text.subtle">{label}</Text>
+          <Text size="large" color="color.text.subtle">{label}</Text>
         )}
       </Inline>
     </Tooltip>

@@ -2,6 +2,7 @@ import React from 'react';
 import type { Preview } from '@storybook/react';
 import '@atlaskit/css-reset';
 import { COLOR_MODE } from '../src/a11y/index.js';
+// eslint-disable-next-line @atlaskit/ui-styling-standard/no-global-styles -- self-hosted @font-face declarations only (no selectors); fonts cannot be registered through compiled styles
 import "../src/fonts/fonts.css";
 /**
  * Global story context.

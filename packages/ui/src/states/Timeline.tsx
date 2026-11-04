@@ -33,16 +33,16 @@ const formatterFor = (language: string): ((iso: string) => string) => {
 export function Timeline({ entries, formatAt, emptyLabel }: TimelineProps): React.ReactElement {
   const { i18n } = useTranslation();
   const format = React.useMemo(() => formatAt ?? formatterFor(i18n.language), [formatAt, i18n.language]);
-  if (entries.length === 0) return <Text color="color.text.subtle">{emptyLabel}</Text>;
+  if (entries.length === 0) return <Text size="large" color="color.text.subtle">{emptyLabel}</Text>;
   return (
     <Stack space="space.150" testId="timeline">
       {sortTimeline(entries).map((e) => (
         <Box key={e.id} xcss={styles["item"]}>
           <Inline space="space.150" alignBlock="start" shouldWrap>
-            <Text size="small" color="color.text.subtle">{format(e.at)}</Text>
+            <Text size="large" color="color.text.subtle">{format(e.at)}</Text>
             <Stack space="space.050">
-              <Text weight="medium">{e.title}</Text>
-              {e.detail !== undefined && <Text size="small">{e.detail}</Text>}
+              <Text size="large" weight="medium">{e.title}</Text>
+              {e.detail !== undefined && <Text size="large">{e.detail}</Text>}
             </Stack>
           </Inline>
         </Box>

@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '@atlaskit/button/new';
-import Heading from '@atlaskit/heading';
 import SectionMessage from '@atlaskit/section-message';
 import Select from '@atlaskit/select';
 import TextField from '@atlaskit/textfield';
@@ -10,7 +9,7 @@ import { token } from '@atlaskit/tokens';
 import { httpStatusOf, searchApplications, useSearchApplications, type ApiClient, type ApplicationSearchRow } from '@usrp/api-client';
 import type { Agency, ApplicationStatus } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { FreshnessStamp, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
+import { FreshnessStamp, PageShell, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { useNavigate } from 'react-router-dom';
 import { APPLICATION_STATUSES } from '@usrp/contracts';
 import { EMPTY_FILTERS, filtersActive, searchQueryOf, type ListFilters } from '../model/workspace.js';
@@ -19,7 +18,6 @@ import { statusLabelKey } from '../model/status.js';
 const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   filters: {
     padding: token('space.200'),
     borderWidth: token('border.width'),
@@ -94,21 +92,21 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
   }));
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      title={t('applications.list.title')}
+      description={t('applications.list.subtitle', { agency })}
+      {...(query.dataUpdatedAt > 0
+        ? { actions: <FreshnessStamp updatedAt={new Date(query.dataUpdatedAt).toISOString()} now={now} /> }
+        : {})}
+    >
       <Stack space="space.200">
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Stack space="space.050">
-            <Heading size="xlarge" as="h1">{t('applications.list.title')}</Heading>
-            <Text color="color.text.subtle">{t('applications.list.subtitle', { agency })}</Text>
-          </Stack>
-          {query.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(query.dataUpdatedAt).toISOString()} now={now} />}
-        </Inline>
 
         <Box xcss={styles.filters}>
           <Inline space="space.200" shouldWrap alignBlock="end">
             <Box xcss={styles.field}>
               <Stack space="space.050">
-                <Text size="small" weight="medium" as="span">{t('applications.filters.preset')}</Text>
+                <Text size="large" weight="medium" as="span">{t('applications.filters.preset')}</Text>
                 <Select
                   inputId="applications-preset"
                   aria-label={t('applications.filters.preset')}
@@ -121,7 +119,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
             {(['category', 'campaign', 'district'] as const).map((k) => (
               <Box xcss={styles.field} key={k}>
                 <Stack space="space.050">
-                  <Text size="small" weight="medium" as="span">{t(`applications.filters.${k}`)}</Text>
+                  <Text size="large" weight="medium" as="span">{t(`applications.filters.${k}`)}</Text>
                   <TextField
                     name={k}
                     aria-label={t(`applications.filters.${k}`)}
@@ -137,7 +135,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
 
         {badFilter && (
           <SectionMessage appearance="warning" testId="filter-invalid" title={t('applications.filters.invalidTitle')} headingLevel="h2">
-            <Text as="p">{t('applications.filters.invalidBody')}</Text>
+            <Text size="large" as="p">{t('applications.filters.invalidBody')}</Text>
           </SectionMessage>
         )}
         <StateBoundary
@@ -146,7 +144,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
           onClearFilters={() => { setDraft(EMPTY_FILTERS); apply(EMPTY_FILTERS); }}
         >
           <Stack space="space.150">
-            <Text color="color.text.subtle" testId="applications-total">{t('applications.list.total', { shown: pages.length, total: query.data?.total ?? pages.length })}</Text>
+            <Text size="large" color="color.text.subtle" testId="applications-total">{t('applications.list.total', { shown: pages.length, total: query.data?.total ?? pages.length })}</Text>
             <QueueTable
               caption={t('applications.list.title')}
               rows={rows}
@@ -158,12 +156,12 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
             {nextCursor !== null && (
               <Inline space="space.100" alignBlock="center">
                 <Button appearance="default" isDisabled={moreBusy} onClick={() => void loadMore()}>{t('applications.list.more')}</Button>
-                {moreFailed && <Text color="color.text.danger">{t('applications.list.moreFailed')}</Text>}
+                {moreFailed && <Text size="large" color="color.text.danger">{t('applications.list.moreFailed')}</Text>}
               </Inline>
             )}
           </Stack>
         </StateBoundary>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }

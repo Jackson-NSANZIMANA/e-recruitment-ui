@@ -57,7 +57,7 @@ export function DeclineGroundsDialog({
 
               <ModalBody>
                 <Stack space="space.150">
-                  <Text as="p">{t('compliance.decline.ground_required')}</Text>
+                  <Text size="large" as="p">{t('compliance.decline.ground_required')}</Text>
 
                   <Field<string>
                     name="note"
@@ -97,7 +97,7 @@ export function DeclineGroundsDialog({
                             </MessageWrapper>
 
                             <Box paddingInlineStart="space.100">
-                              <Text size="small" color="color.text.subtlest">
+                              <Text size="large" color="color.text.subtlest">
                                 {currentLength} / {DECLINE_NOTE_MAX}
                               </Text>
                             </Box>

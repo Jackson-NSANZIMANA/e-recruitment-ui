@@ -31,21 +31,21 @@ export function PublishStep({ client, detail, agency, canPublish: allowed, onSte
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.publish.title')}</Heading>
-      <Text as="p">{t('campaigns.publish.lead')}</Text>
+      <Text size="large" as="p">{t('campaigns.publish.lead')}</Text>
       <Stack space="space.100" testId="preflight">
         {items.map((i) => (
           <Inline key={i.id} space="space.100" alignBlock="center" testId={`preflight-${i.id}`}>
             <Lozenge appearance={i.ok ? 'success' : 'removed'}>{t(i.ok ? 'campaigns.publish.ok' : 'campaigns.publish.todo')}</Lozenge>
-            <Text>{t(`campaigns.publish.checks.${i.id}`, { count: i.count })}</Text>
+            <Text size="large">{t(`campaigns.publish.checks.${i.id}`, { count: i.count })}</Text>
           </Inline>
         ))}
       </Stack>
       <CitizenPreview detail={detail} agency={agency} />
       {publish.isSuccess && (
-        <SectionMessage appearance="success" testId="published-notice"><Text as="p">{t('campaigns.publish.done', { code })}</Text></SectionMessage>
+        <SectionMessage appearance="success" testId="published-notice"><Text size="large" as="p">{t('campaigns.publish.done', { code })}</Text></SectionMessage>
       )}
-      {isDraft && !allowed && <Text as="p" color="color.text.subtle">{t('campaigns.noPermission')}</Text>}
-      {!isDraft && !publish.isSuccess && <Text as="p" color="color.text.subtle">{t('campaigns.frozen')}</Text>}
+      {isDraft && !allowed && <Text size="large" as="p" color="color.text.subtle">{t('campaigns.noPermission')}</Text>}
+      {!isDraft && !publish.isSuccess && <Text size="large" as="p" color="color.text.subtle">{t('campaigns.frozen')}</Text>}
       {isDraft && allowed && (
         <Inline><Button appearance="primary" isDisabled={!ready} onClick={() => { publish.reset(); setOpen(true); }} testId="publish-open">{t('campaigns.publish.action')}</Button></Inline>
       )}

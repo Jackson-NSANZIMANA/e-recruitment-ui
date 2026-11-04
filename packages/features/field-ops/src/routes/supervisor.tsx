@@ -69,15 +69,15 @@ export default function SupervisorPage({ client }: { readonly client: ApiClient 
         <Stack space="space.150">
           <Heading size="small" as="h2">{t('field_ops.supervisor.counts_title')}</Heading>
           {day === null ? (
-            <Stack space="space.100"><Text color="color.text.subtle">{t('field_ops.supervisor.no_venue_day')}</Text><Box><LinkButton href="/setup">{t('field_ops.physical.open_setup')}</LinkButton></Box></Stack>
+            <Stack space="space.100"><Text size="large" color="color.text.subtle">{t('field_ops.supervisor.no_venue_day')}</Text><Box><LinkButton href="/setup">{t('field_ops.physical.open_setup')}</LinkButton></Box></Stack>
           ) : counts.load.status === 'ready' ? (
             <Stack space="space.050" testId="supervisor-counts">
-              <Text weight="bold">{day.venueName} · {day.examDate}</Text>
-              <Text>{t('field_ops.supervisor.counts', { ...counts.load.data.counts })}</Text>
+              <Text size="large" weight="bold">{day.venueName} · {day.examDate}</Text>
+              <Text size="large">{t('field_ops.supervisor.counts', { ...counts.load.data.counts })}</Text>
             </Stack>
           ) : counts.load.status === 'failed' ? (
-            <Text testId="supervisor-counts-failed">{counts.load.offline ? t('field_ops.supervisor.read_offline') : t('field_ops.supervisor.read_failed')}</Text>
-          ) : <Text>{t('field_ops.check_in.loading')}</Text>}
+            <Text size="large" testId="supervisor-counts-failed">{counts.load.offline ? t('field_ops.supervisor.read_offline') : t('field_ops.supervisor.read_failed')}</Text>
+          ) : <Text size="large">{t('field_ops.check_in.loading')}</Text>}
           <Inline><Button onClick={counts.reload}>{t('field_ops.supervisor.reload')}</Button></Inline>
         </Stack>
       </Box>
@@ -85,11 +85,11 @@ export default function SupervisorPage({ client }: { readonly client: ApiClient 
       <Box xcss={box.b}>
         <Stack space="space.150">
           <Heading size="small" as="h2">{t('field_ops.supervisor.sync_title')}</Heading>
-          <Text testId="supervisor-sync-summary">{t('field_ops.supervisor.sync_summary', { total: summary.total, acknowledged: summary.acknowledged, waiting: summary.waiting, refused: summary.refused, conflicts: summary.conflicts })}</Text>
-          <Text color="color.text.subtle">{summary.lastAcknowledgedAt === null ? t('field_ops.supervisor.last_none') : t('field_ops.supervisor.last_ack', { time: summary.lastAcknowledgedAt.slice(11, 16) })}</Text>
+          <Text size="large" testId="supervisor-sync-summary">{t('field_ops.supervisor.sync_summary', { total: summary.total, acknowledged: summary.acknowledged, waiting: summary.waiting, refused: summary.refused, conflicts: summary.conflicts })}</Text>
+          <Text size="large" color="color.text.subtle">{summary.lastAcknowledgedAt === null ? t('field_ops.supervisor.last_none') : t('field_ops.supervisor.last_ack', { time: summary.lastAcknowledgedAt.slice(11, 16) })}</Text>
           {records.slice(-8).reverse().map((r) => (
             <Inline key={r.envelope.recordId} space="space.200" alignBlock="center" spread="space-between">
-              <Text>{t('field_ops.physical.record_line', { n: r.envelope.localSequence, time: r.envelope.capturedAt.slice(11, 16) })}</Text>
+              <Text size="large">{t('field_ops.physical.record_line', { n: r.envelope.localSequence, time: r.envelope.capturedAt.slice(11, 16) })}</Text>
               <RecordFateLozenge state={r.state} />
             </Inline>
           ))}
@@ -103,15 +103,15 @@ export default function SupervisorPage({ client }: { readonly client: ApiClient 
       <Box xcss={box.b}>
         <Stack space="space.150">
           <Heading size="small" as="h2">{t('field_ops.supervisor.fleet_title')}</Heading>
-          {!canFleet ? <Text color="color.text.subtle">{t('field_ops.supervisor.fleet_no_permission')}</Text>
+          {!canFleet ? <Text size="large" color="color.text.subtle">{t('field_ops.supervisor.fleet_no_permission')}</Text>
             : fleet.load.status === 'ready' ? (
-              fleet.load.data.devices.length === 0 ? <Text>{t('field_ops.supervisor.fleet_none')}</Text> : (
+              fleet.load.data.devices.length === 0 ? <Text size="large">{t('field_ops.supervisor.fleet_none')}</Text> : (
                 <Stack space="space.100" testId="supervisor-fleet">
                   {fleet.load.data.devices.map((d) => (
                     <Inline key={d.deviceId} space="space.200" alignBlock="center" spread="space-between" shouldWrap testId={`fleet-${d.deviceId}`}>
                       <Stack space="space.0">
-                        <Text weight="bold">{d.deviceId.slice(0, 8)}</Text>
-                        <Text color="color.text.subtle">{d.lastSyncAt === null ? t('field_ops.supervisor.never_synced') : t('field_ops.supervisor.last_sync', { time: d.lastSyncAt.slice(0, 16).replace('T', ' ') })}{d.assignment === null ? '' : ` · ${d.assignment.district} ${d.assignment.examDate}`}</Text>
+                        <Text size="large" weight="bold">{d.deviceId.slice(0, 8)}</Text>
+                        <Text size="large" color="color.text.subtle">{d.lastSyncAt === null ? t('field_ops.supervisor.never_synced') : t('field_ops.supervisor.last_sync', { time: d.lastSyncAt.slice(0, 16).replace('T', ' ') })}{d.assignment === null ? '' : ` · ${d.assignment.district} ${d.assignment.examDate}`}</Text>
                       </Stack>
                       <Lozenge appearance={d.revokedAt === null ? 'success' : 'removed'}>{d.revokedAt === null ? t('field_ops.supervisor.device_active') : t('field_ops.supervisor.device_revoked')}</Lozenge>
                     </Inline>
@@ -120,11 +120,11 @@ export default function SupervisorPage({ client }: { readonly client: ApiClient 
               )
             ) : fleet.load.status === 'failed' ? (
               <SectionMessage appearance="warning" title={t('field_ops.supervisor.read_failed')} headingLevel="h3"><Button onClick={fleet.reload}>{t('field_ops.supervisor.reload')}</Button></SectionMessage>
-            ) : <Text>{t('field_ops.check_in.loading')}</Text>}
+            ) : <Text size="large">{t('field_ops.check_in.loading')}</Text>}
         </Stack>
       </Box>
 
-      <Text color="color.text.subtle">{t('field_ops.supervisor.manual_identity')}</Text>
+      <Text size="large" color="color.text.subtle">{t('field_ops.supervisor.manual_identity')}</Text>
     </StationPage>
   );
 }

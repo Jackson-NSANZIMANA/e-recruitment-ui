@@ -57,7 +57,7 @@ export function NotBuiltBanner({ rung, surface }: NotBuiltBannerProps): React.Re
   return (
     <Box xcss={styles.banner} testId="readiness-not-built">
       <SectionMessage appearance="warning" title={t("readiness.not_built_title")} headingLevel="h2">
-        <Text as="p">
+        <Text size="large" as="p">
           {rung === null
             ? t("readiness.undeclared_body")
             : t("readiness.not_built_body", { rung, surface: surface ?? "" })}
@@ -76,7 +76,7 @@ export function NotFoundPage({ homePath }: { readonly homePath: string }): React
         <Heading size="large" as="h1">
           {t("readiness.not_found_title")}
         </Heading>
-        <Text as="p">{t("readiness.not_found_body")}</Text>
+        <Text size="large" as="p">{t("readiness.not_found_body")}</Text>
         <Box>
           <LinkButton appearance="primary" href={homePath}>
             {t("readiness.not_found_home")}

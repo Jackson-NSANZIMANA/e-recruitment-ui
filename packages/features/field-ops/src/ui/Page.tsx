@@ -14,7 +14,7 @@ export function StationPage({ title, intro, children, testId }: { readonly title
     <Box xcss={styles.page} {...(testId === undefined ? {} : { testId })}>
       <Stack space="space.300">
         <Heading size="large" as="h1">{title}</Heading>
-        {intro !== undefined && <Text color="color.text.subtle">{intro}</Text>}
+        {intro !== undefined && <Text size="large" color="color.text.subtle">{intro}</Text>}
         {children}
       </Stack>
     </Box>

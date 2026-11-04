@@ -58,7 +58,7 @@ export function BiometricConsent({
 
           <ModalBody>
             <Stack space="space.300">
-              <Text as="p">{t("biometric_consent.body", { agencyName })}</Text>
+              <Text size="large" as="p">{t("biometric_consent.body", { agencyName })}</Text>
 
               {/* Kinyarwanda voice reading — HCI mandate for semi-literate applicants */}
               <AudioTooltip

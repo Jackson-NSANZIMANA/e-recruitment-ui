@@ -21,25 +21,14 @@ import {
   type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
-import { RouterLink, StateBoundary, listState } from "@usrp/ui";
+import { Card, MetricCard, RouterLink, SkeletonPanel, StackedBar, StateBoundary, formatCount, listState } from "@usrp/ui";
 import { calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem } from "./model.js";
 
 const styles = cssMap({
-  panel: {
-    padding: token("space.300"),
-    borderWidth: token("border.width"),
-    borderStyle: "solid",
-    borderColor: token("color.border"),
-    borderRadius: token("radius.medium"),
-    backgroundColor: token("elevation.surface"),
-  },
   meterTrack: { width: "100%", minWidth: "96px", height: "0.5rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
   fill: { height: "100%", borderRadius: token("radius.small"), backgroundColor: token("color.background.brand.bold") },
   fillWarning: { backgroundColor: token("color.background.warning.bold") },
   attentionRow: { paddingBlock: token("space.100"), borderBlockEndWidth: token("border.width"), borderBlockEndStyle: "solid", borderBlockEndColor: token("color.border") },
-  stageTrack: { width: "100%", height: "0.75rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
-  stageLabel: { minWidth: "220px" },
-  figure: { minWidth: "140px" },
 });
 
 const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress" | "moved" | "default" | "removed">> = {
@@ -51,21 +40,19 @@ const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress
   CANCELLED: "removed",
 };
 
-/** A titled, bordered region; the heading names it for assistive technology. */
+/**
+ * A titled, bordered region; the heading names it for assistive technology.
+ *
+ * This used to carry its own `panel` cssMap block, which had drifted from the
+ * identical block in `DashboardMetricCard`: one bordered on a white surface, the
+ * other filled the surface grey. Both now delegate to `Card`, so a panel and a
+ * metric tile are the same raised plane and cannot disagree again.
+ */
 export function Panel({ title, testId, action, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly children: React.ReactNode }): React.ReactElement {
-  const id = `${testId}-title`;
   return (
-    <section aria-labelledby={id} data-testid={testId}>
-      <Box xcss={styles.panel}>
-        <Stack space="space.200">
-          <Inline spread="space-between" alignBlock="center" shouldWrap>
-            <Heading size="medium" as="h2" id={id}>{title}</Heading>
-            {action}
-          </Inline>
-          {children}
-        </Stack>
-      </Box>
-    </section>
+    <Card title={title} titleLevel={2} {...(action !== undefined ? { actions: action } : {})} testId={testId}>
+      {children}
+    </Card>
   );
 }
 
@@ -75,7 +62,7 @@ function PanelError({ onRetry }: { readonly onRetry: () => void }): React.ReactE
   return (
     <SectionMessage appearance="warning" testId="panel-error">
       <Stack space="space.100">
-        <Text as="p">{t("dashboard.panel_error")}</Text>
+        <Text size="large" as="p">{t("dashboard.panel_error")}</Text>
         <Inline><Button onClick={onRetry}>{t("dashboard.retry")}</Button></Inline>
       </Stack>
     </SectionMessage>
@@ -109,13 +96,13 @@ export function AttentionPanel({ items, ready }: { readonly items: readonly Atte
   return (
     <Panel title={t("dashboard.attention.title")} testId="dashboard-attention">
       {!ready ? <StateBoundary state="loading" /> : items.length === 0 ? (
-        <SectionMessage appearance="success" testId="attention-none"><Text as="p">{t("dashboard.attention.none")}</Text></SectionMessage>
+        <SectionMessage appearance="success" testId="attention-none"><Text size="large" as="p">{t("dashboard.attention.none")}</Text></SectionMessage>
       ) : (
         <Stack space="space.0" testId="attention-list">
           {items.map((i) => (
             <Box key={`${i.kind}-${"publicCode" in i ? i.publicCode : ""}`} xcss={styles.attentionRow} testId={`attention-${i.kind}`}>
               <Inline spread="space-between" alignBlock="center" shouldWrap space="space.200">
-                <Text as="p" weight="medium">{line(i)}</Text>
+                <Text size="large" as="p" weight="medium">{line(i)}</Text>
                 {"href" in i && <RouterLink href={i.href}>{t("dashboard.attention.open")}</RouterLink>}
               </Inline>
             </Box>
@@ -157,20 +144,20 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
       key: c.publicCode,
       testId: `campaign-row-${c.publicCode}`,
       cells: [
-        { key: "campaign", content: <Stack space="space.025"><Text weight="semibold">{c.campaignLabel}</Text><Text size="small" color="color.text.subtle">{c.publicCode}</Text></Stack> },
+        { key: "campaign", content: <Stack space="space.025"><Text size="large" weight="semibold">{c.campaignLabel}</Text><Text size="large" color="color.text.subtle">{c.publicCode}</Text></Stack> },
         { key: "status", content: <StatusBadge status={c.status} /> },
-        { key: "registration", content: <Text>{t("dashboard.campaigns.range", { from: day(c.registrationOpensAt), to: day(c.registrationClosesAt) })}</Text> },
-        { key: "examination", content: <Text>{t("dashboard.campaigns.range", { from: day(c.examinationStartDate), to: day(c.examinationEndDate) })}</Text> },
+        { key: "registration", content: <Text size="large">{t("dashboard.campaigns.range", { from: day(c.registrationOpensAt), to: day(c.registrationClosesAt) })}</Text> },
+        { key: "examination", content: <Text size="large">{t("dashboard.campaigns.range", { from: day(c.examinationStartDate), to: day(c.examinationEndDate) })}</Text> },
         {
           key: "occupancy",
           content: (
             <Stack space="space.050">
-              <Text size="small">{occupancyText}</Text>
+              <Text size="large">{occupancyText}</Text>
               {share !== null && cap !== null && <Meter value={c.occupancy.registeredTotal} max={cap} label={occupancyText} />}
             </Stack>
           ),
         },
-        { key: "sessions", content: <Text>{String(c.occupancy.sessionCount)}</Text> },
+        { key: "sessions", content: <Text size="large">{String(c.occupancy.sessionCount)}</Text> },
       ],
     };
   });
@@ -187,7 +174,7 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
 // ── Applications by stage ───────────────────────────────────────
 
 export function PipelinePanel({ client, enabled }: { readonly client: ApiClient; readonly enabled: boolean }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const results = useQueries({
     queries: PIPELINE_STAGES.map((s) => {
       const q = { status: s.statuses, limit: 1 };
@@ -197,25 +184,41 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
   const loading = results.some((r) => r.isLoading);
   const failed = results.some((r) => r.isError);
   const totals = results.map((r) => r.data?.total ?? 0);
-  const max = Math.max(1, ...totals);
+  const segments = PIPELINE_STAGES.map((stage, index) => ({
+    label: t(`dashboard.pipeline.stages.${stage.id}`),
+    value: totals.at(index) ?? 0,
+    id: stage.id,
+  }));
   return (
     <Panel title={t("dashboard.pipeline.title")} testId="dashboard-pipeline">
-      <Text as="p" color="color.text.subtle">{t("dashboard.pipeline.lead")}</Text>
-      {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <StateBoundary state="loading" /> : (
-        <Stack space="space.150">
-          {PIPELINE_STAGES.map((s, i) => {
-            const total = totals.at(i) ?? 0;
-            const label = t(`dashboard.pipeline.stages.${s.id}`);
-            return (
-              <Inline key={s.id} space="space.200" alignBlock="center" testId={`stage-${s.id}`}>
-                <Box xcss={styles.stageLabel}><Text>{label}</Text></Box>
-                <Box xcss={styles.stageTrack}>
-                  <Box aria-hidden xcss={styles.fill} style={{ width: `${String(Math.round((total / max) * 100))}%` }} />
-                </Box>
-                <Text weight="semibold" testId={`stage-${s.id}-total`}>{String(total)}</Text>
+      <Text as="p" size="large" color="color.text.subtle">{t("dashboard.pipeline.lead")}</Text>
+      {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <SkeletonPanel shape="chart" /> : (
+        <Stack space="space.200">
+          {/*
+            One bar, one total, six stages. This replaced six full-width tracks
+            each scaled to the largest stage: that layout answered "which stage
+            is biggest" and hid "how much is in the pipeline at all, and how is
+            it split" - the question an officer actually has. It also needed
+            three local cssMap entries (stageTrack, fill, stageLabel) to draw
+            what a shared component now draws from tokens.
+          */}
+          <StackedBar label={t("dashboard.pipeline.title")} segments={segments} showTotal />
+          {/*
+            Every stage keeps its own row and its own testId, because the e2e
+            suite asserts `stage-<id>-total` and an officer reads the exact count
+            for a stage before acting on it. The bar gives the shape; this list
+            gives the numbers.
+          */}
+          <Inline space="space.200" shouldWrap>
+            {segments.map((segment) => (
+              <Inline key={segment.id} space="space.075" alignBlock="center" testId={`stage-${segment.id}`}>
+                <Text as="span" size="large" color="color.text.subtle">{segment.label}</Text>
+                <Text as="span" size="large" weight="semibold" testId={`stage-${segment.id}-total`}>
+                  {formatCount(segment.value, i18n.language)}
+                </Text>
               </Inline>
-            );
-          })}
+            ))}
+          </Inline>
         </Stack>
       )}
     </Panel>
@@ -224,15 +227,17 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
 
 // ── Staff ───────────────────────────────────────────────────────
 
+/**
+ * A staff/fleet figure.
+ *
+ * Was a 12px label above a 16px number on a 140px-min box. It is now the shared
+ * `MetricCard`, so the figure is a 28px tabular metric face and the label is
+ * body-size - the previous pair was below the design-system's 16px text floor
+ * on both lines. `testId` still lands on the outer element, so the existing
+ * `staff-active` / `fleet-active` e2e assertions are unchanged.
+ */
 function Figure({ label, value, testId }: { readonly label: string; readonly value: number; readonly testId: string }): React.ReactElement {
-  return (
-    <Box xcss={styles.figure} testId={testId}>
-      <Stack space="space.025">
-        <Text size="small" color="color.text.subtle">{label}</Text>
-        <Text size="large" weight="bold">{String(value)}</Text>
-      </Stack>
-    </Box>
-  );
+  return <MetricCard label={label} count={{ state: "known", value }} testId={testId} />;
 }
 
 export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonly officers: readonly OfficerRow[] }, Error> }): React.ReactElement {
@@ -253,8 +258,8 @@ export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonl
           <Heading size="xsmall" as="h3">{t("dashboard.staff.by_post")}</Heading>
           {s.byPost.map((p) => (
             <Inline key={p.post} spread="space-between" testId={`post-${p.post}`}>
-              <Text>{t(`dashboard.staff.posts.${p.post}`)}</Text>
-              <Text weight="semibold">{String(p.count)}</Text>
+              <Text size="large">{t(`dashboard.staff.posts.${p.post}`)}</Text>
+              <Text size="large" weight="semibold">{String(p.count)}</Text>
             </Inline>
           ))}
         </Stack>
@@ -270,7 +275,7 @@ export function FleetPanel({ query, now }: { readonly query: UseQueryResult<{ re
   if (query.isError) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><PanelError onRetry={() => void query.refetch()} /></Panel>;
   if (query.data === undefined) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><StateBoundary state="loading" /></Panel>;
   if (query.data.devices.length === 0) {
-    return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><Text as="p" testId="fleet-empty">{t("dashboard.fleet.empty")}</Text></Panel>;
+    return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><Text size="large" as="p" testId="fleet-empty">{t("dashboard.fleet.empty")}</Text></Panel>;
   }
   const f = fleetSummary(query.data.devices, now);
   return (

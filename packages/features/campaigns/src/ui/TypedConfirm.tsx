@@ -22,7 +22,7 @@ export function TypedConfirm({ isOpen, isPending, publicCode, title, body, conse
       onCancel={onCancel} onConfirm={onConfirm}
     >
       <Stack space="space.100">
-        <Text as="p" weight="medium">{t('campaigns.confirm.typeCode', { code: publicCode })}</Text>
+        <Text size="large" as="p" weight="medium">{t('campaigns.confirm.typeCode', { code: publicCode })}</Text>
         <Textfield
           name="confirm-code" aria-label={t('campaigns.confirm.codeLabel')} autoComplete="off" testId="confirm-code"
           value={typed} onChange={(e) => setTyped((e.target as HTMLInputElement).value)}

@@ -46,13 +46,13 @@ function RefusalMessage({ error, t }: { readonly error: unknown; readonly t: T }
   if (o.kind === 'conflict') {
     const holder = lockedBy(o.data);
     if (o.outcome === 'CROSS_AGENCY_LOCKED' || o.outcome === 'CROSS_AGENCY_ACCEPT_LOCK') {
-      return <SectionMessage appearance="warning" title={t('applications.errors.crossAgencyLockedTitle')} headingLevel="h3"><Text as="p">{holder === null ? t('applications.errors.crossAgencyLocked') : t('applications.errors.crossAgencyLockedBy', { agency: holder })}</Text></SectionMessage>;
+      return <SectionMessage appearance="warning" title={t('applications.errors.crossAgencyLockedTitle')} headingLevel="h3"><Text size="large" as="p">{holder === null ? t('applications.errors.crossAgencyLocked') : t('applications.errors.crossAgencyLockedBy', { agency: holder })}</Text></SectionMessage>;
     }
-    return <SectionMessage appearance="warning"><Text as="p">{t('applications.errors.conflict')}</Text></SectionMessage>;
+    return <SectionMessage appearance="warning"><Text size="large" as="p">{t('applications.errors.conflict')}</Text></SectionMessage>;
   }
-  if (o.kind === 'unprocessable') return <SectionMessage appearance="error"><Text as="p">{t('applications.errors.invalidInput')}</Text></SectionMessage>;
-  if (o.kind === 'forbidden') return <SectionMessage appearance="error"><Text as="p">{t('applications.errors.forbidden')}</Text></SectionMessage>;
-  return <SectionMessage appearance="error"><Text as="p">{t('applications.errors.generic')}</Text></SectionMessage>;
+  if (o.kind === 'unprocessable') return <SectionMessage appearance="error"><Text size="large" as="p">{t('applications.errors.invalidInput')}</Text></SectionMessage>;
+  if (o.kind === 'forbidden') return <SectionMessage appearance="error"><Text size="large" as="p">{t('applications.errors.forbidden')}</Text></SectionMessage>;
+  return <SectionMessage appearance="error"><Text size="large" as="p">{t('applications.errors.generic')}</Text></SectionMessage>;
 }
 
 function Panel({ title, hint, children }: { readonly title: string; readonly hint: string; readonly children: React.ReactNode }): React.ReactElement {
@@ -60,7 +60,7 @@ function Panel({ title, hint, children }: { readonly title: string; readonly hin
     <Box xcss={styles.panel}>
       <Stack space="space.200">
         <Heading size="medium" as="h2">{title}</Heading>
-        <Text>{hint}</Text>
+        <Text size="large">{hint}</Text>
         {children}
       </Stack>
     </Box>

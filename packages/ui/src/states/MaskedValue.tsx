@@ -41,7 +41,7 @@ export function MaskedValue({ value, keep, onReveal, label }: MaskedValueProps):
   };
   return (
     <Inline space="space.100" alignBlock="center">
-      <Text as="span" testId="masked-value">{shown ? value : maskValue(value, keep)}</Text>
+      <Text size="large" as="span" testId="masked-value">{shown ? value : maskValue(value, keep)}</Text>
       {onReveal !== undefined && (
         <Button
           appearance="subtle"

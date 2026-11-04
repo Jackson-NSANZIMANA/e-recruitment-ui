@@ -24,17 +24,17 @@ export default function CheckInPage({ client }: { readonly client: ApiClient }):
   const { load, reload } = useEdgeRead(() => getBiometricPolicy(client), 'policy');
   return (
     <StationPage title={t('field_ops.check_in.title')} intro={t('field_ops.check_in.intro')} testId="check-in-page">
-      {load.status === 'loading' && <Text>{t('field_ops.check_in.loading')}</Text>}
+      {load.status === 'loading' && <Text size="large">{t('field_ops.check_in.loading')}</Text>}
       {load.status === 'failed' && (
         <SectionMessage appearance="warning" title={t('field_ops.check_in.failed_title')} headingLevel="h2" testId="check-in-failed">
-          <Stack space="space.200"><Text as="p">{t('field_ops.check_in.failed_body')}</Text><Box><Button onClick={reload}>{t('field_ops.supervisor.reload')}</Button></Box></Stack>
+          <Stack space="space.200"><Text size="large" as="p">{t('field_ops.check_in.failed_body')}</Text><Box><Button onClick={reload}>{t('field_ops.supervisor.reload')}</Button></Box></Stack>
         </SectionMessage>
       )}
       {load.status === 'ready' && (
         <Stack space="space.200">
           <Lozenge appearance={load.data.mode === 'ADVISORY' ? 'inprogress' : 'default'} testId="check-in-mode">{t(`field_ops.check_in.mode.${load.data.mode}`)}</Lozenge>
-          <Text as="p">{t(`field_ops.check_in.mode_body.${load.data.mode}`)}</Text>
-          <Text as="p" color="color.text.subtle">{t('field_ops.check_in.no_match')}</Text>
+          <Text size="large" as="p">{t(`field_ops.check_in.mode_body.${load.data.mode}`)}</Text>
+          <Text size="large" as="p" color="color.text.subtle">{t('field_ops.check_in.no_match')}</Text>
           <Box><LinkButton appearance="primary" href="/gate">{t('field_ops.check_in.to_gate')}</LinkButton></Box>
         </Stack>
       )}

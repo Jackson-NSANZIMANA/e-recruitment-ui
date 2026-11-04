@@ -71,8 +71,8 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
       <Stack space="space.250">
         <Inline><LinkButton appearance="subtle" href="/campaigns">{t('campaigns.new.back')}</LinkButton></Inline>
         <Heading size="xlarge" as="h1">{t('campaigns.new.title')}</Heading>
-        <Text as="p">{t('campaigns.new.lead')}</Text>
-        <SectionMessage appearance="information" testId="kigali-notice"><Text as="p">{t('campaigns.new.kigaliTime')}</Text></SectionMessage>
+        <Text size="large" as="p">{t('campaigns.new.lead')}</Text>
+        <SectionMessage appearance="information" testId="kigali-notice"><Text size="large" as="p">{t('campaigns.new.kigaliTime')}</Text></SectionMessage>
         <Panel>
           <Stack space="space.200">
             <Inline space="space.200" shouldWrap>
@@ -117,7 +117,7 @@ export function NewCampaignPage({ client }: { readonly client: ApiClient }): Rea
             {create.isError && serverField === null && <Refusal error={create.error} />}
             <Inline space="space.100" alignBlock="center">
               <Button appearance="primary" isDisabled={create.isPending} onClick={() => void submit()} testId="create-draft">{t('campaigns.new.submit')}</Button>
-              <Text size="small" color="color.text.subtle">{t('campaigns.new.next')}</Text>
+              <Text size="large" color="color.text.subtle">{t('campaigns.new.next')}</Text>
             </Inline>
           </Stack>
         </Panel>

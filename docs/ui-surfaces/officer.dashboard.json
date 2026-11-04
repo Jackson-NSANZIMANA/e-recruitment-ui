@@ -24,9 +24,10 @@
   ],
   "ads": [
     {
-      "name": "PageHeader",
+      "name": "PageShell",
       "source": "apps/officer-console/src/routes/dashboard.tsx",
-      "import": "@atlaskit/page-header"
+      "import": "@usrp/ui",
+      "note": "Replaces @atlaskit/page-header: the column, H1 and actions now come from the shared PageShell so the console aligns with the national header instead of an ad-hoc 1200px box."
     },
     {
       "name": "SectionMessage",

@@ -26,9 +26,10 @@
   ],
   "ads": [
     {
-      "name": "Heading",
+      "name": "PageShell",
       "source": "packages/features/compliance/src/ui/DpoQueuePage.tsx",
-      "import": "@atlaskit/heading"
+      "import": "@usrp/ui",
+      "note": "The page's H1 and column now come from PageShell; Heading remains for in-page section titles only."
     },
     {
       "name": "SectionMessage",

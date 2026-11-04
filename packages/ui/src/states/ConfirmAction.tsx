@@ -46,10 +46,10 @@ export function ConfirmAction({
           </ModalHeader>
           <ModalBody>
             <Stack space="space.150">
-              <Text as="p">{body}</Text>
+              <Text size="large" as="p">{body}</Text>
               {consequences !== undefined && consequences.length > 0 && (
                 <Stack space="space.050">
-                  {consequences.map((c) => <Text as="p" key={c} weight="medium">{c}</Text>)}
+                  {consequences.map((c) => <Text size="large" as="p" key={c} weight="medium">{c}</Text>)}
                 </Stack>
               )}
               {children}

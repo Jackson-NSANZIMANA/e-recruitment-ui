@@ -43,7 +43,7 @@ export default function MedicalPage({ client }: { readonly client: ApiClient }):
   if (mode === null) {
     return (
       <StationPage title={t('field_ops.medical.title')}>
-        <SectionMessage appearance="warning" title={t('field_ops.medical.no_mode_title')} headingLevel="h2" testId="medical-no-mode"><Text as="p">{t('field_ops.medical.no_mode_body')}</Text></SectionMessage>
+        <SectionMessage appearance="warning" title={t('field_ops.medical.no_mode_title')} headingLevel="h2" testId="medical-no-mode"><Text size="large" as="p">{t('field_ops.medical.no_mode_body')}</Text></SectionMessage>
       </StationPage>
     );
   }
@@ -83,7 +83,7 @@ export default function MedicalPage({ client }: { readonly client: ApiClient }):
           testId="medical-outcome"
         >
           <Stack space="space.200">
-            <Text as="p">
+            <Text size="large" as="p">
               {outcome.kind === 'recorded' ? t(`field_ops.medical.recorded_${outcome.choice}`) : outcome.kind === 'offline' ? t('field_ops.medical.offline_body') : t(`field_ops.medical.refused_${outcome.why}`)}
             </Text>
             <Inline space="space.200" shouldWrap>
@@ -96,12 +96,12 @@ export default function MedicalPage({ client }: { readonly client: ApiClient }):
           <TicketInput ticket={ticket} testId="medical-scanner" onTicket={(tk) => { setTicket(tk); }} onClear={() => { setTicket(null); }} />
           {fit !== null && fit !== 'MATCHES' && (
             <SectionMessage appearance="warning" title={t('field_ops.ticket.not_this_venue_title')} headingLevel="h3" testId="ticket-misfit">
-              <Text as="p">{fit === 'OTHER_AGENCY' ? t('field_ops.ticket.other_agency') : fit === 'OTHER_DAY' ? t('field_ops.ticket.other_day') : fit === 'OTHER_VENUE' ? t('field_ops.ticket.other_venue') : t('field_ops.ticket.no_venue_day')}</Text>
+              <Text size="large" as="p">{fit === 'OTHER_AGENCY' ? t('field_ops.ticket.other_agency') : fit === 'OTHER_DAY' ? t('field_ops.ticket.other_day') : fit === 'OTHER_VENUE' ? t('field_ops.ticket.other_venue') : t('field_ops.ticket.no_venue_day')}</Text>
             </SectionMessage>
           )}
           {ticket !== null && (
             <Stack space="space.200">
-              <Text weight="bold">{t(`field_ops.medical.choose_${mode}`)}</Text>
+              <Text size="large" weight="bold">{t(`field_ops.medical.choose_${mode}`)}</Text>
               <Inline space="space.200" shouldWrap>
                 {choicesFor(mode).map((c) => (
                   <Button key={c} appearance={choice === c ? 'primary' : 'default'} isSelected={choice === c} onClick={() => { setChoice(c); }} testId={`medical-choice-${c}`}>{t(`field_ops.medical.choice.${c}`)}</Button>

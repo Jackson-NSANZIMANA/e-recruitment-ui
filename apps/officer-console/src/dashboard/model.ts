@@ -190,3 +190,70 @@ export function calendarDay(value: string): { readonly year: string; readonly mo
   const part = (type: string): string => parts.find((p) => p.type === type)?.value ?? "";
   return { year: part("year"), month: Number(part("month")), day: part("day") };
 }
+
+// ─── The amber queue's own history ───────────────────────────────────────────
+//
+// The dashboard's headline metric is "awaiting adjudication", and until now it
+// was a single number that could not show whether the backlog was growing. The
+// queue entries already carry `queuedAt`, so the history is not invented: it is
+// the same rows, counted by the day they entered the queue.
+//
+// WHAT THIS IS NOT. It is not a time series of the queue's length over time -
+// that would need snapshots the edge does not store. It is "how many of the
+// items waiting now arrived on each of the last N days", which is exactly the
+// question an officer asks before deciding whether to clear the queue today.
+// The caption says so; the chart does not pretend otherwise.
+
+/** Days of arrival history drawn under the "awaiting adjudication" figure. */
+export const AMBER_HISTORY_DAYS = 7;
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Count queue arrivals per calendar day for the last `days` days, oldest first.
+ *
+ * `now` is a parameter, not a clock read, so the shape is unit-provable and a
+ * test does not have to mock time. Undated entries (`queuedAt: null`) are
+ * excluded rather than bucketed into today: an unknown arrival is not an
+ * arrival. Entries older than the window are excluded the same way - the series
+ * has exactly `days` points or fewer, never a spike in a bucket that stands for
+ * "everything older".
+ */
+export function amberArrivalSeries(
+  entries: readonly { readonly queuedAt: string | null }[],
+  now: Date,
+  days: number = AMBER_HISTORY_DAYS,
+): readonly { readonly at: Date; readonly count: number }[] {
+  const span = Math.max(1, Math.floor(days));
+  // Midnight in Kigali, not UTC: a queue entry at 01:00 local belongs to that
+  // local day, and Rwanda is UTC+2 year-round (no DST to get wrong).
+  //
+  // ONE formatter, built once. `Intl.DateTimeFormat` construction is the
+  // expensive part (locale data lookup), and this function is called with one
+  // entry per row on the dashboard - a formatter per row turned a seven-bucket
+  // count into hundreds of them on every render.
+  const KIGALI_DAY = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Africa/Kigali",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const dayStart = (d: Date): number => {
+    const parts = KIGALI_DAY.formatToParts(d);
+    const get = (t: string): number => Number(parts.find((p) => p.type === t)?.value ?? "0");
+    return Date.UTC(get("year"), get("month") - 1, get("day"));
+  };
+
+  const today = dayStart(now);
+  const buckets = new Array<number>(span).fill(0);
+  for (const entry of entries) {
+    if (entry.queuedAt === null) continue;
+    const at = new Date(entry.queuedAt);
+    if (Number.isNaN(at.getTime())) continue;
+    const index = span - 1 - (today - dayStart(at)) / DAY_MS;
+    if (!Number.isInteger(index) || index < 0 || index >= span) continue;
+    buckets[index] = (buckets[index] ?? 0) + 1;
+  }
+
+  return buckets.map((count, i) => ({ at: new Date(today - (span - 1 - i) * DAY_MS), count }));
+}

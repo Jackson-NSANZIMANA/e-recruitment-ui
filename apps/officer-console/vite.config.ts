@@ -32,6 +32,12 @@ function assertEdgeUrl(command: string, mode: string): void {
 export default defineConfig(({ command, mode }) => {
   assertEdgeUrl(command, mode);
   return {
+    test: {
+      // `node` by default: the existing suites are pure model tests. A DOM test
+      // opts in per file with `// @vitest-environment jsdom`, which is what
+      // src/dashboard/s13-render.test.tsx does to render the real components.
+      setupFiles: ["./src/test/setup.ts"],
+    },
     plugins: [
       readinessStubPlugin({ app: "officer-console", repoRoot: fileURLToPath(new URL("../..", import.meta.url)) }),
       compiled({

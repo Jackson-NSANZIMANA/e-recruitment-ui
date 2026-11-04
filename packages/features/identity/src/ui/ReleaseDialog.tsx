@@ -67,14 +67,14 @@ export function ReleaseDialog({ handle, code, expiresAt, onClose }: ReleaseDialo
       </ModalHeader>
       <ModalBody>
         <Stack space="space.200">
-          <Text as="p">{t('identity.release.body', { handle })}</Text>
+          <Text size="large" as="p">{t('identity.release.body', { handle })}</Text>
           <Box xcss={styles['code']}><Heading size="large" as="span" testId="activation-code">{code}</Heading></Box>
-          <Text as="p" color="color.text.subtle">{t('identity.release.expiresAt', { when: expires })}</Text>
+          <Text size="large" as="p" color="color.text.subtle">{t('identity.release.expiresAt', { when: expires })}</Text>
           <SectionMessage appearance="warning" title={t('identity.release.onceTitle')} headingLevel="h3">
-            <Text as="p">{t('identity.release.onceBody')}</Text>
+            <Text size="large" as="p">{t('identity.release.onceBody')}</Text>
           </SectionMessage>
-          {copied === 'ok' && <Text color="color.text.success" role="status">{t('identity.release.copied')}</Text>}
-          {copied === 'failed' && <Text color="color.text.danger" role="status">{t('identity.release.copyFailed')}</Text>}
+          {copied === 'ok' && <Text size="large" color="color.text.success" role="status">{t('identity.release.copied')}</Text>}
+          {copied === 'failed' && <Text size="large" color="color.text.danger" role="status">{t('identity.release.copyFailed')}</Text>}
         </Stack>
       </ModalBody>
       <ModalFooter>

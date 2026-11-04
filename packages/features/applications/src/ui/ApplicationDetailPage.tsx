@@ -19,7 +19,7 @@ import { useOfficerSession } from '@usrp/auth';
 import type { Agency, ApplicationStatus } from '@usrp/contracts';
 import { APPLICATION_STATUSES } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { FreshnessStamp, MaskedValue, StateBoundary, Timeline, stateFromHttpStatus, type TimelineEntry } from '@usrp/ui';
+import { FreshnessStamp, MaskedValue, PageShell, StateBoundary, Timeline, stateFromHttpStatus, type TimelineEntry } from '@usrp/ui';
 import { useNavigate, useParams } from 'react-router-dom';
 import { actionsToShow, blockedByPost, evidenceSummary } from '../model/workspace.js';
 import { statusLabelKey } from '../model/status.js';
@@ -30,7 +30,6 @@ const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
 const isStatus = (s: string | null): s is ApplicationStatus => s !== null && STATUS_SET.has(s);
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: {
     padding: token('space.300'),
     borderWidth: token('border.width'),
@@ -56,8 +55,8 @@ function Fact({ label, value, testId }: { readonly label: string; readonly value
   return (
     <Box xcss={styles.fact} {...(testId !== undefined ? { testId } : {})}>
       <Stack space="space.050">
-        <Text size="small" color="color.text.subtle">{label}</Text>
-        {typeof value === 'string' ? <Text weight="medium">{value}</Text> : value}
+        <Text size="large" color="color.text.subtle">{label}</Text>
+        {typeof value === 'string' ? <Text size="large" weight="medium">{value}</Text> : value}
       </Stack>
     </Box>
   );
@@ -100,20 +99,20 @@ function DocumentsTab({ client, applicationId, t }: { readonly client: ApiClient
       <Stack space="space.100" testId="documents-checklist">
         {(q.data?.items ?? []).map((item) => (
           <Inline key={item.documentType} space="space.150" alignBlock="center" shouldWrap>
-            <Text weight="medium">{item.documentType}</Text>
-            <Text color="color.text.subtle">{t(`applications.documents.satisfaction.${item.satisfaction}`)}</Text>
+            <Text size="large" weight="medium">{item.documentType}</Text>
+            <Text size="large" color="color.text.subtle">{t(`applications.documents.satisfaction.${item.satisfaction}`)}</Text>
             {item.clearance !== undefined && (
               <Stack space="space.0" testId="clearance-officer-view">
-                <Text color="color.text.subtle">{t('applications.documents.clearance.label')}: {t(`applications.documents.clearance.${item.clearance.state}`)}</Text>
-                {item.clearance.code !== null && <Text size="small" color="color.text.subtle">{t('applications.documents.clearance.code')}: {item.clearance.code}</Text>}
+                <Text size="large" color="color.text.subtle">{t('applications.documents.clearance.label')}: {t(`applications.documents.clearance.${item.clearance.state}`)}</Text>
+                {item.clearance.code !== null && <Text size="large" color="color.text.subtle">{t('applications.documents.clearance.code')}: {item.clearance.code}</Text>}
                 {(item.clearance.reasons ?? []).length > 0 && (
-                  <Text size="small" color="color.text.subtle" testId="clearance-reasons">
+                  <Text size="large" color="color.text.subtle" testId="clearance-reasons">
                     {t('applications.documents.clearance.reasons')}: {(item.clearance.reasons ?? []).map((r) => t(`applications.documents.clearance.reason.${r}`, { defaultValue: r })).join(' · ')}
                   </Text>
                 )}
               </Stack>
             )}
-            {item.satisfaction === 'VENUE_VERIFIED' && <Text color="color.text.success" testId={`venue-verified-${item.documentType}`}>{t('applications.documents.venueVerified')}</Text>}
+            {item.satisfaction === 'VENUE_VERIFIED' && <Text size="large" color="color.text.success" testId={`venue-verified-${item.documentType}`}>{t('applications.documents.venueVerified')}</Text>}
           </Inline>
         ))}
       </Stack>
@@ -140,7 +139,7 @@ function GateTab({ client, applicationId, permissions, t }: { readonly client: A
   return (
     <Stack space="space.200">
       <SectionMessage appearance="information" title={t('applications.biometric.advisoryTitle')} headingLevel="h3">
-        <Text as="p">{t('applications.biometric.advisoryBody')}</Text>
+        <Text size="large" as="p">{t('applications.biometric.advisoryBody')}</Text>
       </SectionMessage>
       <StateBoundary
         state={state}
@@ -208,9 +207,11 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
   const blocked = isStatus(status) ? blockedByPost(status, permissions) : [];
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      actions={<Button appearance="subtle" onClick={() => navigate('/applications')}>{t('applications.actions.back')}</Button>}
+    >
       <Stack space="space.300">
-        <Inline><Button appearance="subtle" onClick={() => navigate('/applications')}>{t('applications.actions.back')}</Button></Inline>
         <StateBoundary state={state} onRetry={() => void query.refetch()}>
           {application !== undefined && query.data !== undefined && (
             <Stack space="space.300">
@@ -218,15 +219,15 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
                 <Stack space="space.200">
                   <Inline spread="space-between" alignBlock="center" shouldWrap>
                     <Stack space="space.050">
-                      <Text color="color.text.subtle" size="small">{applicationId}</Text>
+                      <Text color="color.text.subtle" size="large">{applicationId}</Text>
                       <Heading size="xlarge" as="h1">{dash(application.processingCode)}</Heading>
                     </Stack>
                     {isStatus(status) && <StatusLozenge status={status} />}
                   </Inline>
                   <Inline space="space.200" shouldWrap alignBlock="center">
-                    <Text color="color.text.subtle">{t('applications.detail.agency')}: <Text weight="medium">{agency}</Text></Text>
-                    <Text color="color.text.subtle">{t('applications.detail.category')}: <Text weight="medium">{dash(application.category)}</Text></Text>
-                    <Text color="color.text.subtle">{t('applications.detail.submittedAt')}: <Text weight="medium">{when(application.submittedAt)}</Text></Text>
+                    <Text size="large" color="color.text.subtle">{t('applications.detail.agency')}: <Text size="large" weight="medium">{agency}</Text></Text>
+                    <Text size="large" color="color.text.subtle">{t('applications.detail.category')}: <Text size="large" weight="medium">{dash(application.category)}</Text></Text>
+                    <Text size="large" color="color.text.subtle">{t('applications.detail.submittedAt')}: <Text size="large" weight="medium">{when(application.submittedAt)}</Text></Text>
                     <FreshnessStamp updatedAt={new Date(query.dataUpdatedAt).toISOString()} />
                   </Inline>
                 </Stack>
@@ -236,7 +237,7 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
                 <ActionPanel key={action} action={action} client={client} agency={agency} applicationId={applicationId} t={t} />
               ))}
               {shown.length === 0 && blocked.length > 0 && (
-                <SectionMessage appearance="information" testId="blocked-by-post"><Text as="p">{t('applications.actions.blockedByPost')}</Text></SectionMessage>
+                <SectionMessage appearance="information" testId="blocked-by-post"><Text size="large" as="p">{t('applications.actions.blockedByPost')}</Text></SectionMessage>
               )}
 
               <Tabs id="application-360">
@@ -261,6 +262,6 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
           )}
         </StateBoundary>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }

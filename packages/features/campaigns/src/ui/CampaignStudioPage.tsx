@@ -40,13 +40,13 @@ function Basics({ detail }: { readonly detail: CampaignAdminDetail }): React.Rea
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.basics.title')}</Heading>
-      <Text as="p">{t('campaigns.basics.lead')}</Text>
+      <Text size="large" as="p">{t('campaigns.basics.lead')}</Text>
       <Panel testId="basics">
-        <Stack space="space.100">{rows.map(([k, v]) => <Inline key={k} space="space.200" shouldWrap><Cell><Text weight="medium">{k}</Text></Cell><Cell><Text>{v}</Text></Cell></Inline>)}</Stack>
+        <Stack space="space.100">{rows.map(([k, v]) => <Inline key={k} space="space.200" shouldWrap><Cell><Text size="large" weight="medium">{k}</Text></Cell><Cell><Text size="large">{v}</Text></Cell></Inline>)}</Stack>
       </Panel>
       <Heading size="small" as="h3">{t('campaigns.basics.history')}</Heading>
       <Stack space="space.050" testId="history">
-        {detail.history.map((h) => <Text size="small" key={`${h.occurredAt}-${h.toStatus}`}>{formatKigali(h.occurredAt)} · {h.fromStatus === null ? '—' : t(`campaigns.states.${h.fromStatus}`)} → {t(`campaigns.states.${h.toStatus}`)}</Text>)}
+        {detail.history.map((h) => <Text size="large" key={`${h.occurredAt}-${h.toStatus}`}>{formatKigali(h.occurredAt)} · {h.fromStatus === null ? '—' : t(`campaigns.states.${h.fromStatus}`)} → {t(`campaigns.states.${h.toStatus}`)}</Text>)}
       </Stack>
     </Stack>
   );
@@ -72,7 +72,7 @@ export function CampaignStudioPage({ client }: { readonly client: ApiClient }): 
               <Inline spread="space-between" alignBlock="center" shouldWrap>
                 <Stack space="space.0">
                   <Heading size="xlarge" as="h1">{detail.campaignLabel}</Heading>
-                  <Text color="color.text.subtle">{detail.publicCode}</Text>
+                  <Text size="large" color="color.text.subtle">{detail.publicCode}</Text>
                 </Stack>
                 <Inline space="space.200" alignBlock="center">
                   <CampaignStatusLozenge state={detail.status as CampaignState} />

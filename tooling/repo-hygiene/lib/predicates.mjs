@@ -89,10 +89,60 @@ export const TOUCH_TARGET_PROPERTIES = Object.freeze([
   'inline-size',
 ]);
 
-/** Escape hatches, so an exemption is a deliberate and greppable act. */
+/**
+ * The body-text floor, in CSS pixels.
+ *
+ * Below 16px a mobile browser zooms the page on focus (Safari is the strict
+ * one), and cheap LCD panels in direct sunlight lose small type entirely - the
+ * two conditions this service is used in. The constant is the same number as
+ * MIN_BODY_TEXT_PX in packages/design-system/src/a11y/index.ts; it is restated
+ * here because this file must stay dependency-free (zero imports, runs before
+ * `pnpm install`), and a contract test asserts the two never drift apart.
+ */
+export const MIN_BODY_TEXT_PX = 16;
+
+/**
+ * ADS `Text size` -> rendered px, read off @atlaskit/primitives' own
+ * `textSizeMap` (`var(--ds-font-body...)` at 14px, `-body-large` at 16px,
+ * `-body-small` at 12px). Only the three sizes the component accepts exist;
+ * an unknown value is treated as a bug in the caller, not as compliance.
+ */
+export const TEXT_SIZE_PX = Object.freeze({ small: 12, medium: 14, large: 16 });
+
+/**
+ * The `<Text>` elements the floor does and does not govern.
+ *
+ * GOVERNED: every `<Text>` a person reads as body copy, and every `<Text>` that
+ * shrink-wraps an icon or a separator.
+ *
+ * NOT GOVERNED, with reasons - each is a deliberate scope decision, not a
+ * concession:
+ *
+ *  - `packages/ui/src/national/*` - the national lockup is a mark. Its type is
+ *    proportional to a symbol (`height={symbol}`), must stay optically locked to
+ *    the emblem, and at its 48px symbol it already renders 16px; the compact
+ *    chrome variant renders 12px inside a 56px top bar that a person reads once,
+ *    next to a logo they already recognise. Raising it would either break the
+ *    lockup or force the symbol up to an unapproved size. The mark's legibility
+ *    is verified by eye, not by a body-copy rule.
+ *  - `packages/ui/src/components/AgencyLogo` - same reasoning, one level down:
+ *    the agency name sits inside a lockup beside the emblem.
+ */
+export const BODY_TEXT_SCAN = Object.freeze({
+  // `tooling` is included because the ESLint rule now runs repo-wide, and two
+  // gates that scan different trees will disagree the first time a .tsx lands in
+  // the one they do not share. It already happened here: the surface-contract
+  // selftest fixture rendered 12px body copy, was linted nowhere (that package
+  // replaces ESLint with its own linter) and sat in no sweep root either.
+  roots: Object.freeze(['apps', 'packages', 'tooling']),
+  exemptPaths: Object.freeze(['packages/ui/src/national/', 'packages/ui/src/components/AgencyLogo/']),
+});
+
+/** Escape hatch, so an exemption is a deliberate and greppable act. */
 export const ALLOW_HEX_MARKER = 'hygiene-allow-hex';
 export const ALLOW_SMALL_TARGET_MARKER = 'hygiene-allow-small-target';
 export const ALLOW_DOMAIN_MARKER = 'hygiene-allow-domain';
+export const ALLOW_SMALL_TEXT_MARKER = 'hygiene-allow-small-text';
 
 // --- comment-aware scanning --------------------------------------------------
 
@@ -278,6 +328,136 @@ export function findUndersizedTouchTargets(text, min = MIN_TOUCH_TARGET_PX) {
  */
 export function isAcceptableTouchTarget(px, min = MIN_TOUCH_TARGET_PX) {
   return Number.isFinite(px) && px >= min;
+}
+
+// --- Body text floor (16px) --------------------------------------------------
+
+/**
+ * Read the `size` attribute out of a `<Text ...>` opening tag's attribute text.
+ *
+ * Returns a NUMBER of px when the size is decidable, or a SYMBOL-ish sentinel:
+ *   - `{ px: 14 }`                 no size attribute at all (ADS default is medium)
+ *   - `{ px: 12 }`                 size="small"
+ *   - `{ px: 16 }`                 size="large"
+ *   - `{ expression: '...' }`      size={...} - a runtime value, not guessed at
+ *   - `{ literal: 'xlarge' }`      an unknown literal, so a typo is not silently legal
+ *
+ * Deliberately conservative in the same way findUndersizedTouchTargets is: a
+ * computed size is reported as UNDECIDABLE and the caller decides, because
+ * guessing at a computed value is how a gate earns a reputation for crying wolf.
+ *
+ * @param {string} attrText
+ * @returns {{px: number} | {expression: string} | {literal: string}}
+ */
+export function bodyTextSizeOf(attrText) {
+  const raw = String(attrText);
+  const quoted = /\bsize\s*=\s*"([^"]*)"/.exec(raw) ?? /\bsize\s*=\s*'([^']*)'/.exec(raw);
+  if (quoted) {
+    const value = quoted[1];
+    const px = TEXT_SIZE_PX[value];
+    return px === undefined ? { literal: value } : { px };
+  }
+  const braced = /\bsize\s*=\s*\{([\s\S]*?)\}/.exec(raw);
+  if (braced) return { expression: braced[1].trim() };
+  return { px: TEXT_SIZE_PX.medium };
+}
+
+/**
+ * Find the end of a JSX opening tag starting at `<Text`, honouring braces and
+ * quotes.
+ *
+ * WHY NOT `/<Text[^>]*>/`: an attribute may legally contain `>` inside a
+ * template literal or a comparison (`testId={`a-${id}`}` is fine, but
+ * `color={a > b ? 'x' : 'y'}` is not rare), and a regex that stops at the first
+ * `>` would silently truncate the tag - reading the size correctly by accident
+ * only for the simple cases and mis-reporting the rest.
+ *
+ * @param {string} src
+ * @param {number} from index of the `<` in `<Text`
+ * @returns {number} index just past the closing `>` (or -1 when unterminated)
+ */
+function jsxTagEnd(src, from) {
+  let depth = 0;
+  let quote = null;
+  for (let i = from; i < src.length; i += 1) {
+    const c = src[i];
+    if (quote) {
+      if (c === '\\') i += 1;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
+    if (c === '{') depth += 1;
+    else if (c === '}') depth -= 1;
+    else if (c === '>' && depth === 0) return i + 1;
+  }
+  return -1;
+}
+
+/**
+ * Find ADS `<Text>` elements whose type falls below the body-text floor.
+ *
+ * WHY A SOURCE-LEVEL GATE AND NOT A RENDERED ONE. jsdom has no layout, so no
+ * test can compute a font size; axe-core checks contrast, not type size. The
+ * only place the size is decidable is where it is written, and the only thing
+ * that keeps 380-odd nodes from drifting back below the floor is a gate that
+ * runs on every save.
+ *
+ * Multi-line opening tags are handled by locating the tag's real end, and the
+ * exemption marker counts anywhere in the tag or in the comment block directly
+ * above it - a rule that can only be silenced one way gets worked around.
+ *
+ * @param {string} text
+ * @param {number} [min]
+ * @returns {{line: number, size: string, px: number|null}[]}
+ */
+export function findUndersizedBodyText(text, min = MIN_BODY_TEXT_PX) {
+  /** @type {{line: number, size: string, px: number|null}[]} */
+  const found = [];
+  const original = String(text).split(/\r?\n/);
+  const stripped = stripComments(text);
+  const strippedLines = stripped.split(/\r?\n/);
+  const OPEN_RE = /<Text(?=[\s/>])/g;
+
+  let m;
+  while ((m = OPEN_RE.exec(stripped)) !== null) {
+    const tagEnd = jsxTagEnd(stripped, m.index);
+    if (tagEnd === -1) continue;
+    const tag = stripped.slice(m.index, tagEnd);
+    const firstLine = stripped.slice(0, m.index).split(/\r?\n/).length - 1;
+    const lastLine = stripped.slice(0, tagEnd).split(/\r?\n/).length - 1;
+
+    let exempt = false;
+    for (let i = firstLine; i <= lastLine; i += 1) {
+      if (isExempt(original, strippedLines, i, ALLOW_SMALL_TEXT_MARKER)) { exempt = true; break; }
+    }
+    if (exempt) continue;
+
+    // Drop the element name so `size` is read from attributes only.
+    const attrs = tag.slice('<Text'.length);
+    const size = bodyTextSizeOf(attrs);
+    const line = firstLine + 1;
+
+    if ('expression' in size) {
+      found.push({ line, size: '{' + size.expression + '}', px: null });
+    } else if ('literal' in size) {
+      found.push({ line, size: size.literal, px: null });
+    } else if (size.px < min) {
+      const name = Object.keys(TEXT_SIZE_PX).find((k) => TEXT_SIZE_PX[k] === size.px);
+      found.push({ line, size: name ?? String(size.px) + 'px', px: size.px });
+    }
+  }
+
+  return found;
+}
+
+/**
+ * True when a source path is inside one of BODY_TEXT_SCAN.exemptPaths.
+ * @param {string} relPath repo-relative, posix separators
+ */
+export function isBodyTextExemptPath(relPath) {
+  const p = String(relPath).replace(/\\/g, '/');
+  return BODY_TEXT_SCAN.exemptPaths.some((prefix) => p.startsWith(prefix));
 }
 
 // --- Domain vocabulary leakage ----------------------------------------------

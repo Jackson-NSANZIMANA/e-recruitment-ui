@@ -28,7 +28,7 @@ export default function FieldStationNotice(): React.ReactElement {
         <Heading size="large" as="h1">{t("field_station.moved_title")}</Heading>
         <SectionMessage appearance="information" headingLevel="h2" title={t("field_station.app_title")} testId="field-station-notice">
           <Stack space="space.200">
-            <Text as="p">{t("field_station.moved_body")}</Text>
+            <Text size="large" as="p">{t("field_station.moved_body")}</Text>
             {FIELD_STATION_URL !== "" && (
               <Box>
                 <Button appearance="primary" href={FIELD_STATION_URL}>{t("field_station.moved_link")}</Button>

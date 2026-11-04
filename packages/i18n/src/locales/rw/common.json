@@ -161,7 +161,11 @@
       "11": "Ugushyingo",
       "12": "Ukuboza"
     },
-    "day": "{{day}} {{month}} {{year}}"
+    "day": "{{day}} {{month}} {{year}}",
+    "series": {
+      "day_short": "{{day}} {{month}}",
+      "arrivals_caption": "Abinjiye ku munsi, iminsi {{days}} ishize"
+    }
   },
   "application": {
     "id": "Nimero y'ubusabe",
@@ -727,5 +731,15 @@
   },
   "citizen_docs": {
     "open_link": "Inyandiko zanjye"
+  },
+  "chart": {
+    "period": "Igihe",
+    "value": "Agaciro",
+    "total": "Igiteranyo",
+    "needs_attention": "Bikeneye kwitabwaho"
+  },
+  "metric": {
+    "loading": "Biratunganywa…",
+    "unavailable": "Ntibibonetse"
   }
 }

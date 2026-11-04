@@ -161,7 +161,11 @@
       "11": "Nov",
       "12": "Dec"
     },
-    "day": "{{day}} {{month}} {{year}}"
+    "day": "{{day}} {{month}} {{year}}",
+    "series": {
+      "day_short": "{{day}} {{month}}",
+      "arrivals_caption": "Arrivals per day, last {{days}} days"
+    }
   },
   "application": {
     "id": "Application ID",
@@ -727,5 +731,15 @@
   },
   "citizen_docs": {
     "open_link": "My documents"
+  },
+  "chart": {
+    "period": "Period",
+    "value": "Value",
+    "total": "Total",
+    "needs_attention": "Needs attention"
+  },
+  "metric": {
+    "loading": "Loading…",
+    "unavailable": "Unavailable"
   }
 }
