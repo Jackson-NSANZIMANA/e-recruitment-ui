@@ -24,6 +24,8 @@ const gates = [
 
 if (withBuild) {
   gates.push(['compiled build-time extraction', 'verify-compiled-extraction.mjs']);
+  gates.push(['design-system font faces survive the build', 'verify-font-faces.mjs']);
+  gates.push(['no inlined import.meta.env object', 'verify-bundle-env.mjs']);
   gates.push(['bundle size budgets (gzip)', 'check-bundle-size.mjs']);
 }
 
