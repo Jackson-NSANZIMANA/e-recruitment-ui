@@ -10,7 +10,10 @@ import React from "react";
 import DynamicTable from "@atlaskit/dynamic-table";
 import Heading from "@atlaskit/heading";
 import SectionMessage from "@atlaskit/section-message";
-import Button from "@atlaskit/button/new";
+import Button, { LinkButton } from "@atlaskit/button/new";
+import AddIcon from "@atlaskit/icon/core/add";
+import CheckCircleIcon from "@atlaskit/icon/core/check-circle";
+import CampaignIcon from "@atlaskit/icon/core/megaphone";
 import Lozenge from "@atlaskit/lozenge";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import { cssMap, cx } from "@atlaskit/css";
@@ -28,6 +31,25 @@ const styles = cssMap({
   meterTrack: { width: "100%", minWidth: "96px", height: "0.5rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
   fill: { height: "100%", borderRadius: token("radius.small"), backgroundColor: token("color.background.brand.bold") },
   fillWarning: { backgroundColor: token("color.background.warning.bold") },
+  // All-clear: a notice that hugs its text, not a banner that fills the row.
+  allClear: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: token("space.100"),
+    alignSelf: "flex-start",
+    paddingBlock: token("space.100"),
+    paddingInline: token("space.200"),
+    borderRadius: token("radius.medium"),
+    backgroundColor: token("color.background.success"),
+    color: token("color.text.success"),
+  },
+  blank: { paddingBlock: token("space.600"), paddingInline: token("space.300"), textAlign: "center" },
+  blankIcon: {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: "4rem", height: "4rem", borderRadius: token("radius.full"),
+    backgroundColor: token("color.background.accent.purple.subtlest"), color: token("color.text.accent.purple"),
+  },
+  blankBody: { maxWidth: "28rem" },
   attentionRow: { paddingBlock: token("space.100"), borderBlockEndWidth: token("border.width"), borderBlockEndStyle: "solid", borderBlockEndColor: token("color.border") },
 });
 
@@ -93,11 +115,20 @@ export function AttentionPanel({ items, ready }: { readonly items: readonly Atte
     i.kind === "amber" || i.kind === "pending_release" || i.kind === "stale_devices"
       ? t(`dashboard.attention.${i.kind}`, { count: i.count })
       : t(`dashboard.attention.${i.kind}`, { campaign: i.campaign });
+  // Nothing to do is good news and takes one line. It was a full-width card around
+  // a full-width green banner around one sentence: the most prominent thing on a
+  // quiet day was the statement that there is nothing to see.
+  if (ready && items.length === 0) {
+    return (
+      <Box xcss={styles.allClear} role="status" testId="dashboard-attention">
+        <CheckCircleIcon label="" color="currentColor" />
+        <Text size="large" weight="medium" color="color.text.success" testId="attention-none">{t("dashboard.attention.none")}</Text>
+      </Box>
+    );
+  }
   return (
     <Panel title={t("dashboard.attention.title")} testId="dashboard-attention">
-      {!ready ? <StateBoundary state="loading" /> : items.length === 0 ? (
-        <SectionMessage appearance="success" testId="attention-none"><Text size="large" as="p">{t("dashboard.attention.none")}</Text></SectionMessage>
-      ) : (
+      {!ready ? <StateBoundary state="loading" /> : (
         <Stack space="space.0" testId="attention-list">
           {items.map((i) => (
             <Box key={`${i.kind}-${"publicCode" in i ? i.publicCode : ""}`} xcss={styles.attentionRow} testId={`attention-${i.kind}`}>
@@ -116,7 +147,26 @@ export function AttentionPanel({ items, ready }: { readonly items: readonly Atte
 // ── Campaigns ───────────────────────────────────────────────────
 
 
-export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult<unknown, Error>; readonly rows: readonly CampaignAdminSummary[] }): React.ReactElement {
+/**
+ * The Atlassian blank-state pattern: an icon, a heading, one muted sentence and the
+ * primary action - so an empty panel invites the next step instead of reporting
+ * a lack. The button is offered only to a post that may create campaigns.
+ */
+function CampaignsBlank({ canCreate }: { readonly canCreate: boolean }): React.ReactElement {
+  const { t } = useTranslation();
+  return (
+    <Stack space="space.200" alignInline="center" xcss={styles.blank} testId="campaigns-blank">
+      <Box xcss={styles.blankIcon} aria-hidden="true"><CampaignIcon label="" color="currentColor" size="medium" /></Box>
+      <Heading size="medium" as="h3">{t("dashboard.campaigns.blank_title")}</Heading>
+      <Box xcss={styles.blankBody}><Text as="p" size="large" color="color.text.subtle" align="center">{t("dashboard.campaigns.blank_body")}</Text></Box>
+      {canCreate && (
+        <LinkButton appearance="primary" href="/campaigns/new" iconBefore={AddIcon} testId="campaigns-blank-create">{t("dashboard.campaigns.blank_action")}</LinkButton>
+      )}
+    </Stack>
+  );
+}
+
+export function CampaignsPanel({ query, rows, canCreate = false }: { readonly query: UseQueryResult<unknown, Error>; readonly rows: readonly CampaignAdminSummary[]; readonly canCreate?: boolean }): React.ReactElement {
   const { t } = useTranslation();
   // Day before month, as on official documents: "27 Ukwakira 2026".
   const day = (value: string): string => {
@@ -162,9 +212,10 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
     };
   });
   if (query.isError) return <Panel title={t("dashboard.campaigns.title")} testId="dashboard-campaigns"><PanelError onRetry={() => void query.refetch()} /></Panel>;
+  if (state === "empty") return <Panel title={t("dashboard.campaigns.title")} testId="dashboard-campaigns"><CampaignsBlank canCreate={canCreate} /></Panel>;
   return (
     <Panel title={t("dashboard.campaigns.title")} testId="dashboard-campaigns">
-      <StateBoundary state={state} copy={{ empty: { title: t("dashboard.campaigns.empty"), body: "" } }}>
+      <StateBoundary state={state}>
         <DynamicTable label={t("dashboard.campaigns.title")} head={head} rows={tableRows} />
       </StateBoundary>
     </Panel>
@@ -268,6 +319,7 @@ const statStyles = cssMap({
   figure: {
     // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography -- the ADS metric face has no allowlisted family
     font: token("font.metric.medium"),
+    fontWeight: token("font.weight.bold"),
     fontVariantNumeric: "tabular-nums",
     color: token("color.text"),
     margin: token("space.0"),

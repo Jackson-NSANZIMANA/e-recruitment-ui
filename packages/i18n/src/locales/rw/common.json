@@ -104,7 +104,10 @@
         "EXAMINATION_ACTIVE": "Ibizamini birakomeje",
         "COMPLETED": "Byarangiye",
         "CANCELLED": "Byahagaritswe"
-      }
+      },
+      "blank_title": "Nta bukangurambaga burahari",
+      "blank_body": "Ubukangurambaga bufungura kwiyandikisha ku basaba kandi bugategura ibizamini byabo. Tangira ukora ubwa mbere.",
+      "blank_action": "Kora ubukangurambaga bushya"
     },
     "pipeline": {
       "title": "Ubusabe hakurikijwe icyiciro",

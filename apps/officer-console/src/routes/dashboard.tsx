@@ -25,7 +25,15 @@ const pageStyles = cssMap({
   // a wide screen; on a narrow one they stack. `minmax(0, ...)` lets a chart shrink
   // below its content instead of forcing the page to scroll sideways.
   split: { display: "grid", gap: token("space.300"), gridTemplateColumns: "minmax(0, 1fr)", "@media (min-width: 64rem)": { gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" } },
-  metrics: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr))" },
+  // Five tiles share one row from desktop width and are all one height
+  // (`alignItems: stretch`); below that they reflow to as many as fit.
+  metrics: {
+    display: "grid",
+    gap: token("space.300"),
+    alignItems: "stretch",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))",
+    "@media (min-width: 64rem)": { gridTemplateColumns: "repeat(5, minmax(0, 1fr))" },
+  },
 });
 
 
@@ -55,7 +63,7 @@ function CaseworkDashboard(): React.ReactElement {
     // middle of an empty page: the two tiles land where their placeholders were,
     // so nothing jumps after the read resolves.
     return (
-      <PageShell align="header" title={t("dashboard.title")} testId="casework-dashboard">
+      <PageShell align="header" spacious title={t("dashboard.title")} testId="casework-dashboard">
         <SkeletonPanel shape="metrics" />
         <SkeletonPanel shape="prose" rows={2} />
       </PageShell>
@@ -63,7 +71,7 @@ function CaseworkDashboard(): React.ReactElement {
   }
   if (isError) {
     return (
-      <PageShell align="header" title={t("dashboard.title")} testId="casework-dashboard">
+      <PageShell align="header" spacious title={t("dashboard.title")} testId="casework-dashboard">
         <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>
       </PageShell>
     );
@@ -71,6 +79,7 @@ function CaseworkDashboard(): React.ReactElement {
   return (
     <PageShell
       align="header"
+      spacious
       title={t("dashboard.title")}
       {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}
       testId="casework-dashboard"
@@ -117,6 +126,7 @@ function AdministrationDashboard(): React.ReactElement {
   return (
     <PageShell
       align="header"
+      spacious
       title={t("dashboard.admin_title")}
       description={t("dashboard.admin_lead")}
       {...(signedIn ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}
@@ -190,7 +200,7 @@ function AdministrationDashboard(): React.ReactElement {
         {access.fleet && <FleetPanel query={devices} now={now} />}
       </Box>
 
-      {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
+      {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} canCreate={(session?.permissions ?? []).includes("campaign.create")} />}
     </PageShell>
   );
 }

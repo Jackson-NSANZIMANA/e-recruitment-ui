@@ -20,6 +20,7 @@ const styles = cssMap({
   figure: {
     // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography
     font: token("font.metric.large"),
+    fontWeight: token("font.weight.bold"),
     fontVariantNumeric: "tabular-nums",
     color: token("color.text"),
     margin: token("space.0"),
@@ -27,6 +28,7 @@ const styles = cssMap({
   figureUrgent: {
     // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography
     font: token("font.metric.large"),
+    fontWeight: token("font.weight.bold"),
     fontVariantNumeric: "tabular-nums",
     color: token("color.text.danger"),
     margin: token("space.0"),
@@ -132,6 +134,7 @@ export function MetricCard({
     <Card
       title={label}
       titleLevel={3}
+      reserveTitleLines
       {...(action !== undefined ? { footer: action } : {})}
       {...(testId !== undefined ? { testId } : {})}
     >

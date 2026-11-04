@@ -44,6 +44,8 @@ const styles = cssMap({
     backgroundColor: token("color.background.brand.subtlest"),
   },
   header: { minWidth: "0" },
+  /** Two lines of heading height, so a row of tiles keeps one baseline whether a title wraps or not. */
+  titleTwoLines: { minBlockSize: "2.5rem" },
   actions: { flexShrink: 0 },
   footer: {
     paddingBlockStart: token("space.200"),
@@ -70,6 +72,8 @@ export interface CardProps {
   readonly tone?: CardTone;
   /** Tighter padding, for tiles in a row of their own. */
   readonly density?: "default" | "compact";
+  /** Reserve two lines for the title, so cards side by side align below it. */
+  readonly reserveTitleLines?: boolean;
   /** Highlight the card as the current selection. */
   readonly selected?: boolean;
   readonly children?: React.ReactNode;
@@ -98,6 +102,7 @@ export function Card({
   footer,
   tone = "raised",
   density = "default",
+  reserveTitleLines = false,
   selected = false,
   children,
   testId,
@@ -112,7 +117,7 @@ export function Card({
     <Stack space="space.200">
       {(title !== undefined || actions !== undefined) && (
         <Inline spread="space-between" alignBlock="start" space="space.200" shouldWrap>
-          <Box xcss={styles['header']}>
+          <Box xcss={cx(styles['header'], reserveTitleLines && styles['titleTwoLines'])}>
             <Stack space="space.050">
               {title !== undefined && (
                 <Heading size="small" as={`h${String(titleLevel)}` as "h2" | "h3" | "h4"} id={headingId}>

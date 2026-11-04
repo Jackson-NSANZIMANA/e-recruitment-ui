@@ -77,3 +77,46 @@ test('an empty queue says so in words instead of drawing a quiet-looking chart',
   // Zero stages still print their zeros: the chart keeps its shape.
   await expect(page.getByTestId('stage-vetting-total')).toHaveText('0');
 });
+
+// Layout contracts the screenshots cannot hold: KPI tiles are one height, the all-clear notice is
+// compact, and an empty campaigns panel is a blank state whose button only a creator sees.
+async function emptyReads(page: import('@playwright/test').Page): Promise<void> {
+  await page.route('**/edge/v1/campaigns/admin**', (route) => json(route, 200, { agency: 'RDF', total: 0, nextCursor: null, campaigns: [] }));
+  await page.route('**/edge/v1/applications/search**', (route) => json(route, 200, { agency: 'RDF', applications: [], total: 0, nextCursor: null }));
+  await page.route('**/edge/v1/applications/amber-queue', (route) => json(route, 200, []));
+  await page.route('**/edge/v1/officers', (route) => json(route, 200, { officers: [] }));
+  await page.route('**/edge/v1/field-sync/devices', (route) => json(route, 200, { devices: [] }));
+}
+
+test('KPI tiles are one height and the all-clear notice does not span the page', async ({ page }) => {
+  await signIn(page, ['agency_admin'], ADMIN);
+  await emptyReads(page);
+  await page.goto('/dashboard');
+  const ids = ['metric-open-campaigns', 'metric-applications-total', 'metric-requires-action', 'metric-active-officers', 'metric-active-devices'];
+  const heights: number[] = [];
+  for (const id of ids) {
+    await expect(page.getByTestId(id)).toBeVisible();
+    heights.push(Math.round((await page.getByTestId(id).boundingBox())!.height));
+  }
+  expect(new Set(heights).size).toBe(1);
+  const notice = await page.getByTestId('dashboard-attention').boundingBox();
+  const page_ = await page.getByTestId('dashboard-metrics').boundingBox();
+  expect(notice!.width).toBeLessThan(page_!.width / 2);
+});
+
+test('an empty campaigns panel is a blank state with a create button for a creator', async ({ page }) => {
+  await signIn(page, ['agency_admin'], [...ADMIN, 'campaign.create']);
+  await emptyReads(page);
+  await page.goto('/dashboard');
+  const blank = page.getByTestId('campaigns-blank');
+  await expect(blank.getByRole('heading', { name: 'No campaigns yet' })).toBeVisible();
+  await expect(blank.getByRole('link', { name: 'Create campaign' })).toHaveAttribute('href', '/campaigns/new');
+});
+
+test('a post that cannot create campaigns sees the blank state without the button', async ({ page }) => {
+  await signIn(page, ['agency_admin'], ['campaign.read.admin', 'officer.read', 'application.read', 'adjudication.read']);
+  await emptyReads(page);
+  await page.goto('/dashboard');
+  await expect(page.getByTestId('campaigns-blank').getByRole('heading', { name: 'No campaigns yet' })).toBeVisible();
+  await expect(page.getByTestId('campaigns-blank-create')).toHaveCount(0);
+});

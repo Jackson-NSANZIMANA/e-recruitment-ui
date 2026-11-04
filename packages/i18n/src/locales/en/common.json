@@ -104,7 +104,10 @@
         "EXAMINATION_ACTIVE": "Examinations in progress",
         "COMPLETED": "Completed",
         "CANCELLED": "Cancelled"
-      }
+      },
+      "blank_title": "No campaigns yet",
+      "blank_body": "Campaigns open registration to applicants and schedule their examinations. Create the first one to get started.",
+      "blank_action": "Create campaign"
     },
     "pipeline": {
       "title": "Applications by stage",

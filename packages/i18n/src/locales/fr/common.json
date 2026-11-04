@@ -104,7 +104,10 @@
         "EXAMINATION_ACTIVE": "Examens en cours",
         "COMPLETED": "Terminée",
         "CANCELLED": "Annulée"
-      }
+      },
+      "blank_title": "Aucune campagne pour le moment",
+      "blank_body": "Les campagnes ouvrent les inscriptions aux candidats et planifient leurs examens. Créez la première pour commencer.",
+      "blank_action": "Créer une campagne"
     },
     "pipeline": {
       "title": "Candidatures par étape",

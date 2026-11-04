@@ -22,6 +22,7 @@ const styles = cssMap({
   figure: {
     // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography -- the ADS metric face has no allowlisted family
     font: token("font.metric.medium"),
+    fontWeight: token("font.weight.bold"),
     fontVariantNumeric: "tabular-nums",
     color: token("color.text"),
     margin: token("space.0"),
