@@ -104,8 +104,13 @@ export function StackedBar({
 
   return (
     <Stack space="space.150" {...(testId !== undefined ? { testId } : {})}>
+      {/*
+        A named <figure>, for the same reason as the sparkline: role="img" on a
+        layout div announces an image where a figure with a caption is meant, and
+        the caption is the composition itself.
+      */}
       <Box
-        role="img"
+        as="figure"
         aria-label={`${label}: ${segments.map((s) => `${s.label} ${String(s.value)}`).join(", ")}`}
         xcss={styles['track']}
       >

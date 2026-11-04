@@ -112,7 +112,12 @@ export function Sparkline({
           <Text size="medium" color="color.text.subtle">{trendGlyph(trend.direction)}</Text>
         </Inline>
       )}
-      <Box as="figure" xcss={styles['frame']} aria-details={tableId}>
+      {/*
+        A <figure> with a name, not a bare <div>: the graphic is then reachable
+        as "figure, Applications received" instead of being skipped as paint.
+        `aria-details` points at the table, which is the real interface.
+      */}
+      <Box as="figure" xcss={styles['frame']} aria-label={label} aria-details={tableId}>
         <svg
           width={width}
           height={height}
