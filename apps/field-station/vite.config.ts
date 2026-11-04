@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import compiled from "@compiled/vite-plugin";
+import { singleCompiledStylesheet } from "../../tooling/vite-single-stylesheet/index.ts";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath } from "node:url";
 // ADR-FE-009 lock 2: below-floor route sources are not shipped in production.
@@ -46,6 +47,7 @@ export default defineConfig(({ command, mode }) => {
         extract: true,
         sortShorthand: true,
       }),
+      singleCompiledStylesheet(fileURLToPath(new URL(".", import.meta.url))),
       react(),
       VitePWA({
         registerType: "autoUpdate",
@@ -98,6 +100,8 @@ export default defineConfig(({ command, mode }) => {
       dedupe: ["react", "react-dom", "react-router-dom"],
     },
     build: {
+      // One CSS asset: Compiled atomic rules are only correct in one global order.
+      cssCodeSplit: false,
       target: "es2022",
       sourcemap: "hidden",
       // See applicant-portal: no manualChunks, same rationale.
