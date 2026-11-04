@@ -4,7 +4,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env", ".env.local"],
+      // Files outside the app that are part of its bundle: vite.config.ts imports the
+      // readiness plugin by relative path, src/routes/readiness.ts globs
+      // docs/ui-surfaces/*.json into the bundle, and every app tsconfig extends
+      // tsconfig.base.json. None belongs to a workspace package the app depends on,
+      // so without these entries an edit to them is a cache hit on the old bundle.
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env",
+        ".env.local",
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/tooling/surface-contract/src/vite-readiness.ts",
+        "$TURBO_ROOT$/docs/ui-surfaces/*.json"
+      ],
+      // The other VITE_* variables (VITE_USRP_SANDBOX, VITE_FIELD_STATION_URL,
+      // VITE_SLOT_TRUST_ANCHOR_B64) are hashed and passed through strict env mode by
+      // Turbo's Vite framework inference: `turbo run build --dry=json` lists them
+      // under environmentVariables.inferred.
       "env": ["VITE_EDGE_URL"],
       "outputs": ["dist/**"]
     },
