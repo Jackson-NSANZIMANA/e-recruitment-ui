@@ -8,7 +8,7 @@
 // ══════════════════════════════════════════════════════════════════
 
 export interface NavItem {
-  readonly id: 'dashboard' | 'applications' | 'queues' | 'campaigns' | 'erasure' | 'staff';
+  readonly id: 'dashboard' | 'applications' | 'queues' | 'campaigns' | 'analytics' | 'erasure' | 'staff';
   readonly href: string;
   readonly labelKey: string;
 }
@@ -18,6 +18,7 @@ const ITEMS: readonly (NavItem & { readonly needs: string | null })[] = [
   { id: 'applications', href: '/applications', labelKey: 'nav.applications', needs: 'application.read' },
   { id: 'queues', href: '/adjudication', labelKey: 'nav.queues', needs: 'adjudication.read' },
   { id: 'campaigns', href: '/campaigns', labelKey: 'nav.campaigns', needs: 'campaign.read.admin' },
+  { id: 'analytics', href: '/analytics', labelKey: 'nav.analytics', needs: 'campaign.read.admin' },
   { id: 'erasure', href: '/compliance/erasure-queue', labelKey: 'nav.erasure', needs: 'erasure.queue.read' },
   { id: 'staff', href: '/staff', labelKey: 'nav.staff', needs: 'officer.read' },
 ];

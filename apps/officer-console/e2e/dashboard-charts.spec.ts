@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ID1, ID2, ID3, POSTS, json, officerRow, signIn } from './support';
+import { analyticsReads } from './analytics-fixture';
 
 // The dashboard's charts, against real-shaped reads: the queue's arrival trend with a hover
 // tooltip, the capacity bars (a nearly-full campaign is flagged in words and in the share),
@@ -88,11 +89,11 @@ async function emptyReads(page: import('@playwright/test').Page): Promise<void> 
   await page.route('**/edge/v1/field-sync/devices', (route) => json(route, 200, { devices: [] }));
 }
 
-test('KPI tiles are one height and the all-clear notice does not span the page', async ({ page }) => {
+test('the hero KPI cards are one height and the all-clear notice does not span the page', async ({ page }) => {
   await signIn(page, ['agency_admin'], ADMIN);
   await emptyReads(page);
   await page.goto('/dashboard');
-  const ids = ['metric-open-campaigns', 'metric-applications-total', 'metric-requires-action', 'metric-active-officers', 'metric-active-devices'];
+  const ids = ['metric-open-campaigns', 'metric-applications-total', 'metric-requires-action'];
   const heights: number[] = [];
   for (const id of ids) {
     await expect(page.getByTestId(id)).toBeVisible();
@@ -119,4 +120,33 @@ test('a post that cannot create campaigns sees the blank state without the butto
   await page.goto('/dashboard');
   await expect(page.getByTestId('campaigns-blank').getByRole('heading', { name: 'No campaigns yet' })).toBeVisible();
   await expect(page.getByTestId('campaigns-blank-create')).toHaveCount(0);
+});
+
+// The home dashboard's filters and hero cards, against the deterministic fake of the edge's search.
+test('the campaign filter narrows the pipeline and the period filter changes the trend window', async ({ page }) => {
+  await signIn(page, ['agency_admin'], ADMIN);
+  await analyticsReads(page);
+  await page.goto('/dashboard');
+  await expect(page.getByTestId('stage-vetting-total')).toHaveText('64'); // 42 + 20 + 2, all campaigns
+  await page.getByTestId('filter-campaign').getByRole('combobox').selectOption('RDF-2026-RES');
+  await expect(page.getByTestId('stage-vetting-total')).toHaveText('20'); // that campaign alone
+  await expect(page.getByTestId('stage-exam-total')).toHaveText('10');
+
+  const chart = page.getByTestId('received-chart');
+  await expect(chart.locator('tbody tr')).toHaveCount(7);
+  await page.getByTestId('filter-period').getByRole('combobox').selectOption('14');
+  await expect(chart.locator('tbody tr')).toHaveCount(14);
+});
+
+test('the hero cards show a change badge, and the queue lists the longest-waiting items first', async ({ page }) => {
+  await signIn(page, ['agency_admin'], ADMIN);
+  await analyticsReads(page);
+  await page.goto('/dashboard');
+  // Applications received: a figure and a change against the previous period.
+  await expect(page.getByTestId('metric-applications-total')).toBeVisible();
+  await expect(page.getByTestId('metric-applications-total-delta')).toContainText('%');
+  // Longest waiting: oldest first (6 days, then 2 days, then today).
+  await expect(page.getByTestId('queue-item-0')).toContainText('RDF-0001');
+  await expect(page.getByTestId('queue-item-0')).toContainText('6 days');
+  await expect(page.getByTestId('queue-item-2')).toContainText('Today');
 });

@@ -21,10 +21,10 @@ import { token } from "@atlaskit/tokens";
 import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import {
   httpStatusOf, searchApplications, searchKeys,
-  type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
+  type AmberQueueResponse, type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
-import { BarChart, Card, RingGauge, RouterLink, SkeletonPanel, StateBoundary, TrendChart, formatCount, formatShare, listState, type BarChartItem, type BarTone } from "@usrp/ui";
+import { BarChart, RingGauge, RouterLink, SeriesChart, SkeletonPanel, StateBoundary, TrendChart, Widget, formatCount, formatShare, listState, type BarChartItem, type BarTone } from "@usrp/ui";
 import { AMBER_HISTORY_DAYS, NEAR_CAPACITY_SHARE, amberArrivalSeries, calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem, type PipelineStageId } from "./model.js";
 
 const styles = cssMap({
@@ -65,21 +65,19 @@ const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress
 /**
  * A titled, bordered region; the heading names it for assistive technology.
  *
- * This used to carry its own `panel` cssMap block, which had drifted from the
- * identical block in `DashboardMetricCard`: one bordered on a white surface, the
- * other filled the surface grey. Both now delegate to `Card`, so a panel and a
- * metric tile are the same raised plane and cannot disagree again.
+ * A panel is a `Widget`: the same raised plane as a metric tile, with the brand
+ * rule across the top and, where the panel owns a read, its own refresh button.
  */
-export function Panel({ title, testId, action, description, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly description?: string; readonly children: React.ReactNode }): React.ReactElement {
+export function Panel({ title, testId, action, description, onRefresh, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly description?: string; readonly onRefresh?: () => void; readonly children: React.ReactNode }): React.ReactElement {
   return (
-    <Card title={title} titleLevel={2} {...(description !== undefined ? { description } : {})} {...(action !== undefined ? { actions: action } : {})} testId={testId}>
+    <Widget title={title} {...(description !== undefined ? { description } : {})} {...(action !== undefined ? { actions: action } : {})} {...(onRefresh !== undefined ? { onRefresh } : {})} testId={testId}>
       {children}
-    </Card>
+    </Widget>
   );
 }
 
 /** The panel's own failure: says what failed and offers a retry, nothing else. */
-function PanelError({ onRetry }: { readonly onRetry: () => void }): React.ReactElement {
+export function PanelError({ onRetry }: { readonly onRetry: () => void }): React.ReactElement {
   const { t } = useTranslation();
   return (
     <SectionMessage appearance="warning" testId="panel-error">
@@ -229,11 +227,11 @@ const STAGE_TONE: Readonly<Record<PipelineStageId, BarTone>> = {
   vetting: "brand", documents: "brand", exam: "brand", medical: "brand", accepted: "success", closed: "neutral",
 };
 
-export function PipelinePanel({ client, enabled }: { readonly client: ApiClient; readonly enabled: boolean }): React.ReactElement {
+export function PipelinePanel({ client, enabled, campaign }: { readonly client: ApiClient; readonly enabled: boolean; readonly campaign?: string }): React.ReactElement {
   const { t, i18n } = useTranslation();
   const results = useQueries({
     queries: PIPELINE_STAGES.map((s) => {
-      const q = { status: s.statuses, limit: 1 };
+      const q = { status: s.statuses, limit: 1, ...(campaign !== undefined ? { campaign } : {}) };
       return { queryKey: searchKeys.query(q), queryFn: () => searchApplications(client, q), enabled, retry: false, staleTime: 30_000 };
     }),
   });
@@ -253,7 +251,7 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
     valueTestId: `stage-${stage.id}-total`,
   }));
   return (
-    <Panel title={t("dashboard.pipeline.title")} description={failed || loading ? t("dashboard.pipeline.lead") : t("dashboard.pipeline.total", { count: grand })} testId="dashboard-pipeline">
+    <Panel title={t("dashboard.pipeline.title")} description={failed || loading ? t("dashboard.pipeline.lead") : t("dashboard.pipeline.total", { count: grand })} onRefresh={() => { for (const r of results) void r.refetch(); }} testId="dashboard-pipeline">
       {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <SkeletonPanel shape="chart" /> : (
         <BarChart label={t("dashboard.pipeline.title")} items={items} max={Math.max(1, ...totals)} testId="pipeline-chart" />
       )}
@@ -263,18 +261,80 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
 
 // ── Adjudication queue: arrivals ────────────────────────────────
 
-export function ArrivalsPanel({ entries, now }: { readonly entries: readonly { readonly queuedAt: string | null }[] | undefined; readonly now: Date }): React.ReactElement {
+export function ArrivalsPanel({ entries, now, onRefresh }: { readonly entries: AmberQueueResponse | undefined; readonly now: Date; readonly onRefresh?: () => void }): React.ReactElement {
   const { t } = useTranslation();
   const dayLabel = (at: Date): string => t("dashboard.series.day_short", { day: at.getUTCDate(), month: t(`dashboard.months.${String(at.getUTCMonth() + 1)}`) });
+  // The oldest first: the items an officer should look at before the queue grows.
+  const oldest = [...(entries ?? [])]
+    .filter((e) => e.queuedAt !== null && !Number.isNaN(Date.parse(e.queuedAt)))
+    .sort((a, b) => Date.parse(a.queuedAt ?? "") - Date.parse(b.queuedAt ?? ""))
+    .slice(0, 3);
+  const waiting = (iso: string | null): string => {
+    const days = iso === null ? 0 : Math.max(0, Math.floor((now.getTime() - Date.parse(iso)) / 86_400_000));
+    return days === 0 ? t("dashboard.queue.today") : t("dashboard.queue.days", { count: days });
+  };
   return (
-    <Panel title={t("dashboard.charts.arrivals_title")} description={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })} testId="dashboard-arrivals">
+    <Panel title={t("dashboard.charts.arrivals_title")} description={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })} {...(onRefresh !== undefined ? { onRefresh } : {})} testId="dashboard-arrivals">
       {entries === undefined ? <SkeletonPanel shape="chart" /> : (
-        <TrendChart
-          data={amberArrivalSeries(entries, now).map((d) => ({ label: dayLabel(d.at), value: d.count }))}
-          label={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })}
-          unit={t("dashboard.charts.arrivals_unit")}
-          emptyText={t("dashboard.charts.arrivals_empty", { days: AMBER_HISTORY_DAYS })}
-          testId="arrivals-chart"
+        <Stack space="space.200">
+          <TrendChart
+            data={amberArrivalSeries(entries, now).map((d) => ({ label: dayLabel(d.at), value: d.count }))}
+            label={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })}
+            unit={t("dashboard.charts.arrivals_unit")}
+            emptyText={t("dashboard.charts.arrivals_empty", { days: AMBER_HISTORY_DAYS })}
+            testId="arrivals-chart"
+          />
+          <Heading size="xsmall" as="h3">{t("dashboard.queue.title")}</Heading>
+          {oldest.length === 0 ? (
+            <Text as="p" size="large" color="color.text.subtle" testId="queue-empty">{t("dashboard.queue.empty")}</Text>
+          ) : (
+            <Stack space="space.0" testId="queue-oldest">
+              {oldest.map((e, i) => (
+                <Box key={e.applicationId ?? String(i)} xcss={styles.attentionRow} testId={`queue-item-${String(i)}`}>
+                  <Inline spread="space-between" alignBlock="center" space="space.150">
+                    <Stack space="space.025">
+                      <Text size="large" weight="semibold">{e.processingCode ?? "—"}</Text>
+                      <Text size="large" color="color.text.subtle">{e.status === null ? "—" : t(`status.${e.status}`, { defaultValue: e.status })}</Text>
+                    </Stack>
+                    <Text size="large" weight="semibold">{waiting(e.queuedAt)}</Text>
+                  </Inline>
+                </Box>
+              ))}
+            </Stack>
+          )}
+          <Inline><RouterLink href="/adjudication">{t("dashboard.queue.open")}</RouterLink></Inline>
+        </Stack>
+      )}
+    </Panel>
+  );
+}
+
+// ── Applications received per day: this period against the last ─
+
+export interface ReceivedSeries {
+  readonly days: readonly string[];
+  readonly current: readonly number[];
+  readonly previous: readonly number[];
+  readonly ready: boolean;
+  readonly failed: boolean;
+  readonly refetch: () => void;
+}
+
+export function ReceivedPanel({ data }: { readonly data: ReceivedSeries }): React.ReactElement {
+  const { t } = useTranslation();
+  const label = (date: string): string => {
+    const at = new Date(`${date}T00:00:00Z`);
+    return t("dashboard.series.day_short", { day: at.getUTCDate(), month: t(`dashboard.months.${String(at.getUTCMonth() + 1)}`) });
+  };
+  return (
+    <Panel title={t("dashboard.daily.title")} onRefresh={data.refetch} testId="dashboard-received">
+      {data.failed ? <PanelError onRetry={data.refetch} /> : !data.ready ? <SkeletonPanel shape="chart" /> : (
+        <SeriesChart
+          label={t("dashboard.daily.title")}
+          xLabels={data.days.map(label)}
+          series={[{ id: "current", label: t("dashboard.daily.this_period"), values: data.current }, { id: "previous", label: t("dashboard.daily.previous_period"), values: data.previous }]}
+          emptyText={t("dashboard.daily.empty")}
+          testId="received-chart"
         />
       )}
     </Panel>

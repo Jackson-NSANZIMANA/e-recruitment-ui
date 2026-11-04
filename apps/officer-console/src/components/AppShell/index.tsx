@@ -24,6 +24,7 @@ import ChecklistIcon from "@atlaskit/icon/core/list-checklist";
 import DeleteIcon from "@atlaskit/icon/core/delete";
 import LockIcon from "@atlaskit/icon/core/lock-locked";
 import MegaphoneIcon from "@atlaskit/icon/core/megaphone";
+import ChartIcon from "@atlaskit/icon/core/chart-bar";
 import { Box } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
@@ -39,6 +40,7 @@ const NAV_ICONS: Readonly<Record<NavItem["id"], React.ReactElement>> = {
   applications: <AppsIcon label="" color="currentColor" />,
   queues: <ChecklistIcon label="" color="currentColor" />,
   campaigns: <MegaphoneIcon label="" color="currentColor" />,
+  analytics: <ChartIcon label="" color="currentColor" />,
   erasure: <DeleteIcon label="" color="currentColor" />,
   staff: <LockIcon label="" color="currentColor" />,
 };

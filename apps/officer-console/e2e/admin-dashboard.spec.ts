@@ -40,8 +40,10 @@ async function adminReads(page: Page, opts: { fleetFails?: boolean } = {}): Prom
     ],
   }));
   await page.route('**/edge/v1/applications/search**', (route) => {
-    const status = new URL(route.request().url()).searchParams.get('status');
-    const total = status === null ? 101 : (STAGE_TOTALS[status] ?? 0);
+    const params = new URL(route.request().url()).searchParams;
+    const status = params.get('status');
+    // A dated query is one day of "applications received": three a day, so a 7-day period is 21.
+    const total = params.get('submittedFrom') !== null ? 3 : status === null ? 101 : (STAGE_TOTALS[status] ?? 0);
     return json(route, 200, { agency: 'RDF', applications: [], total, nextCursor: null });
   });
   await page.route('**/edge/v1/applications/amber-queue', (route) => json(route, 200, [{ applicationId: ID1 }, { applicationId: ID2 }]));
@@ -82,10 +84,8 @@ test('an administrator sees what needs attention first, then campaigns, stages, 
   await page.goBack();
 
   await expect(page.getByTestId('metric-open-campaigns')).toContainText('2');
-  await expect(page.getByTestId('metric-applications-total')).toContainText('101');
+  await expect(page.getByTestId('metric-applications-total')).toContainText('21');
   await expect(page.getByTestId('metric-requires-action')).toContainText('2');
-  await expect(page.getByTestId('metric-active-officers')).toContainText('2');
-  await expect(page.getByTestId('metric-active-devices')).toContainText('2');
 
   const rows = page.getByTestId('dashboard-campaigns').locator('tbody tr');
   await expect(rows).toHaveCount(3);

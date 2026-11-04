@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { barFill, nearestIndex, niceCeiling, shareOf, trendPoints } from "../src/model.ts";
+import { barFill, heatLevel, nearestIndex, niceCeiling, percentChange, shareOf, trendPoints } from "../src/model.ts";
 import { formatShare } from "../src/format.ts";
 
 describe("barFill", () => {
@@ -72,4 +72,33 @@ describe("nearestIndex", () => {
 test("formatShare prints an unsigned whole percentage, and a dash with no whole", () => {
   assert.match(formatShare(0.5, "en"), /^50\s?%$/);
   assert.equal(formatShare(null, "en"), "—");
+});
+
+describe("heatLevel", () => {
+  test("none is level 0 and any positive value is at least level 1", () => {
+    assert.equal(heatLevel(0, 10), 0);
+    assert.equal(heatLevel(1, 1000), 1);
+  });
+  test("splits the range into four equal bands, the maximum being the top band", () => {
+    assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => heatLevel(v, 10)), [1, 1, 2, 2, 2, 3, 3, 4, 4, 4]);
+  });
+  test("an unusable value or maximum is level 0, and a value above the maximum is capped", () => {
+    assert.equal(heatLevel(Number.NaN, 10), 0);
+    assert.equal(heatLevel(5, 0), 0);
+    assert.equal(heatLevel(99, 10), 4);
+  });
+});
+
+describe("percentChange", () => {
+  test("is the signed whole-percent change from the previous period", () => {
+    assert.equal(percentChange(112, 100), 12);
+    assert.equal(percentChange(50, 100), -50);
+    assert.equal(percentChange(100, 100), 0);
+  });
+  test("has no honest answer without a baseline, so it is null, never Infinity or 100%", () => {
+    assert.equal(percentChange(5, 0), null);
+    assert.equal(percentChange(5, null), null);
+    assert.equal(percentChange(null, 5), null);
+    assert.equal(percentChange(Number.NaN, 5), null);
+  });
 });

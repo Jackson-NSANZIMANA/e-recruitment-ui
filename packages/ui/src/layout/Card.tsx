@@ -27,6 +27,8 @@ const styles = cssMap({
     // flow (auto-height parent) this resolves to auto and changes nothing.
     height: "100%",
     boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
   },
   flat: {
     backgroundColor: token("elevation.surface"),
@@ -43,7 +45,11 @@ const styles = cssMap({
     borderColor: token("color.border.brand"),
     backgroundColor: token("color.background.brand.subtlest"),
   },
-  header: { minWidth: "0" },
+  /** A 3px brand rule across the top: the widget frame of a data dashboard. */
+  accent: { borderBlockStartWidth: token("border.width.selected"), borderBlockStartColor: token("color.border.brand") },
+  header: { minWidth: "0", flexGrow: 1, flexShrink: 1, flexBasis: "0" },
+  /** The body takes the height the grid gives the card, so its content can spread instead of leaving a gap. */
+  body: { flexGrow: 1 },
   /** Two lines of heading height, so a row of tiles keeps one baseline whether a title wraps or not. */
   titleTwoLines: { minBlockSize: "2.5rem" },
   actions: { flexShrink: 0 },
@@ -74,6 +80,8 @@ export interface CardProps {
   readonly density?: "default" | "compact";
   /** Reserve two lines for the title, so cards side by side align below it. */
   readonly reserveTitleLines?: boolean;
+  /** Draw the brand rule across the top, as a dashboard widget. */
+  readonly accent?: boolean;
   /** Highlight the card as the current selection. */
   readonly selected?: boolean;
   readonly children?: React.ReactNode;
@@ -103,6 +111,7 @@ export function Card({
   tone = "raised",
   density = "default",
   reserveTitleLines = false,
+  accent = false,
   selected = false,
   children,
   testId,
@@ -114,7 +123,7 @@ export function Card({
   // (the <section> when titled, the <Box> otherwise). Putting it on both would
   // make every `getByTestId` in the console e2e suite match two nodes.
   const body = (
-    <Stack space="space.200">
+    <Stack space="space.200" xcss={styles['body']}>
       {(title !== undefined || actions !== undefined) && (
         <Inline spread="space-between" alignBlock="start" space="space.200" shouldWrap>
           <Box xcss={cx(styles['header'], reserveTitleLines && styles['titleTwoLines'])}>
@@ -151,6 +160,7 @@ export function Card({
             styles['base'],
             density === "compact" ? styles['compact'] : undefined,
             tone === "flat" ? styles['flat'] : undefined,
+            accent ? styles['accent'] : undefined,
             selected ? styles['selected'] : undefined,
           )}
         >
@@ -165,6 +175,7 @@ export function Card({
         styles['base'],
         density === "compact" ? styles['compact'] : undefined,
         tone === "flat" ? styles['flat'] : undefined,
+        accent ? styles['accent'] : undefined,
         selected ? styles['selected'] : undefined,
       )}
       {...(testId !== undefined ? { testId } : {})}

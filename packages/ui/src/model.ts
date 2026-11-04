@@ -281,3 +281,26 @@ export function nearestIndex(points: readonly TrendPoint[], x: number): number |
   });
   return best;
 }
+
+// ─── Heatmap, period change ──────────────────────────────────────────────────
+
+/**
+ * The ordinal step (0..4) a heatmap cell takes: 0 is "none", and 1..4 split the
+ * range up to `max` into four equal bands. A positive value is never level 0, so
+ * "one" is visibly different from "none"; an unusable value is level 0.
+ */
+export function heatLevel(value: number, max: number): 0 | 1 | 2 | 3 | 4 {
+  if (!Number.isFinite(value) || !Number.isFinite(max) || value <= 0 || max <= 0) return 0;
+  const step = Math.ceil((Math.min(value, max) / max) * 4);
+  return (step < 1 ? 1 : step > 4 ? 4 : step) as 1 | 2 | 3 | 4;
+}
+
+/**
+ * The percent change from `previous` to `current`, as a signed integer, or null
+ * when there is no honest answer: a zero or missing baseline ("up 400%" from
+ * nothing is a lie) or an unusable reading.
+ */
+export function percentChange(current: number | null, previous: number | null): number | null {
+  if (current === null || previous === null || !Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}

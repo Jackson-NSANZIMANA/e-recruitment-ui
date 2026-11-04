@@ -10,7 +10,8 @@
     "campaigns": "Campagnes",
     "queues": "Files de travail",
     "erasure": "Demandes d'effacement",
-    "staff": "Personnel"
+    "staff": "Personnel",
+    "analytics": "Analyses"
   },
   "auth": {
     "send_code": "Envoyer le code",
@@ -177,6 +178,36 @@
       "capacity_title": "Capacité d'inscription",
       "capacity_lead": "Inscrits par rapport à la capacité, pour les campagnes avec une limite.",
       "capacity_empty": "Aucune campagne ouverte n'a de limite de capacité."
+    },
+    "filters": {
+      "campaign": "Campagne",
+      "all": "Toutes les campagnes",
+      "period": "Période",
+      "days7": "7 derniers jours",
+      "days14": "14 derniers jours"
+    },
+    "hero": {
+      "received": "Candidatures reçues",
+      "vs_previous": "par rapport aux {{days}} jours précédents",
+      "arrivals_vs": "Arrivées par rapport aux {{days}} jours précédents",
+      "seats": "{{registered}} places sur {{capacity}} réservées",
+      "seats_none": "Aucune limite de capacité sur les campagnes ouvertes"
+    },
+    "daily": {
+      "title": "Candidatures reçues par jour",
+      "this_period": "Cette période",
+      "previous_period": "Période précédente",
+      "empty": "Rien n'a été reçu sur cette période."
+    },
+    "queue": {
+      "title": "Attente la plus longue",
+      "item": "Candidature",
+      "held": "Retenue pour",
+      "waiting": "Attente",
+      "empty": "Rien n'est en attente.",
+      "open": "Ouvrir la file",
+      "today": "Aujourd'hui",
+      "days": "{{count}} jours"
     }
   },
   "application": {
@@ -748,10 +779,79 @@
     "period": "Période",
     "value": "Valeur",
     "total": "Total",
-    "needs_attention": "Nécessite une attention"
+    "needs_attention": "Nécessite une attention",
+    "refresh": "Actualiser : {{title}}",
+    "unavailable": "Aucune valeur"
   },
   "metric": {
     "loading": "Chargement…",
     "unavailable": "Indisponible"
+  },
+  "analytics": {
+    "title": "Performance du recrutement",
+    "lead": "Décomptes exacts du registre des candidatures, par campagne, catégorie et jour.",
+    "no_campaigns": "Aucune campagne pour le moment : rien à comparer.",
+    "campaign_stage": {
+      "title": "Candidatures par campagne et par étape",
+      "campaign": "Campagne",
+      "total": "Total",
+      "share": "Part"
+    },
+    "weekday": {
+      "title": "Candidatures reçues par jour de la semaine",
+      "lead": "Chaque ligne est une semaine, commençant à la date indiquée. Les quatre dernières semaines, du lundi au dimanche.",
+      "week_of": "{{day}} {{month}}",
+      "less": "Moins",
+      "more": "Plus",
+      "days": {
+        "0": "Lun",
+        "1": "Mar",
+        "2": "Mer",
+        "3": "Jeu",
+        "4": "Ven",
+        "5": "Sam",
+        "6": "Dim"
+      }
+    },
+    "category": {
+      "title": "Résultats par catégorie",
+      "category": "Catégorie",
+      "total": "Total",
+      "accepted": "Acceptées",
+      "closed": "Clôturées",
+      "rate": "Taux"
+    },
+    "stage_by_campaign": {
+      "title": "Totaux par étape et par campagne"
+    },
+    "ratios": {
+      "title": "Part acceptée et part clôturée par campagne",
+      "lead": "Une part clôturée de 50 % ou plus est signalée.",
+      "total": "Candidatures",
+      "accepted": "Acceptées",
+      "closed": "Clôturées"
+    },
+    "category_stage": {
+      "title": "Étapes au sein de chaque catégorie"
+    },
+    "trend": {
+      "title": "Candidatures reçues par catégorie",
+      "lead": "Les 14 derniers jours.",
+      "other": "Autres catégories",
+      "empty": "Rien n'a été reçu ces 14 jours."
+    },
+    "queue_age": {
+      "title": "Jours d'attente moyens, par motif de retenue",
+      "series": "Jours d'attente moyens",
+      "empty": "Rien n'est en attente dans la file."
+    },
+    "stages": {
+      "vetting": "Vérification",
+      "documents": "Documents",
+      "exam": "Examen",
+      "medical": "Médical",
+      "accepted": "Acceptées",
+      "closed": "Clôturées"
+    }
   }
 }

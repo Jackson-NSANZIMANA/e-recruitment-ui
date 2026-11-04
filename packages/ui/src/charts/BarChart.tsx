@@ -31,7 +31,7 @@ const tones = cssMap({
 const tid = (id: string | undefined): { testId?: string } => (id === undefined ? {} : { testId: id });
 
 const styles = cssMap({
-  list: { listStyle: "none", margin: token("space.0"), padding: token("space.0"), display: "flex", flexDirection: "column", gap: token("space.200") },
+  list: { listStyle: "none", margin: token("space.0"), padding: token("space.0"), display: "flex", flexDirection: "column", justifyContent: "space-between", flexGrow: 1, gap: token("space.200") },
   row: { margin: token("space.0"), padding: token("space.0") },
   track: {
     width: "100%",

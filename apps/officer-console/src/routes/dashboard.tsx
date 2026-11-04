@@ -1,20 +1,17 @@
 import React from "react";
-import { Box, Text } from "@atlaskit/primitives/compiled";
+import { Box, Inline, Text } from "@atlaskit/primitives/compiled";
 import SectionMessage from "@atlaskit/section-message";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
-import { createApiClient, useAgencyCampaigns, useAmberQueue, useApplicationList, useFieldDevices, useOfficers, useSearchApplications } from "@usrp/api-client";
+import { createApiClient, useAgencyCampaigns, useAmberQueue, useApplicationList, useFieldDevices, useOfficers } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
-import ApplicationsIcon from "@atlaskit/icon/core/briefcase";
-import CampaignsIcon from "@atlaskit/icon/core/megaphone";
-import DevicesIcon from "@atlaskit/icon/core/clipboard";
-import QueueIcon from "@atlaskit/icon/core/inbox";
-import StaffIcon from "@atlaskit/icon/core/people-group";
 import { useTranslation } from "@usrp/i18n";
-import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel, countFrom } from "@usrp/ui";
+import { AgencyLogo, BarChart, FilterChip, FreshnessStamp, HeroMetric, MetricCard, PageShell, SkeletonPanel, countFrom, formatCount, formatShare, known, PENDING, FAILED, type Count } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
-import { accessFor, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
-import { ArrivalsPanel, AttentionPanel, CampaignsPanel, CapacityPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
+import { NEAR_CAPACITY_SHARE, accessFor, amberArrivalSeries, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
+import { ArrivalsPanel, AttentionPanel, CampaignsPanel, CapacityPanel, FleetPanel, PipelinePanel, ReceivedPanel, StaffPanel } from "../dashboard/panels.js";
+import { dayAsDate, dayQuery, periodWindows } from "../analytics/model.js";
+import { useSearchTotals } from "../analytics/useSearchTotals.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 // The page column now comes from `PageShell` (one 1280px content box that lines
@@ -31,8 +28,8 @@ const pageStyles = cssMap({
     display: "grid",
     gap: token("space.300"),
     alignItems: "stretch",
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))",
-    "@media (min-width: 64rem)": { gridTemplateColumns: "repeat(5, minmax(0, 1fr))" },
+    gridTemplateColumns: "minmax(0, 1fr)",
+    "@media (min-width: 48rem)": { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
   },
 });
 
@@ -96,21 +93,50 @@ function CaseworkDashboard(): React.ReactElement {
 }
 
 function AdministrationDashboard(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const session = useOfficerSession();
   const agency = session?.agency ?? "RDF";
   const access = accessFor(session?.permissions ?? []);
   const signedIn = session !== null;
   const now = new Date();
 
+  // The two dashboard filters. They narrow what the figures count (the campaign) and
+  // how far back the trend looks (the period); nothing else on the page is a filter.
+  const [campaign, setCampaign] = React.useState<string>("ALL");
+  const [period, setPeriod] = React.useState<string>("7");
+  const days = period === "14" ? 14 : 7;
+  const narrow = campaign === "ALL" ? undefined : campaign;
+
   const campaigns = useAgencyCampaigns(client, { limit: 100 }, signedIn && access.campaigns);
   const amber = useAmberQueue(client, agency, signedIn && access.adjudication);
-  const applications = useSearchApplications(client, { limit: 1 });
   const officers = useOfficers(client, signedIn && access.staff);
   const devices = useFieldDevices(client, signedIn && access.fleet);
 
+  // Applications received, one exact count per calendar day: this period then the one before.
+  const win = periodWindows(now, days);
+  const received = useSearchTotals(
+    client,
+    [...win.current, ...win.previous].map((d) => dayQuery(d, narrow === undefined ? {} : { campaign: narrow })),
+    signedIn && access.applications,
+  );
+  const receivedCurrent = received.totals.slice(0, days);
+  const receivedPrevious = received.totals.slice(days, days * 2);
+  const sum = (values: readonly number[]): number => values.reduce((a, v) => a + v, 0);
+  const receivedCount: Count = received.failed ? FAILED : received.ready ? known(sum(receivedCurrent)) : PENDING;
+  const dayText = (date: string): string => {
+    const at = dayAsDate(date);
+    return t("dashboard.series.day_short", { day: at.getUTCDate(), month: t(`dashboard.months.${String(at.getUTCMonth() + 1)}`) });
+  };
+
+  // The queue's arrivals: the same rows, counted by the day they entered, this period and the one before.
+  const arrivals = amber.data === undefined ? undefined : amberArrivalSeries(amber.data, now, days * 2);
+  const arrivalsNow = arrivals?.slice(days);
+  const arrivalsBefore = arrivals?.slice(0, days);
+
   const sorted = sortCampaigns(campaigns.data?.campaigns ?? []);
-  const requiresAction = amber.data?.length ?? 0;
+  const live = sorted.filter((c) => c.status === "REGISTRATION_OPEN" || c.status === "EXAMINATION_ACTIVE");
+  const seats = live.reduce((acc, c) => (c.occupancy.capacityTotal === null ? acc : { registered: acc.registered + c.occupancy.registeredTotal, capacity: acc.capacity + c.occupancy.capacityTotal }), { registered: 0, capacity: 0 });
+
   // The attention list waits for every read it draws on, so a late answer can never read as "all clear".
   const isLoading = [access.campaigns && campaigns.isLoading, access.adjudication && amber.isLoading, access.staff && officers.isLoading, access.fleet && devices.isLoading].some(Boolean);
   const isError = [access.campaigns && campaigns.isError, access.adjudication && amber.isError, access.staff && officers.isError, access.fleet && devices.isError].some(Boolean);
@@ -121,7 +147,7 @@ function AdministrationDashboard(): React.ReactElement {
     devices: access.fleet ? (devices.data?.devices ?? null) : null,
     now,
   });
-  const updatedAt = Math.max(campaigns.dataUpdatedAt, amber.dataUpdatedAt, officers.dataUpdatedAt, devices.dataUpdatedAt);
+  const updatedAt = Math.max(campaigns.dataUpdatedAt, amber.dataUpdatedAt, officers.dataUpdatedAt, devices.dataUpdatedAt, received.updatedAt);
 
   return (
     <PageShell
@@ -136,61 +162,80 @@ function AdministrationDashboard(): React.ReactElement {
       {isError && <SectionMessage appearance="warning" testId="dashboard-partial"><Text size="large" as="p">{t("dashboard.panel_error")}</Text></SectionMessage>}
       <AttentionPanel items={items} ready={!isLoading} />
 
-      <Box xcss={pageStyles.metrics} testId="dashboard-metrics">
+      <Inline space="space.150" shouldWrap testId="dashboard-filters">
         {access.campaigns && (
-          <MetricCard
-            label={t("dashboard.metrics.open_campaigns")}
-            count={countFrom(campaigns, (d) => openCampaignCount(sortCampaigns(d.campaigns)))}
-            icon={<CampaignsIcon label="" color="currentColor" />}
-            accent="purple"
-            testId="metric-open-campaigns"
+          <FilterChip
+            label={t("dashboard.filters.campaign")}
+            value={campaign}
+            neutralValue="ALL"
+            options={[{ value: "ALL", label: t("dashboard.filters.all") }, ...sorted.map((c) => ({ value: c.publicCode, label: c.campaignLabel }))]}
+            onChange={setCampaign}
+            testId="filter-campaign"
           />
         )}
+        <FilterChip
+          label={t("dashboard.filters.period")}
+          value={period}
+          neutralValue="7"
+          options={[{ value: "7", label: t("dashboard.filters.days7") }, { value: "14", label: t("dashboard.filters.days14") }]}
+          onChange={setPeriod}
+          testId="filter-period"
+        />
+      </Inline>
+
+      <Box xcss={pageStyles.metrics} testId="dashboard-metrics">
         {access.applications && (
-          <MetricCard
-            label={t("dashboard.metrics.applications_total")}
-            count={countFrom(applications, (d) => d.total)}
-            icon={<ApplicationsIcon label="" color="currentColor" />}
-            accent="blue"
+          <HeroMetric
+            label={t("dashboard.hero.received")}
+            count={receivedCount}
+            previous={received.ready ? sum(receivedPrevious) : null}
+            {...(received.ready ? { series: win.current.map((d, i) => ({ label: dayText(d), value: receivedCurrent[i] ?? 0 })) } : {})}
+            goodDirection="up"
+            caption={t("dashboard.hero.vs_previous", { days })}
             testId="metric-applications-total"
           />
         )}
         {access.adjudication && (
-          <MetricCard
+          <HeroMetric
             label={t("dashboard.metrics.awaiting_adjudication")}
             count={countFrom(amber, (d) => d.length)}
-            icon={<QueueIcon label="" color="currentColor" />}
-            accent="orange"
-            urgent
+            // A rising queue is bad news, so "down" is the good direction. The badge compares ARRIVALS
+            // (of what still waits) across the two periods; the caption says so.
+            previous={arrivalsBefore === undefined ? null : sum(arrivalsBefore.map((d) => d.count))}
+            {...(arrivalsNow !== undefined ? { series: arrivalsNow.map((d) => ({ label: dayText(d.at.toISOString().slice(0, 10)), value: d.count })) } : {})}
+            goodDirection="down"
+            caption={t("dashboard.hero.arrivals_vs", { days })}
             testId="metric-requires-action"
           />
         )}
-        {access.staff && (
-          <MetricCard
-            label={t("dashboard.metrics.active_officers")}
-            count={countFrom(officers, (d) => staffSummary(d.officers).active)}
-            icon={<StaffIcon label="" color="currentColor" />}
-            accent="green"
-            testId="metric-active-officers"
-          />
-        )}
-        {access.fleet && (
-          <MetricCard
-            label={t("dashboard.metrics.active_devices")}
-            count={countFrom(devices, (d) => fleetSummary(d.devices, now).active)}
-            icon={<DevicesIcon label="" color="currentColor" />}
-            accent="gray"
-            testId="metric-active-devices"
-          />
+        {access.campaigns && (
+          <HeroMetric
+            label={t("dashboard.metrics.open_campaigns")}
+            count={countFrom(campaigns, (d) => openCampaignCount(sortCampaigns(d.campaigns)))}
+            goodDirection="up"
+            caption={seats.capacity > 0 ? t("dashboard.hero.seats", { registered: formatCount(seats.registered, i18n.language), capacity: formatCount(seats.capacity, i18n.language) }) : t("dashboard.hero.seats_none")}
+            testId="metric-open-campaigns"
+          >
+            {seats.capacity > 0 && (
+              <BarChart
+                label={t("dashboard.charts.capacity_title")}
+                items={[{ id: "seats", label: formatShare(seats.registered / seats.capacity, i18n.language), value: seats.registered, max: seats.capacity, display: "", tone: seats.registered / seats.capacity >= NEAR_CAPACITY_SHARE ? "warning" : "brand" }]}
+              />
+            )}
+          </HeroMetric>
         )}
       </Box>
 
-      {/* Shape of the work: where applications sit, and what is arriving in the queue. */}
+      {/* The shape of the work: where applications sit, and what is arriving in the queue. */}
       {(access.applications || access.adjudication) && (
         <Box xcss={access.applications && access.adjudication ? pageStyles.split : pageStyles.columns}>
-          {access.applications && <PipelinePanel client={client} enabled={signedIn} />}
-          {access.adjudication && <ArrivalsPanel entries={amber.data} now={now} />}
+          {access.applications && <PipelinePanel client={client} enabled={signedIn} {...(narrow !== undefined ? { campaign: narrow } : {})} />}
+          {access.adjudication && <ArrivalsPanel entries={amber.data} now={now} onRefresh={() => void amber.refetch()} />}
         </Box>
+      )}
+
+      {access.applications && (
+        <ReceivedPanel data={{ days: win.current, current: receivedCurrent, previous: receivedPrevious, ready: received.ready, failed: received.failed, refetch: received.refetch }} />
       )}
 
       {/* Capacity of the programme: how full registration is, who works it, what runs the exams. */}

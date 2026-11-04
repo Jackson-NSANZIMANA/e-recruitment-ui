@@ -8,7 +8,7 @@ describe('permission-built navigation', () => {
     expect(ids(['application.read', 'adjudication.read', 'officer.read', 'officer.create'])).toEqual(['dashboard', 'applications', 'queues', 'staff']);
   });
   it('campaigns appear only with the campaign read permission', () => {
-    expect(ids(['campaign.read.admin'])).toEqual(['dashboard', 'campaigns']);
+    expect(ids(['campaign.read.admin'])).toEqual(['dashboard', 'campaigns', 'analytics']);
     expect(ids(['application.read', 'officer.read'])).not.toContain('campaigns');
   });
   it('a data protection officer sees only the erasure queue', () => {
