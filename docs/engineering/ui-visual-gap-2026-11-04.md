@@ -232,6 +232,19 @@ story in the same PR_, and `pnpm a11y` + a `toHaveScreenshot` baseline cover it.
 right?" from an opinion into a gate — which is the only thing this repository's own philosophy
 (`llms.txt`: "Prove it, don't assert it") will actually accept.
 
+**Status, 2026-11-04.** The gallery is filled and the rule is mechanical; the baselines are not captured yet.
+
+| Part | State |
+|---|---|
+| Stories for every component in `packages/ui/src/components` | **done** — 11 of 11, 42 stories across 15 titles, up from 3 stories total |
+| The "ships a story" rule as a gate | **done** — `packages/ui/test/story-coverage.test.ts` fails on a component with no story, a story module with no exported story, or two modules claiming one title. Dependency-free, so it runs before `pnpm install`. |
+| `toHaveScreenshot` configuration | **done** — `packages/design-system/storybook/playwright.visual.config.ts` + `visual.spec.ts`, one case per story read from the build's own `index.json`, plus a console-error sweep. `pnpm visual` runs it. |
+| Committed screenshot baselines | **NOT DONE, and not faked.** No Chromium exists in the authoring sandbox and `cdn.playwright.dev` is unreachable, so no baseline could be produced or verified here. The gate is wired and will run on a machine that has the browser; the first run records the baselines, and a human must review them before they are committed, because a baseline captures whatever shipped — including a broken layout. |
+
+The one thing this does not solve, stated so it is not mistaken for a solved problem: the first baseline has no
+judgement in it. It freezes the current appearance. Whether that appearance is *right* is still a review
+question, and the a11y runner is what answers the subset of it that can be verified mechanically.
+
 ---
 
 ## 4. The stack is also behind, and one package matters more than the rest

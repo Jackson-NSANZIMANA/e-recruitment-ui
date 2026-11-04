@@ -29,7 +29,9 @@
     "build-storybook": "storybook build",
     "test:a11y": "test-storybook --config-dir .storybook --maxWorkers=2 --url http://127.0.0.1:6006",
     "scan:cssmap": "node ../ui/scripts/scan-cssmap.cjs src",
-    "clean": "rm -rf dist storybook-static *.tsbuildinfo"
+    "clean": "rm -rf dist storybook-static *.tsbuildinfo",
+    "test:visual": "playwright test --config storybook/playwright.visual.config.ts",
+    "test:visual:update": "playwright test --config storybook/playwright.visual.config.ts --update-snapshots"
   },
   "//dependencies": "NOTE: there is deliberately no @usrp/* entry here, and the usrp/no-domain-imports lint rule enforces that. See src/tokens/index.ts.",
   "dependencies": {
