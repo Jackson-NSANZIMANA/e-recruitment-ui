@@ -42,3 +42,29 @@ test('the handling marking is not covered by the top navigation', async ({ page 
   expect(m!.y + m!.height).toBeLessThanOrEqual(nav!.y);
   expect(m!.width).toBeGreaterThan(1300); // spans the page, not shrink-wrapped to its text
 });
+
+// Regression: RouterLink used to drop every prop but href/children, so the nav anchors lost the
+// className that stretches them over their row. A neighbouring row's decorative overlay then
+// intercepted the pointer and only the last item could be clicked. Also: nothing marked the
+// current page as selected because AppShell never passed isSelected.
+test('every nav item is clickable and the current page is marked selected', async ({ page }) => {
+  await page.route('**/edge/v1/**', (route) => json(route, 200, { campaigns: [], applications: [], officers: [], devices: [], total: 0, nextCursor: null }));
+  await signIn(page, ['agency_admin'], ['application.read', 'adjudication.read', 'campaign.read.admin', 'officer.read', 'erasure.queue.read']);
+  await page.goto('/dashboard');
+
+  const nav = page.locator('nav[data-layout-slot]');
+  const items: readonly (readonly [string, string])[] = [
+    ['/applications', 'a[href="/applications"]'],
+    ['/adjudication', 'a[href="/adjudication"]'],
+    ['/campaigns', 'a[href="/campaigns"]'],
+    ['/compliance/erasure-queue', 'a[href="/compliance/erasure-queue"]'],
+    ['/staff', 'a[href="/staff"]'],
+    ['/dashboard', 'a[href="/dashboard"]'],
+  ];
+  for (const [path, selector] of items) {
+    await nav.locator(selector).click({ timeout: 5000 });
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(nav.locator(selector)).toHaveAttribute('aria-current', 'page');
+    await expect(nav.locator('a[aria-current="page"]')).toHaveCount(1);
+  }
+});
