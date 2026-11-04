@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '@atlaskit/button/new';
-import Heading from '@atlaskit/heading';
 import SectionMessage from '@atlaskit/section-message';
 import Tabs, { Tab, TabList, TabPanel } from '@atlaskit/tabs';
 import { Box, Inline, Stack, Text } from '@atlaskit/primitives/compiled';
@@ -20,14 +19,13 @@ import {
 import { useOfficerSession } from '@usrp/auth';
 import type { Agency } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { ConfirmAction, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
+import { ConfirmAction, PageShell, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { useNavigate } from 'react-router-dom';
 import { byQueueAge, holdKindOf, reasonCodes, registryHoldOf, type AmberRow, type HoldKind } from '../model/amber.js';
 import { QUEUE_STATUSES, rowTransitions, runBulk, visibleQueues, type BulkResult, type QueueId, type RowTransition } from '../model/queues.js';
 import { ForensicsSignal } from './ForensicsSignal.js';
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: { padding: token('space.300') },
 });
 
@@ -301,14 +299,11 @@ export function QueuesPage({ client, initial = 'amber' }: QueuesPageProps): Reac
   const permissions = session?.permissions ?? [];
   const agency: Agency = session?.agency ?? 'RDF';
   const visible = visibleQueues(permissions);
-  if (visible.length === 0) return <Box xcss={styles.root}><StateBoundary state="forbidden"><span /></StateBoundary></Box>;
+  if (visible.length === 0) return <PageShell align="standard"><StateBoundary state="forbidden"><span /></StateBoundary></PageShell>;
   const selected = Math.max(0, visible.indexOf(initial));
   return (
-    <Box xcss={styles.root}>
+    <PageShell align="standard" title={t('adjudication.queue.title')}>
       <Stack space="space.200">
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Heading size="xlarge" as="h1">{t('adjudication.queue.title')}</Heading>
-        </Inline>
         <Tabs id="officer-queues" defaultSelected={selected}>
           <TabList>
             {visible.map((id) => <Tab key={id}>{t(`adjudication.tabs.${id}`)}</Tab>)}
@@ -325,7 +320,7 @@ export function QueuesPage({ client, initial = 'amber' }: QueuesPageProps): Reac
           ))}
         </Tabs>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }
 

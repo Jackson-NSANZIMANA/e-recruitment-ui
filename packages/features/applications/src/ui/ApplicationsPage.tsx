@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '@atlaskit/button/new';
-import Heading from '@atlaskit/heading';
 import SectionMessage from '@atlaskit/section-message';
 import Select from '@atlaskit/select';
 import TextField from '@atlaskit/textfield';
@@ -10,7 +9,7 @@ import { token } from '@atlaskit/tokens';
 import { httpStatusOf, searchApplications, useSearchApplications, type ApiClient, type ApplicationSearchRow } from '@usrp/api-client';
 import type { Agency, ApplicationStatus } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { FreshnessStamp, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
+import { FreshnessStamp, PageShell, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { useNavigate } from 'react-router-dom';
 import { APPLICATION_STATUSES } from '@usrp/contracts';
 import { EMPTY_FILTERS, filtersActive, searchQueryOf, type ListFilters } from '../model/workspace.js';
@@ -19,7 +18,6 @@ import { statusLabelKey } from '../model/status.js';
 const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   filters: {
     padding: token('space.200'),
     borderWidth: token('border.width'),
@@ -94,15 +92,15 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
   }));
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      title={t('applications.list.title')}
+      description={t('applications.list.subtitle', { agency })}
+      {...(query.dataUpdatedAt > 0
+        ? { actions: <FreshnessStamp updatedAt={new Date(query.dataUpdatedAt).toISOString()} now={now} /> }
+        : {})}
+    >
       <Stack space="space.200">
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Stack space="space.050">
-            <Heading size="xlarge" as="h1">{t('applications.list.title')}</Heading>
-            <Text color="color.text.subtle">{t('applications.list.subtitle', { agency })}</Text>
-          </Stack>
-          {query.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(query.dataUpdatedAt).toISOString()} now={now} />}
-        </Inline>
 
         <Box xcss={styles.filters}>
           <Inline space="space.200" shouldWrap alignBlock="end">
@@ -164,6 +162,6 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
           </Stack>
         </StateBoundary>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }

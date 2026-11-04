@@ -19,7 +19,7 @@ import { useOfficerSession } from '@usrp/auth';
 import type { Agency, ApplicationStatus } from '@usrp/contracts';
 import { APPLICATION_STATUSES } from '@usrp/contracts';
 import { useTranslation } from '@usrp/i18n';
-import { FreshnessStamp, MaskedValue, StateBoundary, Timeline, stateFromHttpStatus, type TimelineEntry } from '@usrp/ui';
+import { FreshnessStamp, MaskedValue, PageShell, StateBoundary, Timeline, stateFromHttpStatus, type TimelineEntry } from '@usrp/ui';
 import { useNavigate, useParams } from 'react-router-dom';
 import { actionsToShow, blockedByPost, evidenceSummary } from '../model/workspace.js';
 import { statusLabelKey } from '../model/status.js';
@@ -30,7 +30,6 @@ const STATUS_SET: ReadonlySet<string> = new Set(APPLICATION_STATUSES);
 const isStatus = (s: string | null): s is ApplicationStatus => s !== null && STATUS_SET.has(s);
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: {
     padding: token('space.300'),
     borderWidth: token('border.width'),
@@ -208,9 +207,11 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
   const blocked = isStatus(status) ? blockedByPost(status, permissions) : [];
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      actions={<Button appearance="subtle" onClick={() => navigate('/applications')}>{t('applications.actions.back')}</Button>}
+    >
       <Stack space="space.300">
-        <Inline><Button appearance="subtle" onClick={() => navigate('/applications')}>{t('applications.actions.back')}</Button></Inline>
         <StateBoundary state={state} onRetry={() => void query.refetch()}>
           {application !== undefined && query.data !== undefined && (
             <Stack space="space.300">
@@ -261,6 +262,6 @@ export function ApplicationDetailPage({ client, agency }: ApplicationDetailPageP
           )}
         </StateBoundary>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }

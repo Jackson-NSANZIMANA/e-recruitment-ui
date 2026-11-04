@@ -30,13 +30,12 @@ import {
 } from '@usrp/api-client';
 import { useOfficerSession } from '@usrp/auth';
 import { useTranslation } from '@usrp/i18n';
-import { ConfirmAction, FreshnessStamp, StateBoundary, listState } from '@usrp/ui';
+import { ConfirmAction, FreshnessStamp, PageShell, StateBoundary, listState } from '@usrp/ui';
 import { addedPermissions, grantsDecisionAuthority, permissionsOfPosts } from '../model/role-table.ts';
 import { activationView, normaliseHandle, readOwnHandle, rowActions, rowLock } from '../model/staff.ts';
 import { ReleaseDialog } from './ReleaseDialog.tsx';
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: { padding: token('space.200'), borderWidth: token('border.width'), borderStyle: 'solid', borderColor: token('color.border'), borderRadius: token('radius.medium') },
   field: { minWidth: '240px' },
   wide: { minWidth: '320px' },
@@ -228,13 +227,15 @@ export function StaffPage({ client }: { readonly client: ApiClient }): React.Rea
   });
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      title={t('identity.staff.title')}
+      description={t('identity.staff.lead')}
+      {...(q.dataUpdatedAt > 0
+        ? { actions: <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} /> }
+        : {})}
+    >
       <Stack space="space.250">
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Heading size="xlarge" as="h1">{t('identity.staff.title')}</Heading>
-          {q.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} />}
-        </Inline>
-        <Text as="p">{t('identity.staff.lead')}</Text>
 
         {notice !== null && <SectionMessage appearance="success" testId="staff-notice"><Text as="p">{notice}</Text></SectionMessage>}
         {created !== null && (
@@ -295,6 +296,6 @@ export function StaffPage({ client }: { readonly client: ApiClient }): React.Rea
       </ConfirmAction>
 
       {released !== null && <ReleaseDialog handle={released.handle} code={released.code} expiresAt={released.expiresAt} onClose={() => { setReleased(null); release.reset(); }} />}
-    </Box>
+    </PageShell>
   );
 }

@@ -7,12 +7,11 @@ import { token } from '@atlaskit/tokens';
 import { ApiError, httpStatusOf, useDecideErasure, useErasureQueue, type ApiClient } from '@usrp/api-client';
 import { useOfficerSession } from '@usrp/auth';
 import { useTranslation } from '@usrp/i18n';
-import { ConfirmAction, FreshnessStamp, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
+import { ConfirmAction, FreshnessStamp, PageShell, QueueTable, StateBoundary, listState, type QueueRow } from '@usrp/ui';
 import { ERASURE_PERMISSIONS, refusalReasonKey, type RefusalGround } from '../model/erasure.ts';
 import { DeclineGroundsDialog } from './DeclineGroundsDialog.tsx';
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
 });
 
 type T = ReturnType<typeof useTranslation>['t'];
@@ -74,13 +73,15 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
   };
 
   return (
-    <Box xcss={styles.root}>
+    <PageShell
+      align="standard"
+      title={t('compliance.queue.title')}
+      description={t('compliance.queue.lead')}
+      {...(q.dataUpdatedAt > 0
+        ? { actions: <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} /> }
+        : {})}
+    >
       <Stack space="space.200">
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Heading size="xlarge" as="h1">{t('compliance.queue.title')}</Heading>
-          {q.dataUpdatedAt > 0 && <FreshnessStamp updatedAt={new Date(q.dataUpdatedAt).toISOString()} />}
-        </Inline>
-        <Text as="p">{t('compliance.queue.lead')}</Text>
         <Text as="p" color="color.text.subtle">{t('compliance.queue.anonymous_by_design')}</Text>
         {done !== null && <SectionMessage appearance="success" testId="dpo-done"><Text as="p">{done}</Text></SectionMessage>}
         <StateBoundary state={state} onRetry={() => void q.refetch()}>
@@ -118,6 +119,6 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
           {decide.isError && <SectionMessage appearance="error" testId="dpo-error"><Text as="p">{failureText(decide.error, t)}</Text></SectionMessage>}
         </ConfirmAction>
       </Stack>
-    </Box>
+    </PageShell>
   );
 }

@@ -9,21 +9,27 @@ import { token } from '@atlaskit/tokens';
 import { ApiError } from '@usrp/api-client';
 import { useOfficerSession } from '@usrp/auth';
 import { useTranslation } from '@usrp/i18n';
+import { PageShell } from '@usrp/ui';
 import { campaignRefusal } from '../api/campaigns.ts';
 import { keyForIntent, type IntentKey } from '../model/intent.ts';
 import { stepOfRefusal, type StudioStep } from '../model/preflight.ts';
 
 const styles = cssMap({
-  root: { maxWidth: '1200px', marginInline: 'auto', paddingBlock: token('space.300'), paddingInline: token('space.400') },
   panel: { padding: token('space.200'), borderWidth: token('border.width'), borderStyle: 'solid', borderColor: token('color.border'), borderRadius: token('radius.medium') },
   field: { minWidth: '240px', flexGrow: 1 },
   narrow: { minWidth: '120px', maxWidth: '160px' },
   hash: { overflowWrap: 'anywhere' },
 });
 
-/** Page container. */
+/**
+ * Page container.
+ *
+ * Delegates to `PageShell` so the three campaign screens sit in the same column
+ * as every other console page. It used to carry its own copy of the 1200px
+ * block, which is how six screens ended up with six slightly different pages.
+ */
 export function Page({ children }: { readonly children: React.ReactNode }): React.ReactElement {
-  return <Box xcss={styles.root}>{children}</Box>;
+  return <PageShell align="standard">{children}</PageShell>;
 }
 /** A bordered group of related fields. */
 export function Panel({ children, testId }: { readonly children: React.ReactNode; readonly testId?: string }): React.ReactElement {
