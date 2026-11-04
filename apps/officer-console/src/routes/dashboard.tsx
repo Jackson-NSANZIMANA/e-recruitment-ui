@@ -5,34 +5,29 @@ import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
 import { createApiClient, useAgencyCampaigns, useAmberQueue, useApplicationList, useFieldDevices, useOfficers, useSearchApplications } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
+import ApplicationsIcon from "@atlaskit/icon/core/briefcase";
+import CampaignsIcon from "@atlaskit/icon/core/megaphone";
+import DevicesIcon from "@atlaskit/icon/core/clipboard";
+import QueueIcon from "@atlaskit/icon/core/inbox";
+import StaffIcon from "@atlaskit/icon/core/people-group";
 import { useTranslation } from "@usrp/i18n";
 import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel, countFrom } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
-import { AMBER_HISTORY_DAYS, accessFor, amberArrivalSeries, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
-import { AttentionPanel, CampaignsPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
+import { accessFor, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
+import { ArrivalsPanel, AttentionPanel, CampaignsPanel, CapacityPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 // The page column now comes from `PageShell` (one 1280px content box that lines
 // up with the national header); only the panel grid is local to this screen.
 const pageStyles = cssMap({
-  columns: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" },
-  metrics: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" },
+  columns: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 20rem), 1fr))" },
+  // The headline row: the pipeline gets twice the width of the trend beside it, on
+  // a wide screen; on a narrow one they stack. `minmax(0, ...)` lets a chart shrink
+  // below its content instead of forcing the page to scroll sideways.
+  split: { display: "grid", gap: token("space.300"), gridTemplateColumns: "minmax(0, 1fr)", "@media (min-width: 64rem)": { gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" } },
+  metrics: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr))" },
 });
 
-
-/**
- * The x label a screen reader hears for one day of the arrival series.
- *
- * Built from the bundle's own month names, not `toLocaleDateString`: browsers
- * ship trimmed locale data and would print the US order for rw-RW - the exact
- * defect `calendarDay` exists to avoid. The month is read with UTC getters
- * because `amberArrivalSeries` has already normalised each bucket to a Kigali
- * midnight expressed as a UTC calendar date.
- */
-function dayLabel(at: Date, t: ReturnType<typeof useTranslation>["t"]): string {
-  const month = t(`dashboard.months.${String(at.getUTCMonth() + 1)}`);
-  return t("dashboard.series.day_short", { day: at.getUTCDate(), month });
-}
 
 /**
  * The officer's landing page. Posts that run the agency (campaigns, staff,
@@ -136,6 +131,8 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.open_campaigns")}
             count={countFrom(campaigns, (d) => openCampaignCount(sortCampaigns(d.campaigns)))}
+            icon={<CampaignsIcon label="" color="currentColor" />}
+            accent="purple"
             testId="metric-open-campaigns"
           />
         )}
@@ -143,6 +140,8 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.applications_total")}
             count={countFrom(applications, (d) => d.total)}
+            icon={<ApplicationsIcon label="" color="currentColor" />}
+            accent="blue"
             testId="metric-applications-total"
           />
         )}
@@ -150,19 +149,8 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.awaiting_adjudication")}
             count={countFrom(amber, (d) => d.length)}
-            // The history is the queue's own arrival dates, so the tile changes
-            // shape when the work does - not a decorative sine wave. A rising
-            // backlog is bad news, so goodDirection is "down".
-            {...(amber.data !== undefined
-              ? {
-                  trend: amberArrivalSeries(amber.data, now).map((day) => ({
-                    label: dayLabel(day.at, t),
-                    value: day.count,
-                  })),
-                  trendCaption: t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS }),
-                }
-              : {})}
-            goodDirection="down"
+            icon={<QueueIcon label="" color="currentColor" />}
+            accent="orange"
             urgent
             testId="metric-requires-action"
           />
@@ -171,6 +159,8 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.active_officers")}
             count={countFrom(officers, (d) => staffSummary(d.officers).active)}
+            icon={<StaffIcon label="" color="currentColor" />}
+            accent="green"
             testId="metric-active-officers"
           />
         )}
@@ -178,18 +168,29 @@ function AdministrationDashboard(): React.ReactElement {
           <MetricCard
             label={t("dashboard.metrics.active_devices")}
             count={countFrom(devices, (d) => fleetSummary(d.devices, now).active)}
+            icon={<DevicesIcon label="" color="currentColor" />}
+            accent="gray"
             testId="metric-active-devices"
           />
         )}
       </Box>
 
-      {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
+      {/* Shape of the work: where applications sit, and what is arriving in the queue. */}
+      {(access.applications || access.adjudication) && (
+        <Box xcss={access.applications && access.adjudication ? pageStyles.split : pageStyles.columns}>
+          {access.applications && <PipelinePanel client={client} enabled={signedIn} />}
+          {access.adjudication && <ArrivalsPanel entries={amber.data} now={now} />}
+        </Box>
+      )}
 
+      {/* Capacity of the programme: how full registration is, who works it, what runs the exams. */}
       <Box xcss={pageStyles.columns}>
-        {access.applications && <PipelinePanel client={client} enabled={signedIn} />}
+        {access.campaigns && <CapacityPanel rows={sorted} query={campaigns} />}
         {access.staff && <StaffPanel query={officers} />}
         {access.fleet && <FleetPanel query={devices} now={now} />}
       </Box>
+
+      {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
     </PageShell>
   );
 }

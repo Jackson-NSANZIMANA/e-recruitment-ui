@@ -201,3 +201,83 @@ export function seriesIndexAt(index: number): number {
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
+
+// ─── Bar and trend geometry ──────────────────────────────────────────────────
+
+/**
+ * The fraction (0..1) of `max` that `value` fills, for a bar's width.
+ *
+ * Clamped, and never NaN: a bar for a missing, negative or over-capacity reading
+ * must stay inside its track. A real, positive reading is never drawn thinner
+ * than `minVisible` (so "1 of 4,000" is still a visible sliver), and a zero is
+ * drawn as nothing, not as a sliver that reads as a small number.
+ */
+export function barFill(value: number, max: number, minVisible = 0.015): number {
+  if (!Number.isFinite(value) || !Number.isFinite(max) || value <= 0 || max <= 0) return 0;
+  return Math.min(1, Math.max(minVisible, value / max));
+}
+
+/**
+ * `part` as a share of `whole` (0..1), or null when the whole is zero: "0% of
+ * nothing" is not a percentage, so the caller prints nothing instead.
+ */
+export function shareOf(part: number, whole: number): number | null {
+  if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return null;
+  return Math.min(1, Math.max(0, part / whole));
+}
+
+const NICE_CEILINGS = (() => {
+  const out: number[] = [];
+  for (let mag = 1; mag <= 1e9; mag *= 10) for (const m of [4, 8, 12, 20]) out.push(m * mag);
+  return out.sort((a, b) => a - b);
+})();
+
+/**
+ * The top of a y axis for `max`: the smallest of 4, 8, 12, 20, 40, 80, 120...
+ * that holds it. Every ceiling is divisible by 4, so the half and quarter
+ * gridlines are whole numbers - a count axis must never read "2.5 applications".
+ * An empty or all-zero series gets 4, so a flat line still sits on a real scale.
+ */
+export function niceCeiling(max: number): number {
+  const wanted = Number.isFinite(max) && max > 0 ? max : 0;
+  return NICE_CEILINGS.find((c) => c >= wanted) ?? Math.ceil(wanted);
+}
+
+export interface TrendPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * Plot positions for a series inside a `width` x `height` box with padding.
+ * x is spread evenly (a single reading sits in the middle); y is measured from
+ * the top, so a larger value is a smaller y. The ceiling is the caller's, so the
+ * same scale can draw its gridlines.
+ */
+export function trendPoints(
+  values: readonly number[],
+  box: { readonly width: number; readonly height: number; readonly padX: number; readonly padTop: number; readonly padBottom: number },
+  ceiling: number,
+): readonly TrendPoint[] {
+  const innerW = Math.max(0, box.width - 2 * box.padX);
+  const innerH = Math.max(0, box.height - box.padTop - box.padBottom);
+  const top = ceiling > 0 ? ceiling : 1;
+  return values.map((raw, i) => {
+    const v = Number.isFinite(raw) ? Math.min(Math.max(raw, 0), top) : 0;
+    return {
+      x: round2(values.length === 1 ? box.width / 2 : box.padX + (innerW * i) / (values.length - 1)),
+      y: round2(box.padTop + innerH * (1 - v / top)),
+    };
+  });
+}
+
+/** The index of the point whose x is nearest `x`, or null for an empty series. */
+export function nearestIndex(points: readonly TrendPoint[], x: number): number | null {
+  let best: number | null = null;
+  let bestDistance = Infinity;
+  points.forEach((p, i) => {
+    const d = Math.abs(p.x - x);
+    if (d < bestDistance) { bestDistance = d; best = i; }
+  });
+  return best;
+}

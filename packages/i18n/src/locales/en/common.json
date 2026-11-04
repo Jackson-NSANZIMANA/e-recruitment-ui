@@ -116,7 +116,8 @@
         "medical": "Medical review and final decision",
         "accepted": "Accepted",
         "closed": "Rejected or withdrawn"
-      }
+      },
+      "total": "{{count}} applications in the register"
     },
     "staff": {
       "title": "Staff",
@@ -165,6 +166,14 @@
     "series": {
       "day_short": "{{day}} {{month}}",
       "arrivals_caption": "Arrivals per day, last {{days}} days"
+    },
+    "charts": {
+      "arrivals_title": "Adjudication queue",
+      "arrivals_empty": "Nothing has arrived in the last {{days}} days.",
+      "arrivals_unit": "arrivals",
+      "capacity_title": "Registration capacity",
+      "capacity_lead": "Registered against capacity, for campaigns with a limit.",
+      "capacity_empty": "No open campaign has a capacity limit."
     }
   },
   "application": {

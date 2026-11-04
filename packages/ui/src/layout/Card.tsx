@@ -23,6 +23,10 @@ const styles = cssMap({
     // Position + a radius make the shadow's overflow visible without clipping
     // the children's focus rings.
     position: "relative",
+    // Fill the grid cell it sits in, so a row of cards is one height. In a block
+    // flow (auto-height parent) this resolves to auto and changes nothing.
+    height: "100%",
+    boxSizing: "border-box",
   },
   flat: {
     backgroundColor: token("elevation.surface"),

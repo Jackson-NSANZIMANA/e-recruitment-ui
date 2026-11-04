@@ -71,3 +71,13 @@ export function formatPercent(value: number | null | undefined, language: string
     signDisplay: "exceptZero",
   }).format(value / 100);
 }
+
+/**
+ * A share (0..1) as an unsigned whole percentage in the reader's locale, or an
+ * em dash when there is no whole to take a share of. The signed `formatPercent`
+ * above is for CHANGE; this is for "how much of the total".
+ */
+export function formatShare(value: number | null | undefined, language: string | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat(LOCALE[asSupportedLanguage(language)], { style: "percent", maximumFractionDigits: 0 }).format(value);
+}

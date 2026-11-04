@@ -116,7 +116,8 @@
         "medical": "Isuzuma ry'ubuzima n'icyemezo cya nyuma",
         "accepted": "Bwemewe",
         "closed": "Bwanzwe cyangwa bwakuweho"
-      }
+      },
+      "total": "Dosiye {{count}} muri rejisitiri"
     },
     "staff": {
       "title": "Abakozi",
@@ -165,6 +166,14 @@
     "series": {
       "day_short": "{{day}} {{month}}",
       "arrivals_caption": "Abinjiye ku munsi, iminsi {{days}} ishize"
+    },
+    "charts": {
+      "arrivals_title": "Umurongo w'isuzuma",
+      "arrivals_empty": "Nta dosiye yageze mu minsi {{days}} ishize.",
+      "arrivals_unit": "zigezeyo",
+      "capacity_title": "Ubushobozi bwo kwiyandikisha",
+      "capacity_lead": "Abiyandikishije ugereranyije n'ubushobozi, ku bikorwa bifite imbibi.",
+      "capacity_empty": "Nta gikorwa gifunguye gifite imbibi z'ubushobozi."
     }
   },
   "application": {

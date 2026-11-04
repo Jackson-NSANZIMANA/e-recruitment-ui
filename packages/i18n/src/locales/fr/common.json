@@ -116,7 +116,8 @@
         "medical": "Examen médical et décision finale",
         "accepted": "Acceptées",
         "closed": "Rejetées ou retirées"
-      }
+      },
+      "total": "{{count}} candidatures dans le registre"
     },
     "staff": {
       "title": "Agents",
@@ -165,6 +166,14 @@
     "series": {
       "day_short": "{{day}} {{month}}",
       "arrivals_caption": "Arrivées par jour, {{days}} derniers jours"
+    },
+    "charts": {
+      "arrivals_title": "File d'adjudication",
+      "arrivals_empty": "Rien n'est arrivé au cours des {{days}} derniers jours.",
+      "arrivals_unit": "arrivées",
+      "capacity_title": "Capacité d'inscription",
+      "capacity_lead": "Inscrits par rapport à la capacité, pour les campagnes avec une limite.",
+      "capacity_empty": "Aucune campagne ouverte n'a de limite de capacité."
     }
   },
   "application": {

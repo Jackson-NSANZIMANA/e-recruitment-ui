@@ -21,8 +21,8 @@ import {
   type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
-import { Card, MetricCard, RouterLink, SkeletonPanel, StackedBar, StateBoundary, formatCount, listState } from "@usrp/ui";
-import { calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem } from "./model.js";
+import { BarChart, Card, RingGauge, RouterLink, SkeletonPanel, StateBoundary, TrendChart, formatCount, formatShare, listState, type BarChartItem, type BarTone } from "@usrp/ui";
+import { AMBER_HISTORY_DAYS, NEAR_CAPACITY_SHARE, amberArrivalSeries, calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem, type PipelineStageId } from "./model.js";
 
 const styles = cssMap({
   meterTrack: { width: "100%", minWidth: "96px", height: "0.5rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
@@ -48,9 +48,9 @@ const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress
  * other filled the surface grey. Both now delegate to `Card`, so a panel and a
  * metric tile are the same raised plane and cannot disagree again.
  */
-export function Panel({ title, testId, action, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly children: React.ReactNode }): React.ReactElement {
+export function Panel({ title, testId, action, description, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly description?: string; readonly children: React.ReactNode }): React.ReactElement {
   return (
-    <Card title={title} titleLevel={2} {...(action !== undefined ? { actions: action } : {})} testId={testId}>
+    <Card title={title} titleLevel={2} {...(description !== undefined ? { description } : {})} {...(action !== undefined ? { actions: action } : {})} testId={testId}>
       {children}
     </Card>
   );
@@ -173,6 +173,11 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
 
 // ── Applications by stage ───────────────────────────────────────
 
+/** What each stage's bar means. Work in progress is one hue; the two end states say what they are. */
+const STAGE_TONE: Readonly<Record<PipelineStageId, BarTone>> = {
+  vetting: "brand", documents: "brand", exam: "brand", medical: "brand", accepted: "success", closed: "neutral",
+};
+
 export function PipelinePanel({ client, enabled }: { readonly client: ApiClient; readonly enabled: boolean }): React.ReactElement {
   const { t, i18n } = useTranslation();
   const results = useQueries({
@@ -184,60 +189,108 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
   const loading = results.some((r) => r.isLoading);
   const failed = results.some((r) => r.isError);
   const totals = results.map((r) => r.data?.total ?? 0);
-  const segments = PIPELINE_STAGES.map((stage, index) => ({
+  const grand = totals.reduce((sum, n) => sum + n, 0);
+  const items: readonly BarChartItem[] = PIPELINE_STAGES.map((stage, index) => ({
+    id: stage.id,
     label: t(`dashboard.pipeline.stages.${stage.id}`),
     value: totals.at(index) ?? 0,
-    id: stage.id,
+    tone: STAGE_TONE[stage.id],
+    ...(grand > 0 ? { detail: formatShare((totals.at(index) ?? 0) / grand, i18n.language) } : {}),
+    // The row and its bare number keep their own ids: an officer reads the exact
+    // count before acting on it, and the e2e suite asserts `stage-<id>-total`.
+    testId: `stage-${stage.id}`,
+    valueTestId: `stage-${stage.id}-total`,
   }));
   return (
-    <Panel title={t("dashboard.pipeline.title")} testId="dashboard-pipeline">
-      <Text as="p" size="large" color="color.text.subtle">{t("dashboard.pipeline.lead")}</Text>
+    <Panel title={t("dashboard.pipeline.title")} description={failed || loading ? t("dashboard.pipeline.lead") : t("dashboard.pipeline.total", { count: grand })} testId="dashboard-pipeline">
       {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <SkeletonPanel shape="chart" /> : (
-        <Stack space="space.200">
-          {/*
-            One bar, one total, six stages. This replaced six full-width tracks
-            each scaled to the largest stage: that layout answered "which stage
-            is biggest" and hid "how much is in the pipeline at all, and how is
-            it split" - the question an officer actually has. It also needed
-            three local cssMap entries (stageTrack, fill, stageLabel) to draw
-            what a shared component now draws from tokens.
-          */}
-          <StackedBar label={t("dashboard.pipeline.title")} segments={segments} showTotal />
-          {/*
-            Every stage keeps its own row and its own testId, because the e2e
-            suite asserts `stage-<id>-total` and an officer reads the exact count
-            for a stage before acting on it. The bar gives the shape; this list
-            gives the numbers.
-          */}
-          <Inline space="space.200" shouldWrap>
-            {segments.map((segment) => (
-              <Inline key={segment.id} space="space.075" alignBlock="center" testId={`stage-${segment.id}`}>
-                <Text as="span" size="large" color="color.text.subtle">{segment.label}</Text>
-                <Text as="span" size="large" weight="semibold" testId={`stage-${segment.id}-total`}>
-                  {formatCount(segment.value, i18n.language)}
-                </Text>
-              </Inline>
-            ))}
-          </Inline>
-        </Stack>
+        <BarChart label={t("dashboard.pipeline.title")} items={items} max={Math.max(1, ...totals)} testId="pipeline-chart" />
       )}
+    </Panel>
+  );
+}
+
+// ── Adjudication queue: arrivals ────────────────────────────────
+
+export function ArrivalsPanel({ entries, now }: { readonly entries: readonly { readonly queuedAt: string | null }[] | undefined; readonly now: Date }): React.ReactElement {
+  const { t } = useTranslation();
+  const dayLabel = (at: Date): string => t("dashboard.series.day_short", { day: at.getUTCDate(), month: t(`dashboard.months.${String(at.getUTCMonth() + 1)}`) });
+  return (
+    <Panel title={t("dashboard.charts.arrivals_title")} description={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })} testId="dashboard-arrivals">
+      {entries === undefined ? <SkeletonPanel shape="chart" /> : (
+        <TrendChart
+          data={amberArrivalSeries(entries, now).map((d) => ({ label: dayLabel(d.at), value: d.count }))}
+          label={t("dashboard.series.arrivals_caption", { days: AMBER_HISTORY_DAYS })}
+          unit={t("dashboard.charts.arrivals_unit")}
+          emptyText={t("dashboard.charts.arrivals_empty", { days: AMBER_HISTORY_DAYS })}
+          testId="arrivals-chart"
+        />
+      )}
+    </Panel>
+  );
+}
+
+// ── Registration capacity ───────────────────────────────────────
+
+const CAPACITY_STATES: ReadonlySet<CampaignStatus> = new Set<CampaignStatus>(["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "EXAMINATION_ACTIVE"]);
+
+export function CapacityPanel({ rows, query }: { readonly rows: readonly CampaignAdminSummary[]; readonly query: UseQueryResult<unknown, Error> }): React.ReactElement {
+  const { t, i18n } = useTranslation();
+  if (query.isError) return <Panel title={t("dashboard.charts.capacity_title")} testId="dashboard-capacity"><PanelError onRetry={() => void query.refetch()} /></Panel>;
+  if (query.isLoading) return <Panel title={t("dashboard.charts.capacity_title")} testId="dashboard-capacity"><SkeletonPanel shape="chart" /></Panel>;
+  const items: BarChartItem[] = [];
+  for (const c of rows) {
+    const cap = c.occupancy.capacityTotal;
+    const share = occupancyShare(c);
+    if (!CAPACITY_STATES.has(c.status) || cap === null || share === null) continue;
+    items.push({
+      id: c.publicCode,
+      label: c.campaignLabel,
+      value: c.occupancy.registeredTotal,
+      max: cap,
+      display: t("dashboard.campaigns.occupancy_value", { registered: formatCount(c.occupancy.registeredTotal, i18n.language), capacity: formatCount(cap, i18n.language) }),
+      detail: formatShare(share, i18n.language),
+      // Nearly full is a heads-up, not a failure: warning, never danger.
+      tone: share >= NEAR_CAPACITY_SHARE ? "warning" : "brand",
+      testId: `capacity-${c.publicCode}`,
+    });
+  }
+  return (
+    <Panel title={t("dashboard.charts.capacity_title")} description={t("dashboard.charts.capacity_lead")} testId="dashboard-capacity">
+      <BarChart label={t("dashboard.charts.capacity_title")} items={items} emptyText={t("dashboard.charts.capacity_empty")} testId="capacity-chart" />
     </Panel>
   );
 }
 
 // ── Staff ───────────────────────────────────────────────────────
 
+const statStyles = cssMap({
+  figure: {
+    // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography -- the ADS metric face has no allowlisted family
+    font: token("font.metric.medium"),
+    fontVariantNumeric: "tabular-nums",
+    color: token("color.text"),
+    margin: token("space.0"),
+  },
+  stat: { minWidth: "0" },
+  figures: { display: "grid", gap: token("space.200"), gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr))" },
+});
+
 /**
- * A staff/fleet figure.
+ * A staff/fleet figure inside a panel: label over a metric-face number.
  *
- * Was a 12px label above a 16px number on a 140px-min box. It is now the shared
- * `MetricCard`, so the figure is a 28px tabular metric face and the label is
- * body-size - the previous pair was below the design-system's 16px text floor
- * on both lines. `testId` still lands on the outer element, so the existing
- * `staff-active` / `fleet-active` e2e assertions are unchanged.
+ * Not a `MetricCard`: a card inside a card doubles the border and shadow and made
+ * the panel read as a stack of boxes. `testId` still lands on the outer element,
+ * so the `staff-active` / `fleet-active` e2e assertions are unchanged.
  */
 function Figure({ label, value, testId }: { readonly label: string; readonly value: number; readonly testId: string }): React.ReactElement {
-  return <MetricCard label={label} count={{ state: "known", value }} testId={testId} />;
+  const { i18n } = useTranslation();
+  return (
+    <Stack space="space.025" xcss={statStyles.stat} testId={testId}>
+      <Text as="p" size="large" color="color.text.subtle">{label}</Text>
+      <Box as="p" xcss={statStyles.figure}>{formatCount(value, i18n.language)}</Box>
+    </Stack>
+  );
 }
 
 export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonly officers: readonly OfficerRow[] }, Error> }): React.ReactElement {
@@ -248,20 +301,18 @@ export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonl
   const s = staffSummary(query.data.officers);
   return (
     <Panel title={t("dashboard.staff.title")} testId="dashboard-staff" action={manage}>
-      <Inline space="space.300" shouldWrap>
+      <Box xcss={statStyles.figures}>
         <Figure label={t("dashboard.staff.active")} value={s.active} testId="staff-active" />
         <Figure label={t("dashboard.staff.pending")} value={s.pending} testId="staff-pending" />
         <Figure label={t("dashboard.staff.disabled")} value={s.disabled} testId="staff-disabled" />
-      </Inline>
+      </Box>
       {s.byPost.length > 0 && (
-        <Stack space="space.075">
+        <Stack space="space.150">
           <Heading size="xsmall" as="h3">{t("dashboard.staff.by_post")}</Heading>
-          {s.byPost.map((p) => (
-            <Inline key={p.post} spread="space-between" testId={`post-${p.post}`}>
-              <Text size="large">{t(`dashboard.staff.posts.${p.post}`)}</Text>
-              <Text size="large" weight="semibold">{String(p.count)}</Text>
-            </Inline>
-          ))}
+          <BarChart
+            label={t("dashboard.staff.by_post")}
+            items={s.byPost.map((p) => ({ id: p.post, label: t(`dashboard.staff.posts.${p.post}`), value: p.count, testId: `post-${p.post}` }))}
+          />
         </Stack>
       )}
     </Panel>
@@ -271,7 +322,7 @@ export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonl
 // ── Field tablets ───────────────────────────────────────────────
 
 export function FleetPanel({ query, now }: { readonly query: UseQueryResult<{ readonly devices: readonly FleetDevice[] }, Error>; readonly now: Date }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (query.isError) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><PanelError onRetry={() => void query.refetch()} /></Panel>;
   if (query.data === undefined) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><StateBoundary state="loading" /></Panel>;
   if (query.data.devices.length === 0) {
@@ -280,12 +331,18 @@ export function FleetPanel({ query, now }: { readonly query: UseQueryResult<{ re
   const f = fleetSummary(query.data.devices, now);
   return (
     <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet">
-      <Inline space="space.300" shouldWrap>
+      <Stack space="space.300">
+        <Inline space="space.300" alignBlock="center" shouldWrap>
+          <RingGauge value={f.seenToday} total={f.active} label={t("dashboard.fleet.seen_today")} tone={f.active > 0 && f.seenToday < f.active ? "warning" : "success"} testId="fleet-gauge" />
+          <Text as="p" size="large" weight="semibold">{t("dashboard.campaigns.occupancy_value", { registered: formatCount(f.seenToday, i18n.language), capacity: formatCount(f.active, i18n.language) })}</Text>
+        </Inline>
+      <Box xcss={statStyles.figures}>
         <Figure label={t("dashboard.fleet.active")} value={f.active} testId="fleet-active" />
         <Figure label={t("dashboard.fleet.seen_today")} value={f.seenToday} testId="fleet-seen-today" />
         <Figure label={t("dashboard.fleet.assigned")} value={f.assigned} testId="fleet-assigned" />
         <Figure label={t("dashboard.fleet.revoked")} value={f.revoked} testId="fleet-revoked" />
-      </Inline>
+      </Box>
+      </Stack>
     </Panel>
   );
 }

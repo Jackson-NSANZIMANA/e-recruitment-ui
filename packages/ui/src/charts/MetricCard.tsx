@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
-import { cssMap } from "@atlaskit/css";
+import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
+import { cssMap, cx } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
 import { useTranslation } from "@usrp/i18n";
 import { Card } from "../layout/Card.js";
@@ -44,6 +44,13 @@ const styles = cssMap({
     margin: token("space.0"),
   },
   chart: { marginBlockStart: token("space.050") },
+  /** A 2.5rem tinted square carrying the tile's icon. Decorative: the label already names the metric. */
+  chip: { display: "flex", alignItems: "center", justifyContent: "center", width: "2.5rem", height: "2.5rem", borderRadius: token("radius.medium") },
+  chipBlue: { backgroundColor: token("color.background.accent.blue.subtlest"), color: token("color.text.accent.blue") },
+  chipGreen: { backgroundColor: token("color.background.accent.green.subtlest"), color: token("color.text.accent.green") },
+  chipOrange: { backgroundColor: token("color.background.accent.orange.subtlest"), color: token("color.text.accent.orange") },
+  chipPurple: { backgroundColor: token("color.background.accent.purple.subtlest"), color: token("color.text.accent.purple") },
+  chipGray: { backgroundColor: token("color.background.accent.gray.subtlest"), color: token("color.text.accent.gray") },
   /** The strip that carries a pending or failed read, so the tile keeps its height. */
   note: { minHeight: "1rem" },
 });
@@ -77,6 +84,13 @@ export interface MetricCardProps {
    * the only signal: the count is printed and the label says what it counts.
    */
   readonly urgent?: boolean;
+  /**
+   * An icon for the tile, drawn in a tinted square at the card's top right. It is
+   * decoration (the label names the metric), so pass an icon with `label=""`.
+   */
+  readonly icon?: React.ReactNode;
+  /** The chip's tint. Identity, not status: a tile's colour never says good or bad. */
+  readonly accent?: "blue" | "green" | "orange" | "purple" | "gray";
   /** Footer link - "View queue", "Open applications". */
   readonly action?: React.ReactNode;
   readonly testId?: string;
@@ -105,6 +119,8 @@ export function MetricCard({
   goodDirection = "up",
   trendCaption,
   urgent = false,
+  icon,
+  accent = "blue",
   action,
   testId,
 }: MetricCardProps): React.ReactElement {
@@ -120,9 +136,14 @@ export function MetricCard({
       {...(testId !== undefined ? { testId } : {})}
     >
       <Stack space="space.100">
-        <Box as="p" xcss={isUrgent ? styles['figureUrgent'] : value === null ? styles['absent'] : styles['figure']}>
-          {formatCount(value, i18n.language)}
-        </Box>
+        <Inline spread="space-between" alignBlock="center" space="space.100">
+          <Box as="p" xcss={isUrgent ? styles['figureUrgent'] : value === null ? styles['absent'] : styles['figure']}>
+            {formatCount(value, i18n.language)}
+          </Box>
+          {icon !== undefined && (
+            <Box xcss={cx(styles['chip'], accent === "green" && styles['chipGreen'], accent === "orange" && styles['chipOrange'], accent === "purple" && styles['chipPurple'], accent === "gray" && styles['chipGray'], accent === "blue" && styles['chipBlue'])} aria-hidden="true">{icon}</Box>
+          )}
+        </Inline>
         <Box xcss={styles['note']}>
           {count.state === "pending" && (
             // The live region is a Box, because Text forwards a curated prop
