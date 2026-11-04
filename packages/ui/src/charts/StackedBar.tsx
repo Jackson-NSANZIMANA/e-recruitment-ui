@@ -5,7 +5,7 @@ import { token } from "@atlaskit/tokens";
 import VisuallyHidden from "@atlaskit/visually-hidden";
 import { useTranslation } from "@usrp/i18n";
 import { formatCount } from "../format.js";
-import { stackShares } from "../model.js";
+import { CHART_SERIES_TOKENS, seriesIndexAt, stackShares } from "../model.js";
 
 const styles = cssMap({
   figure: { margin: token("space.0") },
@@ -36,21 +36,29 @@ const styles = cssMap({
  * The eight categorical fills, resolved once at module scope.
  *
  * `token()` only rewrites calls whose first argument is a string literal, so
- * each slot is named individually. Indexing this table by position keeps a
- * series' colour stable when another series is added - the whole point of a
- * categorical scale - and it is why no category ever borrows a status colour:
- * a category is not a verdict.
+ * each slot is named individually - but the SLOT ORDER is not re-decided here.
+ * `seriesTokenAt(i)` in model.ts is the one definition of "which colour is
+ * series i", and it wraps at 8 the same way this table does. Before this was
+ * wired, the wrapping rule was written twice (once here as `% SERIES_FILL
+ * .length`, once in a model function nobody called) and the copy in model.ts
+ * was dead. A single series can no longer be coloured two ways depending on
+ * which file drew it.
+ *
+ * A category keeps its slot when another category is added, and no category
+ * ever borrows a status colour: a category is not a verdict.
  */
-const SERIES_FILL: readonly string[] = [
-  token("color.chart.categorical.1"),
-  token("color.chart.categorical.2"),
-  token("color.chart.categorical.3"),
-  token("color.chart.categorical.4"),
-  token("color.chart.categorical.5"),
-  token("color.chart.categorical.6"),
-  token("color.chart.categorical.7"),
-  token("color.chart.categorical.8"),
-];
+const SERIES_FILL: readonly string[] = CHART_SERIES_TOKENS.map((name) => {
+  switch (name) {
+    case "color.chart.categorical.1": return token("color.chart.categorical.1");
+    case "color.chart.categorical.2": return token("color.chart.categorical.2");
+    case "color.chart.categorical.3": return token("color.chart.categorical.3");
+    case "color.chart.categorical.4": return token("color.chart.categorical.4");
+    case "color.chart.categorical.5": return token("color.chart.categorical.5");
+    case "color.chart.categorical.6": return token("color.chart.categorical.6");
+    case "color.chart.categorical.7": return token("color.chart.categorical.7");
+    case "color.chart.categorical.8": return token("color.chart.categorical.8");
+  }
+});
 
 export interface StackedBarSegment {
   /** Localised label, also used as the legend entry. */
@@ -102,7 +110,7 @@ export function StackedBar({
     if (segment.value <= 0 || share <= 0) return null;
     const x = cursor;
     cursor += share;
-    return { label: segment.label, x, width: share, fill: SERIES_FILL[index % SERIES_FILL.length] as string };
+    return { label: segment.label, x, width: share, fill: SERIES_FILL[seriesIndexAt(index)] as string };
   });
 
   return (
@@ -138,7 +146,7 @@ export function StackedBar({
                   <Inline space="space.075" alignBlock="center">
                     <Box as="span" xcss={styles['swatch']}>
                       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-                        <rect x={0} y={0} width={12} height={12} rx={2} fill={SERIES_FILL[index % SERIES_FILL.length]} />
+                        <rect x={0} y={0} width={12} height={12} rx={2} fill={SERIES_FILL[seriesIndexAt(index)]} />
                       </svg>
                     </Box>
                     <Text size="large" color="color.text.subtle">

@@ -1,10 +1,11 @@
-import { test } from "node:test";
+import { describe, test } from "node:test";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import {
   CHART_SERIES_TOKENS,
   PAGE_MAX_WIDTH,
   seriesTokenAt,
+  seriesIndexAt,
   sparklineIsDot,
   sparklinePath,
   sparklinePoints,
@@ -247,4 +248,45 @@ test("the formatter's language list cannot drift from the i18n package", () => {
   for (const language of languages) {
     assert.equal(asSupportedLanguage(language), language);
   }
+});
+
+describe('seriesIndexAt', () => {
+  test('is the one wrap rule, and seriesTokenAt reads it', () => {
+    for (let i = 0; i < 20; i += 1) {
+      assert.equal(seriesTokenAt(i), CHART_SERIES_TOKENS[seriesIndexAt(i)]);
+    }
+  });
+
+  test('bad indices land on slot 0 instead of throwing', () => {
+    assert.equal(seriesIndexAt(-1), 0);
+    assert.equal(seriesIndexAt(Number.NaN), 0);
+    assert.equal(seriesIndexAt(2.7), 2);
+  });
+});
+
+describe('StackedBar', () => {
+  test('a series keeps its slot when another is added before it', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/charts/StackedBar.tsx', import.meta.url), 'utf8');
+    // The wrap must not be re-derived here; a second copy is how the legend and
+    // the bar drift apart.
+    assert.ok(!/%\s*SERIES_FILL\.length/.test(src), 'StackedBar re-implements the wrap');
+    assert.ok(!/%\s*CHART_SERIES_TOKENS\.length/.test(src), 'StackedBar re-implements the wrap');
+    assert.match(src, /SERIES_FILL\[seriesIndexAt\(/, 'StackedBar must colour through seriesIndexAt');
+    assert.match(src, /CHART_SERIES_TOKENS\.map/, 'the fill table must be keyed on the shared slot order');
+  });
+});
+
+describe('PageShell gutter', () => {
+  test('the padding is an inline token literal, because ADS requires one', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/layout/PageShell.tsx', import.meta.url), 'utf8');
+    assert.match(src, /paddingInline: token\("space\.300"\)/);
+  });
+
+  test('there is no PAGE_INNER_PADDING export that nothing reads', async () => {
+    const { readFileSync } = await import('node:fs');
+    const barrel = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8');
+    assert.ok(!barrel.includes('PAGE_INNER_PADDING'), 'the unread constant is back');
+  });
 });

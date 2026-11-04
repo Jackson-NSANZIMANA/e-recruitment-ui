@@ -43,8 +43,13 @@ export const PAGE_MAX_WIDTH = {
 
 export type PageAlign = keyof typeof PAGE_MAX_WIDTH;
 
-/** Page-shell inner padding, in ADS space tokens. 24px, as the header uses. */
-export const PAGE_INNER_PADDING = "space.300";
+// There is deliberately NO PAGE_INNER_PADDING constant here. It used to exist,
+// exported and unread, while PageShell spelled `space.300` out by hand - a
+// "single source of truth" that nothing consulted. It cannot be reintroduced as
+// a token argument either: both the tokens babel plugin and
+// @atlaskit/design-system/no-unsafe-design-token-usage require the token string
+// to be a literal at the call site. The gutter therefore has exactly one
+// definition, in PageShell, where it is used.
 
 /**
  * Turn a series of readings into the polyline points of one sparkline.
@@ -178,10 +183,32 @@ export const CHART_SERIES_TOKENS = [
   "color.chart.categorical.8",
 ] as const;
 
-/** Series colour for slot `index`; wraps after 8 because there is no slot 9. */
-export function seriesTokenAt(index: number): (typeof CHART_SERIES_TOKENS)[number] {
+/**
+ * The slot a series at `index` occupies, wrapped into the eight categorical
+ * positions.
+ *
+ * This is the ONLY definition of the wrap. StackedBar used to carry its own
+ * `index % SERIES_FILL.length` while this function sat here with no caller -
+ * two copies of one rule, which is how a legend swatch and the bar it labels
+ * end up different colours after an edit. Bad indices land on slot 0 rather
+ * than throwing: a chart is not a place to fail a render.
+ */
+export function seriesIndexAt(index: number): number {
   const safe = Number.isFinite(index) && index >= 0 ? Math.floor(index) : 0;
-  return CHART_SERIES_TOKENS[safe % CHART_SERIES_TOKENS.length] as (typeof CHART_SERIES_TOKENS)[number];
+  return safe % CHART_SERIES_TOKENS.length;
+}
+
+/**
+ * The token NAME for slot `index`; wraps after 8 because there is no slot 9.
+ *
+ * Note it returns a name, not a resolved value: `token()` only rewrites calls
+ * whose argument is a string literal at the call site, so a component that
+ * needs a colour writes `token("color.chart.categorical.1")` itself. This
+ * function is what tells it WHICH literal to write, and it is what the
+ * StackedBar fill table is keyed on.
+ */
+export function seriesTokenAt(index: number): (typeof CHART_SERIES_TOKENS)[number] {
+  return CHART_SERIES_TOKENS[seriesIndexAt(index)] as (typeof CHART_SERIES_TOKENS)[number];
 }
 
 function round2(value: number): number {

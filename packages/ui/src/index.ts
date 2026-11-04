@@ -23,7 +23,6 @@ export { MetricCard } from "./charts/MetricCard.js";
 export type { MetricCardProps } from "./charts/MetricCard.js";
 export {
   PAGE_MAX_WIDTH,
-  PAGE_INNER_PADDING,
   CHART_SERIES_TOKENS,
   sparklinePoints,
   sparklinePath,
@@ -32,6 +31,7 @@ export {
   trendTone,
   stackShares,
   seriesTokenAt,
+  seriesIndexAt,
 } from "./model.js";
 export type { PageAlign, TrendDirection } from "./model.js";
 

@@ -8,8 +8,13 @@ import { PAGE_MAX_WIDTH, type PageAlign } from "../model.js";
 const styles = cssMap({
   page: {
     marginInline: "auto",
-    // 24px, the same inner padding NationalHeader uses; declared as a literal so
-    // the tokens babel plugin can rewrite it.
+    // 24px, the same inner padding NationalHeader uses. Written as a literal
+    // because it MUST be one: @atlaskit/design-system/no-unsafe-design-token-usage
+    // and the tokens babel plugin both require the token string to be inline, so
+    // a PAGE_INNER_PADDING constant could never be read here. That constant used
+    // to be exported from model.ts with no caller at all - it looked like the
+    // single source of truth for the gutter and was not. It is deleted rather
+    // than left as reassurance.
     paddingInline: token("space.300"),
     paddingBlock: token("space.300"),
     // The page never lets the shell's grey page colour show through the column:
