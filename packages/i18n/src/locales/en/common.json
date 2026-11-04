@@ -733,5 +733,9 @@
     "value": "Value",
     "total": "Total",
     "needs_attention": "Needs attention"
+  },
+  "metric": {
+    "loading": "Loading…",
+    "unavailable": "Unavailable"
   }
 }

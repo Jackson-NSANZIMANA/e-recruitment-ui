@@ -7,6 +7,9 @@ export type { AgencyTokenSet, LozengeAppearance } from "./tokens/usrp-tokens.js"
 // layout-stable placeholder, and a token-bound chart primitives set. All of it
 // is domain-free - it renders numbers and regions, and names no agency.
 export { PageShell } from "./layout/PageShell.js";
+export { formatCount, formatPercent, asSupportedLanguage } from "./format.js";
+export { known, PENDING, FAILED, countFrom, valueOf } from "./states/useCount.js";
+export type { Count, CountQueryLike } from "./states/useCount.js";
 export type { PageShellProps } from "./layout/PageShell.js";
 export { Card } from "./layout/Card.js";
 export type { CardProps, CardTone } from "./layout/Card.js";

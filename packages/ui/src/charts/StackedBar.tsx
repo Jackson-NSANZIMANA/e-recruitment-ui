@@ -2,10 +2,13 @@ import React from "react";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
+import VisuallyHidden from "@atlaskit/visually-hidden";
 import { useTranslation } from "@usrp/i18n";
+import { formatCount } from "../format.js";
 import { stackShares } from "../model.js";
 
 const styles = cssMap({
+  figure: { margin: token("space.0") },
   track: {
     display: "block",
     width: "100%",
@@ -89,7 +92,7 @@ export function StackedBar({
   showTotal = true,
   testId,
 }: StackedBarProps): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const total = segments.reduce((sum, s) => sum + (s.value > 0 ? s.value : 0), 0);
   const shares = stackShares(segments.map((s) => s.value));
 
@@ -105,15 +108,18 @@ export function StackedBar({
   return (
     <Stack space="space.150" {...(testId !== undefined ? { testId } : {})}>
       {/*
-        A named <figure>, for the same reason as the sparkline: role="img" on a
-        layout div announces an image where a figure with a caption is meant, and
-        the caption is the composition itself.
+        A <figure> whose accessible NAME is its <figcaption>. `aria-label` on a
+        bare figure is ignored by most assistive tech - the name comes from the
+        caption - so the label is real text, not an attribute that looks right in
+        the DOM and announces nothing.
       */}
-      <Box
-        as="figure"
-        aria-label={`${label}: ${segments.map((s) => `${s.label} ${String(s.value)}`).join(", ")}`}
-        xcss={styles['track']}
-      >
+      <Box as="figure" xcss={styles['figure']}>
+        <figcaption>
+          <VisuallyHidden>
+            {label}: {segments.map((s) => `${s.label} ${formatCount(s.value, i18n.language)}`).join(", ")}
+          </VisuallyHidden>
+        </figcaption>
+      <Box xcss={styles['track']}>
         <svg width="100%" height="100%" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true" focusable="false">
           {spans.map((span) =>
             span === null ? null : (
@@ -121,6 +127,7 @@ export function StackedBar({
             ),
           )}
         </svg>
+      </Box>
       </Box>
       {(showLegend || showTotal) && (
         <Inline spread="space-between" alignBlock="start" space="space.200" shouldWrap>
@@ -137,7 +144,7 @@ export function StackedBar({
                     <Text size="medium" color="color.text.subtle">
                       {segment.label}{" "}
                       <Text as="span" weight="semibold" color="color.text">
-                        {String(segment.value)}
+                        {formatCount(segment.value, i18n.language)}
                       </Text>
                     </Text>
                   </Inline>
@@ -149,7 +156,7 @@ export function StackedBar({
             <Text size="medium" color="color.text.subtle">
               {t("chart.total")}{" "}
               <Text as="span" weight="semibold" color="color.text">
-                {String(total)}
+                {formatCount(total, i18n.language)}
               </Text>
             </Text>
           )}

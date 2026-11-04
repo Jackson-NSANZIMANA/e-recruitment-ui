@@ -5,16 +5,19 @@ import { token } from "@atlaskit/tokens";
 import VisuallyHidden from "@atlaskit/visually-hidden";
 import { useTranslation } from "@usrp/i18n";
 import { sparklineIsDot, sparklinePath, trendOf, trendTone, type TrendDirection } from "../model.js";
+import { formatCount, formatPercent } from "../format.js";
 
 const styles = cssMap({
   frame: { display: "block", margin: token("space.0") },
+  plot: { display: "block", width: "100%" },
+
   /**
-   * The table is the real interface and is reachable by assistive tech, but it
-   * must not take screen space from the shape it summarises. Standard
-   * visually-hidden clip; never `display: none`, which removes it from the
-   * accessibility tree and leaves the figure with no data at all.
+   * The caption is the figure's accessible NAME. `aria-label` on a bare
+   * `<figure>` is ignored by most assistive tech - the name comes from
+   * `<figcaption>` - so the label is rendered here, visually hidden, rather
+   * than passed as an attribute that would look right and announce nothing.
    */
-  table: { borderCollapse: "collapse", font: token("font.body.small") },
+  caption: { margin: token("space.0") },
 });
 
 
@@ -29,6 +32,11 @@ export interface SparklineProps {
   readonly data: readonly SparklineDatum[];
   /** Accessible name for the figure, e.g. "Applications received, last 7 days". Already localised. */
   readonly label: string;
+  /**
+   * The viewBox width. The rendered width is always `100%` of its container, so
+   * the chart cannot overflow a tile whose column is narrower than this. A fixed
+   * pixel width is what put a 220px svg inside a 177px metric tile.
+   */
   readonly width?: number;
   readonly height?: number;
   /**
@@ -71,7 +79,7 @@ export function Sparkline({
   showTrend = true,
   testId,
 }: SparklineProps): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const values = data.map((d) => d.value);
   const trend = trendOf(values);
   // trendTone needs a good direction; a flat series has no tone, and
@@ -106,10 +114,14 @@ export function Sparkline({
     <Stack space="space.050" {...(testId !== undefined ? { testId } : {})}>
       {showTrend && (
         <Inline space="space.100" alignBlock="center">
-          <Text size="medium" weight="medium" color={trendColour}>
-            {trend.percent === null ? "—" : `${trend.percent > 0 ? "+" : ""}${String(trend.percent)}%`}
+          {/* 16px, the design-system body floor: this is the number a reader
+              acts on, not a caption. */}
+          <Text size="large" weight="medium" color={trendColour} {...(testId !== undefined ? { testId: `${testId}-delta` } : {})}>
+            {formatPercent(trend.percent, i18n.language)}
           </Text>
-          <Text size="medium" color="color.text.subtle">{trendGlyph(trend.direction)}</Text>
+          <Text size="large" color="color.text.subtle">
+            <span aria-hidden="true">{trendGlyph(trend.direction)}</span>
+          </Text>
         </Inline>
       )}
       {/*
@@ -117,11 +129,16 @@ export function Sparkline({
         as "figure, Applications received" instead of being skipped as paint.
         `aria-details` points at the table, which is the real interface.
       */}
-      <Box as="figure" xcss={styles['frame']} aria-label={label} aria-details={tableId}>
+      <Box as="figure" xcss={styles['frame']} aria-details={tableId}>
+        <figcaption>
+          <VisuallyHidden>{label}</VisuallyHidden>
+        </figcaption>
+        <Box xcss={styles['plot']}>
         <svg
-          width={width}
-          height={height}
+          width="100%"
+          height="100%"
           viewBox={`0 0 ${String(width)} ${String(height)}`}
+          preserveAspectRatio="none"
           aria-hidden="true"
           focusable="false"
         >
@@ -146,6 +163,7 @@ export function Sparkline({
           )}
           {isDot && last !== undefined && <circle cx={last[0]} cy={last[1]} r={3} fill={stroke} />}
         </svg>
+        </Box>
         <VisuallyHidden>
           <table id={tableId}>
             <caption>{label}</caption>
@@ -159,7 +177,7 @@ export function Sparkline({
               {data.map((d) => (
                 <tr key={d.label}>
                   <th scope="row">{d.label}</th>
-                  <td>{String(d.value)}</td>
+                  <td>{formatCount(d.value, i18n.language)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import {
   CHART_SERIES_TOKENS,
@@ -11,6 +12,8 @@ import {
   trendOf,
   trendTone,
 } from "../src/model.ts";
+import { countFrom, known, valueOf } from "../src/states/useCount.ts";
+import { asSupportedLanguage, formatCount, formatPercent } from "../src/format.ts";
 
 // ══════════════════════════════════════════════════════════════════
 // Layout and chart geometry. The components are thin renderers over these
@@ -155,4 +158,93 @@ test("chart series slot survives a garbage index instead of rendering untokenise
   assert.equal(seriesTokenAt(-3), "color.chart.categorical.1");
   assert.equal(seriesTokenAt(NaN), "color.chart.categorical.1");
   assert.equal(seriesTokenAt(2.7), "color.chart.categorical.3");
+});
+
+// ── The three-state count ────────────────────────────────────────
+// A metric tile must distinguish "0" from "not known yet" from "could not be
+// read". The type does the enforcing; these assert the helpers keep it.
+
+test("countFrom: a read that has not answered is pending, never zero", () => {
+  const count = countFrom({ data: undefined, isLoading: true, isError: false }, () => 0);
+  assert.equal(count.state, "pending");
+  assert.equal(valueOf(count), null);
+});
+
+test("countFrom: a failed read is failed, even while it retries", () => {
+  const count = countFrom({ data: undefined, isLoading: true, isError: true }, () => 9);
+  assert.equal(count.state, "failed");
+  assert.equal(valueOf(count), null);
+});
+
+test("countFrom: a known zero is a real reading and survives", () => {
+  const count = countFrom({ data: { total: 0 }, isLoading: false, isError: false }, (d) => d.total);
+  assert.equal(count.state, "known");
+  assert.equal(valueOf(count), 0);
+});
+
+test("countFrom: select is never called without data, so a half-built response cannot throw", () => {
+  let called = false;
+  countFrom({ data: undefined, isLoading: true, isError: false }, () => {
+    called = true;
+    throw new Error("would have thrown");
+  });
+  assert.equal(called, false);
+});
+
+test("known: a non-finite reading degrades to 0 rather than printing NaN", () => {
+  assert.deepEqual(known(NaN), { state: "known", value: 0 });
+  assert.deepEqual(known(Infinity), { state: "known", value: 0 });
+});
+
+// ── The one formatter ────────────────────────────────────────────
+
+test("formatCount groups digits per language, so a figure and its legend agree", () => {
+  assert.equal(formatCount(1024, "en"), "1,024");
+  // fr-FR groups with a space; which space is the engine's business, so the
+  // assertion is on the shape and not the codepoint.
+  assert.match(formatCount(1024, "fr"), /^1\s024$/u);
+  // rw-RW is a supported locale in ICU and CLDR groups it with a period. Pinned
+  // deliberately: if a future ICU drops `rw`, this test says so instead of the
+  // portal silently rendering Kinyarwanda figures the English way.
+  assert.equal(formatCount(1024, "rw"), "1.024");
+});
+
+test("formatCount: no reading is a dash, not a zero", () => {
+  assert.equal(formatCount(null, "en"), "—");
+  assert.equal(formatCount(undefined, "en"), "—");
+  assert.equal(formatCount(NaN, "en"), "—");
+  assert.equal(formatCount(0, "en"), "0");
+});
+
+test("formatCount: an unknown language falls back to English instead of throwing", () => {
+  assert.equal(formatCount(1024, "de"), "1,024");
+  assert.equal(formatCount(1024, undefined), "1,024");
+});
+
+test("formatPercent: carries its own sign and refuses to invent one from zero", () => {
+  assert.equal(formatPercent(12, "en"), "+12%");
+  assert.equal(formatPercent(-8, "en"), "-8%");
+  assert.equal(formatPercent(null, "en"), "—");
+  assert.equal(formatPercent(0, "en"), "0%");
+});
+
+test("asSupportedLanguage narrows a regional tag to its base language", () => {
+  assert.equal(asSupportedLanguage("fr-FR"), "fr");
+  assert.equal(asSupportedLanguage("rw"), "rw");
+  assert.equal(asSupportedLanguage("pt-BR"), "en");
+});
+
+test("the formatter's language list cannot drift from the i18n package", () => {
+  // format.ts declares its own locale map so it stays React-free and testable in
+  // plain node. That duplication is only safe if something checks it: read the
+  // i18n source and compare the two lists as text, the way the design-system
+  // contract test reads its own a11y floor.
+  const i18nConfig = readFileSync(new URL("../../i18n/src/config.ts", import.meta.url), "utf8");
+  const declared = /SUPPORTED_LANGUAGES\s*=\s*\[([^\]]*)\]/.exec(i18nConfig)?.[1] ?? "";
+  const languages = [...declared.matchAll(/"([a-z]{2})"/g)].map((m) => m[1]).sort();
+  assert.deepEqual(languages, ["en", "fr", "rw"]);
+  // and every one of them must be a key the formatter knows
+  for (const language of languages) {
+    assert.equal(asSupportedLanguage(language), language);
+  }
 });

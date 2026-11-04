@@ -6,6 +6,7 @@ import { SkeletonPanel } from "./SkeletonPanel.js";
 import { MetricCard } from "../charts/MetricCard.js";
 import { Sparkline, type SparklineDatum } from "../charts/Sparkline.js";
 import { StackedBar } from "../charts/StackedBar.js";
+import { known, PENDING, FAILED } from "../states/useCount.js";
 
 // Types come from the Storybook host (design-system); ui stays free of Storybook
 // dependencies, so the story shape is declared locally.
@@ -113,11 +114,13 @@ export const Metrics: Story = {
   render: () => (
     <PageShell align="standard" title="MetricCard" description="28px tabular figure, optional sparkline, urgency never on the border alone.">
       <Inline space="space.300" shouldWrap>
-        <MetricCard label="Awaiting adjudication" value={128} urgent testId="story-metric-urgent" />
-        <MetricCard label="Open campaigns" value={4} testId="story-metric-plain" />
-        <MetricCard label="Applications completed" value={1024} trend={RISING} goodDirection="up" testId="story-metric-up" />
-        <MetricCard label="Queue age (minutes)" value={42} trend={FALLING} goodDirection="down" testId="story-metric-down" />
-        <MetricCard label="Devices reporting" value={19} trend={FLAT} goodDirection="up" testId="story-metric-flat" />
+        <MetricCard label="Awaiting adjudication" count={known(128)} urgent testId="story-metric-urgent" />
+        <MetricCard label="Open campaigns" count={known(4)} testId="story-metric-plain" />
+        <MetricCard label="Applications completed" count={known(1024)} trend={RISING} goodDirection="up" testId="story-metric-up" />
+        <MetricCard label="Queue age (minutes)" count={known(42)} trend={FALLING} goodDirection="down" testId="story-metric-down" />
+        <MetricCard label="Devices reporting" count={known(19)} trend={FLAT} goodDirection="up" testId="story-metric-flat" />
+        <MetricCard label="Tonight\'s walk-ins" count={PENDING} testId="story-metric-pending" />
+        <MetricCard label="Erasure requests" count={FAILED} testId="story-metric-failed" />
       </Inline>
     </PageShell>
   ),

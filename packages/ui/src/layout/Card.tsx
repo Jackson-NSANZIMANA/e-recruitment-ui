@@ -6,12 +6,15 @@ import { token } from "@atlaskit/tokens";
 
 const styles = cssMap({
   base: {
-    // The card surface is a RAISED plane, not a neutral fill behind a border.
-    // `elevation.surface.raised` and `elevation.shadow.raised` exist in the
-    // pinned @atlaskit/tokens and were used by zero files before this
-    // component: panels sat flat on the ADS reset's white body, which is what
-    // makes a dashboard read as a form rather than as a workspace.
+    // The card is a RAISED plane, and a raised plane in ADS is a PAIR: a surface
+    // token and a shadow token. Taking only the surface was the bug this
+    // component shipped with - in atlassian-light `elevation.surface.raised`
+    // resolves to #FFFFFF, exactly `elevation.surface`, so on a white page the
+    // "raised" card was a 1px border and nothing else. The shadow is what
+    // actually lifts it, and `elevation.shadow.raised` is one hairline shadow
+    // plus a 1px ambient line - the same subtle lift Jira uses on its cards.
     backgroundColor: token("elevation.surface.raised"),
+    boxShadow: token("elevation.shadow.raised"),
     borderRadius: token("radius.medium"),
     borderWidth: token("border.width"),
     borderStyle: "solid",
@@ -23,12 +26,12 @@ const styles = cssMap({
   },
   flat: {
     backgroundColor: token("elevation.surface"),
+    // A flat card is not elevated, so it must not cast: the pairing is dropped
+    // together with the surface, never half-kept.
+    boxShadow: "initial",
   },
-  interactive: {
-    cursor: "pointer",
-    "&:hover": { backgroundColor: token("elevation.surface.raised.hovered") },
-    "&:active": { backgroundColor: token("elevation.surface.raised.pressed") },
-  },
+  /** Tighter padding for tiles and short cards that sit in a row of their own. */
+  compact: { padding: token("space.200") },
   selected: {
     // The selected-card treatment from the Jira template picker: a brand
     // border on a brand-tinted surface, so selection is visible without
@@ -44,7 +47,6 @@ const styles = cssMap({
     borderBlockStartStyle: "solid",
     borderBlockStartColor: token("color.border"),
   },
-  title: { margin: token("space.0") },
 });
 
 export type CardTone = "raised" | "flat";
@@ -62,10 +64,10 @@ export interface CardProps {
   readonly footer?: React.ReactNode;
   /** `raised` (default) draws a card surface; `flat` draws a panel with no fill change. */
   readonly tone?: CardTone;
+  /** Tighter padding, for tiles in a row of their own. */
+  readonly density?: "default" | "compact";
   /** Highlight the card as the current selection. */
   readonly selected?: boolean;
-  /** Renders the card as a button-like target. Use a real link/button inside instead where possible. */
-  readonly onClick?: () => void;
   readonly children?: React.ReactNode;
   readonly testId?: string;
 }
@@ -91,14 +93,13 @@ export function Card({
   actions,
   footer,
   tone = "raised",
+  density = "default",
   selected = false,
-  onClick,
   children,
   testId,
 }: CardProps): React.ReactElement {
   const id = React.useId();
   const headingId = `${id}-title`;
-  const isInteractive = onClick !== undefined;
 
   // No testId here, ever: the element that owns the testId is the outermost one
   // (the <section> when titled, the <Box> otherwise). Putting it on both would
@@ -127,15 +128,21 @@ export function Card({
     </Stack>
   );
 
+  // No `onClick`. A card that is a control must contain a real `<button>` or
+  // `<a>`: a div with a click handler is not focusable, does not answer Enter or
+  // Space, and announces nothing. The earlier version accepted `onClick`,
+  // styled a hover state, and never attached a handler - a trap that would have
+  // shipped a card that looked clickable and was not. Callers put the control in
+  // `children` or `footer` and let it carry the interaction.
   if (title !== undefined) {
     return (
       <section aria-labelledby={headingId} {...(testId !== undefined ? { "data-testid": testId } : {})}>
         <Box
           xcss={cx(
             styles['base'],
+            density === "compact" ? styles['compact'] : undefined,
             tone === "flat" ? styles['flat'] : undefined,
             selected ? styles['selected'] : undefined,
-            isInteractive ? styles['interactive'] : undefined,
           )}
         >
           {body}
@@ -147,9 +154,9 @@ export function Card({
     <Box
       xcss={cx(
         styles['base'],
+        density === "compact" ? styles['compact'] : undefined,
         tone === "flat" ? styles['flat'] : undefined,
         selected ? styles['selected'] : undefined,
-        isInteractive ? styles['interactive'] : undefined,
       )}
       {...(testId !== undefined ? { testId } : {})}
     >

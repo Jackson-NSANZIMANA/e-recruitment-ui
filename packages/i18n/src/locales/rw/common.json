@@ -733,5 +733,9 @@
     "value": "Agaciro",
     "total": "Igiteranyo",
     "needs_attention": "Bikeneye kwitabwaho"
+  },
+  "metric": {
+    "loading": "Biratunganywa…",
+    "unavailable": "Ntibibonetse"
   }
 }

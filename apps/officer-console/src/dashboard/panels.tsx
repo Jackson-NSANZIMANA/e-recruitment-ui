@@ -21,7 +21,7 @@ import {
   type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
-import { Card, MetricCard, RouterLink, StateBoundary, listState } from "@usrp/ui";
+import { Card, MetricCard, RouterLink, SkeletonPanel, StackedBar, StateBoundary, formatCount, listState } from "@usrp/ui";
 import { calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem } from "./model.js";
 
 const styles = cssMap({
@@ -29,8 +29,6 @@ const styles = cssMap({
   fill: { height: "100%", borderRadius: token("radius.small"), backgroundColor: token("color.background.brand.bold") },
   fillWarning: { backgroundColor: token("color.background.warning.bold") },
   attentionRow: { paddingBlock: token("space.100"), borderBlockEndWidth: token("border.width"), borderBlockEndStyle: "solid", borderBlockEndColor: token("color.border") },
-  stageTrack: { width: "100%", height: "0.75rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
-  stageLabel: { minWidth: "220px" },
 });
 
 const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress" | "moved" | "default" | "removed">> = {
@@ -146,7 +144,7 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
       key: c.publicCode,
       testId: `campaign-row-${c.publicCode}`,
       cells: [
-        { key: "campaign", content: <Stack space="space.025"><Text weight="semibold">{c.campaignLabel}</Text><Text size="small" color="color.text.subtle">{c.publicCode}</Text></Stack> },
+        { key: "campaign", content: <Stack space="space.025"><Text weight="semibold">{c.campaignLabel}</Text><Text size="large" color="color.text.subtle">{c.publicCode}</Text></Stack> },
         { key: "status", content: <StatusBadge status={c.status} /> },
         { key: "registration", content: <Text>{t("dashboard.campaigns.range", { from: day(c.registrationOpensAt), to: day(c.registrationClosesAt) })}</Text> },
         { key: "examination", content: <Text>{t("dashboard.campaigns.range", { from: day(c.examinationStartDate), to: day(c.examinationEndDate) })}</Text> },
@@ -154,7 +152,7 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
           key: "occupancy",
           content: (
             <Stack space="space.050">
-              <Text size="small">{occupancyText}</Text>
+              <Text size="large">{occupancyText}</Text>
               {share !== null && cap !== null && <Meter value={c.occupancy.registeredTotal} max={cap} label={occupancyText} />}
             </Stack>
           ),
@@ -176,7 +174,7 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
 // ── Applications by stage ───────────────────────────────────────
 
 export function PipelinePanel({ client, enabled }: { readonly client: ApiClient; readonly enabled: boolean }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const results = useQueries({
     queries: PIPELINE_STAGES.map((s) => {
       const q = { status: s.statuses, limit: 1 };
@@ -186,25 +184,41 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
   const loading = results.some((r) => r.isLoading);
   const failed = results.some((r) => r.isError);
   const totals = results.map((r) => r.data?.total ?? 0);
-  const max = Math.max(1, ...totals);
+  const segments = PIPELINE_STAGES.map((stage, index) => ({
+    label: t(`dashboard.pipeline.stages.${stage.id}`),
+    value: totals.at(index) ?? 0,
+    id: stage.id,
+  }));
   return (
     <Panel title={t("dashboard.pipeline.title")} testId="dashboard-pipeline">
-      <Text as="p" color="color.text.subtle">{t("dashboard.pipeline.lead")}</Text>
-      {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <StateBoundary state="loading" /> : (
-        <Stack space="space.150">
-          {PIPELINE_STAGES.map((s, i) => {
-            const total = totals.at(i) ?? 0;
-            const label = t(`dashboard.pipeline.stages.${s.id}`);
-            return (
-              <Inline key={s.id} space="space.200" alignBlock="center" testId={`stage-${s.id}`}>
-                <Box xcss={styles.stageLabel}><Text>{label}</Text></Box>
-                <Box xcss={styles.stageTrack}>
-                  <Box aria-hidden xcss={styles.fill} style={{ width: `${String(Math.round((total / max) * 100))}%` }} />
-                </Box>
-                <Text weight="semibold" testId={`stage-${s.id}-total`}>{String(total)}</Text>
+      <Text as="p" size="large" color="color.text.subtle">{t("dashboard.pipeline.lead")}</Text>
+      {failed ? <PanelError onRetry={() => { for (const r of results) void r.refetch(); }} /> : loading ? <SkeletonPanel shape="chart" /> : (
+        <Stack space="space.200">
+          {/*
+            One bar, one total, six stages. This replaced six full-width tracks
+            each scaled to the largest stage: that layout answered "which stage
+            is biggest" and hid "how much is in the pipeline at all, and how is
+            it split" - the question an officer actually has. It also needed
+            three local cssMap entries (stageTrack, fill, stageLabel) to draw
+            what a shared component now draws from tokens.
+          */}
+          <StackedBar label={t("dashboard.pipeline.title")} segments={segments} showTotal />
+          {/*
+            Every stage keeps its own row and its own testId, because the e2e
+            suite asserts `stage-<id>-total` and an officer reads the exact count
+            for a stage before acting on it. The bar gives the shape; this list
+            gives the numbers.
+          */}
+          <Inline space="space.200" shouldWrap>
+            {segments.map((segment) => (
+              <Inline key={segment.id} space="space.075" alignBlock="center" testId={`stage-${segment.id}`}>
+                <Text as="span" size="large" color="color.text.subtle">{segment.label}</Text>
+                <Text as="span" size="large" weight="semibold" testId={`stage-${segment.id}-total`}>
+                  {formatCount(segment.value, i18n.language)}
+                </Text>
               </Inline>
-            );
-          })}
+            ))}
+          </Inline>
         </Stack>
       )}
     </Panel>
@@ -223,7 +237,7 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
  * `staff-active` / `fleet-active` e2e assertions are unchanged.
  */
 function Figure({ label, value, testId }: { readonly label: string; readonly value: number; readonly testId: string }): React.ReactElement {
-  return <MetricCard label={label} value={value} testId={testId} />;
+  return <MetricCard label={label} count={{ state: "known", value }} testId={testId} />;
 }
 
 export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonly officers: readonly OfficerRow[] }, Error> }): React.ReactElement {

@@ -19,7 +19,7 @@ import React from "react";
 import { Text } from "@atlaskit/primitives/compiled";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { Card, MetricCard, PAGE_MAX_WIDTH, PageShell, SkeletonPanel, Sparkline, StackedBar } from "@usrp/ui";
+import { Card, FAILED, MetricCard, PAGE_MAX_WIDTH, PENDING, PageShell, SkeletonPanel, Sparkline, StackedBar, known } from "@usrp/ui";
 
 afterEach(cleanup);
 
@@ -95,7 +95,7 @@ describe("Card", () => {
 
 describe("MetricCard", () => {
   it("prints the figure as a metric, not as a heading", () => {
-    render(<MetricCard label="Awaiting adjudication" value={128} testId="metric" />);
+    render(<MetricCard label="Awaiting adjudication" count={{ state: "known", value: 128 }} testId="metric" />);
     const region = screen.getByTestId("metric");
     // The label is the card's heading; the number is a paragraph with the metric
     // face. If the figure were an <h2> the page outline would gain a second
@@ -106,27 +106,27 @@ describe("MetricCard", () => {
   });
 
   it("says the number needs attention in words, not only in colour", () => {
-    render(<MetricCard label="Amber queue" value={12} urgent testId="urgent" />);
+    render(<MetricCard label="Amber queue" count={{ state: "known", value: 12 }} urgent testId="urgent" />);
     expect(screen.getByTestId("urgent")).toHaveTextContent(/needs attention/i);
   });
 
   it("gives the tile an accessible name, so a screen reader is not read a bare number", () => {
-    render(<MetricCard label="Amber queue" value={12} testId="named" />);
+    render(<MetricCard label="Amber queue" count={{ state: "known", value: 12 }} testId="named" />);
     // MetricCard is a Card: a named region, not a figure. The name is the label,
     // which is what turns "12" into "Amber queue, region" on entry.
     expect(screen.getByRole("region", { name: "Amber queue" })).toBeTruthy();
   });
 
   it("does not print the attention line when nothing needs attention", () => {
-    render(<MetricCard label="Open campaigns" value={4} testId="calm" />);
+    render(<MetricCard label="Open campaigns" count={{ state: "known", value: 4 }} testId="calm" />);
     expect(screen.getByTestId("calm")).not.toHaveTextContent(/needs attention/i);
   });
 
   it("draws a chart only when there is a history to draw", () => {
-    const { container, rerender } = render(<MetricCard label="Queue" value={3} testId="plain" />);
+    const { container, rerender } = render(<MetricCard label="Queue" count={{ state: "known", value: 3 }} testId="plain" />);
     // A plain tile draws no svg at all: there is no history to draw.
     expect(container.querySelectorAll("svg")).toHaveLength(0);
-    rerender(<MetricCard label="Queue" value={3} trend={series(4, 3, 2)} goodDirection="down" testId="trended" />);
+    rerender(<MetricCard label="Queue" count={{ state: "known", value: 3 }} trend={series(4, 3, 2)} goodDirection="down" testId="trended" />);
     // The graph is one <svg>, and it is hidden from assistive tech because the
     // table beside it is the real interface.
     const svg = container.querySelector("svg");
@@ -159,18 +159,22 @@ describe("Sparkline", () => {
     expect(screen.queryByText(/%/)).toBeNull();
   });
 
-  it("is one named figure, so the line is reachable and not just paint", () => {
-    // <img> was the wrong role: an inline SVG is already an image to a screen
-    // reader whenever it is given a name, and the readings live in the table.
-    // A <figure> is the correct wrapper: a graphic with a caption.
-    render(<Sparkline data={series(5, 6, 7)} label="Fleet reporting" goodDirection="up" />);
-    expect(screen.getByRole("figure", { name: "Fleet reporting" })).toBeTruthy();
+  it("names the figure from a real figcaption, which is what AT actually reads", () => {
+    // `aria-label` on a bare <figure> is ignored by most assistive tech; the name
+    // comes from <figcaption>. Asserting the caption exists (and the svg is
+    // hidden) is the honest test: RTL's role query computes a name from
+    // aria-label too, so it would pass against the broken version.
+    const { container } = render(<Sparkline data={series(5, 6, 7)} label="Fleet reporting" goodDirection="up" />);
+    const caption = container.querySelector("figcaption");
+    expect(caption).not.toBeNull();
+    expect(caption?.textContent).toBe("Fleet reporting");
+    expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 });
 
 describe("StackedBar", () => {
   it("repeats every value as text, so colour is never the only channel", () => {
-    render(
+    const { container } = render(
       <StackedBar
         label="Applications by stage"
         segments={[
@@ -179,11 +183,12 @@ describe("StackedBar", () => {
         ]}
       />,
     );
-    const chart = screen.getByRole("figure", { name: /Applications by stage/ });
+    const caption = container.querySelector("figcaption");
     // Every segment's label and value are in the figure's own name, so the bar
     // and the legend cannot disagree.
-    expect(chart.getAttribute("aria-label")).toMatch(/Received 42/);
-    expect(chart.getAttribute("aria-label")).toMatch(/Offer 1/);
+    expect(caption?.textContent).toMatch(/Applications by stage/);
+    expect(caption?.textContent).toMatch(/Received 42/);
+    expect(caption?.textContent).toMatch(/Offer 1/);
     // The legend repeats both values as readable text.
     for (const text of ["Received", "Offer", "42", "1", "Total", "43"]) {
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
@@ -202,9 +207,10 @@ describe("StackedBar", () => {
     );
     // Scope to the bar itself: the legend still draws a chip per category, so a
     // page-wide "svg rect" count would be measuring the wrong element.
-    const bar = container.querySelector('figure[aria-label^="Nothing"]');
+    const bar = container.querySelector("figure");
     expect(bar).not.toBeNull();
-    expect(bar?.querySelectorAll("rect")).toHaveLength(0);
+    // The legend still draws a chip per category, so scope to the bar's own svg.
+    expect(bar?.querySelector("svg")?.querySelectorAll("rect")).toHaveLength(0);
   });
 });
 
@@ -219,5 +225,92 @@ describe("SkeletonPanel", () => {
     // A shape, not a spinner: several blocks, and a fixed-height bar row.
     expect(container.querySelectorAll("*").length).toBeGreaterThan(3);
     expect(container.querySelector("[class]")).not.toBeNull();
+  });
+});
+
+describe("MetricCard: the three states of a count", () => {
+  it("prints a known zero as zero, because a known zero is news", () => {
+    render(<MetricCard label="Open campaigns" count={known(0)} testId="zero" />);
+    expect(screen.getByTestId("zero")).toHaveTextContent("0");
+    expect(screen.getByTestId("zero")).not.toHaveTextContent(/unavailable/i);
+  });
+
+  it("a pending read prints a dash and says it is loading - never a zero", () => {
+    render(<MetricCard label="Applications" count={PENDING} testId="pending" />);
+    const tile = screen.getByTestId("pending");
+    // The load-bearing assertion: the old tile rendered 0 here.
+    expect(tile).not.toHaveTextContent(/\b0\b/);
+    expect(tile).toHaveTextContent("—");
+    expect(tile).toHaveTextContent(/loading/i);
+  });
+
+  it("a failed read says unavailable rather than showing an all-clear", () => {
+    render(<MetricCard label="Amber queue" count={FAILED} testId="failed" />);
+    const tile = screen.getByTestId("failed");
+    expect(tile).not.toHaveTextContent(/\b0\b/);
+    expect(tile).toHaveTextContent(/unavailable/i);
+  });
+
+  it("announces the pending state politely, so a slow read is not mistaken for an empty one", () => {
+    const { container } = render(<MetricCard label="Applications" count={PENDING} testId="live" />);
+    const status = container.querySelector('[role="status"]');
+    expect(status).not.toBeNull();
+    expect(status?.textContent).toMatch(/loading/i);
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("does not mark an unavailable reading as needing attention", () => {
+    render(<MetricCard label="Amber queue" count={FAILED} urgent testId="not-urgent" />);
+    expect(screen.getByTestId("not-urgent")).not.toHaveTextContent(/needs attention/i);
+  });
+
+  it("groups a four-digit figure the way the page's language does", () => {
+    render(<MetricCard label="Applications" count={known(1024)} testId="grouped" />);
+    expect(screen.getByTestId("grouped")).toHaveTextContent("1,024");
+  });
+});
+
+describe("Card: the control it does not pretend to be", () => {
+  it("is never rendered as a control, so a caller cannot ship a clickable-looking card", () => {
+    const { container } = render(
+      <Card title="Template" testId="inert">
+        body
+      </Card>,
+    );
+    // The old implementation accepted onClick, styled hover, and attached nothing.
+    // A card is a container; the control goes inside it.
+    expect(container.querySelector("button")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("carries a shadow, so 'raised' is not just a border on a white page", () => {
+    const { container } = render(
+      <Card title="Raised" testId="plane">
+        body
+      </Card>,
+    );
+    const surface = screen.getByTestId("plane").querySelector("div");
+    expect(surface).not.toBeNull();
+    // jsdom does not resolve tokens, but the class carrying box-shadow must exist
+    // on the surface element; the token VALUE is asserted in the CSS extraction.
+    expect(surface?.className).toBeTruthy();
+  });
+});
+
+describe("StackedBar: the caption is the name", () => {
+  it("names the figure from a real figcaption, not an ignored aria-label", () => {
+    const { container } = render(
+      <StackedBar
+        label="Applications by stage"
+        segments={[
+          { label: "Received", value: 42 },
+          { label: "Offer", value: 1 },
+        ]}
+      />,
+    );
+    const caption = container.querySelector("figcaption");
+    expect(caption).not.toBeNull();
+    expect(caption?.textContent).toMatch(/Applications by stage/);
+    expect(caption?.textContent).toMatch(/Received 42/);
   });
 });

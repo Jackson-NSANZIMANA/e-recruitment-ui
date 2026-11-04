@@ -6,7 +6,7 @@ import { cssMap } from "@atlaskit/css";
 import { createApiClient, useAgencyCampaigns, useAmberQueue, useApplicationList, useFieldDevices, useOfficers, useSearchApplications } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel } from "@usrp/ui";
+import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel, countFrom } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
 import { accessFor, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
 import { AttentionPanel, CampaignsPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
@@ -66,8 +66,8 @@ function CaseworkDashboard(): React.ReactElement {
       testId="casework-dashboard"
     >
       <Box xcss={pageStyles.metrics}>
-        <MetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />
-        <MetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" />
+        <MetricCard label={t("dashboard.requires_action")} count={{ state: "known", value: requiresAction }} urgent={requiresAction > 0} testId="metric-requires-action" />
+        <MetricCard label={t("dashboard.pending_review")} count={{ state: "known", value: total }} testId="metric-total-applications" />
       </Box>
       {requiresAction === 0 && (
         <SectionMessage appearance="success" title={t("dashboard.no_exceptions")} headingLevel="h3">{t("dashboard.no_exceptions")}</SectionMessage>
@@ -117,11 +117,42 @@ function AdministrationDashboard(): React.ReactElement {
       <AttentionPanel items={items} ready={!isLoading} />
 
       <Box xcss={pageStyles.metrics} testId="dashboard-metrics">
-        {access.campaigns && <MetricCard label={t("dashboard.metrics.open_campaigns")} value={openCampaignCount(sorted)} testId="metric-open-campaigns" />}
-        {access.applications && <MetricCard label={t("dashboard.metrics.applications_total")} value={applications.data?.total ?? 0} testId="metric-applications-total" />}
-        {access.adjudication && <MetricCard label={t("dashboard.metrics.awaiting_adjudication")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />}
-        {access.staff && <MetricCard label={t("dashboard.metrics.active_officers")} value={staffSummary(officers.data?.officers ?? []).active} testId="metric-active-officers" />}
-        {access.fleet && <MetricCard label={t("dashboard.metrics.active_devices")} value={fleetSummary(devices.data?.devices ?? [], now).active} testId="metric-active-devices" />}
+        {access.campaigns && (
+          <MetricCard
+            label={t("dashboard.metrics.open_campaigns")}
+            count={countFrom(campaigns, (d) => openCampaignCount(sortCampaigns(d.campaigns)))}
+            testId="metric-open-campaigns"
+          />
+        )}
+        {access.applications && (
+          <MetricCard
+            label={t("dashboard.metrics.applications_total")}
+            count={countFrom(applications, (d) => d.total)}
+            testId="metric-applications-total"
+          />
+        )}
+        {access.adjudication && (
+          <MetricCard
+            label={t("dashboard.metrics.awaiting_adjudication")}
+            count={countFrom(amber, (d) => d.length)}
+            urgent
+            testId="metric-requires-action"
+          />
+        )}
+        {access.staff && (
+          <MetricCard
+            label={t("dashboard.metrics.active_officers")}
+            count={countFrom(officers, (d) => staffSummary(d.officers).active)}
+            testId="metric-active-officers"
+          />
+        )}
+        {access.fleet && (
+          <MetricCard
+            label={t("dashboard.metrics.active_devices")}
+            count={countFrom(devices, (d) => fleetSummary(d.devices, now).active)}
+            testId="metric-active-devices"
+          />
+        )}
       </Box>
 
       {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
