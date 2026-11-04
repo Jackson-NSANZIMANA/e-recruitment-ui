@@ -727,5 +727,11 @@
   },
   "citizen_docs": {
     "open_link": "Inyandiko zanjye"
+  },
+  "chart": {
+    "period": "Igihe",
+    "value": "Agaciro",
+    "total": "Igiteranyo",
+    "needs_attention": "Bikeneye kwitabwaho"
   }
 }

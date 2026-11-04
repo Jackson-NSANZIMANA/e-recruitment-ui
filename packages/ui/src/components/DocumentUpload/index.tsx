@@ -1,4 +1,4 @@
-/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop, @atlaskit/design-system/no-unsafe-design-token-usage, @atlaskit/ui-styling-standard/no-imported-style-values */
+/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop, @atlaskit/ui-styling-standard/no-imported-style-values */
 import React, { useCallback, useId, useRef, useState } from "react";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button";
@@ -191,7 +191,7 @@ export function DocumentUpload({
       <Box
         xcss={isDragOver ? cx(dropzoneStyles['base'], dropzoneStyles['active']) : dropzoneStyles['base']}
         style={{
-          borderRadius: "var(--ds-border-radius-200, 8px)",
+          borderRadius: token("radius.large"),
           border: isDragOver
             ? `2px dashed ${token("color.border.selected")}`
             : `2px dashed ${token("color.border")}`,
@@ -222,7 +222,7 @@ export function DocumentUpload({
             <Box
               key={`${file.name}-${file.size}-${index}`}
               xcss={fileRowStyles['base']}
-              style={{ borderRadius: "var(--ds-border-radius-100, 3px)" }}
+              style={{ borderRadius: token("radius.small") }}
             >
               <Inline space="space.200" alignBlock="center" spread="space-between">
                 <Stack space="space.025">

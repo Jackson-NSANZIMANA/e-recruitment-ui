@@ -6,7 +6,9 @@ import Button from "@atlaskit/button/new";
 import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
 import { cssMap } from "@atlaskit/css";
 import { token } from "@atlaskit/tokens";
+import VisuallyHidden from "@atlaskit/visually-hidden";
 import { useTranslation } from "@usrp/i18n";
+import { SkeletonPanel, type SkeletonShape } from "../layout/SkeletonPanel.js";
 import type { UiStateKind } from "./model.js";
 
 const styles = cssMap({
@@ -25,6 +27,15 @@ export interface StateBoundaryProps {
   readonly copy?: Partial<Record<UiStateKind, { readonly title?: string; readonly body?: string }>>;
   /** For `conflict`: names the holder, e.g. the agency holding a cross-agency lock. */
   readonly detail?: string;
+  /**
+   * Shape of the placeholder drawn while `loading`.
+   *
+   * The spinner is the fallback only because a caller that does not know what
+   * it is about to render cannot hold its layout. Every screen that knows -
+   * a table, a set of metric tiles, a chart - should say so, and the page then
+   * keeps its edges instead of blanking and reflowing.
+   */
+  readonly loadingShape?: SkeletonShape;
   readonly testId?: string;
 }
 
@@ -35,7 +46,7 @@ const BANNER_APPEARANCE = { partial: "warning", stale: "information" } as const;
  * `partial` and `stale` still render the children, under a banner; every other
  * non-ready state replaces them. Copy is trilingual through the common bundle.
  */
-export function StateBoundary({ state, children, onRetry, onClearFilters, copy, detail, testId }: StateBoundaryProps): React.ReactElement {
+export function StateBoundary({ state, children, onRetry, onClearFilters, copy, detail, loadingShape, testId }: StateBoundaryProps): React.ReactElement {
   const { t } = useTranslation();
   if (state === "ready") return <>{children}</>;
   const title = copy?.[state]?.title ?? t(`ui.state.${state}.title`);
@@ -43,6 +54,17 @@ export function StateBoundary({ state, children, onRetry, onClearFilters, copy, 
   const id = testId ?? `state-${state}`;
 
   if (state === "loading") {
+    // A live region, announced once: twelve skeletons each shouting "loading"
+    // would be worse than silence, and an unannounced swap from skeleton to
+    // content leaves a screen-reader user with no idea anything happened.
+    if (loadingShape !== undefined) {
+      return (
+        <Box testId={id}>
+          <VisuallyHidden role="status" aria-live="polite">{title}</VisuallyHidden>
+          <SkeletonPanel shape={loadingShape} />
+        </Box>
+      );
+    }
     return (
       <Box xcss={styles.center} testId={id}>
         <Spinner size="large" label={title} />

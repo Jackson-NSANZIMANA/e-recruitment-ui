@@ -1,22 +1,22 @@
 import React from "react";
-import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
-import PageHeader from "@atlaskit/page-header";
-import Spinner from "@atlaskit/spinner";
+import { Box, Text } from "@atlaskit/primitives/compiled";
 import SectionMessage from "@atlaskit/section-message";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
 import { createApiClient, useAgencyCampaigns, useAmberQueue, useApplicationList, useFieldDevices, useOfficers, useSearchApplications } from "@usrp/api-client";
 import { useOfficerSession } from "@usrp/auth";
 import { useTranslation } from "@usrp/i18n";
-import { AgencyLogo, DashboardMetricCard, FreshnessStamp } from "@usrp/ui";
+import { AgencyLogo, FreshnessStamp, MetricCard, PageShell, SkeletonPanel } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../env.js";
 import { accessFor, attentionItems, fleetSummary, isAdministrationView, openCampaignCount, sortCampaigns, staffSummary } from "../dashboard/model.js";
 import { AttentionPanel, CampaignsPanel, FleetPanel, PipelinePanel, StaffPanel } from "../dashboard/panels.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
+// The page column now comes from `PageShell` (one 1280px content box that lines
+// up with the national header); only the panel grid is local to this screen.
 const pageStyles = cssMap({
-  base: { maxWidth: "1200px", marginInline: "auto", paddingBlock: token("space.400"), paddingInline: token("space.500") },
   columns: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" },
+  metrics: { display: "grid", gap: token("space.300"), gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" },
 });
 
 /**
@@ -40,9 +40,40 @@ function CaseworkDashboard(): React.ReactElement {
   const isError = applications.isError || amber.isError;
   const total = applications.data?.length ?? 0;
   const requiresAction = amber.data?.length ?? 0;
-  if (isLoading) return <Box xcss={pageStyles.base}><Spinner label={t("a11y.loading")} /></Box>;
-  if (isError) return <Box xcss={pageStyles.base}><SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage></Box>;
-  return <Box xcss={pageStyles.base}><Stack space="space.500"><PageHeader {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}>{t("dashboard.title")}</PageHeader><Inline space="space.300" shouldWrap><DashboardMetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" /><DashboardMetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" /></Inline>{requiresAction === 0 && <SectionMessage appearance="success" title={t("dashboard.no_exceptions")} headingLevel="h3">{t("dashboard.no_exceptions")}</SectionMessage>}</Stack></Box>;
+  if (isLoading) {
+    // A skeleton of the shape that is about to arrive, not a spinner in the
+    // middle of an empty page: the two tiles land where their placeholders were,
+    // so nothing jumps after the read resolves.
+    return (
+      <PageShell align="header" title={t("dashboard.title")} testId="casework-dashboard">
+        <SkeletonPanel shape="metrics" />
+        <SkeletonPanel shape="prose" rows={2} />
+      </PageShell>
+    );
+  }
+  if (isError) {
+    return (
+      <PageShell align="header" title={t("dashboard.title")} testId="casework-dashboard">
+        <SectionMessage appearance="error" title={t("errors.generic")} headingLevel="h3">{t("errors.generic")}</SectionMessage>
+      </PageShell>
+    );
+  }
+  return (
+    <PageShell
+      align="header"
+      title={t("dashboard.title")}
+      {...(session !== null ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}
+      testId="casework-dashboard"
+    >
+      <Box xcss={pageStyles.metrics}>
+        <MetricCard label={t("dashboard.requires_action")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />
+        <MetricCard label={t("dashboard.pending_review")} value={total} testId="metric-total-applications" />
+      </Box>
+      {requiresAction === 0 && (
+        <SectionMessage appearance="success" title={t("dashboard.no_exceptions")} headingLevel="h3">{t("dashboard.no_exceptions")}</SectionMessage>
+      )}
+    </PageShell>
+  );
 }
 
 function AdministrationDashboard(): React.ReactElement {
@@ -74,33 +105,32 @@ function AdministrationDashboard(): React.ReactElement {
   const updatedAt = Math.max(campaigns.dataUpdatedAt, amber.dataUpdatedAt, officers.dataUpdatedAt, devices.dataUpdatedAt);
 
   return (
-    <Box xcss={pageStyles.base}>
-      <Stack space="space.400">
-        <PageHeader {...(signedIn ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}>{t("dashboard.admin_title")}</PageHeader>
-        <Inline spread="space-between" alignBlock="center" shouldWrap>
-          <Text as="p" color="color.text.subtle">{t("dashboard.admin_lead")}</Text>
-          {updatedAt > 0 && <FreshnessStamp updatedAt={new Date(updatedAt).toISOString()} />}
-        </Inline>
+    <PageShell
+      align="header"
+      title={t("dashboard.admin_title")}
+      description={t("dashboard.admin_lead")}
+      {...(signedIn ? { breadcrumbs: <AgencyLogo agency={session.agency} size="sm" /> } : {})}
+      {...(updatedAt > 0 ? { actions: <FreshnessStamp updatedAt={new Date(updatedAt).toISOString()} /> } : {})}
+      testId="admin-dashboard"
+    >
+      {isError && <SectionMessage appearance="warning" testId="dashboard-partial"><Text as="p">{t("dashboard.panel_error")}</Text></SectionMessage>}
+      <AttentionPanel items={items} ready={!isLoading} />
 
-        {isError && <SectionMessage appearance="warning" testId="dashboard-partial"><Text as="p">{t("dashboard.panel_error")}</Text></SectionMessage>}
-        <AttentionPanel items={items} ready={!isLoading} />
+      <Box xcss={pageStyles.metrics} testId="dashboard-metrics">
+        {access.campaigns && <MetricCard label={t("dashboard.metrics.open_campaigns")} value={openCampaignCount(sorted)} testId="metric-open-campaigns" />}
+        {access.applications && <MetricCard label={t("dashboard.metrics.applications_total")} value={applications.data?.total ?? 0} testId="metric-applications-total" />}
+        {access.adjudication && <MetricCard label={t("dashboard.metrics.awaiting_adjudication")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />}
+        {access.staff && <MetricCard label={t("dashboard.metrics.active_officers")} value={staffSummary(officers.data?.officers ?? []).active} testId="metric-active-officers" />}
+        {access.fleet && <MetricCard label={t("dashboard.metrics.active_devices")} value={fleetSummary(devices.data?.devices ?? [], now).active} testId="metric-active-devices" />}
+      </Box>
 
-        <Inline space="space.300" shouldWrap testId="dashboard-metrics">
-          {access.campaigns && <DashboardMetricCard label={t("dashboard.metrics.open_campaigns")} value={openCampaignCount(sorted)} testId="metric-open-campaigns" />}
-          {access.applications && <DashboardMetricCard label={t("dashboard.metrics.applications_total")} value={applications.data?.total ?? 0} testId="metric-applications-total" />}
-          {access.adjudication && <DashboardMetricCard label={t("dashboard.metrics.awaiting_adjudication")} value={requiresAction} urgent={requiresAction > 0} testId="metric-requires-action" />}
-          {access.staff && <DashboardMetricCard label={t("dashboard.metrics.active_officers")} value={staffSummary(officers.data?.officers ?? []).active} testId="metric-active-officers" />}
-          {access.fleet && <DashboardMetricCard label={t("dashboard.metrics.active_devices")} value={fleetSummary(devices.data?.devices ?? [], now).active} testId="metric-active-devices" />}
-        </Inline>
+      {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
 
-        {access.campaigns && <CampaignsPanel query={campaigns} rows={sorted} />}
-
-        <Box xcss={pageStyles.columns}>
-          {access.applications && <PipelinePanel client={client} enabled={signedIn} />}
-          {access.staff && <StaffPanel query={officers} />}
-          {access.fleet && <FleetPanel query={devices} now={now} />}
-        </Box>
-      </Stack>
-    </Box>
+      <Box xcss={pageStyles.columns}>
+        {access.applications && <PipelinePanel client={client} enabled={signedIn} />}
+        {access.staff && <StaffPanel query={officers} />}
+        {access.fleet && <FleetPanel query={devices} now={now} />}
+      </Box>
+    </PageShell>
   );
 }

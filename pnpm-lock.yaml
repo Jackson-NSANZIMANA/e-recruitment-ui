@@ -1490,6 +1490,9 @@ importers:
       '@atlaskit/section-message':
         specifier: ^10.0.0
         version: 10.2.6(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/skeleton':
+        specifier: ^4.4.4
+        version: 4.4.4(react@18.3.1)
       '@atlaskit/spinner':
         specifier: ^20.1.2
         version: 20.4.4(react@18.3.1)
@@ -1505,6 +1508,9 @@ importers:
       '@atlaskit/tooltip':
         specifier: ^24.0.5
         version: 24.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@atlaskit/visually-hidden':
+        specifier: ^4.4.0
+        version: 4.4.0(react@18.3.1)
       '@compiled/react':
         specifier: ^1.0.0
         version: 1.0.2(react@18.3.1)

@@ -21,25 +21,16 @@ import {
   type ApiClient, type CampaignAdminSummary, type CampaignStatus, type FleetDevice, type OfficerRow,
 } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
-import { RouterLink, StateBoundary, listState } from "@usrp/ui";
+import { Card, MetricCard, RouterLink, StateBoundary, listState } from "@usrp/ui";
 import { calendarDay, fleetSummary, occupancyShare, PIPELINE_STAGES, staffSummary, type AttentionItem } from "./model.js";
 
 const styles = cssMap({
-  panel: {
-    padding: token("space.300"),
-    borderWidth: token("border.width"),
-    borderStyle: "solid",
-    borderColor: token("color.border"),
-    borderRadius: token("radius.medium"),
-    backgroundColor: token("elevation.surface"),
-  },
   meterTrack: { width: "100%", minWidth: "96px", height: "0.5rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
   fill: { height: "100%", borderRadius: token("radius.small"), backgroundColor: token("color.background.brand.bold") },
   fillWarning: { backgroundColor: token("color.background.warning.bold") },
   attentionRow: { paddingBlock: token("space.100"), borderBlockEndWidth: token("border.width"), borderBlockEndStyle: "solid", borderBlockEndColor: token("color.border") },
   stageTrack: { width: "100%", height: "0.75rem", borderRadius: token("radius.small"), backgroundColor: token("color.background.neutral") },
   stageLabel: { minWidth: "220px" },
-  figure: { minWidth: "140px" },
 });
 
 const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress" | "moved" | "default" | "removed">> = {
@@ -51,21 +42,19 @@ const STATUS_APPEARANCE: Readonly<Record<CampaignStatus, "success" | "inprogress
   CANCELLED: "removed",
 };
 
-/** A titled, bordered region; the heading names it for assistive technology. */
+/**
+ * A titled, bordered region; the heading names it for assistive technology.
+ *
+ * This used to carry its own `panel` cssMap block, which had drifted from the
+ * identical block in `DashboardMetricCard`: one bordered on a white surface, the
+ * other filled the surface grey. Both now delegate to `Card`, so a panel and a
+ * metric tile are the same raised plane and cannot disagree again.
+ */
 export function Panel({ title, testId, action, children }: { readonly title: string; readonly testId: string; readonly action?: React.ReactNode; readonly children: React.ReactNode }): React.ReactElement {
-  const id = `${testId}-title`;
   return (
-    <section aria-labelledby={id} data-testid={testId}>
-      <Box xcss={styles.panel}>
-        <Stack space="space.200">
-          <Inline spread="space-between" alignBlock="center" shouldWrap>
-            <Heading size="medium" as="h2" id={id}>{title}</Heading>
-            {action}
-          </Inline>
-          {children}
-        </Stack>
-      </Box>
-    </section>
+    <Card title={title} titleLevel={2} {...(action !== undefined ? { actions: action } : {})} testId={testId}>
+      {children}
+    </Card>
   );
 }
 
@@ -224,15 +213,17 @@ export function PipelinePanel({ client, enabled }: { readonly client: ApiClient;
 
 // ── Staff ───────────────────────────────────────────────────────
 
+/**
+ * A staff/fleet figure.
+ *
+ * Was a 12px label above a 16px number on a 140px-min box. It is now the shared
+ * `MetricCard`, so the figure is a 28px tabular metric face and the label is
+ * body-size - the previous pair was below the design-system's 16px text floor
+ * on both lines. `testId` still lands on the outer element, so the existing
+ * `staff-active` / `fleet-active` e2e assertions are unchanged.
+ */
 function Figure({ label, value, testId }: { readonly label: string; readonly value: number; readonly testId: string }): React.ReactElement {
-  return (
-    <Box xcss={styles.figure} testId={testId}>
-      <Stack space="space.025">
-        <Text size="small" color="color.text.subtle">{label}</Text>
-        <Text size="large" weight="bold">{String(value)}</Text>
-      </Stack>
-    </Box>
-  );
+  return <MetricCard label={label} value={value} testId={testId} />;
 }
 
 export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonly officers: readonly OfficerRow[] }, Error> }): React.ReactElement {

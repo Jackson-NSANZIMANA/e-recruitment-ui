@@ -1,4 +1,4 @@
-/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop, @atlaskit/design-system/no-unsafe-design-token-usage */
+/* eslint-disable @atlaskit/ui-styling-standard/enforce-style-prop */
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
@@ -242,7 +242,7 @@ export function QrScanner({
               ? previewWrapperStyles['base']
               : previewWrapperStyles['hidden']
           }
-          style={{ borderRadius: "var(--ds-border-radius-200, 8px)" }}
+          style={{ borderRadius: token("radius.large") }}
         >
           <video
             ref={videoRef}

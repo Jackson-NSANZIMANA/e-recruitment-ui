@@ -727,5 +727,11 @@
   },
   "citizen_docs": {
     "open_link": "Mes documents"
+  },
+  "chart": {
+    "period": "Période",
+    "value": "Valeur",
+    "total": "Total",
+    "needs_attention": "Nécessite une attention"
   }
 }
