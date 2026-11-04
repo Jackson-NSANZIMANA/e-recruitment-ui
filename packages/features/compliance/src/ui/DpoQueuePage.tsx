@@ -82,8 +82,8 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
         : {})}
     >
       <Stack space="space.200">
-        <Text as="p" color="color.text.subtle">{t('compliance.queue.anonymous_by_design')}</Text>
-        {done !== null && <SectionMessage appearance="success" testId="dpo-done"><Text as="p">{done}</Text></SectionMessage>}
+        <Text size="large" as="p" color="color.text.subtle">{t('compliance.queue.anonymous_by_design')}</Text>
+        {done !== null && <SectionMessage appearance="success" testId="dpo-done"><Text size="large" as="p">{done}</Text></SectionMessage>}
         <StateBoundary state={state} onRetry={() => void q.refetch()}>
           <QueueTable
             caption={t('compliance.queue.title')}
@@ -101,7 +101,7 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
             <DeclineGroundsDialog
               onCancel={close}
               onConfirm={(note) => void submitDecline(note)}
-              error={decide.isError ? <SectionMessage appearance="error" testId="dpo-error"><Text as="p">{failureText(decide.error, t)}</Text></SectionMessage> : null}
+              error={decide.isError ? <SectionMessage appearance="error" testId="dpo-error"><Text size="large" as="p">{failureText(decide.error, t)}</Text></SectionMessage> : null}
             />
           </>
         )}
@@ -116,7 +116,7 @@ export function DpoQueuePage({ client }: { readonly client: ApiClient }): React.
           onCancel={close}
           onConfirm={() => void submitErase()}
         >
-          {decide.isError && <SectionMessage appearance="error" testId="dpo-error"><Text as="p">{failureText(decide.error, t)}</Text></SectionMessage>}
+          {decide.isError && <SectionMessage appearance="error" testId="dpo-error"><Text size="large" as="p">{failureText(decide.error, t)}</Text></SectionMessage>}
         </ConfirmAction>
       </Stack>
     </PageShell>

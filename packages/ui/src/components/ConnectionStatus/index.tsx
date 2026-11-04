@@ -48,7 +48,7 @@ export function ConnectionStatus(): React.ReactElement | null {
   return (
     <Box xcss={styles.wrapper} role="status" aria-live="polite" testId="connection-offline">
       <SectionMessage appearance="warning" headingLevel="h2" title={t("offline.no_connection")}>
-        <Text as="p">{t("offline.nothing_sent")}</Text>
+        <Text size="large" as="p">{t("offline.nothing_sent")}</Text>
       </SectionMessage>
     </Box>
   );

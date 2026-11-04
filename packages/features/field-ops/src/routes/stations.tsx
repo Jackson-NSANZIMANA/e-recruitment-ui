@@ -50,7 +50,7 @@ export default function StationPicker(): React.ReactElement {
         <Heading size="large" as="h1">
           {t("field_station.stations_title")}
         </Heading>
-        <Text as="p" color="color.text.subtle">
+        <Text size="large" as="p" color="color.text.subtle">
           {t("field_station.stations_intro")}
         </Text>
 
@@ -60,7 +60,7 @@ export default function StationPicker(): React.ReactElement {
 
         {stations.length === 0 ? (
           <SectionMessage appearance="warning" title={t("field_station.no_stations_title")} headingLevel="h2">
-            <Text as="p">{t("field_station.no_stations_body")}</Text>
+            <Text size="large" as="p">{t("field_station.no_stations_body")}</Text>
           </SectionMessage>
         ) : (
           <Stack space="space.200" testId="station-list">
@@ -71,7 +71,7 @@ export default function StationPicker(): React.ReactElement {
                     <Heading size="medium" as="h2">
                       {t(`field_station.stations.${station.id}.title`)}
                     </Heading>
-                    <Text as="p">{t(`field_station.stations.${station.id}.body`)}</Text>
+                    <Text size="large" as="p">{t(`field_station.stations.${station.id}.body`)}</Text>
                   </Stack>
                   {station.path !== null ? (
                     <LinkButton appearance="primary" href={station.path}>

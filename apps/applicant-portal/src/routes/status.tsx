@@ -66,7 +66,7 @@ export default function StatusPage(): React.ReactElement {
 
         {applications.length === 0 && (
           <SectionMessage>
-            <Text>{t("applicant.no_applications")}</Text>
+            <Text size="large">{t("applicant.no_applications")}</Text>
           </SectionMessage>
         )}
 
@@ -79,23 +79,23 @@ export default function StatusPage(): React.ReactElement {
           >
             <Stack space="space.200">
               <Inline spread="space-between" alignBlock="center">
-                <Text weight="bold">{application.agency}</Text>
+                <Text size="large" weight="bold">{application.agency}</Text>
                 <ApplicationStatusBadge status={application.status} />
               </Inline>
 
-              <Text size="small" color="color.text.subtle">
+              <Text size="large" color="color.text.subtle">
                 {t("application.id")}: {application.processingCode ?? t("application.not_provided")}
               </Text>
 
               {application.applicationId !== null && (
-                <Text size="small">
+                <Text size="large">
                   <Link to={`/applications/${application.applicationId}/exam-qr`}>{t("exam_qr.open_link")}</Link>
                   {" · "}
                   <Link to={`/applications/${application.applicationId}/documents`}>{t("citizen_docs.open_link")}</Link>
                 </Text>
               )}
 
-              <Text size="small" color="color.text.subtle">
+              <Text size="large" color="color.text.subtle">
                 {t("application.submitted")}:{" "}
                 {application.submittedAt === null
                   ? t("application.not_provided")
@@ -112,7 +112,7 @@ export default function StatusPage(): React.ReactElement {
         */}
         {applications.length > 0 && (
           <SectionMessage appearance="information">
-            <Text>
+            <Text size="large">
               A detailed decision history is not yet available to applicants. If a
               status is unclear, contact the agency handling your application.
             </Text>

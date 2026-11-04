@@ -60,7 +60,7 @@ function refusalText(error: unknown, t: T): string {
 }
 
 function Refusal({ error, t }: { readonly error: unknown; readonly t: T }): React.ReactElement {
-  return <SectionMessage appearance="error" testId="staff-refusal"><Text as="p">{refusalText(error, t)}</Text></SectionMessage>;
+  return <SectionMessage appearance="error" testId="staff-refusal"><Text size="large" as="p">{refusalText(error, t)}</Text></SectionMessage>;
 }
 
 function PostsPicker({ value, onChange, t }: { readonly value: readonly string[]; readonly onChange: (v: readonly string[]) => void; readonly t: T }): React.ReactElement {
@@ -83,10 +83,10 @@ function PermissionPreview({ posts, before, t }: { readonly posts: readonly stri
   if (posts.length === 0) return null;
   return (
     <Stack space="space.050" testId="permission-preview">
-      <Text size="small" weight="medium">{t(before === undefined ? 'identity.staff.grants' : 'identity.staff.grantsNew')}</Text>
-      <Text size="small" color="color.text.subtle">{granted.length === 0 ? t('identity.staff.grantsNone') : granted.map((p) => t(`identity.staff.operations.${p}`, { defaultValue: p })).join(' · ')}</Text>
+      <Text size="large" weight="medium">{t(before === undefined ? 'identity.staff.grants' : 'identity.staff.grantsNew')}</Text>
+      <Text size="large" color="color.text.subtle">{granted.length === 0 ? t('identity.staff.grantsNone') : granted.map((p) => t(`identity.staff.operations.${p}`, { defaultValue: p })).join(' · ')}</Text>
       {grantsDecisionAuthority(posts) && (before === undefined || !before.includes('decision_authority')) && (
-        <Text size="small" color="color.text.warning" testId="decision-authority-warning">{t('identity.staff.decisionAuthorityNotice')}</Text>
+        <Text size="large" color="color.text.warning" testId="decision-authority-warning">{t('identity.staff.decisionAuthorityNotice')}</Text>
       )}
     </Stack>
   );
@@ -197,21 +197,21 @@ export function StaffPage({ client }: { readonly client: ApiClient }): React.Rea
     return {
       key: o.officerId,
       cells: [
-        { key: 'handle', content: <Text weight="medium">{o.loginHandle}</Text> },
-        { key: 'posts', content: <Text size="small">{o.posts.map((p) => t(`identity.staff.posts.${p}`, { defaultValue: p })).join(', ')}</Text> },
+        { key: 'handle', content: <Text size="large" weight="medium">{o.loginHandle}</Text> },
+        { key: 'posts', content: <Text size="large">{o.posts.map((p) => t(`identity.staff.posts.${p}`, { defaultValue: p })).join(', ')}</Text> },
         {
           key: 'status',
           content: (
             <Stack space="space.050">
               <Lozenge appearance={o.status === 'active' ? 'success' : o.status === 'disabled' ? 'removed' : 'moved'}>{t(`identity.staff.status.${o.status}`)}</Lozenge>
-              {view !== 'NONE' && <Text size="small" testId={`activation-${view}`}>{t(`identity.staff.activation.${view}`)}</Text>}
+              {view !== 'NONE' && <Text size="large" testId={`activation-${view}`}>{t(`identity.staff.activation.${view}`)}</Text>}
             </Stack>
           ),
         },
-        { key: 'login', content: <Text size="small">{o.lastLoginAt === null ? '—' : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(o.lastLoginAt))}</Text> },
+        { key: 'login', content: <Text size="large">{o.lastLoginAt === null ? '—' : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(o.lastLoginAt))}</Text> },
         {
           key: 'actions',
-          content: lock !== null ? <Text size="small" color="color.text.subtle">{t(`identity.staff.locked.${lock}`)}</Text> : (
+          content: lock !== null ? <Text size="large" color="color.text.subtle">{t(`identity.staff.locked.${lock}`)}</Text> : (
             <Inline space="space.100" shouldWrap>
               {a.release && <Button appearance="primary" isDisabled={release.isPending} aria-label={`${t('identity.staff.actions.release')}: ${o.loginHandle}`} onClick={() => void doRelease(o)}>{t('identity.staff.actions.release')}</Button>}
               {a.reissue && <Button aria-label={`${t('identity.staff.actions.reissue')}: ${o.loginHandle}`} onClick={() => open({ kind: 'reissue', row: o })}>{t('identity.staff.actions.reissue')}</Button>}
@@ -237,10 +237,10 @@ export function StaffPage({ client }: { readonly client: ApiClient }): React.Rea
     >
       <Stack space="space.250">
 
-        {notice !== null && <SectionMessage appearance="success" testId="staff-notice"><Text as="p">{notice}</Text></SectionMessage>}
+        {notice !== null && <SectionMessage appearance="success" testId="staff-notice"><Text size="large" as="p">{notice}</Text></SectionMessage>}
         {created !== null && (
           <SectionMessage appearance="information" title={t('identity.staff.created.title', { handle: created })} headingLevel="h2" testId="created-pending-release">
-            <Text as="p">{t('identity.staff.created.body')}</Text>
+            <Text size="large" as="p">{t('identity.staff.created.body')}</Text>
           </SectionMessage>
         )}
         {release.isError && <Refusal error={release.error} t={t} />}
@@ -252,14 +252,14 @@ export function StaffPage({ client }: { readonly client: ApiClient }): React.Rea
               <Inline space="space.200" shouldWrap alignBlock="end">
                 <Box xcss={styles.field}>
                   <Stack space="space.050">
-                    <Text size="small" weight="medium" as="span">{t('identity.staff.create.handle')}</Text>
+                    <Text size="large" weight="medium" as="span">{t('identity.staff.create.handle')}</Text>
                     <TextField name="loginHandle" aria-label={t('identity.staff.create.handle')} value={handle} onChange={(e) => { setHandle((e.target as HTMLInputElement).value); setCreated(null); }} />
                   </Stack>
                 </Box>
                 <Box xcss={styles.wide}><PostsPicker value={newPosts} onChange={(v) => { setNewPosts(v); setCreated(null); }} t={t} /></Box>
                 <Button appearance="primary" isDisabled={normalised === null || newPosts.length === 0 || create.isPending} onClick={() => void submitCreate()}>{t('identity.staff.create.submit')}</Button>
               </Inline>
-              {handle !== '' && normalised === null && <Text size="small" color="color.text.danger">{t('identity.staff.create.badHandle')}</Text>}
+              {handle !== '' && normalised === null && <Text size="large" color="color.text.danger">{t('identity.staff.create.badHandle')}</Text>}
               <PermissionPreview posts={newPosts} t={t} />
               {create.isError && <Refusal error={create.error} t={t} />}
             </Stack>

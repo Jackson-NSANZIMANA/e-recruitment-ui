@@ -26,7 +26,7 @@ export function TicketInput({ onTicket, onClear, ticket, testId }: {
   if (ticket !== null) {
     return (
       <Inline space="space.200" alignBlock="center" shouldWrap>
-        <Text weight="bold" testId={`${testId}-captured`}>{t('field_ops.ticket.read')}</Text>
+        <Text size="large" weight="bold" testId={`${testId}-captured`}>{t('field_ops.ticket.read')}</Text>
         <Button appearance="subtle" onClick={onClear}>{t('field_ops.ticket.rescan')}</Button>
       </Inline>
     );

@@ -79,9 +79,9 @@ function holdLabel(t: T, kind: HoldKind, reasons: readonly string[]): string {
 function HoldReasons({ row }: { readonly row: AmberRow }): React.ReactElement {
   const { t } = useTranslation('adjudication');
   const codes = reasonCodes(row);
-  if (codes.length === 0) return <Text as="span" testId="hold-reason-none">{t('adjudication.reason.none')}</Text>;
+  if (codes.length === 0) return <Text size="large" as="span" testId="hold-reason-none">{t('adjudication.reason.none')}</Text>;
   return (
-    <Text as="span" testId="hold-reason">
+    <Text size="large" as="span" testId="hold-reason">
       {codes.map((code) => REASON_CODES.has(code) ? t(`adjudication.reason.${code}`) : t('adjudication.reason.unknown', { code })).join(' · ')}
     </Text>
   );
@@ -138,11 +138,11 @@ function AmberQueue({ client, agency, kinds, permissions }: { readonly client: A
   };
   return (
     <Stack space="space.200">
-      <SectionMessage appearance="information"><Text as="p">{t(kinds[0] === 'DOCUMENT' ? 'adjudication.queue.document_hint' : 'adjudication.queue.adjudication_hint')}</Text></SectionMessage>
+      <SectionMessage appearance="information"><Text size="large" as="p">{t(kinds[0] === 'DOCUMENT' ? 'adjudication.queue.document_hint' : 'adjudication.queue.adjudication_hint')}</Text></SectionMessage>
       {/* D10, said out loud rather than hidden behind a disabled button: these rows
           are WAITING, and the console has no operation to resolve them yet. */}
       {registryHolds > 0 && (
-        <SectionMessage appearance="warning" testId="registry-hint"><Text as="p">{t('adjudication.queue.registry_hint')}</Text></SectionMessage>
+        <SectionMessage appearance="warning" testId="registry-hint"><Text size="large" as="p">{t('adjudication.queue.registry_hint')}</Text></SectionMessage>
       )}
       <StateBoundary state={state} onRetry={() => void q.refetch()}>
         <QueueTable
@@ -166,7 +166,7 @@ function AmberQueue({ client, agency, kinds, permissions }: { readonly client: A
         onCancel={() => { setPending(null); adjudicate.reset(); }}
         onConfirm={() => void run()}
       >
-        {adjudicate.isError && <SectionMessage appearance="error"><Text as="p">{t('adjudication.errors.refused', { code: refusalCode(adjudicate.error) })}</Text></SectionMessage>}
+        {adjudicate.isError && <SectionMessage appearance="error"><Text size="large" as="p">{t('adjudication.errors.refused', { code: refusalCode(adjudicate.error) })}</Text></SectionMessage>}
       </ConfirmAction>
     </Stack>
   );
@@ -233,7 +233,7 @@ function SearchQueue({ client, agency, queue, permissions }: { readonly client: 
   return (
     <Stack space="space.200">
       {q.data !== undefined && q.data.total > apps.length && (
-        <SectionMessage appearance="warning" testId="queue-truncated"><Text as="p">{t('adjudication.queue.truncated', { shown: apps.length, total: q.data.total })}</Text></SectionMessage>
+        <SectionMessage appearance="warning" testId="queue-truncated"><Text size="large" as="p">{t('adjudication.queue.truncated', { shown: apps.length, total: q.data.total })}</Text></SectionMessage>
       )}
       {canBulk && (
         <Inline space="space.100" shouldWrap alignBlock="center">
@@ -243,9 +243,9 @@ function SearchQueue({ client, agency, queue, permissions }: { readonly client: 
       )}
       {results.length > 0 && (
         <Stack space="space.050" testId="bulk-results">
-          <Text weight="medium">{t('adjudication.bulk.resultsTitle')}</Text>
+          <Text size="large" weight="medium">{t('adjudication.bulk.resultsTitle')}</Text>
           {results.map((r) => (
-            <Text key={r.id} color={r.ok ? 'color.text.success' : 'color.text.danger'}>{`${r.label}: ${r.ok ? t('adjudication.bulk.applied') : t('adjudication.bulk.refused', { code: r.code })}`}</Text>
+            <Text size="large" key={r.id} color={r.ok ? 'color.text.success' : 'color.text.danger'}>{`${r.label}: ${r.ok ? t('adjudication.bulk.applied') : t('adjudication.bulk.refused', { code: r.code })}`}</Text>
           ))}
         </Stack>
       )}
@@ -271,7 +271,7 @@ function SearchQueue({ client, agency, queue, permissions }: { readonly client: 
         onCancel={() => { setPending(null); finalDecision.reset(); accept.reset(); }}
         onConfirm={() => void run()}
       >
-        {mutation.isError && <SectionMessage appearance="error"><Text as="p">{t('adjudication.errors.refused', { code: refusalCode(mutation.error) })}</Text></SectionMessage>}
+        {mutation.isError && <SectionMessage appearance="error"><Text size="large" as="p">{t('adjudication.errors.refused', { code: refusalCode(mutation.error) })}</Text></SectionMessage>}
       </ConfirmAction>
       <ConfirmAction
         isOpen={bulk !== null}

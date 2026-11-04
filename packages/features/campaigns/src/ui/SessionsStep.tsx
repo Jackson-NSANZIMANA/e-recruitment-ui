@@ -30,7 +30,7 @@ function Meter({ covered, total, label }: { readonly covered: number; readonly t
   const steps = Math.min(total, 30);
   return (
     <Stack space="space.050">
-      <Text weight="medium" testId="coverage-text">{label}</Text>
+      <Text size="large" weight="medium" testId="coverage-text">{label}</Text>
       <div role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={covered} aria-label={label} data-testid="coverage-meter">
         <Box xcss={meterStyles.track}>
           <Inline space="space.0">
@@ -73,8 +73,8 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
       <Panel testId={`session-${district}`}>
         <Stack space="space.050">
           <Heading size="small" as="h3">{name}</Heading>
-          {existing === undefined ? <Text size="small" color="color.text.warning">{t('campaigns.sessions.none')}</Text> : (
-            <Text size="small">{existing.venueName} · {existing.examDate} · {t('campaigns.sessions.hour')} {existing.reportingTimeHour} · {existing.capacityLimit === null ? t('campaigns.sessions.unbounded') : t('campaigns.sessions.capacityOf', { registered: existing.registeredCount, capacity: existing.capacityLimit })}</Text>
+          {existing === undefined ? <Text size="large" color="color.text.warning">{t('campaigns.sessions.none')}</Text> : (
+            <Text size="large">{existing.venueName} · {existing.examDate} · {t('campaigns.sessions.hour')} {existing.reportingTimeHour} · {existing.capacityLimit === null ? t('campaigns.sessions.unbounded') : t('campaigns.sessions.capacityOf', { registered: existing.registeredCount, capacity: existing.capacityLimit })}</Text>
           )}
         </Stack>
       </Panel>
@@ -85,7 +85,7 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
       <Stack space="space.150">
         <Inline spread="space-between" alignBlock="center" shouldWrap>
           <Heading size="small" as="h3">{name}</Heading>
-          <Text size="small" color={existing?.isActive === true ? 'color.text.success' : 'color.text.warning'}>
+          <Text size="large" color={existing?.isActive === true ? 'color.text.success' : 'color.text.warning'}>
             {existing === undefined ? t('campaigns.sessions.none') : t('campaigns.sessions.registered', { count: existing.registeredCount })}
           </Text>
         </Inline>
@@ -117,7 +117,7 @@ function DistrictRow({ client, detail, district, existing, canWrite, onStep }: {
             value={activeOptions.find((o) => o.value === (form.isActive ? 'yes' : 'no')) ?? null} onChange={(o) => { if (o !== null) set({ isActive: o.value === 'yes' }); }} />
         </Field>
         {save.isError && <Refusal error={save.error} onStep={onStep} testId={`session-refusal-${district}`} />}
-        {save.isSuccess && <Text size="small" color="color.text.success" testId={`session-saved-${district}`}>{t(save.data.replayed ? 'campaigns.replayed' : save.data.result.status === 'SESSION_UNCHANGED' ? 'campaigns.sessions.unchanged' : 'campaigns.sessions.saved')}</Text>}
+        {save.isSuccess && <Text size="large" color="color.text.success" testId={`session-saved-${district}`}>{t(save.data.replayed ? 'campaigns.replayed' : save.data.result.status === 'SESSION_UNCHANGED' ? 'campaigns.sessions.unchanged' : 'campaigns.sessions.saved')}</Text>}
         {<Inline><Button appearance="primary" isDisabled={save.isPending} aria-label={`${t('campaigns.sessions.save')}: ${name}`} onClick={() => void submit()}>{t('campaigns.sessions.save')}</Button></Inline>}
       </Stack>
     </Panel>
@@ -130,9 +130,9 @@ export function SessionsStep({ client, detail, canWrite, onStep }: { readonly cl
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.sessions.title')}</Heading>
-      <Text as="p">{t('campaigns.sessions.lead')}</Text>
+      <Text size="large" as="p">{t('campaigns.sessions.lead')}</Text>
       <Meter covered={cov.covered.length} total={cov.total} label={t('campaigns.sessions.coverage', { covered: cov.covered.length, total: cov.total })} />
-      {cov.missing.length > 0 && <Text size="small" color="color.text.warning" testId="coverage-missing">{t('campaigns.sessions.missing', { districts: cov.missing.map(districtLabel).join(', ') })}</Text>}
+      {cov.missing.length > 0 && <Text size="large" color="color.text.warning" testId="coverage-missing">{t('campaigns.sessions.missing', { districts: cov.missing.map(districtLabel).join(', ') })}</Text>}
       {detail.targetDistricts.map((d) => (
         <DistrictRow key={d} client={client} detail={detail} district={d} existing={detail.sessions.find((s) => s.district === d)} canWrite={canWrite} onStep={onStep} />
       ))}

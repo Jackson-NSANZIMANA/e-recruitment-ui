@@ -60,7 +60,7 @@ describe("Card", () => {
   it("is a region named by its own heading when titled", () => {
     render(
       <Card title="Applications by stage">
-        <Text>body</Text>
+        <Text size="large">body</Text>
       </Card>,
     );
     const region = screen.getByRole("region", { name: "Applications by stage" });
@@ -71,7 +71,7 @@ describe("Card", () => {
   it("takes an explicit heading level, so a card can sit under an h2 panel", () => {
     render(
       <Card title="Nested" titleLevel={3}>
-        <Text>body</Text>
+        <Text size="large">body</Text>
       </Card>,
     );
     expect(screen.getByRole("heading", { level: 3, name: "Nested" })).toBeTruthy();

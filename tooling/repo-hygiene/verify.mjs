@@ -18,7 +18,7 @@ const withBuild = process.argv.includes('--with-build');
 
 const gates = [
   ['large files (<=5 MiB, tracked)', 'check-large-files.mjs'],
-  ['design-system boundaries + hex + 48px', 'check-boundaries.mjs'],
+  ['boundaries + hex + 48px + 16px text', 'check-boundaries.mjs'],
   ['script coverage (anti-hollow)', 'check-script-coverage.mjs'],
 ];
 

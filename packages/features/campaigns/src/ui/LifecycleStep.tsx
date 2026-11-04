@@ -47,10 +47,10 @@ export function LifecycleStep({ client, detail, allowed }: {
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.lifecycle.title')}</Heading>
-      <Text as="p">{t('campaigns.lifecycle.lead')}</Text>
-      {actions.length === 0 && <SectionMessage appearance="information" testId="lifecycle-terminal"><Text as="p">{t('campaigns.lifecycle.terminal', { state: t(`campaigns.states.${status}`) })}</Text></SectionMessage>}
+      <Text size="large" as="p">{t('campaigns.lifecycle.lead')}</Text>
+      {actions.length === 0 && <SectionMessage appearance="information" testId="lifecycle-terminal"><Text size="large" as="p">{t('campaigns.lifecycle.terminal', { state: t(`campaigns.states.${status}`) })}</Text></SectionMessage>}
       {[close, complete, cancel].some((m) => m.isSuccess) && open === null && (
-        <SectionMessage appearance="success" testId="lifecycle-done"><Text as="p">{t('campaigns.lifecycle.done')}</Text></SectionMessage>
+        <SectionMessage appearance="success" testId="lifecycle-done"><Text size="large" as="p">{t('campaigns.lifecycle.done')}</Text></SectionMessage>
       )}
       <Inline space="space.150" shouldWrap>
         {actions.map((a) => (
@@ -60,7 +60,7 @@ export function LifecycleStep({ client, detail, allowed }: {
           </Button>
         ))}
       </Inline>
-      {actions.some((a) => !allowed[a]) && <Text size="small" color="color.text.subtle">{t('campaigns.noPermission')}</Text>}
+      {actions.some((a) => !allowed[a]) && <Text size="large" color="color.text.subtle">{t('campaigns.noPermission')}</Text>}
       <TypedConfirm
         isOpen={open !== null} isPending={mutation.isPending} publicCode={code}
         title={open === null ? '' : t(`campaigns.lifecycle.${KEY[open]}.title`, { code })} body={open === null ? '' : t(`campaigns.lifecycle.${KEY[open]}.body`)}

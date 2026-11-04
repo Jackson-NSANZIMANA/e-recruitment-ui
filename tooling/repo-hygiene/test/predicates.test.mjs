@@ -22,7 +22,13 @@ import {
   findUndersizedTouchTargets,
   isAcceptableTouchTarget,
   stripComments,
+  findUndersizedBodyText,
+  bodyTextSizeOf,
+  isBodyTextExemptPath,
+  TEXT_SIZE_PX,
+  BODY_TEXT_SCAN,
   MIN_TOUCH_TARGET_PX,
+  MIN_BODY_TEXT_PX,
 } from '../lib/predicates.mjs';
 
 describe('MIN_TOUCH_TARGET_PX', () => {
@@ -268,5 +274,112 @@ describe('stripComments', () => {
 
   test('strips html comments (for svg assets)', () => {
     assert.ok(!stripComments('<!-- #ff0000 --><rect/>').includes('#ff0000'));
+  });
+});
+
+describe('MIN_BODY_TEXT_PX', () => {
+  test('is 16 and agrees with the design-system constant', async () => {
+    const { readFileSync } = await import('node:fs');
+    assert.equal(MIN_BODY_TEXT_PX, 16);
+    const a11y = readFileSync(
+      new URL('../../../packages/design-system/src/a11y/index.ts', import.meta.url),
+      'utf8',
+    );
+    // One number, two files, because the predicate file may not import.
+    const declared = /MIN_BODY_TEXT_PX = (\d+)/.exec(a11y);
+    assert.ok(declared, 'design-system must declare MIN_BODY_TEXT_PX');
+    assert.equal(Number(declared[1]), MIN_BODY_TEXT_PX, 'the two floors have drifted apart');
+  });
+
+  test('ADS sizes are 12 / 14 / 16, so only large clears the floor', () => {
+    assert.deepEqual({ ...TEXT_SIZE_PX }, { small: 12, medium: 14, large: 16 });
+    const compliant = Object.entries(TEXT_SIZE_PX)
+      .filter(([, px]) => px >= MIN_BODY_TEXT_PX)
+      .map(([name]) => name);
+    assert.deepEqual(compliant, ['large']);
+  });
+});
+
+describe('bodyTextSizeOf', () => {
+  test('treats a missing size as the 14px medium default', () => {
+    assert.equal(bodyTextSizeOf('color="x"').px, 14);
+  });
+  test('reads single-quoted and double-quoted literals', () => {
+    assert.equal(bodyTextSizeOf("size='small'").px, 12);
+    assert.equal(bodyTextSizeOf('size="large"').px, 16);
+  });
+  test('reports an expression rather than guessing', () => {
+    assert.match(bodyTextSizeOf('size={compact ? "small" : "large"}').expression, /compact/);
+  });
+  test('reports an unknown literal rather than passing it', () => {
+    assert.equal(bodyTextSizeOf('size="xlarge"').literal, 'xlarge');
+  });
+});
+
+describe('findUndersizedBodyText', () => {
+  test('fires on the default, small and medium', () => {
+    const src = '<Text>a</Text>\n<Text size="small">b</Text>\n<Text size="medium">c</Text>';
+    assert.deepEqual(
+      findUndersizedBodyText(src).map((v) => v.line),
+      [1, 2, 3],
+    );
+  });
+
+  test('stays silent on large', () => {
+    assert.equal(findUndersizedBodyText('<Text size="large">ok</Text>').length, 0);
+  });
+
+  test('reads a multi-line opening tag and reports its first line', () => {
+    const src = 'const a = 1;\n<Text\n  size="small"\n  color="color.text"\n>\n  x\n</Text>';
+    assert.deepEqual(findUndersizedBodyText(src), [{ line: 2, size: 'small', px: 12 }]);
+  });
+
+  test('is not fooled by a > inside an attribute expression', () => {
+    const src = '<Text size="small" testId={a > b ? "x" : "y"}>z</Text>';
+    assert.equal(findUndersizedBodyText(src).length, 1);
+  });
+
+  test('ignores Heading, TextArea, Textfield and the closing tag', () => {
+    const src = [
+      '<Heading size="small" as="h2">t</Heading>',
+      '<TextArea size="small" />',
+      '<Textfield size="small" />',
+      '</Text>',
+      '<Text size="large">ok</Text>',
+    ].join('\n');
+    assert.equal(findUndersizedBodyText(src).length, 0);
+  });
+
+  test('ignores a size that only appears in a comment', () => {
+    const src = '{/* <Text size="small">old</Text> */}\n<Text size="large">ok</Text>';
+    assert.equal(findUndersizedBodyText(src).length, 0);
+  });
+
+  test('honours the exemption marker on the tag and on the comment above', () => {
+    const onTag = '<Text size="small" method="x">a</Text> {/* hygiene-allow-small-text: mark */}';
+    assert.equal(findUndersizedBodyText(onTag).length, 0);
+    const above = [
+      '// hygiene-allow-small-text: a mark, not body copy',
+      '<Text size="small">a</Text>',
+    ].join('\n');
+    assert.equal(findUndersizedBodyText(above).length, 0);
+  });
+});
+
+describe('isBodyTextExemptPath', () => {
+  test('exempts the national lockup and the agency logo only', () => {
+    assert.ok(isBodyTextExemptPath('packages/ui/src/national/NationalLockup.tsx'));
+    assert.ok(isBodyTextExemptPath('packages/ui/src/components/AgencyLogo/index.tsx'));
+    assert.ok(!isBodyTextExemptPath('packages/ui/src/charts/MetricCard.tsx'));
+    assert.ok(!isBodyTextExemptPath('apps/officer-console/src/dashboard/panels.tsx'));
+  });
+
+  test('exempt paths are inside the scanned roots, so the exemption is meaningful', () => {
+    for (const path of BODY_TEXT_SCAN.exemptPaths) {
+      assert.ok(
+        BODY_TEXT_SCAN.roots.some((r) => path.startsWith(r + '/')),
+        path + ' is exempt but not scanned - the exemption is dead weight',
+      );
+    }
   });
 });

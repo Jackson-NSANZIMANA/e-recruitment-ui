@@ -16,12 +16,12 @@ export function ForensicsSignal({ row }: { readonly row: AmberRow }): React.Reac
   const { t } = useTranslation('adjudication');
   const band = signalBand(row.forensicsScore);
   if (band === 'UNSCORED') {
-    return <Text as="span" testId="forensics-unscored">{t(holdKindOf(row) === 'DOCUMENT' ? 'adjudication.signal.not_analysed' : 'adjudication.signal.no_document_evidence')}</Text>;
+    return <Text size="large" as="span" testId="forensics-unscored">{t(holdKindOf(row) === 'DOCUMENT' ? 'adjudication.signal.not_analysed' : 'adjudication.signal.no_document_evidence')}</Text>;
   }
   return (
     <Inline space="space.100" testId="forensics-signal">
       <Lozenge appearance={APPEARANCE[band]}>{t(`adjudication.signal.band.${band}`)}</Lozenge>
-      <Text as="span">{activeFlags(row.forensicsFlags).join(', ') || t('adjudication.signal.no_flags')}</Text>
+      <Text size="large" as="span">{activeFlags(row.forensicsFlags).join(', ') || t('adjudication.signal.no_flags')}</Text>
     </Inline>
   );
 }

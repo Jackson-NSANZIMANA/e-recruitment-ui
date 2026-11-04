@@ -232,6 +232,101 @@ const minTouchTarget = {
   },
 };
 
+/**
+ * The 16px body-text floor, on every ADS `<Text>`.
+ *
+ * WHY THIS RULE EXISTS AT ALL. `packages/design-system/src/a11y/index.ts`
+ * declared `MIN_BODY_TEXT_PX = 16` and nothing called it. A 2026-11-04 audit
+ * counted 390 of 393 `<Text>` nodes below the floor. A constant with no caller
+ * is a comment, and a comment does not fail a build.
+ *
+ * WHAT IT DELIBERATELY DOES NOT DO. It does not guess. A `size={expression}`
+ * is reported as `undecidable` (and the rule's option decides whether that is a
+ * violation), because a gate that flags a computed value it cannot read is a
+ * gate people learn to switch off. It also does not fire inside the national
+ * lockup or the agency logo - both are marks whose type is proportional to a
+ * symbol; see BODY_TEXT_SCAN in tooling/repo-hygiene/lib/predicates.mjs.
+ *
+ * @type {import('eslint').Rule.RuleModule}
+ */
+const minBodyText = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description:
+        'ADS Text may not render below the 16px body floor (MIN_BODY_TEXT_PX): mobile browsers zoom on focus and small type disappears in sunlight.',
+    },
+    schema: [
+      {
+        type: 'object',
+        properties: { min: { type: 'number' }, allowUndecidable: { type: 'boolean' } },
+        additionalProperties: false,
+      },
+    ],
+    messages: {
+      tooSmall:
+        'Text size="{{size}}" renders {{px}}px, below the {{min}}px body floor. Use size="large"; if 12px is genuinely required for a mark, add "hygiene-allow-small-text" with the reason.',
+      undecidable:
+        'Text size={...} cannot be checked against the {{min}}px body floor. Inline a literal size so the gate can read it.',
+      unknown:
+        'Text size="{{size}}" is not a size @atlaskit/primitives accepts (small | medium | large).',
+    },
+  },
+  create(context) {
+    const { BODY_TEXT_SCAN, TEXT_SIZE_PX, bodyTextSizeOf } = predicates();
+    const min = context.options?.[0]?.min ?? 16;
+    const allowUndecidable = context.options?.[0]?.allowUndecidable ?? false;
+
+    const filename = String(context.filename ?? '').replace(/\\/g, '/');
+    if (BODY_TEXT_SCAN.exemptPaths.some((prefix) => filename.includes(prefix))) return {};
+
+    const jsxName = (node) => {
+      const n = node.name;
+      if (!n) return null;
+      if (n.type === 'JSXIdentifier') return n.name;
+      if (n.type === 'JSXMemberExpression' && n.property?.name) return n.property.name;
+      return null;
+    };
+
+    return {
+      JSXOpeningElement(node) {
+        if (jsxName(node) !== 'Text') return;
+        const sizeAttr = node.attributes.find(
+          (a) => a.type === 'JSXAttribute' && a.name?.name === 'size',
+        );
+
+        /** Rebuild the attribute as source text so ONE parser serves both consumers. */
+        const attrText = sizeAttr
+          ? context.sourceCode.getText(sizeAttr)
+          : '';
+        const size = bodyTextSizeOf(attrText);
+
+        if ('literal' in size) {
+          context.report({
+            node: sizeAttr ?? node,
+            messageId: 'unknown',
+            data: { size: size.literal },
+          });
+          return;
+        }
+        if ('expression' in size) {
+          if (allowUndecidable) return;
+          context.report({ node: sizeAttr ?? node, messageId: 'undecidable', data: { min: String(min) } });
+          return;
+        }
+        if (size.px < min) {
+          const name = Object.keys(TEXT_SIZE_PX).find((k) => TEXT_SIZE_PX[k] === size.px);
+          context.report({
+            node: sizeAttr ?? node,
+            messageId: 'tooSmall',
+            data: { size: name ?? String(size.px) + 'px', px: String(size.px), min: String(min) },
+          });
+        }
+      },
+    };
+  },
+};
+
 module.exports = {
   meta: { name: 'usrp', version: '1.0.0' },
   rules: {
@@ -239,5 +334,6 @@ module.exports = {
     'no-domain-vocabulary': noDomainVocabulary,
     'no-raw-hex': noRawHex,
     'min-touch-target': minTouchTarget,
+    'min-body-text': minBodyText,
   },
 };

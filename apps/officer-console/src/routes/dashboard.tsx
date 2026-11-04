@@ -113,7 +113,7 @@ function AdministrationDashboard(): React.ReactElement {
       {...(updatedAt > 0 ? { actions: <FreshnessStamp updatedAt={new Date(updatedAt).toISOString()} /> } : {})}
       testId="admin-dashboard"
     >
-      {isError && <SectionMessage appearance="warning" testId="dashboard-partial"><Text as="p">{t("dashboard.panel_error")}</Text></SectionMessage>}
+      {isError && <SectionMessage appearance="warning" testId="dashboard-partial"><Text size="large" as="p">{t("dashboard.panel_error")}</Text></SectionMessage>}
       <AttentionPanel items={items} ready={!isLoading} />
 
       <Box xcss={pageStyles.metrics} testId="dashboard-metrics">

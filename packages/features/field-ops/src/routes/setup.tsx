@@ -132,7 +132,7 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
     return (
       <StationPage title={t('field_ops.setup.title')}>
         <SectionMessage appearance="error" title={t('field_ops.setup.runtime_failed_title')} headingLevel="h2" testId="setup-runtime-failed">
-          <Text as="p">{t('field_ops.setup.runtime_failed_body')}</Text>
+          <Text size="large" as="p">{t('field_ops.setup.runtime_failed_body')}</Text>
         </SectionMessage>
       </StationPage>
     );
@@ -148,13 +148,13 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
             <Heading size="medium" as="h2">{t('field_ops.setup.readiness')}</Heading>
             <Button onClick={() => { void refresh(); }} testId="setup-recheck">{t('field_ops.setup.recheck')}</Button>
           </Inline>
-          {readiness === null ? <Text>{t('field_ops.setup.checking')}</Text> : (
+          {readiness === null ? <Text size="large">{t('field_ops.setup.checking')}</Text> : (
             <Stack space="space.100" testId="readiness-checks">
               {readiness.checks.map((check) => (
                 <Inline key={check.id} space="space.200" alignBlock="center" spread="space-between" testId={`check-${check.id}`}>
-                  <Text>{t(`field_ops.setup.checks.${check.id}`)}</Text>
+                  <Text size="large">{t(`field_ops.setup.checks.${check.id}`)}</Text>
                   <Inline space="space.100" alignBlock="center">
-                    {check.value !== undefined && <Text color="color.text.subtle">{check.value}</Text>}
+                    {check.value !== undefined && <Text size="large" color="color.text.subtle">{check.value}</Text>}
                     <Lozenge appearance={APPEARANCE[check.status]}>{t(`field_ops.setup.status.${check.status}`)}</Lozenge>
                   </Inline>
                 </Inline>
@@ -163,11 +163,11 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
           )}
           {readiness?.blocked === true ? (
             <SectionMessage appearance="error" title={t('field_ops.setup.blocked_title')} headingLevel="h3" testId="setup-blocked">
-              <Text as="p">{t('field_ops.setup.blocked_body')}</Text>
+              <Text size="large" as="p">{t('field_ops.setup.blocked_body')}</Text>
             </SectionMessage>
           ) : readiness !== null ? (
             <SectionMessage appearance="success" title={t('field_ops.setup.ready_title')} headingLevel="h3" testId="setup-ready">
-              <Text as="p">{t('field_ops.setup.ready_body')}</Text>
+              <Text size="large" as="p">{t('field_ops.setup.ready_body')}</Text>
             </SectionMessage>
           ) : null}
         </Stack>
@@ -176,7 +176,7 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
       <Box xcss={tile.box}>
         <Stack space="space.200">
           <Heading size="medium" as="h2">{t('field_ops.setup.venue_title')}</Heading>
-          <Text color="color.text.subtle">{t('field_ops.setup.venue_help')}</Text>
+          <Text size="large" color="color.text.subtle">{t('field_ops.setup.venue_help')}</Text>
           <Stack space="space.100">
             <Label htmlFor={ids.campaign}>{t('field_ops.setup.campaign')}</Label>
             <TextField id={ids.campaign} value={draft.campaign} autoComplete="off" isInvalid={problems.includes('campaign')} onChange={(e) => { setDraft({ ...draft, campaign: e.currentTarget.value }); }} />
@@ -194,12 +194,12 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
           </Stack>
           {venueFailure !== 'none' && (
             <SectionMessage appearance="error" title={t('field_ops.setup.venue_failed_title')} headingLevel="h3" testId="setup-venue-failed">
-              <Text as="p">{venueFailure === 'not_found' ? t('field_ops.setup.venue_not_found') : venueFailure === 'forbidden' ? t('field_ops.setup.venue_forbidden') : venueFailure === 'offline' ? t('field_ops.setup.venue_offline') : t('field_ops.setup.venue_other')}</Text>
+              <Text size="large" as="p">{venueFailure === 'not_found' ? t('field_ops.setup.venue_not_found') : venueFailure === 'forbidden' ? t('field_ops.setup.venue_forbidden') : venueFailure === 'offline' ? t('field_ops.setup.venue_offline') : t('field_ops.setup.venue_other')}</Text>
             </SectionMessage>
           )}
           <Inline space="space.200" alignBlock="center" shouldWrap>
             <LoadingButton appearance="primary" isLoading={busy === 'venue'} onClick={() => { void confirmVenue(); }} testId="setup-confirm-venue">{t('field_ops.setup.confirm_venue')}</LoadingButton>
-            {day !== null && <Text weight="bold" testId="setup-venue-confirmed">{t('field_ops.setup.venue_confirmed', { venue: day.venueName, date: day.examDate })}</Text>}
+            {day !== null && <Text size="large" weight="bold" testId="setup-venue-confirmed">{t('field_ops.setup.venue_confirmed', { venue: day.venueName, date: day.examDate })}</Text>}
           </Inline>
         </Stack>
       </Box>
@@ -207,11 +207,11 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
       <Box xcss={tile.box}>
         <Stack space="space.200">
           <Heading size="medium" as="h2">{t('field_ops.setup.enrol_title')}</Heading>
-          <Text color="color.text.subtle">{t('field_ops.setup.enrol_help')}</Text>
-          {runtime !== null && <Text testId="setup-device-id">{t('field_ops.setup.device_id', { id: runtime.identity.deviceId })}</Text>}
+          <Text size="large" color="color.text.subtle">{t('field_ops.setup.enrol_help')}</Text>
+          {runtime !== null && <Text size="large" testId="setup-device-id">{t('field_ops.setup.device_id', { id: runtime.identity.deviceId })}</Text>}
           {enrolFailure !== 'none' && (
             <SectionMessage appearance="error" title={t('field_ops.setup.enrol_failed_title')} headingLevel="h3" testId="setup-enrol-failed">
-              <Text as="p">{enrolFailure === 'revoked' ? t('field_ops.setup.enrol_revoked') : enrolFailure === 'forbidden' ? t('field_ops.setup.enrol_forbidden') : enrolFailure === 'offline' ? t('field_ops.setup.enrol_offline') : t('field_ops.setup.enrol_other')}</Text>
+              <Text size="large" as="p">{enrolFailure === 'revoked' ? t('field_ops.setup.enrol_revoked') : enrolFailure === 'forbidden' ? t('field_ops.setup.enrol_forbidden') : enrolFailure === 'offline' ? t('field_ops.setup.enrol_offline') : t('field_ops.setup.enrol_other')}</Text>
             </SectionMessage>
           )}
           {enrolled ? (
@@ -219,7 +219,7 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
           ) : canEnrol ? (
             <Inline><LoadingButton appearance="primary" isLoading={busy === 'enrol'} isDisabled={runtime === null} onClick={() => { void enrol(); }} testId="setup-enrol">{t('field_ops.setup.enrol')}</LoadingButton></Inline>
           ) : (
-            <Text color="color.text.subtle">{t('field_ops.setup.enrol_no_permission')}</Text>
+            <Text size="large" color="color.text.subtle">{t('field_ops.setup.enrol_no_permission')}</Text>
           )}
         </Stack>
       </Box>
@@ -227,8 +227,8 @@ export default function SetupPage({ client, defaultTrustAnchor }: SetupPageProps
       <Box xcss={tile.box}>
         <Stack space="space.200">
           <Heading size="medium" as="h2">{t('field_ops.setup.anchor_title')}</Heading>
-          <Text color="color.text.subtle">{t('field_ops.setup.anchor_help')}</Text>
-          <Text testId="setup-anchor-count">{t('field_ops.setup.anchor_count', { count: anchorCount })}</Text>
+          <Text size="large" color="color.text.subtle">{t('field_ops.setup.anchor_help')}</Text>
+          <Text size="large" testId="setup-anchor-count">{t('field_ops.setup.anchor_count', { count: anchorCount })}</Text>
           <Stack space="space.100">
             <Label htmlFor={ids.anchor}>{t('field_ops.setup.anchor_label')}</Label>
             <TextField id={ids.anchor} value={anchorText} autoComplete="off" isInvalid={anchorBad} onChange={(e) => { setAnchorText(e.currentTarget.value); setAnchorBad(false); }} />

@@ -109,7 +109,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
   if (state.status === 'failed') {
     return (
       <StationPage title={t('field_ops.physical.title')}>
-        <SectionMessage appearance="error" title={t('field_ops.setup.runtime_failed_title')} headingLevel="h2"><Text as="p">{t('field_ops.setup.runtime_failed_body')}</Text></SectionMessage>
+        <SectionMessage appearance="error" title={t('field_ops.setup.runtime_failed_title')} headingLevel="h2"><Text size="large" as="p">{t('field_ops.setup.runtime_failed_body')}</Text></SectionMessage>
       </StationPage>
     );
   }
@@ -118,7 +118,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
       <StationPage title={t('field_ops.physical.title')}>
         <SectionMessage appearance="error" title={t('field_ops.physical.blocked_title')} headingLevel="h2" testId="physical-blocked">
           <Stack space="space.200">
-            <Text as="p">{t('field_ops.physical.blocked_body')}</Text>
+            <Text size="large" as="p">{t('field_ops.physical.blocked_body')}</Text>
             <Box><LinkButton appearance="primary" href="/setup">{t('field_ops.physical.open_setup')}</LinkButton></Box>
           </Stack>
         </SectionMessage>
@@ -144,13 +144,13 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
     <StationPage title={t('field_ops.physical.title')} intro={t('field_ops.physical.intro')} testId="physical-page">
       {!online && (
         <SectionMessage appearance="warning" title={t('field_ops.physical.offline_title')} headingLevel="h2" testId="physical-offline">
-          <Text as="p">{t('field_ops.physical.offline_body')}</Text>
+          <Text size="large" as="p">{t('field_ops.physical.offline_body')}</Text>
         </SectionMessage>
       )}
 
       {failed && (
         <SectionMessage appearance="error" title={t('field_ops.physical.device_failed_title')} headingLevel="h2" testId="physical-device-failed">
-          <Text as="p">{t('field_ops.physical.device_failed_body')}</Text>
+          <Text size="large" as="p">{t('field_ops.physical.device_failed_body')}</Text>
         </SectionMessage>
       )}
 
@@ -168,11 +168,11 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
           testId="physical-outcome"
         >
           <Stack space="space.200">
-            {fate === 'ACKNOWLEDGED' || fate === 'RESOLVED' ? <Text as="p">{t('field_ops.physical.acknowledged_body')}</Text> : null}
-            {fate === 'DUPLICATE' ? <Text as="p">{t('field_ops.physical.duplicate_body')}</Text> : null}
-            {fate === 'WAITING' || fate === 'SENDING' ? <Text as="p" testId="physical-paper-prompt">{t('field_ops.physical.paper_prompt')}</Text> : null}
-            {fate === 'REFUSED' ? <Text as="p">{reasonText}</Text> : null}
-            {fate === 'CONFLICT' || fate === 'WITH_SUPERVISOR' ? <Text as="p">{t('field_ops.physical.conflict_body')}</Text> : null}
+            {fate === 'ACKNOWLEDGED' || fate === 'RESOLVED' ? <Text size="large" as="p">{t('field_ops.physical.acknowledged_body')}</Text> : null}
+            {fate === 'DUPLICATE' ? <Text size="large" as="p">{t('field_ops.physical.duplicate_body')}</Text> : null}
+            {fate === 'WAITING' || fate === 'SENDING' ? <Text size="large" as="p" testId="physical-paper-prompt">{t('field_ops.physical.paper_prompt')}</Text> : null}
+            {fate === 'REFUSED' ? <Text size="large" as="p">{reasonText}</Text> : null}
+            {fate === 'CONFLICT' || fate === 'WITH_SUPERVISOR' ? <Text size="large" as="p">{t('field_ops.physical.conflict_body')}</Text> : null}
             <Inline space="space.200" shouldWrap>
               {(fate === 'WAITING') && (
                 <LoadingButton appearance="primary" isLoading={busy} onClick={() => { setBusy(true); void send([current]).catch(() => { setFailed(true); }).finally(() => { setBusy(false); }); }} testId="physical-send-again">{t('field_ops.physical.send_again')}</LoadingButton>
@@ -186,7 +186,7 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
           <TicketInput ticket={ticket} testId="physical-scanner" onTicket={(tk) => { setTicket(tk); }} onClear={() => { setTicket(null); }} />
           {fit !== null && fit !== 'MATCHES' && (
             <SectionMessage appearance="warning" title={t('field_ops.ticket.not_this_venue_title')} headingLevel="h3" testId="ticket-misfit">
-              <Text as="p">{fit === 'OTHER_AGENCY' ? t('field_ops.ticket.other_agency') : fit === 'OTHER_DAY' ? t('field_ops.ticket.other_day') : t('field_ops.ticket.other_venue')}</Text>
+              <Text size="large" as="p">{fit === 'OTHER_AGENCY' ? t('field_ops.ticket.other_agency') : fit === 'OTHER_DAY' ? t('field_ops.ticket.other_day') : t('field_ops.ticket.other_venue')}</Text>
             </SectionMessage>
           )}
           {ticket !== null && (
@@ -223,10 +223,10 @@ export default function PhysicalPage({ client }: { readonly client: ApiClient })
       <Box xcss={box.b}>
         <Stack space="space.150">
           <Heading size="small" as="h2">{t('field_ops.physical.recent')}</Heading>
-          <Text color="color.text.subtle" testId="physical-summary">{t('field_ops.physical.summary', { acknowledged: summary.acknowledged, waiting: summary.waiting })}</Text>
-          {records.length === 0 ? <Text color="color.text.subtle">{t('field_ops.physical.none_yet')}</Text> : records.slice(-5).reverse().map((r) => (
+          <Text size="large" color="color.text.subtle" testId="physical-summary">{t('field_ops.physical.summary', { acknowledged: summary.acknowledged, waiting: summary.waiting })}</Text>
+          {records.length === 0 ? <Text size="large" color="color.text.subtle">{t('field_ops.physical.none_yet')}</Text> : records.slice(-5).reverse().map((r) => (
             <Inline key={r.envelope.recordId} space="space.200" alignBlock="center" spread="space-between">
-              <Text>{t('field_ops.physical.record_line', { n: r.envelope.localSequence, time: r.envelope.capturedAt.slice(11, 16) })}</Text>
+              <Text size="large">{t('field_ops.physical.record_line', { n: r.envelope.localSequence, time: r.envelope.capturedAt.slice(11, 16) })}</Text>
               <RecordFateLozenge state={r.state} />
             </Inline>
           ))}

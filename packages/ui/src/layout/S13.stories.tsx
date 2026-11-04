@@ -39,17 +39,17 @@ export const PageAlignment: Story = {
     <Stack space="space.400">
       <PageShell align="header" title="align=header" description="1280px: the national header's inner edge. The default.">
         <Card title="The default column">
-          <Text as="p">A page column that lines up with the lockup above it, at every viewport width.</Text>
+          <Text size="large" as="p">A page column that lines up with the lockup above it, at every viewport width.</Text>
         </Card>
       </PageShell>
       <PageShell align="standard" title="align=standard" description="1200px: the width six feature slices already use.">
         <Card title="The legacy column" tone="flat">
-          <Text as="p">What already ships. Adopting it changes no existing screen.</Text>
+          <Text size="large" as="p">What already ships. Adopting it changes no existing screen.</Text>
         </Card>
       </PageShell>
       <PageShell align="narrow" title="align=narrow" description="640px: reading width for forms and single-task screens.">
         <Card title="The narrow column" tone="flat">
-          <Text as="p">One task per screen, with a line length a person can actually track.</Text>
+          <Text size="large" as="p">One task per screen, with a line length a person can actually track.</Text>
         </Card>
       </PageShell>
     </Stack>
@@ -62,13 +62,13 @@ export const CardElevation: Story = {
     <PageShell align="narrow" title="Card" description="Raised is the default; flat is opt-in for content already on a card.">
       <Stack space="space.300">
         <Card title="Raised (default)" description="elevation.surface.raised plus a border.">
-          <Text as="p">The unit of layout on every dashboard and queue screen.</Text>
+          <Text size="large" as="p">The unit of layout on every dashboard and queue screen.</Text>
         </Card>
         <Card title="Flat" description="elevation.surface, for a panel inside a raised surface." tone="flat">
-          <Text as="p">Same padding, same named region, one plane lower.</Text>
+          <Text size="large" as="p">Same padding, same named region, one plane lower.</Text>
         </Card>
         <Card title="Selected" description="A brand border on a brand-tinted surface." selected>
-          <Text as="p">Selection survives colour-blindness because the border weight and the surface change together.</Text>
+          <Text size="large" as="p">Selection survives colour-blindness because the border weight and the surface change together.</Text>
         </Card>
       </Stack>
     </PageShell>

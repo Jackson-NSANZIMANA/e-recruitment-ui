@@ -70,6 +70,14 @@ Tokens, icons, components, primitives and accessibility tooling.
 - **No domain vocabulary in the design-system layer.** `Agency`,
   `ApplicationStatus`, `nationalId` and the three agency acronyms are forbidden
   identifiers there, enforced by `check-boundaries.mjs`.
+- **16px minimum body text**, not the ADS 12/14px scale. `size="large"` is the
+  only compliant `<Text>` size: `small` is 12px and `medium` — also what an
+  absent `size` inherits — is 14px. Enforced by `usrp/min-body-text` in the
+  editor and by the same predicate in `check-boundaries.mjs`, so a literal size
+  cannot ship below the floor. The one exemption is the national lockup and the
+  agency logo (`packages/ui/src/national/`,
+  `packages/ui/src/components/AgencyLogo/`), where type is proportional to a
+  mark; a per-line escape is `hygiene-allow-small-text` with a reason.
 
 ### One upstream note worth keeping
 

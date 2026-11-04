@@ -51,7 +51,7 @@ export default function ConflictsPage({ client }: { readonly client: ApiClient }
   if (!allowed) {
     return (
       <StationPage title={t('field_ops.conflicts.title')}>
-        <SectionMessage appearance="warning" title={t('field_ops.conflicts.no_permission_title')} headingLevel="h2" testId="conflicts-no-permission"><Text as="p">{t('field_ops.conflicts.no_permission_body')}</Text></SectionMessage>
+        <SectionMessage appearance="warning" title={t('field_ops.conflicts.no_permission_title')} headingLevel="h2" testId="conflicts-no-permission"><Text size="large" as="p">{t('field_ops.conflicts.no_permission_body')}</Text></SectionMessage>
       </StationPage>
     );
   }
@@ -85,7 +85,7 @@ export default function ConflictsPage({ client }: { readonly client: ApiClient }
   return (
     <StationPage title={t('field_ops.conflicts.title')} intro={t('field_ops.conflicts.intro')} testId="conflicts-page">
       {held.length === 0 ? (
-        <Text color="color.text.subtle" testId="conflicts-none">{t('field_ops.conflicts.none')}</Text>
+        <Text size="large" color="color.text.subtle" testId="conflicts-none">{t('field_ops.conflicts.none')}</Text>
       ) : held.map((record) => {
         const id = record.envelope.recordId;
         const metrics = (record.envelope.payload as Partial<PhysicalPayload> | null)?.metrics;
@@ -99,20 +99,20 @@ export default function ConflictsPage({ client }: { readonly client: ApiClient }
                 <Heading size="small" as="h2">{t('field_ops.conflicts.record', { n: record.envelope.localSequence })}</Heading>
                 <RecordFateLozenge state={record.state} />
               </Inline>
-              <Text color="color.text.subtle">{t('field_ops.conflicts.local_record', { time: record.envelope.capturedAt.slice(0, 16).replace('T', ' ') })}</Text>
+              <Text size="large" color="color.text.subtle">{t('field_ops.conflicts.local_record', { time: record.envelope.capturedAt.slice(0, 16).replace('T', ' ') })}</Text>
               {metrics !== undefined && (
-                <Text testId={`conflict-metrics-${id}`}>{t('field_ops.conflicts.metrics', { height: metrics.heightCm, weight: metrics.weightKg, chest: metrics.chestCm, run: metrics.run3kmTimeSeconds })}</Text>
+                <Text size="large" testId={`conflict-metrics-${id}`}>{t('field_ops.conflicts.metrics', { height: metrics.heightCm, weight: metrics.weightKg, chest: metrics.chestCm, run: metrics.run3kmTimeSeconds })}</Text>
               )}
-              <Text color="color.text.subtle">{t('field_ops.conflicts.server_holds')}</Text>
+              <Text size="large" color="color.text.subtle">{t('field_ops.conflicts.server_holds')}</Text>
               {record.scoreId === undefined ? (
-                <SectionMessage appearance="warning" title={t('field_ops.conflicts.no_score_title')} headingLevel="h3"><Text as="p">{t('field_ops.conflicts.no_score_body')}</Text></SectionMessage>
+                <SectionMessage appearance="warning" title={t('field_ops.conflicts.no_score_title')} headingLevel="h3"><Text size="large" as="p">{t('field_ops.conflicts.no_score_body')}</Text></SectionMessage>
               ) : (
                 <Stack space="space.100">
                   <Label htmlFor={`res-${id}`}>{t('field_ops.conflicts.reason_label')}</Label>
                   <TextField id={`res-${id}`} value={resolution} autoComplete="off" isInvalid={problem} onChange={(e) => { const value = e.currentTarget.value; setReasons((prev) => ({ ...prev, [id]: value })); }} />
                   {problem ? <ErrorMessage>{t('field_ops.conflicts.reason_required', { max: RESOLUTION_MAX_LENGTH })}</ErrorMessage> : <HelperMessage>{t('field_ops.conflicts.reason_help', { max: RESOLUTION_MAX_LENGTH })}</HelperMessage>}
                   {verdict !== undefined && verdict !== 'RESOLVED' && (
-                    <SectionMessage appearance="error" title={t('field_ops.conflicts.failed_title')} headingLevel="h3" testId={`conflict-failed-${id}`}><Text as="p">{t(`field_ops.conflicts.verdict.${verdict}`)}</Text></SectionMessage>
+                    <SectionMessage appearance="error" title={t('field_ops.conflicts.failed_title')} headingLevel="h3" testId={`conflict-failed-${id}`}><Text size="large" as="p">{t(`field_ops.conflicts.verdict.${verdict}`)}</Text></SectionMessage>
                   )}
                   <Box><LoadingButton appearance="primary" isLoading={busy === id} onClick={() => { void resolve(record); }} testId={`conflict-resolve-${id}`}>{t('field_ops.conflicts.resolve')}</LoadingButton></Box>
                 </Stack>

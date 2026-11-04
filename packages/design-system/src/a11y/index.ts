@@ -22,8 +22,14 @@ export const MIN_TOUCH_TARGET_PX = 48;
  * Minimum body text size, in CSS pixels.
  *
  * Below 16px, mobile browsers zoom on focus and small type loses to sunlight
- * glare on a cheap screen. ADS `Text size="medium"` already satisfies this;
- * the constant exists so a test can assert it.
+ * glare on a cheap screen. This used to claim that ADS `Text size="medium"`
+ * satisfied the floor. It does not: `medium` is 14px and the primitives package
+ * only offers 12 / 14 / 16, so **`size="large"` is the only compliant value**
+ * and rendering no size at all inherits the non-compliant 14px default.
+ *
+ * The constant is not left as prose this time. It has a caller at last:
+ * `usrp/min-body-text` (packages/eslint-config) and the same predicate in
+ * tooling/repo-hygiene/lib/predicates.mjs, enforced in the editor and in CI.
  */
 export const MIN_BODY_TEXT_PX = 16;
 

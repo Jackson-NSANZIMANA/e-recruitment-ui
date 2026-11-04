@@ -141,9 +141,9 @@ export function StackedBar({
                         <rect x={0} y={0} width={12} height={12} rx={2} fill={SERIES_FILL[index % SERIES_FILL.length]} />
                       </svg>
                     </Box>
-                    <Text size="medium" color="color.text.subtle">
+                    <Text size="large" color="color.text.subtle">
                       {segment.label}{" "}
-                      <Text as="span" weight="semibold" color="color.text">
+                      <Text size="large" as="span" weight="semibold" color="color.text">
                         {formatCount(segment.value, i18n.language)}
                       </Text>
                     </Text>
@@ -153,9 +153,9 @@ export function StackedBar({
             </Box>
           )}
           {showTotal && (
-            <Text size="medium" color="color.text.subtle">
+            <Text size="large" color="color.text.subtle">
               {t("chart.total")}{" "}
-              <Text as="span" weight="semibold" color="color.text">
+              <Text size="large" as="span" weight="semibold" color="color.text">
                 {formatCount(total, i18n.language)}
               </Text>
             </Text>

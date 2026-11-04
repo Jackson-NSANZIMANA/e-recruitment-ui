@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 
 /** A deliberately small glyph - the exact case this wrapper exists to rescue. */
 function SmallGlyph(): React.ReactElement {
-  return <Text weight="bold">x</Text>;
+  return <Text size="large" weight="bold">x</Text>;
 }
 
 export const WrapsASmallControl: Story = {
@@ -40,7 +40,7 @@ export const TheFloorIsDocumented: Story = {
   name: "Floor is " + String(MIN_TOUCH_TARGET_PX) + "px",
   args: { children: <SmallGlyph /> },
   render: () => (
-    <Text>
+    <Text size="large">
       Interactive targets never go below {MIN_TOUCH_TARGET_PX} CSS pixels. WCAG 2.1 AA asks
       for 44; this service adds 4 for outdoor, one-handed, gloved use.
     </Text>

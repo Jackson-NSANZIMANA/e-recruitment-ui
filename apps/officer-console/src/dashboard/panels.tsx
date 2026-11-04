@@ -62,7 +62,7 @@ function PanelError({ onRetry }: { readonly onRetry: () => void }): React.ReactE
   return (
     <SectionMessage appearance="warning" testId="panel-error">
       <Stack space="space.100">
-        <Text as="p">{t("dashboard.panel_error")}</Text>
+        <Text size="large" as="p">{t("dashboard.panel_error")}</Text>
         <Inline><Button onClick={onRetry}>{t("dashboard.retry")}</Button></Inline>
       </Stack>
     </SectionMessage>
@@ -96,13 +96,13 @@ export function AttentionPanel({ items, ready }: { readonly items: readonly Atte
   return (
     <Panel title={t("dashboard.attention.title")} testId="dashboard-attention">
       {!ready ? <StateBoundary state="loading" /> : items.length === 0 ? (
-        <SectionMessage appearance="success" testId="attention-none"><Text as="p">{t("dashboard.attention.none")}</Text></SectionMessage>
+        <SectionMessage appearance="success" testId="attention-none"><Text size="large" as="p">{t("dashboard.attention.none")}</Text></SectionMessage>
       ) : (
         <Stack space="space.0" testId="attention-list">
           {items.map((i) => (
             <Box key={`${i.kind}-${"publicCode" in i ? i.publicCode : ""}`} xcss={styles.attentionRow} testId={`attention-${i.kind}`}>
               <Inline spread="space-between" alignBlock="center" shouldWrap space="space.200">
-                <Text as="p" weight="medium">{line(i)}</Text>
+                <Text size="large" as="p" weight="medium">{line(i)}</Text>
                 {"href" in i && <RouterLink href={i.href}>{t("dashboard.attention.open")}</RouterLink>}
               </Inline>
             </Box>
@@ -144,10 +144,10 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
       key: c.publicCode,
       testId: `campaign-row-${c.publicCode}`,
       cells: [
-        { key: "campaign", content: <Stack space="space.025"><Text weight="semibold">{c.campaignLabel}</Text><Text size="large" color="color.text.subtle">{c.publicCode}</Text></Stack> },
+        { key: "campaign", content: <Stack space="space.025"><Text size="large" weight="semibold">{c.campaignLabel}</Text><Text size="large" color="color.text.subtle">{c.publicCode}</Text></Stack> },
         { key: "status", content: <StatusBadge status={c.status} /> },
-        { key: "registration", content: <Text>{t("dashboard.campaigns.range", { from: day(c.registrationOpensAt), to: day(c.registrationClosesAt) })}</Text> },
-        { key: "examination", content: <Text>{t("dashboard.campaigns.range", { from: day(c.examinationStartDate), to: day(c.examinationEndDate) })}</Text> },
+        { key: "registration", content: <Text size="large">{t("dashboard.campaigns.range", { from: day(c.registrationOpensAt), to: day(c.registrationClosesAt) })}</Text> },
+        { key: "examination", content: <Text size="large">{t("dashboard.campaigns.range", { from: day(c.examinationStartDate), to: day(c.examinationEndDate) })}</Text> },
         {
           key: "occupancy",
           content: (
@@ -157,7 +157,7 @@ export function CampaignsPanel({ query, rows }: { readonly query: UseQueryResult
             </Stack>
           ),
         },
-        { key: "sessions", content: <Text>{String(c.occupancy.sessionCount)}</Text> },
+        { key: "sessions", content: <Text size="large">{String(c.occupancy.sessionCount)}</Text> },
       ],
     };
   });
@@ -258,8 +258,8 @@ export function StaffPanel({ query }: { readonly query: UseQueryResult<{ readonl
           <Heading size="xsmall" as="h3">{t("dashboard.staff.by_post")}</Heading>
           {s.byPost.map((p) => (
             <Inline key={p.post} spread="space-between" testId={`post-${p.post}`}>
-              <Text>{t(`dashboard.staff.posts.${p.post}`)}</Text>
-              <Text weight="semibold">{String(p.count)}</Text>
+              <Text size="large">{t(`dashboard.staff.posts.${p.post}`)}</Text>
+              <Text size="large" weight="semibold">{String(p.count)}</Text>
             </Inline>
           ))}
         </Stack>
@@ -275,7 +275,7 @@ export function FleetPanel({ query, now }: { readonly query: UseQueryResult<{ re
   if (query.isError) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><PanelError onRetry={() => void query.refetch()} /></Panel>;
   if (query.data === undefined) return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><StateBoundary state="loading" /></Panel>;
   if (query.data.devices.length === 0) {
-    return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><Text as="p" testId="fleet-empty">{t("dashboard.fleet.empty")}</Text></Panel>;
+    return <Panel title={t("dashboard.fleet.title")} testId="dashboard-fleet"><Text size="large" as="p" testId="fleet-empty">{t("dashboard.fleet.empty")}</Text></Panel>;
   }
   const f = fleetSummary(query.data.devices, now);
   return (

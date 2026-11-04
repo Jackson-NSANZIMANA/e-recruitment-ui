@@ -209,7 +209,7 @@ export function QrScanner({
               {cameraError}
             </SectionMessage>
           )}
-          <Text id={manualDescriptionId} size="small" color="color.text.subtle">
+          <Text id={manualDescriptionId} size="large" color="color.text.subtle">
             {t("scan.fallback_placeholder")}
           </Text>
           <TextField

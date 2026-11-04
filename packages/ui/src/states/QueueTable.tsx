@@ -72,15 +72,15 @@ export function QueueTable({ caption, rows, now = new Date(), thresholds, onOpen
             <Inline space="space.100" alignBlock="center">
               {onOpen !== undefined
                 ? <Button appearance="subtle" spacing="compact" onClick={() => onOpen(r.id)}>{r.primary}</Button>
-                : <Text weight="medium">{r.primary}</Text>}
-              {r.secondary !== undefined && <Text size="small" color="color.text.subtle">{r.secondary}</Text>}
+                : <Text size="large" weight="medium">{r.primary}</Text>}
+              {r.secondary !== undefined && <Text size="large" color="color.text.subtle">{r.secondary}</Text>}
               {r.detail}
             </Inline>
           ),
         },
         { key: "status", content: <Lozenge>{r.status}</Lozenge> },
         { key: "age", content: <Lozenge appearance={AGE_APPEARANCE[age.bucket]}>{age.unknown ? "—" : t(`ui.age.${age.unit}`, { count: age.value })}</Lozenge> },
-        { key: "last", content: r.lastAction ? <Text size="small">{`${r.lastAction.label} · ${agoLabel(r.lastAction.at)}`}</Text> : <Text size="small" color="color.text.subtle">—</Text> },
+        { key: "last", content: r.lastAction ? <Text size="large">{`${r.lastAction.label} · ${agoLabel(r.lastAction.at)}`}</Text> : <Text size="large" color="color.text.subtle">—</Text> },
         {
           key: "actions",
           content: (

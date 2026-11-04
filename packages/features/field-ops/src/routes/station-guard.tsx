@@ -29,7 +29,7 @@ export function StationGuard({ path, children }: { readonly path: string; readon
     <Box xcss={styles.page}>
       <SectionMessage appearance="warning" title={t("field_station.station_unavailable_title")} headingLevel="h1" testId="station-unavailable">
         <Stack space="space.200">
-          <Text as="p">{t("field_station.station_unavailable_body")}</Text>
+          <Text size="large" as="p">{t("field_station.station_unavailable_body")}</Text>
           <Box>
             <LinkButton appearance="primary" href="/stations">{t("field_station.back_to_stations")}</LinkButton>
           </Box>

@@ -136,6 +136,13 @@ const base = [
       // Accessibility floor, applied to every package rather than only the
       // design system: a 40px target in a feature slice is just as unusable.
       'usrp/min-touch-target': 'error',
+
+      // The other floor. MIN_BODY_TEXT_PX declared 16px and had no caller, so
+      // 390 of 393 <Text> nodes rendered below it. A computed size is NOT
+      // tolerated: the one conditional size left in the repo is in the national
+      // lockup, which is exempt by path. Anywhere else a runtime size is a
+      // decision the gate cannot see, so it is an error with a fix (inline it).
+      'usrp/min-body-text': 'error',
     },
   },
 ];

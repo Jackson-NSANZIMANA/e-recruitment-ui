@@ -60,7 +60,7 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
   const matrix = useMemo(() => (invitation === undefined ? null : qrMatrix(invitation.qrPayload)), [invitation]);
 
   if (invitation === undefined || matrix === null) {
-    return <SectionMessage appearance="error" title={t("exam_qr.unavailable_title")} headingLevel="h2"><Text>{t("exam_qr.unavailable_body")}</Text></SectionMessage>;
+    return <SectionMessage appearance="error" title={t("exam_qr.unavailable_title")} headingLevel="h2"><Text size="large">{t("exam_qr.unavailable_body")}</Text></SectionMessage>;
   }
   const modules = matrix.length + QUIET_ZONE * 2;
   // A pass issued by a sandbox build is practice whatever the campaign is called (ADR-FE-019).
@@ -94,11 +94,11 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
     <Stack space="space.300">
       {rehearsal && (
         <SectionMessage appearance="warning" title={t("rehearsal.pass_title")} headingLevel="h2">
-          <Text>{t("rehearsal.pass_body")}</Text>
+          <Text size="large">{t("rehearsal.pass_body")}</Text>
         </SectionMessage>
       )}
       <SectionMessage appearance="success" title={t("exam_qr.ready_title")} headingLevel="h2">
-        <Text>{t("exam_qr.ready_body")}</Text>
+        <Text size="large">{t("exam_qr.ready_body")}</Text>
       </SectionMessage>
       {/* The pass is an official document (ADR-FE-020): national header, seeded
           guilloche, watermark, serial and a check-digit verification line.
@@ -123,20 +123,20 @@ function ReadyTicket({ view }: { readonly view: ExamInvitationView }): React.Rea
           </svg>
         </Box>
         <Stack space="space.100">
-          {details.map((line) => <Text key={line}>{line}</Text>)}
-          <Text size="small" color="color.text.subtle">
+          {details.map((line) => <Text size="large" key={line}>{line}</Text>)}
+          <Text size="large" color="color.text.subtle">
             {t("exam_qr.valid_until")}: {new Date(invitation.validUntil).toLocaleString()}
           </Text>
         </Stack>
       </OfficialDocument>
-      {failed && <SectionMessage appearance="warning"><Text>{t("exam_qr.download_failed")}</Text></SectionMessage>}
+      {failed && <SectionMessage appearance="warning"><Text size="large">{t("exam_qr.download_failed")}</Text></SectionMessage>}
       <Inline space="space.200">
         <Button appearance="primary" isDisabled={downloading} onClick={() => { void download(); }}>
           {downloading ? t("exam_qr.downloading") : t("exam_qr.download")}
         </Button>
         <Button onClick={() => window.print()}>{t("exam_qr.print")}</Button>
       </Inline>
-      <Text size="small" color="color.text.subtle">{t("exam_qr.keep_private")}</Text>
+      <Text size="large" color="color.text.subtle">{t("exam_qr.keep_private")}</Text>
     </Stack>
   );
 }
@@ -149,12 +149,12 @@ export default function ExamQrPage(): React.ReactElement {
 
   let body: React.ReactElement;
   if (applicationId === null) {
-    body = <SectionMessage appearance="error"><Text>{t("exam_qr.not_found")}</Text></SectionMessage>;
+    body = <SectionMessage appearance="error"><Text size="large">{t("exam_qr.not_found")}</Text></SectionMessage>;
   } else if (query.isPending) {
     body = <Spinner label={t("a11y.loading")} />;
   } else if (query.isError) {
     const notFound = query.error instanceof ApiError && query.error.normalised.kind === "notFound";
-    body = <SectionMessage appearance={notFound ? "error" : "warning"}><Text>{notFound ? t("exam_qr.not_found") : t("exam_qr.load_failed")}</Text></SectionMessage>;
+    body = <SectionMessage appearance={notFound ? "error" : "warning"}><Text size="large">{notFound ? t("exam_qr.not_found") : t("exam_qr.load_failed")}</Text></SectionMessage>;
   } else {
     const view = query.data;
     body =
@@ -172,7 +172,7 @@ export default function ExamQrPage(): React.ReactElement {
           headingLevel="h2"
         >
           <Stack space="space.100">
-            <Text>
+            <Text size="large">
               {view.state === "ADMITTED" && view.admission !== undefined
                 ? t("exam_qr.states.ADMITTED.body", {
                     venue: view.admission.venueName,
@@ -180,7 +180,7 @@ export default function ExamQrPage(): React.ReactElement {
                   })
                 : t(`exam_qr.states.${view.state}.body`)}
             </Text>
-            <Text size="small" color="color.text.subtle">{t("exam_qr.processing_code")}: {view.processingCode}</Text>
+            <Text size="large" color="color.text.subtle">{t("exam_qr.processing_code")}: {view.processingCode}</Text>
           </Stack>
         </SectionMessage>
       );
@@ -191,7 +191,7 @@ export default function ExamQrPage(): React.ReactElement {
       <Stack space="space.400">
         <Heading size="large" as="h1">{t("exam_qr.title")}</Heading>
         {body}
-        <Text><Link to="/status">{t("apply.view_applications")}</Link></Text>
+        <Text size="large"><Link to="/status">{t("apply.view_applications")}</Link></Text>
       </Stack>
     </Box>
   );

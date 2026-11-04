@@ -55,10 +55,10 @@ export function Field({ label, hint, error, children, testId, grow = true }: {
   return (
     <Box xcss={grow ? styles['field'] : styles['narrow']} {...(testId === undefined ? {} : { testId })}>
       <Stack space="space.050">
-        <Text size="small" weight="medium" as="span">{label}</Text>
+        <Text size="large" weight="medium" as="span">{label}</Text>
         {children}
-        {hint !== undefined && error === undefined && <Text size="small" color="color.text.subtle">{hint}</Text>}
-        {error !== undefined && <Text size="small" color="color.text.danger" {...(testId === undefined ? {} : { testId: `${testId}-error` })}>{error}</Text>}
+        {hint !== undefined && error === undefined && <Text size="large" color="color.text.subtle">{hint}</Text>}
+        {error !== undefined && <Text size="large" color="color.text.danger" {...(testId === undefined ? {} : { testId: `${testId}-error` })}>{error}</Text>}
       </Stack>
     </Box>
   );
@@ -133,8 +133,8 @@ export function Refusal({ error, onStep, testId = 'campaign-refusal' }: { readon
   return (
     <SectionMessage appearance="error" testId={testId}>
       <Stack space="space.100">
-        <Text as="p">{text}</Text>
-        {code !== null && <Text size="small" color="color.text.subtle">{code}</Text>}
+        <Text size="large" as="p">{text}</Text>
+        {code !== null && <Text size="large" color="color.text.subtle">{code}</Text>}
         {step !== null && onStep !== undefined && (
           <Inline><Button onClick={() => onStep(step)}>{t('campaigns.refusals.goToStep', { step: t(`campaigns.steps.${step}`) })}</Button></Inline>
         )}

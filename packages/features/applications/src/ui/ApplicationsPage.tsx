@@ -106,7 +106,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
           <Inline space="space.200" shouldWrap alignBlock="end">
             <Box xcss={styles.field}>
               <Stack space="space.050">
-                <Text size="small" weight="medium" as="span">{t('applications.filters.preset')}</Text>
+                <Text size="large" weight="medium" as="span">{t('applications.filters.preset')}</Text>
                 <Select
                   inputId="applications-preset"
                   aria-label={t('applications.filters.preset')}
@@ -119,7 +119,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
             {(['category', 'campaign', 'district'] as const).map((k) => (
               <Box xcss={styles.field} key={k}>
                 <Stack space="space.050">
-                  <Text size="small" weight="medium" as="span">{t(`applications.filters.${k}`)}</Text>
+                  <Text size="large" weight="medium" as="span">{t(`applications.filters.${k}`)}</Text>
                   <TextField
                     name={k}
                     aria-label={t(`applications.filters.${k}`)}
@@ -135,7 +135,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
 
         {badFilter && (
           <SectionMessage appearance="warning" testId="filter-invalid" title={t('applications.filters.invalidTitle')} headingLevel="h2">
-            <Text as="p">{t('applications.filters.invalidBody')}</Text>
+            <Text size="large" as="p">{t('applications.filters.invalidBody')}</Text>
           </SectionMessage>
         )}
         <StateBoundary
@@ -144,7 +144,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
           onClearFilters={() => { setDraft(EMPTY_FILTERS); apply(EMPTY_FILTERS); }}
         >
           <Stack space="space.150">
-            <Text color="color.text.subtle" testId="applications-total">{t('applications.list.total', { shown: pages.length, total: query.data?.total ?? pages.length })}</Text>
+            <Text size="large" color="color.text.subtle" testId="applications-total">{t('applications.list.total', { shown: pages.length, total: query.data?.total ?? pages.length })}</Text>
             <QueueTable
               caption={t('applications.list.title')}
               rows={rows}
@@ -156,7 +156,7 @@ export function ApplicationsPage({ client, agency }: ApplicationsPageProps): Rea
             {nextCursor !== null && (
               <Inline space="space.100" alignBlock="center">
                 <Button appearance="default" isDisabled={moreBusy} onClick={() => void loadMore()}>{t('applications.list.more')}</Button>
-                {moreFailed && <Text color="color.text.danger">{t('applications.list.moreFailed')}</Text>}
+                {moreFailed && <Text size="large" color="color.text.danger">{t('applications.list.moreFailed')}</Text>}
               </Inline>
             )}
           </Stack>

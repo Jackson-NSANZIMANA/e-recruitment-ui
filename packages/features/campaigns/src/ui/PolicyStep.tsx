@@ -48,7 +48,7 @@ function CategoryCard({ category, value, onChange, t }: { readonly category: str
       <Stack space="space.150">
         <Inline spread="space-between" alignBlock="center" shouldWrap>
           <Heading size="small" as="h3">{t(`campaigns.categories.${category}`)}</Heading>
-          <Text size="small" color={value.confirmed ? 'color.text.success' : 'color.text.warning'}>{t(value.confirmed ? 'campaigns.policy.confirmed' : 'campaigns.policy.suggestion')}</Text>
+          <Text size="large" color={value.confirmed ? 'color.text.success' : 'color.text.warning'}>{t(value.confirmed ? 'campaigns.policy.confirmed' : 'campaigns.policy.suggestion')}</Text>
         </Inline>
         <Inline space="space.200" shouldWrap>
           {num('minimumAge')}{num('maximumAge')}
@@ -109,20 +109,20 @@ export function PolicyStep({ client, detail, canWrite, onStep }: { readonly clie
   return (
     <Stack space="space.200">
       <Heading size="medium" as="h2">{t('campaigns.policy.title')}</Heading>
-      <Text as="p">{t('campaigns.policy.lead')}</Text>
+      <Text size="large" as="p">{t('campaigns.policy.lead')}</Text>
       {p !== null ? (
         <SectionMessage appearance="information" title={t('campaigns.policy.current', { version: p.versionNumber })} testId="policy-current" headingLevel="h3">
           <Stack space="space.050">
-            <Text size="small">{t('campaigns.policy.legalBasis')}: {p.legalBasisCode}</Text>
-            <Text size="small">{t('campaigns.policy.hash')}:</Text>
-            <Wrap><Text size="small" testId="policy-hash">{p.policyHash}</Text></Wrap>
+            <Text size="large">{t('campaigns.policy.legalBasis')}: {p.legalBasisCode}</Text>
+            <Text size="large">{t('campaigns.policy.hash')}:</Text>
+            <Wrap><Text size="large" testId="policy-hash">{p.policyHash}</Text></Wrap>
           </Stack>
         </SectionMessage>
-      ) : <SectionMessage appearance="warning" testId="policy-none"><Text as="p">{t('campaigns.policy.none')}</Text></SectionMessage>}
-      {!editable && <Text as="p" color="color.text.subtle">{t(detail.status === 'DRAFT' ? 'campaigns.noPermission' : 'campaigns.frozen')}</Text>}
+      ) : <SectionMessage appearance="warning" testId="policy-none"><Text size="large" as="p">{t('campaigns.policy.none')}</Text></SectionMessage>}
+      {!editable && <Text size="large" as="p" color="color.text.subtle">{t(detail.status === 'DRAFT' ? 'campaigns.noPermission' : 'campaigns.frozen')}</Text>}
       {editable && (
         <>
-          <SectionMessage appearance="warning" testId="policy-suggestion-notice"><Text as="p">{t('campaigns.policy.suggestionNotice')}</Text></SectionMessage>
+          <SectionMessage appearance="warning" testId="policy-suggestion-notice"><Text size="large" as="p">{t('campaigns.policy.suggestionNotice')}</Text></SectionMessage>
           <Panel>
             <Stack space="space.150">
               <Heading size="small" as="h3">{t('campaigns.policy.legalBasis')}</Heading>
@@ -143,19 +143,19 @@ export function PolicyStep({ client, detail, canWrite, onStep }: { readonly clie
           <Panel testId="policy-diff">
             <Stack space="space.100">
               <Heading size="small" as="h3">{t('campaigns.policy.diffTitle')}</Heading>
-              <Text size="small" color="color.text.subtle">{t(previous === null ? 'campaigns.policy.diffFirst' : 'campaigns.policy.diffBasis')}</Text>
-              {cmd === null ? <Text size="small">{t('campaigns.policy.incomplete', { count: issues.length })}</Text>
-                : changes.length === 0 ? <Text size="small">{t('campaigns.policy.noChanges')}</Text>
-                : changes.map((c) => <Text size="small" key={c.path}>{c.path}: {c.before ?? '—'} → {c.after ?? '—'}</Text>)}
+              <Text size="large" color="color.text.subtle">{t(previous === null ? 'campaigns.policy.diffFirst' : 'campaigns.policy.diffBasis')}</Text>
+              {cmd === null ? <Text size="large">{t('campaigns.policy.incomplete', { count: issues.length })}</Text>
+                : changes.length === 0 ? <Text size="large">{t('campaigns.policy.noChanges')}</Text>
+                : changes.map((c) => <Text size="large" key={c.path}>{c.path}: {c.before ?? '—'} → {c.after ?? '—'}</Text>)}
             </Stack>
           </Panel>
           {create.isError && <Refusal error={create.error} onStep={onStep} />}
           {done !== undefined && (
             <SectionMessage appearance="success" title={t('campaigns.policy.created', { version: done.policyVersion })} testId="policy-created" headingLevel="h3">
               <Stack space="space.050">
-                <Wrap><Text size="small" testId="policy-created-hash">{done.policyHash}</Text></Wrap>
-                {create.data?.replayed === true && <Text size="small">{t('campaigns.replayed')}</Text>}
-                {checked !== null && checked.version === done.policyVersion && <Text size="small" testId="policy-local-check">{checked.digest === null ? t('campaigns.policy.localUnavailable') : checked.digest === done.policyHash ? t('campaigns.policy.localMatch') : t('campaigns.policy.localMismatch')}</Text>}
+                <Wrap><Text size="large" testId="policy-created-hash">{done.policyHash}</Text></Wrap>
+                {create.data?.replayed === true && <Text size="large">{t('campaigns.replayed')}</Text>}
+                {checked !== null && checked.version === done.policyVersion && <Text size="large" testId="policy-local-check">{checked.digest === null ? t('campaigns.policy.localUnavailable') : checked.digest === done.policyHash ? t('campaigns.policy.localMatch') : t('campaigns.policy.localMismatch')}</Text>}
               </Stack>
             </SectionMessage>
           )}

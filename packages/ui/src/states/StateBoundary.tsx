@@ -76,7 +76,7 @@ export function StateBoundary({ state, children, onRetry, onClearFilters, copy, 
       <Stack space="space.0">
         <Box xcss={styles.banner} testId={id}>
           <SectionMessage appearance={BANNER_APPEARANCE[state]} title={title} headingLevel="h2">
-            <Text as="p">{body}</Text>
+            <Text size="large" as="p">{body}</Text>
           </SectionMessage>
         </Box>
         {children}
@@ -88,8 +88,8 @@ export function StateBoundary({ state, children, onRetry, onClearFilters, copy, 
       <Box testId={id}>
         <SectionMessage appearance={state === "conflict" ? "warning" : "error"} title={title} headingLevel="h2">
           <Stack space="space.150">
-            <Text as="p">{body}</Text>
-            {detail !== undefined && <Text as="p" weight="medium">{detail}</Text>}
+            <Text size="large" as="p">{body}</Text>
+            {detail !== undefined && <Text size="large" as="p" weight="medium">{detail}</Text>}
             {onRetry !== undefined && (
               <Inline><Button appearance="default" onClick={onRetry}>{t("ui.state.retry")}</Button></Inline>
             )}

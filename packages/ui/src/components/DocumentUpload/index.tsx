@@ -206,7 +206,7 @@ export function DocumentUpload({
         onKeyDown={handleKeyDown}
       >
         <Stack space="space.150" alignInline="center">
-          <Text color="color.text.subtle">
+          <Text size="large" color="color.text.subtle">
             {isDragOver ? t("upload.drag_active") : t("upload.drop_hint")}
           </Text>
           <Button appearance="default" onClick={handleClick} tabIndex={-1}>
@@ -226,8 +226,8 @@ export function DocumentUpload({
             >
               <Inline space="space.200" alignBlock="center" spread="space-between">
                 <Stack space="space.025">
-                  <Text>{file.name}</Text>
-                  <Text size="small" color="color.text.subtlest">
+                  <Text size="large">{file.name}</Text>
+                  <Text size="large" color="color.text.subtlest">
                     {formatBytes(file.size)}
                   </Text>
                 </Stack>

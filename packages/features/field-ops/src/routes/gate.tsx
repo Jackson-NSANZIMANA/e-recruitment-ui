@@ -105,7 +105,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
         <Stack space="space.400">
           <Heading size="large" as="h1">{t("gate.title")}</Heading>
           <SectionMessage appearance="warning" title={t("gate.no_permission_title")} headingLevel="h2">
-            <Text>{t("gate.no_permission_body")}</Text>
+            <Text size="large">{t("gate.no_permission_body")}</Text>
           </SectionMessage>
         </Stack>
       </Box>
@@ -118,7 +118,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
     <Box xcss={styles.page}>
       <Stack space="space.400">
         <Heading size="large" as="h1">{t("gate.title")}</Heading>
-        <Text color="color.text.subtle">{t("gate.intro")}</Text>
+        <Text size="large" color="color.text.subtle">{t("gate.intro")}</Text>
 
         {editingVenue ? (
           <Stack space="space.100">
@@ -143,7 +143,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
           </Stack>
         ) : (
           <Inline space="space.200" alignBlock="center" shouldWrap>
-            <Text weight="bold">{t("gate.venue_current", { venue })}</Text>
+            <Text size="large" weight="bold">{t("gate.venue_current", { venue })}</Text>
             <Button appearance="subtle" onClick={() => { setVenueDraft(venue); setEditingVenue(true); }}>
               {t("gate.venue_change")}
             </Button>
@@ -153,7 +153,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
         {!editingVenue && message !== null && (
           <SectionMessage appearance={message.appearance} title={t(message.titleKey)} headingLevel="h2" testId="gate-outcome">
             <Stack space="space.200">
-              <Text>{t(message.bodyKey, message.values)}</Text>
+              <Text size="large">{t(message.bodyKey, message.values)}</Text>
               <Inline>
                 <Button appearance="primary" onClick={next} autoFocus>{t("gate.next")}</Button>
               </Inline>
@@ -165,7 +165,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
           <Stack space="space.300">
             {admit.isError && (
               <SectionMessage appearance="error" title={t("gate.failed_title")} headingLevel="h2">
-                <Text>{t("gate.failed_body")}</Text>
+                <Text size="large">{t("gate.failed_body")}</Text>
               </SectionMessage>
             )}
 
@@ -189,7 +189,7 @@ export default function GatePage({ client }: GatePageProps): React.ReactElement 
                 </>
               ) : (
                 <Inline space="space.200" alignBlock="center">
-                  <Text weight="bold" testId="gate-qr-captured">{t("gate.qr_captured")}</Text>
+                  <Text size="large" weight="bold" testId="gate-qr-captured">{t("gate.qr_captured")}</Text>
                   <Button appearance="subtle" onClick={() => { setQr(""); }}>{t("gate.qr_rescan")}</Button>
                 </Inline>
               )}

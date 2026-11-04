@@ -73,7 +73,7 @@ export function OfflineIndicator({
       <Inline space="space.100" alignBlock="center">
         <span aria-hidden="true">{status === "offline" ? "⚠️" : "🔄"}</span>
         <Text
-          size="small"
+          size="large"
           weight="medium"
           color={
             status === "offline"

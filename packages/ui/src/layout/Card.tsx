@@ -116,7 +116,7 @@ export function Card({
                 </Heading>
               )}
               {description !== undefined && (
-                <Text as="p" size="medium" color="color.text.subtle">{description}</Text>
+                <Text as="p" size="large" color="color.text.subtle">{description}</Text>
               )}
             </Stack>
           </Box>

@@ -19,7 +19,7 @@ function AllStates(): React.ReactElement {
     <Stack space="space.300">
       {UI_STATE_KINDS.map((s: UiStateKind) => (
         <StateBoundary key={s} state={s} onRetry={() => undefined} onClearFilters={() => undefined} {...(s === "conflict" ? { detail: "RNP" } : {})} testId={`story-${s}`}>
-          <Text>Ready content</Text>
+          <Text size="large">Ready content</Text>
         </StateBoundary>
       ))}
     </Stack>
