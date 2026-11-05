@@ -45,6 +45,11 @@ function RefusalMessage({ error, t }: { readonly error: unknown; readonly t: T }
   const o = outcomeOf(error);
   if (o.kind === 'conflict') {
     const holder = lockedBy(o.data);
+    // Acceptance waits for an open vetting hold (e.g. a certificate whose content an officer has
+    // not read yet, when the policy let the exam go ahead): say where to decide it.
+    if (o.outcome === 'ADJUDICATION_LANE_REQUIRED') {
+      return <SectionMessage appearance="warning" title={t('applications.errors.vettingHoldOpenTitle')} headingLevel="h3"><Text size="large" as="p">{t('applications.errors.vettingHoldOpen')}</Text></SectionMessage>;
+    }
     if (o.outcome === 'CROSS_AGENCY_LOCKED' || o.outcome === 'CROSS_AGENCY_ACCEPT_LOCK') {
       return <SectionMessage appearance="warning" title={t('applications.errors.crossAgencyLockedTitle')} headingLevel="h3"><Text size="large" as="p">{holder === null ? t('applications.errors.crossAgencyLocked') : t('applications.errors.crossAgencyLockedBy', { agency: holder })}</Text></SectionMessage>;
     }

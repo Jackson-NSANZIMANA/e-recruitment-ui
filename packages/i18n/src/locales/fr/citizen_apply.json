@@ -31,10 +31,10 @@
     },
     "clearance": {
       "field_label": "Numéro de demande de votre casier judiciaire",
-      "hint": "Demandez le certificat sur IremboGov, puis saisissez ici son numéro de demande : une lettre, 12 chiffres et 4 lettres.",
+      "hint": "Demandez le certificat sur IremboGov, puis saisissez ici son numéro de demande : une lettre, 12 chiffres, puis 4 lettres ou chiffres.",
       "submit": "Envoyer le numéro",
       "sending": "Envoi en cours",
-      "shape": "Ce numéro n’a pas le bon format : une lettre, 12 chiffres et 4 lettres.",
+      "shape": "Ce numéro n’a pas le bon format : une lettre, 12 chiffres, puis 4 lettres ou chiffres.",
       "sent": "Numéro reçu. Nous le vérifions.",
       "closed": "Ce dossier est clos : un numéro ne peut plus être ajouté.",
       "failed": "Nous n’avons pas pu envoyer le numéro. Réessayez.",

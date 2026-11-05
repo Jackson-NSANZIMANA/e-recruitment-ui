@@ -31,10 +31,10 @@
     },
     "clearance": {
       "field_label": "Numero y’ubusabe bw’icyemezo cy’uko utigeze uhamwa n’icyaha",
-      "hint": "Saba icyo cyemezo kuri IremboGov, hanyuma wandike hano numero y’ubusabe bwacyo: inyuguti imwe, imibare 12 n’inyuguti 4.",
+      "hint": "Saba icyo cyemezo kuri IremboGov, hanyuma wandike hano numero y’ubusabe bwacyo: inyuguti imwe, imibare 12, hanyuma inyuguti cyangwa imibare 4.",
       "submit": "Ohereza numero",
       "sending": "Kirimo koherezwa",
-      "shape": "Iyi numero ntabwo iri mu buryo bukwiye: inyuguti imwe, imibare 12 n’inyuguti 4.",
+      "shape": "Iyi numero ntabwo iri mu buryo bukwiye: inyuguti imwe, imibare 12, hanyuma inyuguti cyangwa imibare 4.",
       "sent": "Numero yakiriwe. Turimo kuyigenzura.",
       "closed": "Ubu busabe bwarafunzwe, bityo ntushobora kongeraho numero.",
       "failed": "Ntitwabashije kohereza numero. Ongera ugerageze.",

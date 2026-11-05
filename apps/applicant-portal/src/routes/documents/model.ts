@@ -3,13 +3,13 @@ import type { ClearanceItem, ClearanceState, DocumentChecklist } from "@usrp/api
 
 type Item = DocumentChecklist["items"][number];
 
-/** A letter, 12 digits and 4 letters; spaces and hyphens are ignored (the edge's own rule). */
+/** A letter, 12 digits and 4 letters or digits; spaces and hyphens are ignored (the edge's own rule). */
 export function normaliseClearanceNumber(raw: string): string {
   return raw.replace(/[\s-]/g, "").toUpperCase();
 }
 
 export function isClearanceNumberShape(raw: string): boolean {
-  return /^[A-Z]\d{12}[A-Z]{4}$/.test(normaliseClearanceNumber(raw));
+  return /^[A-Z]\d{12}[A-Z0-9]{4}$/.test(normaliseClearanceNumber(raw));
 }
 
 /** The number field is shown when a number is wanted, or when the last one needs correcting. */
