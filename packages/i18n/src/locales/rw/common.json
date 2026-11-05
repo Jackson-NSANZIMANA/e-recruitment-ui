@@ -10,7 +10,8 @@
     "campaigns": "Ubukangurambaga",
     "queues": "Imirongo y'akazi",
     "erasure": "Ibyifuzo byo gusiba",
-    "staff": "Abakozi"
+    "staff": "Abakozi",
+    "analytics": "Isesengura"
   },
   "auth": {
     "send_code": "Ohereza kode",
@@ -104,7 +105,10 @@
         "EXAMINATION_ACTIVE": "Ibizamini birakomeje",
         "COMPLETED": "Byarangiye",
         "CANCELLED": "Byahagaritswe"
-      }
+      },
+      "blank_title": "Nta bukangurambaga burahari",
+      "blank_body": "Ubukangurambaga bufungura kwiyandikisha ku basaba kandi bugategura ibizamini byabo. Tangira ukora ubwa mbere.",
+      "blank_action": "Kora ubukangurambaga bushya"
     },
     "pipeline": {
       "title": "Ubusabe hakurikijwe icyiciro",
@@ -116,7 +120,8 @@
         "medical": "Isuzuma ry'ubuzima n'icyemezo cya nyuma",
         "accepted": "Bwemewe",
         "closed": "Bwanzwe cyangwa bwakuweho"
-      }
+      },
+      "total": "Dosiye {{count}} muri rejisitiri"
     },
     "staff": {
       "title": "Abakozi",
@@ -165,6 +170,44 @@
     "series": {
       "day_short": "{{day}} {{month}}",
       "arrivals_caption": "Abinjiye ku munsi, iminsi {{days}} ishize"
+    },
+    "charts": {
+      "arrivals_title": "Umurongo w'isuzuma",
+      "arrivals_empty": "Nta dosiye yageze mu minsi {{days}} ishize.",
+      "arrivals_unit": "zigezeyo",
+      "capacity_title": "Ubushobozi bwo kwiyandikisha",
+      "capacity_lead": "Abiyandikishije ugereranyije n'ubushobozi, ku bikorwa bifite imbibi.",
+      "capacity_empty": "Nta gikorwa gifunguye gifite imbibi z'ubushobozi."
+    },
+    "filters": {
+      "campaign": "Ubukangurambaga",
+      "all": "Ubukangurambaga bwose",
+      "period": "Igihe",
+      "days7": "Iminsi 7 ishize",
+      "days14": "Iminsi 14 ishize"
+    },
+    "hero": {
+      "received": "Dosiye zakiriwe",
+      "vs_previous": "ugereranyije n'iminsi {{days}} yabanje",
+      "arrivals_vs": "Dosiye zageze ugereranyije n'iminsi {{days}} yabanje",
+      "seats": "{{registered}} kuri {{capacity}} by'imyanya biyandikishijeho",
+      "seats_none": "Nta mbibi z'ubushobozi ku bukangurambaga bufunguye"
+    },
+    "daily": {
+      "title": "Dosiye zakiriwe ku munsi",
+      "this_period": "Iki gihe",
+      "previous_period": "Igihe cyabanje",
+      "empty": "Nta dosiye yakiriwe muri iki gihe."
+    },
+    "queue": {
+      "title": "Izimaze igihe kirekire zitegereje",
+      "item": "Dosiye",
+      "held": "Impamvu yo kuzihagarika",
+      "waiting": "Zimaze",
+      "empty": "Nta dosiye itegereje.",
+      "open": "Fungura umurongo",
+      "today": "Uyu munsi",
+      "days": "iminsi {{count}}"
     }
   },
   "application": {
@@ -736,10 +779,79 @@
     "period": "Igihe",
     "value": "Agaciro",
     "total": "Igiteranyo",
-    "needs_attention": "Bikeneye kwitabwaho"
+    "needs_attention": "Bikeneye kwitabwaho",
+    "refresh": "Vugurura: {{title}}",
+    "unavailable": "Nta gaciro kabonetse"
   },
   "metric": {
     "loading": "Biratunganywa…",
     "unavailable": "Ntibibonetse"
+  },
+  "analytics": {
+    "title": "Imikorere y'itangazo ry'akazi",
+    "lead": "Imibare nyayo iva muri rejisitiri y'dosiye, ukurikije ubukangurambaga, icyiciro n'umunsi.",
+    "no_campaigns": "Nta bukangurambaga burahari, nta cyo kugereranya.",
+    "campaign_stage": {
+      "title": "Dosiye ukurikije ubukangurambaga n'icyiciro",
+      "campaign": "Ubukangurambaga",
+      "total": "Yose",
+      "share": "Igice"
+    },
+    "weekday": {
+      "title": "Dosiye zakiriwe ukurikije umunsi w'icyumweru",
+      "lead": "Buri murongo ni icyumweru, gitangira ku itariki yerekanwe. Ibyumweru bine bishize, kuva ku wa mbere kugeza ku cyumweru.",
+      "week_of": "{{day}} {{month}}",
+      "less": "Nkeya",
+      "more": "Nyinshi",
+      "days": {
+        "0": "Mbe",
+        "1": "Kab",
+        "2": "Gtu",
+        "3": "Kan",
+        "4": "Gnu",
+        "5": "Gnd",
+        "6": "Cyu"
+      }
+    },
+    "category": {
+      "title": "Ibyavuye ukurikije icyiciro",
+      "category": "Icyiciro",
+      "total": "Yose",
+      "accepted": "Izemewe",
+      "closed": "Izirangiye",
+      "rate": "Igipimo"
+    },
+    "stage_by_campaign": {
+      "title": "Ibyiciro ukurikije ubukangurambaga"
+    },
+    "ratios": {
+      "title": "Igice cy'izemewe n'izirangiye ukurikije ubukangurambaga",
+      "lead": "Igice cy'izirangiye cya 50% cyangwa kirenga kiragaragazwa.",
+      "total": "Dosiye",
+      "accepted": "Izemewe",
+      "closed": "Izirangiye"
+    },
+    "category_stage": {
+      "title": "Ibyiciro muri buri cyiciro"
+    },
+    "trend": {
+      "title": "Dosiye zakiriwe ukurikije icyiciro",
+      "lead": "Iminsi 14 ishize.",
+      "other": "Ibindi byiciro",
+      "empty": "Nta dosiye yakiriwe muri iyi minsi 14."
+    },
+    "queue_age": {
+      "title": "Impuzandengo y'iminsi zimaze zitegereje, ukurikije impamvu",
+      "series": "Impuzandengo y'iminsi",
+      "empty": "Nta kintu gitegereje mu murongo."
+    },
+    "stages": {
+      "vetting": "Isuzuma",
+      "documents": "Inyandiko",
+      "exam": "Ikizamini",
+      "medical": "Kwipimisha",
+      "accepted": "Izemewe",
+      "closed": "Izirangiye"
+    }
   }
 }

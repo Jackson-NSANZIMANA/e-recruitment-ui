@@ -7,7 +7,7 @@ export type { AgencyTokenSet, LozengeAppearance } from "./tokens/usrp-tokens.js"
 // layout-stable placeholder, and a token-bound chart primitives set. All of it
 // is domain-free - it renders numbers and regions, and names no agency.
 export { PageShell } from "./layout/PageShell.js";
-export { formatCount, formatPercent, asSupportedLanguage } from "./format.js";
+export { formatCount, formatPercent, formatShare, asSupportedLanguage } from "./format.js";
 export { known, PENDING, FAILED, countFrom, valueOf } from "./states/useCount.js";
 export type { Count, CountQueryLike } from "./states/useCount.js";
 export type { PageShellProps } from "./layout/PageShell.js";
@@ -19,6 +19,30 @@ export { Sparkline } from "./charts/Sparkline.js";
 export type { SparklineProps, SparklineDatum } from "./charts/Sparkline.js";
 export { StackedBar } from "./charts/StackedBar.js";
 export type { StackedBarProps, StackedBarSegment } from "./charts/StackedBar.js";
+export { BarChart } from "./charts/BarChart.js";
+export type { BarChartItem, BarChartProps, BarTone } from "./charts/BarChart.js";
+export { TrendChart } from "./charts/TrendChart.js";
+export type { TrendChartDatum, TrendChartProps } from "./charts/TrendChart.js";
+export { RingGauge } from "./charts/RingGauge.js";
+export type { RingGaugeProps, GaugeTone } from "./charts/RingGauge.js";
+export { StackedColumnChart } from "./charts/StackedColumnChart.js";
+export type { StackedColumnChartProps, ColumnCategory, ColumnSeries } from "./charts/StackedColumnChart.js";
+export { SeriesChart } from "./charts/SeriesChart.js";
+export type { SeriesChartProps, SeriesChartSeries } from "./charts/SeriesChart.js";
+export { HeroMetric } from "./charts/HeroMetric.js";
+export type { HeroMetricProps } from "./charts/HeroMetric.js";
+export { Heatmap } from "./charts/Heatmap.js";
+export type { HeatmapProps } from "./charts/Heatmap.js";
+export { StatGrid } from "./charts/StatGrid.js";
+export type { StatGridItem, StatTone } from "./charts/StatGrid.js";
+export { FigureTable } from "./charts/FigureTable.js";
+export type { FigureTableProps, FigureTableColumn, FigureTableRow } from "./charts/FigureTable.js";
+export { StackedRows } from "./charts/StackedRows.js";
+export type { StackedRowsProps } from "./charts/StackedRows.js";
+export { Widget } from "./layout/Widget.js";
+export type { WidgetProps } from "./layout/Widget.js";
+export { FilterChip } from "./layout/FilterChip.js";
+export type { FilterChipProps, FilterChipOption } from "./layout/FilterChip.js";
 export { MetricCard } from "./charts/MetricCard.js";
 export type { MetricCardProps } from "./charts/MetricCard.js";
 export {

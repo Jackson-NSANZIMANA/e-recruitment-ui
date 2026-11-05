@@ -1,0 +1,77 @@
+{
+  "$schema": "../../tooling/surface-contract/surface-contract.schema.json",
+  "schemaVersion": 2,
+  "id": "officer.analytics",
+  "title": "Recruitment performance (analytics board)",
+  "audience": "officer",
+  "owner": "apps/officer-console",
+  "purpose": "A team-performance style board for agency administrators: applications by campaign and stage, outcomes by category, weekday heatmap, stage totals, accepted and closed shares, category trend and queue age. Every figure is an exact count from the application register (one limit-1 search per cell); nothing is sampled or estimated.",
+  "routes": [
+    {
+      "path": "/analytics",
+      "app": "officer-console",
+      "source": "apps/officer-console/src/routes/analytics.tsx",
+      "role": "dashboard"
+    }
+  ],
+  "operations": [
+    "searchApplications",
+    "listAgencyCampaigns",
+    "listAmberQueue"
+  ],
+  "ads": [
+    {
+      "name": "PageShell",
+      "source": "apps/officer-console/src/routes/analytics.tsx",
+      "import": "@usrp/ui",
+      "note": "The shared page column and H1."
+    },
+    {
+      "name": "SectionMessage",
+      "source": "apps/officer-console/src/routes/analytics.tsx",
+      "import": "@atlaskit/section-message"
+    },
+    {
+      "name": "Text",
+      "source": "apps/officer-console/src/analytics/widgets.tsx",
+      "import": "@atlaskit/primitives/compiled"
+    }
+  ],
+  "states": [
+    {
+      "surface": "analytics",
+      "required": ["forbidden", "no-campaigns"],
+      "source": "apps/officer-console/src/routes/analytics.tsx",
+      "evidence": ["analytics-forbidden", "analytics-no-campaigns"]
+    },
+    {
+      "surface": "widget",
+      "required": ["loading", "populated", "error", "empty"],
+      "source": "apps/officer-console/src/analytics/widgets.tsx",
+      "evidence": ["SkeletonPanel", "PanelError", "queue-age-empty"]
+    }
+  ],
+  "accessibility": [
+    "all user-facing text is translated in en, rw and fr",
+    "every chart carries a data table for assistive technology and prints its values; colour never carries meaning alone",
+    "chart text is real text at the 16px floor; tooltips are reachable by the arrow keys"
+  ],
+  "tests": [
+    "apps/officer-console/e2e/analytics.spec.ts"
+  ],
+  "rules": {
+    "browserTransport": "operation-id-only",
+    "agencyAuthority": "server-session",
+    "pii": "no-national-id-or-hash",
+    "interactiveTargetMinimumPx": 48,
+    "positivePolarityOnly": true
+  },
+  "readiness": {
+    "rung": "E2E-PROVEN",
+    "evidence": {
+      "e2e": [
+        "apps/officer-console/e2e/analytics.spec.ts"
+      ]
+    }
+  }
+}

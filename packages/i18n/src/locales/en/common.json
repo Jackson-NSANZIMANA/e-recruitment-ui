@@ -10,7 +10,8 @@
     "campaigns": "Campaigns",
     "queues": "Queues",
     "erasure": "Erasure requests",
-    "staff": "Staff"
+    "staff": "Staff",
+    "analytics": "Analytics"
   },
   "auth": {
     "send_code": "Send code",
@@ -104,7 +105,10 @@
         "EXAMINATION_ACTIVE": "Examinations in progress",
         "COMPLETED": "Completed",
         "CANCELLED": "Cancelled"
-      }
+      },
+      "blank_title": "No campaigns yet",
+      "blank_body": "Campaigns open registration to applicants and schedule their examinations. Create the first one to get started.",
+      "blank_action": "Create campaign"
     },
     "pipeline": {
       "title": "Applications by stage",
@@ -116,7 +120,8 @@
         "medical": "Medical review and final decision",
         "accepted": "Accepted",
         "closed": "Rejected or withdrawn"
-      }
+      },
+      "total": "{{count}} applications in the register"
     },
     "staff": {
       "title": "Staff",
@@ -165,6 +170,44 @@
     "series": {
       "day_short": "{{day}} {{month}}",
       "arrivals_caption": "Arrivals per day, last {{days}} days"
+    },
+    "charts": {
+      "arrivals_title": "Adjudication queue",
+      "arrivals_empty": "Nothing has arrived in the last {{days}} days.",
+      "arrivals_unit": "arrivals",
+      "capacity_title": "Registration capacity",
+      "capacity_lead": "Registered against capacity, for campaigns with a limit.",
+      "capacity_empty": "No open campaign has a capacity limit."
+    },
+    "filters": {
+      "campaign": "Campaign",
+      "all": "All campaigns",
+      "period": "Period",
+      "days7": "Last 7 days",
+      "days14": "Last 14 days"
+    },
+    "hero": {
+      "received": "Applications received",
+      "vs_previous": "vs previous {{days}} days",
+      "arrivals_vs": "Arrivals vs previous {{days}} days",
+      "seats": "{{registered}} of {{capacity}} seats registered",
+      "seats_none": "No capacity limit on open campaigns"
+    },
+    "daily": {
+      "title": "Applications received per day",
+      "this_period": "This period",
+      "previous_period": "Previous period",
+      "empty": "Nothing was received in this period."
+    },
+    "queue": {
+      "title": "Longest waiting",
+      "item": "Application",
+      "held": "Held for",
+      "waiting": "Waiting",
+      "empty": "Nothing is waiting.",
+      "open": "Open the queue",
+      "today": "Today",
+      "days": "{{count}} days"
     }
   },
   "application": {
@@ -736,10 +779,79 @@
     "period": "Period",
     "value": "Value",
     "total": "Total",
-    "needs_attention": "Needs attention"
+    "needs_attention": "Needs attention",
+    "refresh": "Refresh {{title}}",
+    "unavailable": "No reading"
   },
   "metric": {
     "loading": "Loading…",
     "unavailable": "Unavailable"
+  },
+  "analytics": {
+    "title": "Recruitment performance",
+    "lead": "Exact counts from the application register, by campaign, category and day.",
+    "no_campaigns": "No campaigns yet, so there is nothing to compare.",
+    "campaign_stage": {
+      "title": "Applications by campaign and stage",
+      "campaign": "Campaign",
+      "total": "Total",
+      "share": "Share"
+    },
+    "weekday": {
+      "title": "Applications received by weekday",
+      "lead": "Each row is a week, starting on the date shown. The last four weeks, Monday to Sunday.",
+      "week_of": "{{day}} {{month}}",
+      "less": "Fewer",
+      "more": "More",
+      "days": {
+        "0": "Mon",
+        "1": "Tue",
+        "2": "Wed",
+        "3": "Thu",
+        "4": "Fri",
+        "5": "Sat",
+        "6": "Sun"
+      }
+    },
+    "category": {
+      "title": "Outcomes by category",
+      "category": "Category",
+      "total": "Total",
+      "accepted": "Accepted",
+      "closed": "Closed",
+      "rate": "Rate"
+    },
+    "stage_by_campaign": {
+      "title": "Stage totals by campaign"
+    },
+    "ratios": {
+      "title": "Accepted and closed share by campaign",
+      "lead": "A closed share of 50% or more is flagged.",
+      "total": "Applications",
+      "accepted": "Accepted",
+      "closed": "Closed"
+    },
+    "category_stage": {
+      "title": "Stages within each category"
+    },
+    "trend": {
+      "title": "Applications received by category",
+      "lead": "The last 14 days.",
+      "other": "Other categories",
+      "empty": "Nothing was received in these 14 days."
+    },
+    "queue_age": {
+      "title": "Average days waiting, by hold",
+      "series": "Average days waiting",
+      "empty": "Nothing is waiting in the queue."
+    },
+    "stages": {
+      "vetting": "Vetting",
+      "documents": "Documents",
+      "exam": "Exam",
+      "medical": "Medical",
+      "accepted": "Accepted",
+      "closed": "Closed"
+    }
   }
 }

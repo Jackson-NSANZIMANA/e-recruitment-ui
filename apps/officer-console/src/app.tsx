@@ -31,6 +31,7 @@ const spinnerStyles = cssMap({
 import OfficerLoginPage from "@usrp/feature-identity/officer-login";
 
 const DashboardPage = lazy(() => import("./routes/dashboard.js"));
+const AnalyticsPage = lazy(() => import("./routes/analytics.js"));
 const ActivatePage = lazy(() => import("./routes/activate.js"));
 // The gate and the walk-in desk moved to the Field Station (ADR-FE-007): the
 // old paths redirect to a notice that says where they went.
@@ -79,6 +80,7 @@ const router = createBrowserRouter(gateByReadiness([
         ),
         children: [
           { path: "dashboard", element: <DashboardPage /> },
+          { path: "analytics", element: <AnalyticsPage /> },
           { path: "walk-in", element: <Navigate to="/field-station" replace /> },
           { path: "gate", element: <Navigate to="/field-station" replace /> },
           { path: "field-station", element: <FieldStationNotice /> },

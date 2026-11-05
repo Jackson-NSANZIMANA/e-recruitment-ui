@@ -25,6 +25,17 @@ const styles = cssMap({
   bleed: {
     marginInline: token("space.0"),
   },
+  /**
+   * Room to breathe, for data-dense screens (the dashboard): a 32px gutter from
+   * tablet width up, a 32px top, and 48px under the last card so the final panel
+   * never sits on the edge of the scroll area. Opt-in, because the default gutter
+   * is the one the national header's lockup aligns to.
+   */
+  spacious: {
+    paddingBlockStart: token("space.400"),
+    paddingBlockEnd: token("space.600"),
+    "@media (min-width: 48rem)": { paddingInline: token("space.400") },
+  },
 });
 
 const MAX_WIDTH_STYLE: Readonly<Record<PageAlign, string>> = {
@@ -45,6 +56,8 @@ export interface PageShellProps {
    *   layout (a board, a map); the padding still applies.
    */
   readonly align?: PageAlign | "bleed";
+  /** A wider gutter and generous bottom padding. Default off: see the `spacious` style. */
+  readonly spacious?: boolean;
   /** The page's H1. Omit on screens whose heading is drawn by a wizard or a modal. */
   readonly title?: string;
   /** A line under the title that says what the page is for. */
@@ -73,6 +86,7 @@ export interface PageShellProps {
  */
 export function PageShell({
   align = "header",
+  spacious = false,
   title,
   description,
   actions,
@@ -85,7 +99,7 @@ export function PageShell({
   return (
     <Box
       as="section"
-      xcss={cx(styles['page'], capped ? undefined : styles['bleed'])}
+      xcss={cx(styles['page'], capped ? undefined : styles['bleed'], spacious && styles['spacious'])}
       // The one dynamic dimension in the shell. A style attribute is correct
       // here and not a cssMap violation: the value is a constant from
       // PAGE_MAX_WIDTH, and compiled's static cssMap cannot take a variable
