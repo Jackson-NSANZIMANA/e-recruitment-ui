@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DocumentChecklist } from "@usrp/api-client";
-import { selectedType, uploadChoices } from "./required-documents.js";
+import { requiredItemCopyKey, selectedType, uploadChoices } from "./required-documents.js";
 
 const AGENCY = ["NATIONAL_ID", "OLEVEL_CERTIFICATE", "NON_CONVICTION_CERTIFICATE", "GOOD_CONDUCT_CERTIFICATE", "BIRTH_CERTIFICATE"];
 const ok = { isLoading: false, isError: false };
@@ -58,5 +58,19 @@ describe("selectedType", () => {
     expect(selectedType("B", ["A", "B"])).toBe("B");
     expect(selectedType("Z", ["A", "B"])).toBe("A");
     expect(selectedType(null, [])).toBeNull();
+  });
+});
+
+describe("requiredItemCopyKey", () => {
+  const item = (over: Record<string, unknown>) => ({ documentType: "GOOD_CONDUCT_CERTIFICATE", satisfaction: "MISSING", registry: null, ...over }) as unknown as DocumentChecklist["items"][number];
+  it("tells the citizen a missing item can be uploaded here", () => {
+    expect(requiredItemCopyKey(item({}), ["GOOD_CONDUCT_CERTIFICATE"])).toBe("apply.required_docs.missing_upload");
+  });
+  it("keeps the venue wording when the item cannot be uploaded here", () => {
+    expect(requiredItemCopyKey(item({}), [])).toBe("citizen_docs.sat.MISSING");
+  });
+  it("names IremboGov for the clearance item and the state for everything else", () => {
+    expect(requiredItemCopyKey(item({ clearance: { state: "NUMBER_REQUIRED", code: null, reasons: [] } }), [])).toBe("apply.required_docs.via_irembo");
+    expect(requiredItemCopyKey(item({ satisfaction: "API_VERIFIED" }), [])).toBe("citizen_docs.sat.API_VERIFIED");
   });
 });

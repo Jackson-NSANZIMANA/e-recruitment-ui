@@ -7,6 +7,7 @@
 // what THIS campaign asks for. Only when the checklist cannot be read does the
 // panel fall back to the agency catalogue, and it says so.
 import type { DocumentChecklist } from "@usrp/api-client";
+import { satisfactionCopyKey } from "../documents/model.js";
 
 type Item = DocumentChecklist["items"][number];
 
@@ -62,4 +63,14 @@ export function uploadChoices(
 export function selectedType(current: string | null, types: readonly string[]): string | null {
   if (current !== null && types.includes(current)) return current;
   return types[0] ?? null;
+}
+
+/**
+ * The i18n key for one required item's line. The clearance item is checked through IremboGov;
+ * a missing item the citizen can upload here says so, rather than only "bring it to the venue".
+ */
+export function requiredItemCopyKey(item: Item, uploadable: readonly string[]): string {
+  if (item.clearance !== undefined) return "apply.required_docs.via_irembo";
+  if (item.satisfaction === "MISSING" && uploadable.includes(item.documentType)) return "apply.required_docs.missing_upload";
+  return satisfactionCopyKey(item);
 }
