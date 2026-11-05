@@ -31,10 +31,10 @@
     },
     "clearance": {
       "field_label": "Application number of your criminal-record certificate",
-      "hint": "Request the certificate on IremboGov, then type its application number here: a letter, 12 digits and 4 letters.",
+      "hint": "Request the certificate on IremboGov, then type its application number here: a letter, 12 digits, then 4 letters or digits.",
       "submit": "Send the number",
       "sending": "Sending",
-      "shape": "This number is not in the right shape: a letter, 12 digits and 4 letters.",
+      "shape": "This number is not in the right shape: a letter, 12 digits, then 4 letters or digits.",
       "sent": "Number received. We are checking it.",
       "closed": "This application is closed, so a number can no longer be added.",
       "failed": "We could not send the number. Try again.",

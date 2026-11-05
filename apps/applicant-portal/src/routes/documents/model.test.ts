@@ -8,13 +8,16 @@ const list = (clearance: NonNullable<DocumentChecklist["items"][number]["clearan
 });
 
 describe("clearance number", () => {
-  it("accepts a letter, 12 digits and 4 letters, ignoring spaces, hyphens and case", () => {
+  it("accepts a letter, 12 digits and 4 letters or digits, ignoring spaces, hyphens and case", () => {
     expect(isClearanceNumberShape("A000000000000ABCD")).toBe(true);
+    // Real numbers can end in a digit then letters (ADR-048 §2.3 amendment); synthetic values here.
+    expect(isClearanceNumberShape("A0000000000003ZZL")).toBe(true);
+    expect(isClearanceNumberShape("a000000000000-9a8b")).toBe(true);
     expect(isClearanceNumberShape(" a 000000000000-abcd ")).toBe(true);
     expect(normaliseClearanceNumber(" a 000000000000-abcd ")).toBe("A000000000000ABCD");
   });
   it("refuses the wrong shape before anything is sent", () => {
-    for (const bad of ["", "A00000000000ABCD", "000000000000ABCD", "A000000000000AB", "not a number"]) expect(isClearanceNumberShape(bad)).toBe(false);
+    for (const bad of ["", "A00000000000ABCD", "000000000000ABCD", "A000000000000AB", "A00000000000AABCD", "not a number"]) expect(isClearanceNumberShape(bad)).toBe(false);
   });
 });
 
