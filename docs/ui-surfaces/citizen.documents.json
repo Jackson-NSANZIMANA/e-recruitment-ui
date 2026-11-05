@@ -31,7 +31,7 @@
     },
     {
       "name": "TextField",
-      "source": "apps/applicant-portal/src/routes/documents/index.tsx",
+      "source": "apps/applicant-portal/src/routes/documents/ClearanceBlock.tsx",
       "import": "@atlaskit/textfield"
     }
   ],
@@ -40,22 +40,30 @@
       "surface": "checklist",
       "required": [
         "loading",
-        "number-required",
-        "verifying",
-        "correction-needed",
-        "under-officer-review",
-        "verified",
         "error"
       ],
       "source": "apps/applicant-portal/src/routes/documents/index.tsx",
       "evidence": [
         "isLoading",
+        "isError"
+      ]
+    },
+    {
+      "surface": "clearance-number",
+      "required": [
+        "number-required",
+        "verifying",
+        "correction-needed",
+        "under-officer-review",
+        "verified"
+      ],
+      "source": "apps/applicant-portal/src/routes/documents/ClearanceBlock.tsx",
+      "evidence": [
         "NUMBER_REQUIRED",
         "VERIFYING",
         "CORRECTION_NEEDED",
         "UNDER_OFFICER_REVIEW",
-        "VERIFIED",
-        "isError"
+        "VERIFIED"
       ]
     }
   ],

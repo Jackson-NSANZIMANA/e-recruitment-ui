@@ -24,7 +24,9 @@
     "listCampaigns",
     "getCampaignDetail",
     "getMyIdentity",
-    "submitMyApplication"
+    "submitMyApplication",
+    "getMyDocumentChecklist",
+    "attachMyClearanceCertificate"
   ],
   "ads": [
     {
@@ -63,6 +65,20 @@
         "serverError",
         "isRehearsal"
       ]
+    },
+    {
+      "surface": "documents-step",
+      "required": [
+        "loading",
+        "campaign-list",
+        "unreadable-fallback"
+      ],
+      "source": "apps/applicant-portal/src/routes/apply/required-documents.ts",
+      "evidence": [
+        "LOADING",
+        "POLICY",
+        "FALLBACK"
+      ]
     }
   ],
   "accessibility": [
@@ -73,7 +89,9 @@
   "tests": [
     "apps/applicant-portal/e2e/apply-flow.spec.ts",
     "apps/applicant-portal/e2e/offline.spec.ts",
-    "apps/applicant-portal/e2e/s12c-screens.spec.ts"
+    "apps/applicant-portal/e2e/s12c-screens.spec.ts",
+    "apps/applicant-portal/src/routes/apply/required-documents.test.ts",
+    "apps/applicant-portal/src/routes/apply/documents-panel.test.tsx"
   ],
   "rules": {
     "browserTransport": "operation-id-only",
