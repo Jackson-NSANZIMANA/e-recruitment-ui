@@ -121,7 +121,7 @@ test('documents: the number is checked for shape before it is sent, then sent on
 
 const STATES: readonly [string, unknown, RegExp, boolean][] = [
   ['VERIFYING', { state: 'VERIFYING', code: null }, /checking your certificate/i, false],
-  ['UNDER_OFFICER_REVIEW', { state: 'UNDER_OFFICER_REVIEW', code: null }, /officer will look at your certificate/i, false],
+  ['UNDER_OFFICER_REVIEW', { state: 'UNDER_OFFICER_REVIEW', code: null }, /officer will read your certificate.*upload the certificate PDF/i, false],
   ['VERIFIED', { state: 'VERIFIED', code: null }, /certificate is verified/i, false],
   ['NOT_BOUND', { state: 'CORRECTION_NEEDED', code: 'CERTIFICATE_NOT_BOUND' }, /does not match your identity/i, true],
   ['WRONG_TYPE', { state: 'CORRECTION_NEEDED', code: 'CERTIFICATE_WRONG_TYPE' }, /not a criminal-record certificate/i, true],
@@ -137,6 +137,35 @@ for (const [name, clearance, copy, field] of STATES) {
     await noSeriousViolations(page);
   });
 }
+
+test('documents: under officer review, the certificate PDF can be uploaded from this screen', async ({ page }) => {
+  // The backend's state for an unverified RIB item with nothing uploaded is MISSING (ADR-032).
+  await openDocuments(page, {
+    agency: 'RDF', source: 'POLICY_VERSION', complete: false,
+    items: [
+      { documentType: 'NATIONAL_ID', satisfaction: 'API_VERIFIED', registry: 'NIDA' },
+      { documentType: 'NON_CONVICTION_CERTIFICATE', satisfaction: 'MISSING', registry: 'RIB', clearance: { state: 'UNDER_OFFICER_REVIEW', code: null } },
+    ],
+  });
+  await expect(page.getByTestId('clearance-state')).toContainText(/upload the certificate PDF/i);
+  // The number is not asked again, but the upload is offered, for the certificate only.
+  await expect(page.getByLabel(/application number of your criminal-record certificate/i)).toHaveCount(0);
+  await expect(page.getByTestId('document-upload')).toContainText(/non-conviction certificate/i);
+  await expect(page.locator('#document-file')).toHaveCount(1);
+  await noSeriousViolations(page);
+});
+
+test('documents: a verified certificate is not asked for again', async ({ page }) => {
+  await openDocuments(page, {
+    agency: 'RDF', source: 'POLICY_VERSION', complete: true,
+    items: [
+      { documentType: 'NATIONAL_ID', satisfaction: 'API_VERIFIED', registry: 'NIDA' },
+      { documentType: 'NON_CONVICTION_CERTIFICATE', satisfaction: 'API_VERIFIED', registry: 'RIB', clearance: { state: 'VERIFIED', code: null } },
+    ],
+  });
+  await expect(page.getByTestId('clearance-state')).toContainText(/certificate is verified/i);
+  await expect(page.locator('#document-file')).toHaveCount(0);
+});
 
 test('documents: NESA results not yet published are explained, never a refusal', async ({ page }) => {
   await openDocuments(page, checklist({ state: 'NUMBER_REQUIRED', code: null }, [{ documentType: 'ALEVEL_CERTIFICATE', satisfaction: 'AWAITING_REGISTRY', registry: 'NESA' }]));

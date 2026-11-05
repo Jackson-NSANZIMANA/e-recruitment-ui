@@ -536,16 +536,16 @@ describe("documents the campaign asks for", () => {
     expect(container.querySelector('[data-testid="required-doc-BIRTH_CERTIFICATE"]')).toBeNull();
   });
 
-  it("asks for the IremboGov certificate number instead of an upload for the clearance item", async () => {
+  it("asks for the IremboGov certificate number, and keeps the certificate PDF uploadable", async () => {
     queue([], POLICY([
       { documentType: "NON_CONVICTION_CERTIFICATE", satisfaction: "MISSING", registry: "RIB", clearance: { state: "NUMBER_REQUIRED", code: null, reasons: [] } },
     ]));
     const container = renderPanel();
     await waitFor(() => expect(container.querySelector('[data-testid="apply-clearance"]')).not.toBeNull());
     expect(container.querySelector(`#clearance-number-${APP}`)).not.toBeNull();
-    // Nothing is left to upload: the certificate is verified from its number.
-    expect(container.querySelector("#document-file")).toBeNull();
-    expect(container.querySelector('[data-testid="nothing-to-upload"]')).not.toBeNull();
+    // The PDF is what an officer reads when the certificate type can carry convictions (ADR-048 §2.3.4).
+    expect(container.querySelector("#document-file")).not.toBeNull();
+    expect(container.querySelector('[data-testid="nothing-to-upload"]')).toBeNull();
   });
 
   it("an empty policy list shows that nothing is required, with no upload control", async () => {

@@ -41,7 +41,7 @@
       "state": {
         "NUMBER_REQUIRED": "Nous avons encore besoin du numéro de votre certificat de casier judiciaire.",
         "VERIFYING": "Nous vérifions votre certificat. Cela peut prendre quelques minutes ; vous n’avez rien à faire.",
-        "UNDER_OFFICER_REVIEW": "Un agent examinera votre certificat. Vous n’avez rien à faire.",
+        "UNDER_OFFICER_REVIEW": "Un agent lira votre certificat. Téléversez ci-dessous le PDF du certificat que vous avez téléchargé sur IremboGov, pour qu’il puisse vérifier ce qu’il indique. Votre candidature reste ouverte pendant ce temps.",
         "VERIFIED": "Votre certificat est vérifié."
       },
       "code": {

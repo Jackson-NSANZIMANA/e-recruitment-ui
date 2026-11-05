@@ -5,7 +5,7 @@
   "title": "Citizen documents",
   "audience": "citizen",
   "owner": "apps/applicant-portal",
-  "purpose": "Show the citizen what an application needs and where each item stands, and take the number of the Irembo criminal-record certificate with its states. Advisory: it never blocks the application.",
+  "purpose": "Show the citizen what an application needs and where each item stands, take the number of the Irembo criminal-record certificate with its states, and take the documents the campaign still requires (including the certificate PDF an officer reads during review). Advisory: it never blocks the application.",
   "routes": [
     {
       "path": "/applications/:applicationId/documents",
@@ -16,7 +16,8 @@
   ],
   "operations": [
     "getMyDocumentChecklist",
-    "attachMyClearanceCertificate"
+    "attachMyClearanceCertificate",
+    "uploadMyDocument"
   ],
   "ads": [
     {
@@ -33,6 +34,11 @@
       "name": "TextField",
       "source": "apps/applicant-portal/src/routes/documents/ClearanceBlock.tsx",
       "import": "@atlaskit/textfield"
+    },
+    {
+      "name": "Select",
+      "source": "apps/applicant-portal/src/routes/documents/DocumentsPanel.tsx",
+      "import": "@atlaskit/select"
     }
   ],
   "states": [
@@ -65,6 +71,26 @@
         "UNDER_OFFICER_REVIEW",
         "VERIFIED"
       ]
+    },
+    {
+      "surface": "upload",
+      "required": [
+        "loading",
+        "campaign-list",
+        "unreadable-fallback",
+        "received",
+        "unconfirmed",
+        "review-closed"
+      ],
+      "source": "apps/applicant-portal/src/routes/documents/DocumentsPanel.tsx",
+      "evidence": [
+        "LOADING",
+        "POLICY",
+        "FALLBACK",
+        "documents-received",
+        "upload-unconfirmed",
+        "reviewClosedReason"
+      ]
     }
   ],
   "accessibility": [
@@ -75,7 +101,9 @@
   ],
   "tests": [
     "apps/applicant-portal/e2e/s12c-screens.spec.ts",
-    "apps/applicant-portal/src/routes/documents/model.test.ts"
+    "apps/applicant-portal/src/routes/documents/model.test.ts",
+    "apps/applicant-portal/src/routes/apply/documents-panel.test.tsx",
+    "apps/applicant-portal/src/routes/apply/required-documents.test.ts"
   ],
   "rules": {
     "browserTransport": "operation-id-only",

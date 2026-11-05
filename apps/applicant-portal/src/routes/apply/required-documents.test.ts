@@ -27,11 +27,18 @@ describe("uploadChoices: the campaign's list, never the agency catalogue", () =>
     expect(c.kind === "POLICY" ? c.types : []).toEqual(["GOOD_CONDUCT_CERTIFICATE"]);
   });
 
-  it("routes the criminal-clearance item to the Irembo number, not to an upload", () => {
-    const clearanceItem = { documentType: "NON_CONVICTION_CERTIFICATE", satisfaction: "MISSING", registry: "RIB", clearance: { state: "NUMBER_REQUIRED", code: null, reasons: [] } };
+  it("asks for the Irembo number AND keeps the certificate PDF uploadable until verified", () => {
+    // ADR-048 §2.3.4: an officer reads the PDF when the certificate type can carry convictions.
+    const clearanceItem = { documentType: "NON_CONVICTION_CERTIFICATE", satisfaction: "MISSING", registry: "RIB", clearance: { state: "UNDER_OFFICER_REVIEW", code: null, reasons: [] } };
     const c = uploadChoices(checklist([clearanceItem] as unknown as DocumentChecklist["items"]), ok, AGENCY);
-    expect(c.kind === "POLICY" ? c.types : ["x"]).toEqual([]);
+    expect(c.kind === "POLICY" ? c.types : []).toEqual(["NON_CONVICTION_CERTIFICATE"]);
     expect(c.kind === "POLICY" ? c.clearance?.documentType : null).toBe("NON_CONVICTION_CERTIFICATE");
+  });
+
+  it("drops the certificate from the upload once it is verified", () => {
+    const verified = { documentType: "NON_CONVICTION_CERTIFICATE", satisfaction: "API_VERIFIED", registry: "RIB", clearance: { state: "VERIFIED", code: null, reasons: [] } };
+    const c = uploadChoices(checklist([verified] as unknown as DocumentChecklist["items"]), ok, AGENCY);
+    expect(c.kind === "POLICY" ? c.types : ["x"]).toEqual([]);
   });
 
   it("still offers an upload for the criminal item when the Irembo flow is off", () => {

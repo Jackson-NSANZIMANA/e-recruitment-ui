@@ -31,8 +31,11 @@ export type UploadChoices =
  * The document types the citizen may upload now.
  *
  *   • only types the campaign requires (the checklist items);
- *   • not the criminal-clearance item while the Irembo flow is on: that one is
- *     verified from its IremboGov application number, never from a scan;
+ *   • the criminal-clearance item stays uploadable until it is verified: its
+ *     IremboGov application number proves the certificate authentic and the
+ *     applicant's, but when its type can carry convictions an officer must read
+ *     what it says, from the PDF uploaded here (ADR-048 §2.3.4). A verified
+ *     certificate is API_VERIFIED, so it drops out like any satisfied item;
  *   • not an item a registry, a cleared upload or the venue already satisfied;
  *   • only types the agency can store (a policy is validated against that, so
  *     this is belt and braces).
@@ -54,7 +57,7 @@ export function uploadChoices(
   const storable = new Set(agencyTypes);
   const clearance = required.find((i) => i.clearance !== undefined) ?? null;
   const types = required
-    .filter((i) => i.clearance === undefined && !DONE.has(i.satisfaction) && storable.has(i.documentType))
+    .filter((i) => !DONE.has(i.satisfaction) && storable.has(i.documentType))
     .map((i) => i.documentType);
   return { kind: "POLICY", required, types, clearance };
 }

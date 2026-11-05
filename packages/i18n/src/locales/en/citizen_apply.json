@@ -41,7 +41,7 @@
       "state": {
         "NUMBER_REQUIRED": "We still need the number of your criminal-record certificate.",
         "VERIFYING": "We are checking your certificate. This can take a few minutes; you do not need to do anything.",
-        "UNDER_OFFICER_REVIEW": "An officer will look at your certificate. You do not need to do anything.",
+        "UNDER_OFFICER_REVIEW": "An officer will read your certificate. Upload the certificate PDF you downloaded from IremboGov below, so they can check what it says. Your application stays open while they do.",
         "VERIFIED": "Your certificate is verified."
       },
       "code": {

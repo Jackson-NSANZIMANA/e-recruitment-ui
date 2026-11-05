@@ -41,7 +41,7 @@
       "state": {
         "NUMBER_REQUIRED": "Turacyakeneye numero y’icyemezo cy’uko utigeze uhamwa n’icyaha.",
         "VERIFYING": "Turimo kugenzura icyemezo cyawe. Bishobora gufata iminota mike; nta cyo usabwa gukora.",
-        "UNDER_OFFICER_REVIEW": "Umukozi azareba icyemezo cyawe. Nta cyo usabwa gukora.",
+        "UNDER_OFFICER_REVIEW": "Umukozi azasoma icyemezo cyawe. Ohereza hepfo PDF y'icyemezo wakuye kuri IremboGov, kugira ngo asuzume ibyanditsemo. Ubusabe bwawe bukomeza gukurikiranwa muri icyo gihe.",
         "VERIFIED": "Icyemezo cyawe cyaragenzuwe."
       },
       "code": {
