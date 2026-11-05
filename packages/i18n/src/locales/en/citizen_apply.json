@@ -94,6 +94,15 @@
     "nida_district": "District of residence",
     "nida_female": "Female",
     "nida_male": "Male",
-    "nida_not_held": "Not on record here"
+    "nida_not_held": "Not on record here",
+    "required_docs": {
+      "title": "What this campaign asks for",
+      "loading": "Loading what this campaign asks for",
+      "none": "This campaign does not ask you to upload any documents.",
+      "unavailable": "We could not load this campaign's document list right now. You can still upload; the agency will tell you if something is not needed.",
+      "nothing_to_upload": "Nothing left to upload: every document this campaign asks for is received, verified, or checked through IremboGov.",
+      "via_irembo": "Checked through IremboGov with your certificate's application number (below)",
+      "missing_upload": "Not received yet: upload it below, or bring it to the venue."
+    }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button";
@@ -6,12 +6,14 @@ import TextField from "@atlaskit/textfield";
 import Select from "@atlaskit/select";
 import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
+import Spinner from "@atlaskit/spinner";
 import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, isRehearsalCampaign, type Agency, type ApplicationCategory } from "@usrp/contracts";
 import {
   ApiError,
   createApiClient,
   getMyDocumentChecklist,
   isUnconfirmedUploadOutcome,
+  useMyDocumentChecklist,
   useMyIdentity,
   usePublicCampaign,
   usePublicCampaigns,
@@ -27,6 +29,12 @@ import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
 import { nidaRows, sexKey } from "./nida-identity.js";
 import { CategoryRules } from "./CategoryRules.js";
+import { requiredItemCopyKey, selectedType, uploadChoices } from "./required-documents.js";
+import { ClearanceBlock } from "../documents/ClearanceBlock.js";
+import { documentTypeKey, isInFlight } from "../documents/model.js";
+
+/** How often the panel re-reads the checklist while Irembo answers a clearance number. */
+const CHECKLIST_POLL_MS = 4_000;
 
 const STORAGE_KEY = "usrp_apply_draft";
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -506,9 +514,22 @@ export function DocumentsPanel({ applicationId, agency }: {
   readonly agency: Agency;
 }): React.ReactElement {
   const { t } = useTranslation();
+  const { t: tc } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const upload = useUploadMyDocument(client);
-  const types = AGENCY_DOCUMENT_TYPES[agency];
-  const [documentType, setDocumentType] = useState<string>(types[0] ?? "NATIONAL_ID");
+  // The campaign's own required list, bound to this application (never the agency catalogue).
+  const checklist = useMyDocumentChecklist(client, applicationId);
+  const choices = uploadChoices(checklist.data, checklist, AGENCY_DOCUMENT_TYPES[agency]);
+  const types = choices.kind === "LOADING" ? [] : choices.types;
+  const [picked, setDocumentType] = useState<string | null>(null);
+  const documentType = selectedType(picked, types);
+  const verifying = isInFlight(checklist.data);
+  const { refetch } = checklist;
+  // While Irembo answers a clearance number, re-read the checklist; it stops by itself.
+  useEffect(() => {
+    if (!verifying) return undefined;
+    const timer = setInterval(() => { void refetch(); }, CHECKLIST_POLL_MS);
+    return () => clearInterval(timer);
+  }, [verifying, refetch]);
   const [file, setFile] = useState<File | null>(null);
   const [received, setReceived] = useState<readonly ReceivedDocument[]>([]);
   const [unconfirmed, setUnconfirmed] = useState<UnconfirmedUpload | null>(null);
@@ -533,98 +554,137 @@ export function DocumentsPanel({ applicationId, agency }: {
   return (
     <Stack space="space.200">
       <Text size="large" weight="bold">{t("apply.documents_title")}</Text>
-      <Text size="large" color="color.text.subtle">{t("apply.documents_help")}</Text>
-      <Field name="documentType" label={t("apply.document_type_label")}>
-        {() => (
-          <Select
-            inputId="document-type"
-            options={types.map((type) => ({ label: t(`documents.types.${type}`), value: type }))}
-            value={{ label: t(`documents.types.${documentType}`), value: documentType }}
-            isClearable={false}
-            onChange={(option) => { if (option !== null && option !== undefined) setDocumentType(option.value); }}
-          />
-        )}
-      </Field>
-      <label htmlFor="document-file">
-        <Text size="large">{t("apply.document_file_label")}</Text>
-      </label>
-      <input
-        id="document-file"
-        type="file"
-        accept="application/pdf,image/jpeg,image/png"
-        onChange={(event) => { setFile(event.target.files?.[0] ?? null); upload.reset(); setUnconfirmed(null); }}
-      />
-      {/*
-        D8. An unconfirmed outcome is NOT a refusal. `upload.error` is set for
-        both, and the refusal copy says "could not be uploaded" — which asserts
-        a failure this screen cannot establish. So the unconfirmed message
-        replaces it rather than sitting beside it.
-      */}
-      {unconfirmed !== null && (
-        <SectionMessage appearance="warning" title={t("apply.upload_unconfirmed_title")} headingLevel="h4" aria-live="polite" testId="upload-unconfirmed">
-          <Text size="large">
-            {unconfirmed.onFile
-              ? t("apply.upload_unconfirmed_on_file_body", { type: t(`documents.types.${unconfirmed.documentType}`) })
-              : t("apply.upload_unconfirmed_body")}
+      {choices.kind === "LOADING" && <Spinner label={tc("apply.required_docs.loading")} />}
+      {choices.kind === "FALLBACK" && (
+        <SectionMessage appearance="warning" testId="required-docs-fallback">
+          <Text size="large">{tc("apply.required_docs.unavailable")}</Text>
+        </SectionMessage>
+      )}
+      {choices.kind === "POLICY" && (
+        <Stack space="space.100" testId="required-docs">
+          <Text size="large" weight="medium">
+            {choices.required.length === 0 ? tc("apply.required_docs.none") : tc("apply.required_docs.title")}
           </Text>
-        </SectionMessage>
+          {choices.required.length > 0 && (
+            <ul>
+              {choices.required.map((item) => (
+                <li key={item.documentType} data-testid={`required-doc-${item.documentType}`}>
+                  <Text size="large">
+                    {tc(documentTypeKey(item.documentType), { defaultValue: item.documentType })}
+                    {" — "}
+                    {tc(requiredItemCopyKey(item, types))}
+                  </Text>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Stack>
       )}
-      {unconfirmed === null && refusal !== null && (
-        <SectionMessage appearance="error" title={t("apply.upload_error_title")} headingLevel="h4" aria-live="assertive">
-          <Text size="large">{refusal}</Text>
-        </SectionMessage>
+      {choices.kind === "POLICY" && choices.clearance?.clearance !== undefined && (
+        <Stack space="space.100" testId="apply-clearance">
+          <Text size="large" weight="bold">{tc(documentTypeKey(choices.clearance.documentType), { defaultValue: choices.clearance.documentType })}</Text>
+          <ClearanceBlock client={client} applicationId={applicationId} clearance={choices.clearance.clearance} refresh={() => { void refetch(); }} />
+        </Stack>
       )}
-      {received.length > 0 && (
-        <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite" testId="documents-received">
-          <Text size="large">{t("apply.upload_ok_body", { types: received.map(label).join(", ") })}</Text>
-        </SectionMessage>
+      {choices.kind === "POLICY" && choices.required.length > 0 && types.length === 0 && (
+        <Text size="large" color="color.text.subtle" testId="nothing-to-upload">{tc("apply.required_docs.nothing_to_upload")}</Text>
       )}
-      <Inline>
-        <Button
-          appearance="primary"
-          isDisabled={file === null || upload.isPending}
-          onClick={() => {
-            if (file === null) return;
-            upload.mutate(
-              { applicationId, documentType, file },
-              {
-                onSuccess: (response) => {
-                  // D8: the revision the server accepted, including when this
-                  // type was uploaded before. An identical retry returns the
-                  // same revision and is displayed as the same revision.
-                  const revision = acceptedRevision(response);
-                  setUnconfirmed(null);
-                  // A 2xx with no usable revision is NOT a receipt. The
-                  // transport already refuses one at the boundary; this is the
-                  // second gate, and it must not fall through to "received".
-                  if (revision === null) {
-                    void documentIsOnFile(applicationId, documentType).then((onFile) =>
-                      setUnconfirmed({ documentType, onFile }),
-                    );
-                    return;
-                  }
-                  setReceived((prev) => withRevision(prev, documentType, revision));
-                  setFile(null);
-                },
-                onError: (error) => {
-                  // D8: an answer the client cannot trust is unknown, not
-                  // failure. Reconcile what can be read, then say what could
-                  // not be established — and NEVER re-send the file. Upstream
-                  // an identical re-upload is a retry (same revision, no new
-                  // history entry), so a recovery upload cannot repair a lost
-                  // answer and would only add a confusing duplicate attempt.
-                  if (!isUnconfirmedUploadOutcome(error)) return;
-                  void documentIsOnFile(applicationId, documentType).then((onFile) =>
-                    setUnconfirmed({ documentType, onFile }),
-                  );
-                },
-              },
-            );
-          }}
-        >
-          {upload.isPending ? t("apply.uploading") : t("apply.upload")}
-        </Button>
-      </Inline>
+      {documentType !== null && (
+        <Stack space="space.200" testId="document-upload">
+          <Text size="large" color="color.text.subtle">{t("apply.documents_help")}</Text>
+          <Field name="documentType" label={t("apply.document_type_label")}>
+            {() => (
+              <Select
+                inputId="document-type"
+                options={types.map((type) => ({ label: t(`documents.types.${type}`), value: type }))}
+                value={{ label: t(`documents.types.${documentType}`), value: documentType }}
+                isClearable={false}
+                onChange={(option) => { if (option !== null && option !== undefined) setDocumentType(option.value); }}
+              />
+            )}
+          </Field>
+          <label htmlFor="document-file">
+            <Text size="large">{t("apply.document_file_label")}</Text>
+          </label>
+          <input
+            id="document-file"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            onChange={(event) => { setFile(event.target.files?.[0] ?? null); upload.reset(); setUnconfirmed(null); }}
+          />
+          {/*
+            D8. An unconfirmed outcome is NOT a refusal. `upload.error` is set for
+            both, and the refusal copy says "could not be uploaded" — which asserts
+            a failure this screen cannot establish. So the unconfirmed message
+            replaces it rather than sitting beside it.
+          */}
+          {unconfirmed !== null && (
+            <SectionMessage appearance="warning" title={t("apply.upload_unconfirmed_title")} headingLevel="h4" aria-live="polite" testId="upload-unconfirmed">
+              <Text size="large">
+                {unconfirmed.onFile
+                  ? t("apply.upload_unconfirmed_on_file_body", { type: t(`documents.types.${unconfirmed.documentType}`) })
+                  : t("apply.upload_unconfirmed_body")}
+              </Text>
+            </SectionMessage>
+          )}
+          {unconfirmed === null && refusal !== null && (
+            <SectionMessage appearance="error" title={t("apply.upload_error_title")} headingLevel="h4" aria-live="assertive">
+              <Text size="large">{refusal}</Text>
+            </SectionMessage>
+          )}
+          {received.length > 0 && (
+            <SectionMessage appearance="success" title={t("apply.upload_ok_title")} headingLevel="h4" aria-live="polite" testId="documents-received">
+              <Text size="large">{t("apply.upload_ok_body", { types: received.map(label).join(", ") })}</Text>
+            </SectionMessage>
+          )}
+          <Inline>
+            <Button
+              appearance="primary"
+              isDisabled={file === null || upload.isPending}
+              onClick={() => {
+                if (file === null) return;
+                upload.mutate(
+                  { applicationId, documentType, file },
+                  {
+                    onSuccess: (response) => {
+                      // D8: the revision the server accepted, including when this
+                      // type was uploaded before. An identical retry returns the
+                      // same revision and is displayed as the same revision.
+                      const revision = acceptedRevision(response);
+                      setUnconfirmed(null);
+                      // A 2xx with no usable revision is NOT a receipt. The
+                      // transport already refuses one at the boundary; this is the
+                      // second gate, and it must not fall through to "received".
+                      if (revision === null) {
+                        void documentIsOnFile(applicationId, documentType).then((onFile) =>
+                          setUnconfirmed({ documentType, onFile }),
+                        );
+                        return;
+                      }
+                      setReceived((prev) => withRevision(prev, documentType, revision));
+                      setFile(null);
+                    },
+                    onError: (error) => {
+                      // D8: an answer the client cannot trust is unknown, not
+                      // failure. Reconcile what can be read, then say what could
+                      // not be established — and NEVER re-send the file. Upstream
+                      // an identical re-upload is a retry (same revision, no new
+                      // history entry), so a recovery upload cannot repair a lost
+                      // answer and would only add a confusing duplicate attempt.
+                      if (!isUnconfirmedUploadOutcome(error)) return;
+                      void documentIsOnFile(applicationId, documentType).then((onFile) =>
+                        setUnconfirmed({ documentType, onFile }),
+                      );
+                    },
+                  },
+                );
+              }}
+            >
+              {upload.isPending ? t("apply.uploading") : t("apply.upload")}
+            </Button>
+          </Inline>
+        </Stack>
+      )}
     </Stack>
   );
 }

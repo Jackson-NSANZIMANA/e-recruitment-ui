@@ -1,32 +1,21 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Box, Inline, Stack, Text } from "@atlaskit/primitives/compiled";
-import Button from "@atlaskit/button/new";
+import { Box, Stack, Text } from "@atlaskit/primitives/compiled";
 import Heading from "@atlaskit/heading";
 import SectionMessage from "@atlaskit/section-message";
 import Spinner from "@atlaskit/spinner";
-import TextField from "@atlaskit/textfield";
 import { token } from "@atlaskit/tokens";
 import { cssMap } from "@atlaskit/css";
-import { ApiError, createApiClient, useAttachMyClearanceCertificate, useMyDocumentChecklist, type ClearanceState, type DocumentChecklist } from "@usrp/api-client";
+import { createApiClient, useMyDocumentChecklist, type DocumentChecklist } from "@usrp/api-client";
 import { useTranslation } from "@usrp/i18n";
 import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { EDGE_BASE_URL } from "../../env.js";
-import { clearanceCopyKey, documentTypeKey, isClearanceNumberShape, isInFlight, normaliseClearanceNumber, satisfactionCopyKey, wantsNumber } from "./model.js";
+import { documentTypeKey, isInFlight, satisfactionCopyKey } from "./model.js";
+import { ClearanceBlock } from "./ClearanceBlock.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 const page = cssMap({ base: { maxWidth: "640px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") } });
 const POLL_MS = 4_000;
-/** How long the page waits for an accepted number to show up in the checklist before offering the field again. */
-const SENT_WAIT_MS = 60_000;
-/** How each clearance state is drawn: never colour alone (the words differ), but the tone follows the state. */
-const TONE: Record<ClearanceState, "success" | "warning" | "information"> = {
-  NUMBER_REQUIRED: "information",
-  VERIFYING: "information",
-  CORRECTION_NEEDED: "warning",
-  UNDER_OFFICER_REVIEW: "information",
-  VERIFIED: "success",
-};
 
 /**
  * The citizen's own document checklist (ADR-032), with the Irembo clearance number field and its
@@ -70,77 +59,11 @@ function ChecklistItems({ applicationId, checklist, refresh }: { readonly applic
           <Stack space="space.100">
             <Text size="large" weight="bold">{t(documentTypeKey(item.documentType), { defaultValue: item.documentType })}</Text>
             <Text size="large" color="color.text.subtle" testId={`doc-state-${item.documentType}`}>{t(satisfactionCopyKey(item))}</Text>
-            {item.clearance !== undefined && <ClearanceBlock applicationId={applicationId} clearance={item.clearance} refresh={refresh} />}
+            {item.clearance !== undefined && <ClearanceBlock client={client} applicationId={applicationId} clearance={item.clearance} refresh={refresh} />}
           </Stack>
         </Box>
       ))}
       {checklist.complete && <SectionMessage appearance="success"><Text size="large">{t("citizen_docs.all_done")}</Text></SectionMessage>}
-    </Stack>
-  );
-}
-
-function ClearanceBlock({ applicationId, clearance, refresh }: { readonly applicationId: string; readonly clearance: NonNullable<DocumentChecklist["items"][number]["clearance"]>; readonly refresh: () => void }): React.ReactElement {
-  const { t } = useTranslation(CITIZEN_APPLY_NAMESPACES);
-  const attach = useAttachMyClearanceCertificate(client);
-  const [value, setValue] = useState("");
-  const [shapeError, setShapeError] = useState(false);
-  const sent = attach.isSuccess;
-  const error = attach.error instanceof ApiError ? attach.error.normalised : null;
-  const closed = error !== null && error.kind === "conflict";
-  const { reset } = attach;
-
-  // "Sent" describes the attempt in flight. Once the registry answers that the number needs
-  // correcting, that attempt is over and the citizen must get the field back without a reload.
-  useEffect(() => {
-    if (wantsNumber(clearance.state)) reset();
-  }, [clearance.state, reset]);
-
-  // The edge accepts the number before a consumer records it, so the next read can still look
-  // unchanged, and the page-level poll only runs during VERIFYING. Keep reading until it moves.
-  const refreshRef = useRef(refresh);
-  refreshRef.current = refresh;
-  const awaitingRecord = sent && wantsNumber(clearance.state);
-  useEffect(() => {
-    if (!awaitingRecord) return undefined;
-    const poll = setInterval(() => { refreshRef.current(); }, POLL_MS);
-    const giveUp = setTimeout(reset, SENT_WAIT_MS);
-    return () => { clearInterval(poll); clearTimeout(giveUp); };
-  }, [awaitingRecord, reset]);
-
-  const submit = (): void => {
-    if (!isClearanceNumberShape(value)) { setShapeError(true); return; }
-    setShapeError(false);
-    attach.mutate({ applicationId, clearanceCertificateNumber: normaliseClearanceNumber(value) });
-  };
-
-  return (
-    <Stack space="space.100" testId="clearance-block">
-      <SectionMessage appearance={TONE[clearance.state]}>
-        <Text size="large" testId="clearance-state">{t(clearanceCopyKey(clearance))}</Text>
-      </SectionMessage>
-      {wantsNumber(clearance.state) && !sent && (
-        <Stack space="space.100">
-          <label htmlFor="clearance-number"><Text size="large" weight="medium">{t("citizen_docs.clearance.field_label")}</Text></label>
-          <Text size="large" color="color.text.subtle">{t("citizen_docs.clearance.hint")}</Text>
-          <TextField
-            id="clearance-number"
-            name="clearanceCertificateNumber"
-            value={value}
-            autoComplete="off"
-            inputMode="text"
-            isInvalid={shapeError}
-            onChange={(e) => { setValue((e.target as HTMLInputElement).value); setShapeError(false); }}
-          />
-          {shapeError && <div role="alert"><Text size="large" color="color.text.danger">{t("citizen_docs.clearance.shape")}</Text></div>}
-          {error !== null && <div role="alert"><Text size="large" color="color.text.danger">{closed ? t("citizen_docs.clearance.closed") : t("citizen_docs.clearance.failed")}</Text></div>}
-          <Inline>
-            <Button appearance="primary" isDisabled={attach.isPending} onClick={submit}>
-              {attach.isPending ? t("citizen_docs.clearance.sending") : t("citizen_docs.clearance.submit")}
-            </Button>
-          </Inline>
-        </Stack>
-      )}
-      {sent && <div role="status"><Text size="large" color="color.text.success">{t("citizen_docs.clearance.sent")}</Text></div>}
     </Stack>
   );
 }

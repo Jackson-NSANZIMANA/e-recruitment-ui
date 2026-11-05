@@ -94,6 +94,15 @@
     "nida_district": "Akarere utuyemo",
     "nida_female": "Gore",
     "nida_male": "Gabo",
-    "nida_not_held": "Ntibibitswe hano"
+    "nida_not_held": "Ntibibitswe hano",
+    "required_docs": {
+      "title": "Ibyo iyi gahunda isaba",
+      "loading": "Turimo gushaka ibyo iyi gahunda isaba",
+      "none": "Iyi gahunda ntigusaba kohereza inyandiko.",
+      "unavailable": "Ntitwabashije kubona urutonde rw'inyandiko z'iyi gahunda ubu. Ushobora kohereza; ikigo kizakubwira niba hari idakenewe.",
+      "nothing_to_upload": "Nta kindi cyo kohereza: inyandiko zose iyi gahunda isaba zarakiriwe, zaragenzuwe, cyangwa zigenzurwa binyuze kuri IremboGov.",
+      "via_irembo": "Bigenzurwa binyuze kuri IremboGov ukoresheje nimero y'ubusabe y'icyemezo cyawe (hepfo)",
+      "missing_upload": "Ntiharakirwa: yohereze hepfo, cyangwa uyizane aho gahunda ibera."
+    }
   }
 }
