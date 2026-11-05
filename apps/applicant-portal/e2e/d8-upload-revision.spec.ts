@@ -160,14 +160,22 @@ async function mockEdge(page: Page): Promise<void> {
   await page.route('**/edge/v1/me/identity', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(IDENTITY) }),
   );
-  // The advisory checklist the panel reads to RECONCILE an upload it cannot
-  // confirm. It carries no revision, so it can only ever say "on file". A test
-  // that needs a different answer re-routes it after calling this.
+  // The application's checklist. The panel reads it twice over: on mount, for the
+  // campaign's required list (the picker offers only what the policy requires and
+  // is not yet satisfied), and to RECONCILE an upload it cannot confirm. This
+  // campaign requires the National ID, still MISSING, so it stays uploadable and
+  // a reconciliation finds nothing "on file". The checklist carries no revision.
+  // A test that needs a different answer re-routes it after calling this.
   await page.route('**/edge/v1/me/applications/document-checklist*', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ agency: 'RDF', source: 'POLICY_VERSION', complete: false, items: [] }),
+      body: JSON.stringify({
+        agency: 'RDF',
+        source: 'POLICY_VERSION',
+        complete: false,
+        items: [{ documentType: 'NATIONAL_ID', satisfaction: 'MISSING', registry: 'NIDA' }],
+      }),
     }),
   );
 }
