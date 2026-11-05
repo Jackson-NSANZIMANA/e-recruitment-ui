@@ -170,8 +170,12 @@ function renderPanel(): HTMLElement {
 
 /** Choose a file and press Upload — the only two citizen actions on this panel. */
 async function upload(container: HTMLElement, name: string, label: string = en.apply.upload): Promise<void> {
-  const input = container.querySelector("#document-file");
-  if (!(input instanceof HTMLInputElement)) throw new Error("the file input is not rendered");
+  // The panel first reads the application's own required list (the campaign policy).
+  const input = await waitFor(() => {
+    const found = container.querySelector("#document-file");
+    if (!(found instanceof HTMLInputElement)) throw new Error("the file input is not rendered");
+    return found;
+  });
   const user = userEvent.setup();
   await user.upload(input, new File([`%PDF-1.4 ${name}`], name, { type: "application/pdf" }));
   await user.click(screen.getByRole("button", { name: label }));
@@ -207,7 +211,7 @@ describe("D8 upload confirmation", () => {
     await upload(container, "id-v1.pdf");
 
     await waitFor(() => expect(text(container)).toContain("National ID (revision 1)"));
-    expect(urls).toEqual([ROUTE]);
+    expect(uploadCalls()).toEqual([ROUTE]);
     // The confirmation says "received" and no more: there is no verdict to show.
     expect(text(container)).toContain(en.apply.upload_ok_title);
   });
@@ -225,7 +229,7 @@ describe("D8 upload confirmation", () => {
     expect(receipt.match(/National ID/g)?.length).toBe(1);
     expect(receipt).toContain("National ID (revision 2)");
     expect(receipt).not.toContain("revision 1");
-    expect(urls).toEqual([ROUTE, ROUTE]);
+    expect(uploadCalls()).toEqual([ROUTE, ROUTE]);
   });
 
   it("an identical retry shows the same revision, never a new one", async () => {
@@ -235,7 +239,7 @@ describe("D8 upload confirmation", () => {
     await waitFor(() => expect(text(container)).toContain("National ID (revision 1)"));
 
     await upload(container, "id-v1.pdf");
-    await waitFor(() => expect(urls.length).toBe(2));
+    await waitFor(() => expect(uploadCalls().length).toBe(2));
     expect(text(container)).toContain("National ID (revision 1)");
     expect(text(container)).not.toContain("revision 2");
   });
@@ -355,9 +359,11 @@ describe("D8 an upload whose outcome cannot be confirmed", () => {
 
     await waitFor(() => expect(text(container)).toContain(UNCONFIRMED_TITLE));
     expect(uploadCalls()).toEqual([ROUTE]);
-    // The reconciliation read is not a second upload, and it is a read.
-    expect(urls.filter((url) => url.includes("document-checklist")).length).toBe(1);
-    expect(urls.filter((url) => url.includes("document-checklist"))[0]).toContain(APP);
+    // The reconciliation read is not a second upload, and it is a read: one read of the
+    // campaign's required list when the panel mounts, then exactly one reconciliation.
+    const reads = urls.filter((url) => url.includes("document-checklist"));
+    expect(reads.length).toBe(2);
+    expect(reads.every((url) => url.includes(APP))).toBe(true);
   });
 
   it("reconciles against the checklist, and says a document of that type is on file", async () => {
@@ -501,5 +507,51 @@ describe("D8 evidence integrity on the citizen screen", () => {
       expect(text(container)).not.toContain("apply.upload_review_closed");
       cleanup();
     }
+  });
+});
+
+/**
+ * The required list comes from the CAMPAIGN (the policy version bound to the
+ * application), never from the agency's catalogue of storable types.
+ */
+describe("documents the campaign asks for", () => {
+  const POLICY = (items: readonly Record<string, unknown>[]): EdgeReply => ({
+    status: 200,
+    body: { agency: "RDF", source: "POLICY_VERSION", complete: false, items },
+  });
+
+  it("offers only the campaign's required types, not the agency catalogue", async () => {
+    queue([], POLICY([
+      { documentType: "GOOD_CONDUCT_CERTIFICATE", satisfaction: "MISSING", registry: null },
+      { documentType: "NATIONAL_ID", satisfaction: "API_VERIFIED", registry: "NIDA" },
+    ]));
+    const container = renderPanel();
+    await waitFor(() => expect(container.querySelector('[data-testid="required-docs"]')).not.toBeNull());
+    expect(container.querySelector('[data-testid="required-doc-GOOD_CONDUCT_CERTIFICATE"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="required-doc-NATIONAL_ID"]')).not.toBeNull();
+    // The picker shows the one type still to send; the verified ID is not offered again.
+    expect(text(container)).toContain(en.documents.types.GOOD_CONDUCT_CERTIFICATE);
+    expect(container.querySelector('[data-testid="required-docs-fallback"]')).toBeNull();
+    // Types the agency can store but this campaign did not ask for are absent.
+    expect(container.querySelector('[data-testid="required-doc-BIRTH_CERTIFICATE"]')).toBeNull();
+  });
+
+  it("asks for the IremboGov certificate number instead of an upload for the clearance item", async () => {
+    queue([], POLICY([
+      { documentType: "NON_CONVICTION_CERTIFICATE", satisfaction: "MISSING", registry: "RIB", clearance: { state: "NUMBER_REQUIRED", code: null, reasons: [] } },
+    ]));
+    const container = renderPanel();
+    await waitFor(() => expect(container.querySelector('[data-testid="apply-clearance"]')).not.toBeNull());
+    expect(container.querySelector(`#clearance-number-${APP}`)).not.toBeNull();
+    // Nothing is left to upload: the certificate is verified from its number.
+    expect(container.querySelector("#document-file")).toBeNull();
+    expect(container.querySelector('[data-testid="nothing-to-upload"]')).not.toBeNull();
+  });
+
+  it("an empty policy list shows that nothing is required, with no upload control", async () => {
+    queue([], POLICY([]));
+    const container = renderPanel();
+    await waitFor(() => expect(container.querySelector('[data-testid="required-docs"]')).not.toBeNull());
+    expect(container.querySelector("#document-file")).toBeNull();
   });
 });

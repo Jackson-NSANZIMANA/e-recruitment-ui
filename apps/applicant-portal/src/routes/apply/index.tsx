@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Stack, Inline, Text } from "@atlaskit/primitives/compiled";
 import Button from "@atlaskit/button";
@@ -6,12 +6,14 @@ import TextField from "@atlaskit/textfield";
 import Select from "@atlaskit/select";
 import Form, { Field, FormFooter } from "@atlaskit/form";
 import SectionMessage from "@atlaskit/section-message";
+import Spinner from "@atlaskit/spinner";
 import { APPLICATION_CATEGORIES, ACADEMIC_PATH_BY_CATEGORY, AGENCY_DOCUMENT_TYPES, CATEGORY_AGENCY, isRehearsalCampaign, type Agency, type ApplicationCategory } from "@usrp/contracts";
 import {
   ApiError,
   createApiClient,
   getMyDocumentChecklist,
   isUnconfirmedUploadOutcome,
+  useMyDocumentChecklist,
   useMyIdentity,
   usePublicCampaign,
   usePublicCampaigns,
@@ -27,6 +29,12 @@ import { WizardLayout, AudioTooltip } from "@usrp/ui";
 import { EDGE_BASE_URL } from "../../env.js";
 import { nidaRows, sexKey } from "./nida-identity.js";
 import { CategoryRules } from "./CategoryRules.js";
+import { selectedType, uploadChoices } from "./required-documents.js";
+import { ClearanceBlock } from "../documents/ClearanceBlock.js";
+import { documentTypeKey, isInFlight, satisfactionCopyKey } from "../documents/model.js";
+
+/** How often the panel re-reads the checklist while Irembo answers a clearance number. */
+const CHECKLIST_POLL_MS = 4_000;
 
 const STORAGE_KEY = "usrp_apply_draft";
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
@@ -506,9 +514,22 @@ export function DocumentsPanel({ applicationId, agency }: {
   readonly agency: Agency;
 }): React.ReactElement {
   const { t } = useTranslation();
+  const { t: tc } = useTranslation(CITIZEN_APPLY_NAMESPACES);
   const upload = useUploadMyDocument(client);
-  const types = AGENCY_DOCUMENT_TYPES[agency];
-  const [documentType, setDocumentType] = useState<string>(types[0] ?? "NATIONAL_ID");
+  // The campaign's own required list, bound to this application (never the agency catalogue).
+  const checklist = useMyDocumentChecklist(client, applicationId);
+  const choices = uploadChoices(checklist.data, checklist, AGENCY_DOCUMENT_TYPES[agency]);
+  const types = choices.kind === "LOADING" ? [] : choices.types;
+  const [picked, setDocumentType] = useState<string | null>(null);
+  const documentType = selectedType(picked, types);
+  const verifying = isInFlight(checklist.data);
+  const { refetch } = checklist;
+  // While Irembo answers a clearance number, re-read the checklist; it stops by itself.
+  useEffect(() => {
+    if (!verifying) return undefined;
+    const timer = setInterval(() => { void refetch(); }, CHECKLIST_POLL_MS);
+    return () => clearInterval(timer);
+  }, [verifying, refetch]);
   const [file, setFile] = useState<File | null>(null);
   const [received, setReceived] = useState<readonly ReceivedDocument[]>([]);
   const [unconfirmed, setUnconfirmed] = useState<UnconfirmedUpload | null>(null);
@@ -533,6 +554,42 @@ export function DocumentsPanel({ applicationId, agency }: {
   return (
     <Stack space="space.200">
       <Text size="large" weight="bold">{t("apply.documents_title")}</Text>
+      {choices.kind === "LOADING" && <Spinner label={tc("apply.required_docs.loading")} />}
+      {choices.kind === "FALLBACK" && (
+        <SectionMessage appearance="warning" testId="required-docs-fallback">
+          <Text size="large">{tc("apply.required_docs.unavailable")}</Text>
+        </SectionMessage>
+      )}
+      {choices.kind === "POLICY" && (
+        <Stack space="space.100" testId="required-docs">
+          <Text size="large" weight="medium">
+            {choices.required.length === 0 ? tc("apply.required_docs.none") : tc("apply.required_docs.title")}
+          </Text>
+          {choices.required.length > 0 && (
+            <ul>
+              {choices.required.map((item) => (
+                <li key={item.documentType} data-testid={`required-doc-${item.documentType}`}>
+                  <Text size="large">
+                    {tc(documentTypeKey(item.documentType), { defaultValue: item.documentType })}
+                    {" — "}
+                    {item.clearance !== undefined ? tc("apply.required_docs.via_irembo") : tc(satisfactionCopyKey(item))}
+                  </Text>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Stack>
+      )}
+      {choices.kind === "POLICY" && choices.clearance?.clearance !== undefined && (
+        <Stack space="space.100" testId="apply-clearance">
+          <Text size="large" weight="bold">{tc(documentTypeKey(choices.clearance.documentType), { defaultValue: choices.clearance.documentType })}</Text>
+          <ClearanceBlock client={client} applicationId={applicationId} clearance={choices.clearance.clearance} refresh={() => { void refetch(); }} />
+        </Stack>
+      )}
+      {choices.kind === "POLICY" && choices.required.length > 0 && types.length === 0 && (
+        <Text size="large" color="color.text.subtle" testId="nothing-to-upload">{tc("apply.required_docs.nothing_to_upload")}</Text>
+      )}
+      {documentType !== null && (<>
       <Text size="large" color="color.text.subtle">{t("apply.documents_help")}</Text>
       <Field name="documentType" label={t("apply.document_type_label")}>
         {() => (
@@ -625,6 +682,7 @@ export function DocumentsPanel({ applicationId, agency }: {
           {upload.isPending ? t("apply.uploading") : t("apply.upload")}
         </Button>
       </Inline>
+      </>)}
     </Stack>
   );
 }

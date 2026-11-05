@@ -94,6 +94,14 @@
     "nida_district": "District de résidence",
     "nida_female": "Féminin",
     "nida_male": "Masculin",
-    "nida_not_held": "Non enregistré ici"
+    "nida_not_held": "Non enregistré ici",
+    "required_docs": {
+      "title": "Ce que cette campagne demande",
+      "loading": "Chargement de ce que cette campagne demande",
+      "none": "Cette campagne ne vous demande de téléverser aucun document.",
+      "unavailable": "Nous n'avons pas pu charger la liste des documents de cette campagne pour le moment. Vous pouvez quand même téléverser ; l'agence vous dira si un document n'est pas nécessaire.",
+      "nothing_to_upload": "Plus rien à téléverser : chaque document demandé par cette campagne est reçu, vérifié ou contrôlé via IremboGov.",
+      "via_irembo": "Vérifié via IremboGov avec le numéro de demande de votre certificat (ci-dessous)"
+    }
   }
 }
