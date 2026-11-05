@@ -12,6 +12,7 @@ import { CITIZEN_APPLY_NAMESPACES } from "../locales.js";
 import { EDGE_BASE_URL } from "../../env.js";
 import { documentTypeKey, isInFlight, satisfactionCopyKey } from "./model.js";
 import { ClearanceBlock } from "./ClearanceBlock.js";
+import { DocumentsPanel } from "./DocumentsPanel.js";
 
 const client = createApiClient({ baseUrl: EDGE_BASE_URL });
 const page = cssMap({ base: { maxWidth: "640px", marginInline: "auto", paddingBlock: token("space.500"), paddingInline: token("space.400") } });
@@ -44,6 +45,9 @@ export default function DocumentsPage(): React.ReactElement {
         {checklist.isLoading && <Spinner label={t("citizen_docs.loading")} />}
         {checklist.isError && <SectionMessage appearance="error"><Text size="large">{t("citizen_docs.error")}</Text></SectionMessage>}
         {checklist.data !== undefined && <ChecklistItems applicationId={applicationId} checklist={checklist.data} refresh={() => { void checklist.refetch(); }} />}
+        {/* The same upload panel as right after filing: a citizen who comes back later (an officer now
+            needs the certificate PDF, a document was refused) can send what the campaign requires. */}
+        {checklist.data !== undefined && <DocumentsPanel applicationId={applicationId} agency={checklist.data.agency} uploadOnly />}
         <Text size="large"><Link to="/status">{t("citizen_docs.back")}</Link></Text>
       </Stack>
     </Box>
